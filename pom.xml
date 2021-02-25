@@ -73,7 +73,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>app.app</mainClass>
+							<mainClass>app</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>
