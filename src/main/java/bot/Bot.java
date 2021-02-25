@@ -40,6 +40,19 @@ public class Bot {
 	LinkedList<Long> textChannelIDS;
 
 	public Bot() {
+		
+		File botInfoFile = new File("bot.info");
+		
+		String token = "";
+		
+		try {
+			Scanner in = new Scanner(botInfoFile);
+			token = in.nextLine();
+			in.close();
+		} catch (FileNotFoundException e1) {
+			e1.printStackTrace();
+		}
+		
 
 		createChatIDs = new LinkedList<Long>();
 		createChatIDs.add(812095961475317811l);
@@ -53,7 +66,7 @@ public class Bot {
 		textChannelIDS.add(812909596175106048l);
 		textChannelIDS.add(812912306357928007l);
 
-		JDABuilder bot = JDABuilder.createDefault(BotInfo.TEST_SERVER_TOKEN);
+		JDABuilder bot = JDABuilder.createDefault(token);
 		bot.addEventListeners(new Listener());
 
 		try {
