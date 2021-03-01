@@ -15,6 +15,7 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.VoiceChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
+import net.dv8tion.jda.api.events.ReconnectedEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
@@ -119,65 +120,13 @@ public class Bot {
 		public void onReady(ReadyEvent event) {
 			System.out.println("Logged in");
 		}
-
+		
 		/**
 		 * When we get a message
 		 */
 		@Override
 		public void onMessageReceived(MessageReceivedEvent event) {
-			if (!event.getAuthor().isBot()) {
-				if (textChannelIDS.contains(event.getTextChannel().getIdLong())) {
-					
-					// boolean for valid command
-					boolean valid = false;
-					String command = event.getMessage().getContentDisplay();
-					
-					if(command.startsWith("rename ") && command.split(" ").length > 1) {
-						// Command: rename <name>
-						// Renames channel to the name the user specifies
-						
-						// get the voice channel
-						VoiceChannel channel = event.getMember().getVoiceState().getChannel();
-						if(channel != null) {
-							try {
-								// rename the channel and set valid command to true
-								channel.getManager().setName(command.replace("rename ", "")).queue();
-								valid = true;
-							}catch(IllegalArgumentException e1) {
-								
-							}
-						}
-						
-					}else if(command.startsWith("limit ") && command.split(" ").length > 1) {
-						// Command: limit <user limit number>
-						// puts a limit to the max amount of users that can join the channel
-
-						VoiceChannel channel = event.getMember().getVoiceState().getChannel();
-						try {
-							if (channel != null) {
-								// set the user limit to the channel
-								channel.getManager().setUserLimit(Integer.parseInt(command.replace("limit ", "")))
-										.queue();
-								valid = true;
-							}
-						} catch (NumberFormatException e) {
-
-						} catch (IllegalArgumentException e1) {
-
-						}
-					}					
-					
-					if (!valid) {
-						// we get here if the command isnt valid. Lets send the dumb butt a message
-						event.getAuthor().openPrivateChannel().complete()
-						.sendMessage("Unknown or invalid command:" + event.getMessage().getContentDisplay())
-						.queue();
-					}
-
-					// delete the message from the channel
-					event.getMessage().delete().queue();
-				}
-			}
+			onMessageRecieved(event);
 		}
 
 		/**
@@ -204,34 +153,94 @@ public class Bot {
 		public void onGuildVoiceLeave(GuildVoiceLeaveEvent event) {
 			playerLeft(event.getChannelLeft());
 		}
+	}
+	
+	/**
+	 * 
+	 * @param event
+	 */
+	private void onMessageRecieved(MessageReceivedEvent event) {
+		if (!event.getAuthor().isBot()) {
+			if (textChannelIDS.contains(event.getTextChannel().getIdLong())) {
+				
+				// boolean for valid command
+				boolean valid = false;
+				String command = event.getMessage().getContentDisplay();
+				
+				if(command.startsWith("rename ") && command.split(" ").length > 1) {
+					// Command: rename <name>
+					// Renames channel to the name the user specifies
+					
+					// get the voice channel
+					VoiceChannel channel = event.getMember().getVoiceState().getChannel();
+					if(channel != null) {
+						try {
+							// rename the channel and set valid command to true
+							channel.getManager().setName(command.replace("rename ", "")).queue();
+							valid = true;
+						}catch(IllegalArgumentException e1) {
+							
+						}
+					}
+					
+				}else if(command.startsWith("limit ") && command.split(" ").length > 1) {
+					// Command: limit <user limit number>
+					// puts a limit to the max amount of users that can join the channel
 
-		/**
-		 * Deletes this channel if there are no players in it and it matches the chat room parent
-		 * @param leftChannel The channel the player left
-		 */
-		private void playerLeft(VoiceChannel leftChannel) {
-			if (!ignoredChannelIDs.contains(leftChannel.getIdLong()) && leftChannel.getParent() != null
-					&& leftChannel.getParent().equals(chatRoomsCat) && leftChannel.getMembers().size() <= 0) {
-				// delete the channel
-				leftChannel.delete().queue();
+					VoiceChannel channel = event.getMember().getVoiceState().getChannel();
+					try {
+						if (channel != null) {
+							// set the user limit to the channel
+							channel.getManager().setUserLimit(Integer.parseInt(command.replace("limit ", "")))
+									.queue();
+							valid = true;
+						}
+					} catch (NumberFormatException e) {
+
+					} catch (IllegalArgumentException e1) {
+
+					}
+				}					
+				
+				if (!valid) {
+					// we get here if the command isnt valid. Lets send the dumb butt a message
+					event.getAuthor().openPrivateChannel().complete()
+					.sendMessage("Unknown or invalid command:" + event.getMessage().getContentDisplay())
+					.queue();
+				}
+
+				// delete the message from the channel
+				event.getMessage().delete().queue();
 			}
 		}
+	}
+	
+	/**
+	 * Deletes this channel if there are no players in it and it matches the chat room parent
+	 * @param leftChannel The channel the player left
+	 */
+	private void playerLeft(VoiceChannel leftChannel) {
+		if (!ignoredChannelIDs.contains(leftChannel.getIdLong()) && leftChannel.getParent() != null
+				&& leftChannel.getParent().equals(chatRoomsCat) && leftChannel.getMembers().size() <= 0) {
+			// delete the channel
+			leftChannel.delete().queue();
+		}
+	}
 
-		/**
-		 * If a user joins the create channel, create a room and move them to it
-		 * @param joinChannel The channel the player joined
-		 * @param user The player
-		 */
-		private void playerJoined(VoiceChannel joinChannel, Member user) {
-			// joined create channel
-			if (createChatIDs.contains(joinChannel.getIdLong())) {
-				int number = 1;
-				while (shlongshot.getVoiceChannelsByName("Chatroom " + number, true).size() > 0) {
-					number++;
-				}
-				VoiceChannel newChannel = shlongshot.createVoiceChannel("Chatroom " + number).setParent(chatRoomsCat).complete();
-				shlongshot.moveVoiceMember(user, newChannel).queue();
+	/**
+	 * If a user joins the create channel, create a room and move them to it
+	 * @param joinChannel The channel the player joined
+	 * @param user The player
+	 */
+	private void playerJoined(VoiceChannel joinChannel, Member user) {
+		// joined create channel
+		if (createChatIDs.contains(joinChannel.getIdLong())) {
+			int number = 1;
+			while (shlongshot.getVoiceChannelsByName("Chatroom " + number, true).size() > 0) {
+				number++;
 			}
+			VoiceChannel newChannel = shlongshot.createVoiceChannel("Chatroom " + number).setParent(chatRoomsCat).complete();
+			shlongshot.moveVoiceMember(user, newChannel).queue();
 		}
 	}
 	
