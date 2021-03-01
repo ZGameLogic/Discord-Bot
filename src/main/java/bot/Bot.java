@@ -12,10 +12,8 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Category;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.VoiceChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
-import net.dv8tion.jda.api.events.ReconnectedEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
@@ -102,7 +100,7 @@ public class Bot {
 		}
 
 		// start the message poster
-		new messagePoster().start();
+		new MessagePoster(shlongshot, textChannelIDS).start();
 	}
 
 	
@@ -156,7 +154,7 @@ public class Bot {
 	}
 	
 	/**
-	 * 
+	 * Takes an incoming message event and handles it
 	 * @param event
 	 */
 	private void onMessageRecieved(MessageReceivedEvent event) {
@@ -241,57 +239,6 @@ public class Bot {
 			}
 			VoiceChannel newChannel = shlongshot.createVoiceChannel("Chatroom " + number).setParent(chatRoomsCat).complete();
 			shlongshot.moveVoiceMember(user, newChannel).queue();
-		}
-	}
-	
-	/**
-	 * This class handles posting a message in the bot channel. Will be removed once slash commands come out. 
-	 * @author Ben Shabowski
-	 *
-	 */
-	private class messagePoster extends Thread {
-		
-		public void run() {
-			while(true) {
-				// message file
-				File input = new File("message.txt");
-				
-				if(input.exists()) {
-					// we get here if the file exists
-					
-					// text channel to send the message too
-					TextChannel messageChannel = null;
-					
-					// get the channel by ID
-					for(Long x : textChannelIDS) {
-						if((messageChannel = shlongshot.getTextChannelById(x)) != null) {
-							break;
-						}
-					}
-					
-					Scanner fileInput;
-					try {
-						// read the file, and then send out each line to the text channel
-						fileInput = new Scanner(input);
-						while(fileInput.hasNextLine()) {
-							messageChannel.sendMessage(fileInput.nextLine()).queue();
-						}
-						fileInput.close();
-					} catch (FileNotFoundException e) {
-						e.printStackTrace();
-					}
-					
-					input.delete();
-					
-				}
-				
-				//sleep for 1 minute
-				try {
-					Thread.sleep(60000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
 		}
 	}
 }
