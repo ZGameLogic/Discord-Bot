@@ -18,6 +18,9 @@ import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
+import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class Bot {
@@ -126,6 +129,23 @@ public class Bot {
 		public void onMessageReceived(MessageReceivedEvent event) {
 			onMessageRecieved(event);
 		}
+		
+		@Override
+		public void onMessageReactionAdd(MessageReactionAddEvent event) {
+			
+		}
+		
+		@Override
+		public void onMessageReactionRemove(MessageReactionRemoveEvent event) {
+			
+		}
+		
+		@Override
+		public void	onPrivateMessageReceived(PrivateMessageReceivedEvent event) {
+			if(!event.getAuthor().isBot()) {
+				event.getAuthor().openPrivateChannel().complete().sendMessage("I dont have private message functionality yet. My master sucks :(").queue();
+			}
+		}
 
 		/**
 		 * On voice chat join
@@ -158,7 +178,7 @@ public class Bot {
 	 * @param event
 	 */
 	private void onMessageRecieved(MessageReceivedEvent event) {
-		if (!event.getAuthor().isBot()) {
+		if (!event.getAuthor().isBot() && event.isFromGuild()) {
 			if (textChannelIDS.contains(event.getTextChannel().getIdLong())) {
 				
 				// boolean for valid command
