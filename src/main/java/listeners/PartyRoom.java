@@ -1,20 +1,16 @@
 package listeners;
 
-import java.awt.Color;
 import java.util.LinkedList;
 
-import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Category;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.VoiceChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -98,35 +94,11 @@ public class PartyRoom extends ListenerAdapter {
 
 	}
 
-	@Override
-	public void onPrivateMessageReceived(PrivateMessageReceivedEvent event) {
-		if (!event.getAuthor().isBot()) {
-			EmbedBuilder eb = new EmbedBuilder();
-
-			eb.setTitle("Uh oh");
-			eb.setColor(Color.magenta);
-			eb.setDescription("My master hasn't programed this feature into me yet.");
-			eb.addField("Heres a neat skyrim pic for ya", "Why yes, it is random each time", false);
-			eb.setImage("http://zgamelogic.com/skyrim/image" + (int) ((Math.random() * 40) + 1) + ".jpg");
-
-			MessageEmbed embed = eb.build();
-
-			event.getAuthor().openPrivateChannel().complete().sendMessage(embed).complete();
-
-			/*
-			 * eb.setFooter("This is an edited in footer");
-			 * sent.editMessage(eb.build()).queue();
-			 */
-
-		}
-	}
-
 	/**
 	 * On voice chat join
 	 */
 	@Override
 	public void onGuildVoiceJoin(GuildVoiceJoinEvent event) {
-		System.out.println("Guild member joined");
 		playerJoined(event.getChannelJoined(), event.getMember());
 	}
 
