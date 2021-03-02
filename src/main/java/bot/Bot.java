@@ -150,6 +150,9 @@ public class Bot {
 				eb.setTitle("Uh oh");
 				eb.setColor(Color.magenta);
 				eb.setDescription("My master hasn't programed this feature into me yet.");
+				eb.addField("Heres a neat skyrim pic for ya", "Why yes, it is random each time", false);
+				
+				eb.setImage("http://zgamelogic.com/skyrim/image" + (int)((Math.random() * 40) + 1) + ".jpg");
 				
 				event.getAuthor().openPrivateChannel().complete().sendMessage(eb.build()).queue();
 			}
