@@ -7,6 +7,8 @@ import java.util.Scanner;
 
 import javax.security.auth.login.LoginException;
 
+import java.awt.Color;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.entities.Category;
@@ -143,7 +145,13 @@ public class Bot {
 		@Override
 		public void	onPrivateMessageReceived(PrivateMessageReceivedEvent event) {
 			if(!event.getAuthor().isBot()) {
-				event.getAuthor().openPrivateChannel().complete().sendMessage("I dont have private message functionality yet. My master sucks :(").queue();
+				EmbedBuilder eb = new EmbedBuilder();
+				
+				eb.setTitle("Uh oh");
+				eb.setColor(Color.magenta);
+				eb.setDescription("My master hasn't programed this feature into me yet.");
+				
+				event.getAuthor().openPrivateChannel().complete().sendMessage(eb.build()).queue();
 			}
 		}
 
