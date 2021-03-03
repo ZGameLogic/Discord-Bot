@@ -2,6 +2,7 @@ package listeners;
 
 import java.util.LinkedList;
 
+import data.IDs;
 import net.dv8tion.jda.api.entities.Category;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -34,23 +35,11 @@ public class PartyRoom extends ListenerAdapter {
 	
 	public PartyRoom() {
 		
-		createChatIDs = new LinkedList<Long>();
-		// Shlongshot chat ID
-		createChatIDs.add(812095961475317811l);
-		// Test server chat ID
-		createChatIDs.add(812083428686168136l);
+		createChatIDs = IDs.getCreatechatids();
 
-		ignoredChannelIDs = new LinkedList<Long>();
-		// Ignore all create chat room IDs
-		ignoredChannelIDs.addAll(createChatIDs);
-		// AFK channel ID for Shlongshot
-		ignoredChannelIDs.add(371695546173358090l);
+		ignoredChannelIDs = IDs.getIgnoredchannelids();
 
-		textChannelIDS = new LinkedList<Long>();
-		// Shlongshot text ID
-		textChannelIDS.add(812909596175106048l);
-		// Test server text ID
-		textChannelIDS.add(812912306357928007l);
+		textChannelIDS = IDs.getTextchannelids();
 	}
 
 	/**

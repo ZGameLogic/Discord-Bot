@@ -6,6 +6,7 @@ import java.util.Scanner;
 
 import javax.security.auth.login.LoginException;
 
+import listeners.EventHandler;
 import listeners.PartyRoom;
 import listeners.PrivateMessage;
 import net.dv8tion.jda.api.JDABuilder;
@@ -30,6 +31,7 @@ public class Bot {
 
 		bot.addEventListeners(new PartyRoom());
 		bot.addEventListeners(new PrivateMessage());
+		bot.addEventListeners(new EventHandler());
 		
 		// Login
 		try {
