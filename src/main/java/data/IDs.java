@@ -10,7 +10,7 @@ public class IDs {
 			// Shlongshot
 			812095961475317811l,
 			// Test server
-			812083428686168136l
+			816710808300945420l
 			));
 	
 	// IDs of channels that should be ignored for deletion
@@ -18,7 +18,11 @@ public class IDs {
 	// Create chatroom channels
 	private final static LinkedList<Long> ignoredChannelIDs = new LinkedList<Long>(Arrays.asList(
 			// Shlongshot afk channel
-			371695546173358090l
+			371695546173358090l,
+			// Shlongshot
+			812095961475317811l,
+			// Test server
+			816710808300945420l
 			));
 	
 	private final static LinkedList<Long> textChannelIDs = new LinkedList<Long>(Arrays.asList(
@@ -27,13 +31,6 @@ public class IDs {
 			// Test server command channel
 			812912306357928007l
 			));
-	
-	
-	public IDs() {
-		// add all create chat channel IDs as these should be ignored
-		ignoredChannelIDs.addAll(createChatIDs);
-	}
-
 
 	public static LinkedList<Long> getCreatechatids() {
 		return createChatIDs;

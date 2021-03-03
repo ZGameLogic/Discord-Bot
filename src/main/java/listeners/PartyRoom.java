@@ -1,11 +1,17 @@
 package listeners;
 
+import java.awt.Color;
+import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 
 import data.IDs;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Category;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.VoiceChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
@@ -17,6 +23,9 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class PartyRoom extends ListenerAdapter {
+	
+	//PartyBot version
+	private static final String VERSION = "1.0.0";
 	
 	// main guild
 	private Guild shlongshot;
@@ -33,6 +42,8 @@ public class PartyRoom extends ListenerAdapter {
 	// IDs for text channels that can be sent commands too
 	private LinkedList<Long> textChannelIDS;
 	
+	private Map<VoiceChannel, TextChannel> chatroomToTextroom;
+	
 	public PartyRoom() {
 		
 		createChatIDs = IDs.getCreatechatids();
@@ -40,6 +51,8 @@ public class PartyRoom extends ListenerAdapter {
 		ignoredChannelIDs = IDs.getIgnoredchannelids();
 
 		textChannelIDS = IDs.getTextchannelids();
+		
+		chatroomToTextroom = new HashMap<VoiceChannel, TextChannel>(); 
 	}
 
 	/**
@@ -62,6 +75,34 @@ public class PartyRoom extends ListenerAdapter {
 				chatRoomsCat = x;
 				break;
 			}
+		}
+		
+		// Send command message
+		
+		TextChannel commandChannel = null;
+		
+		for(int i = 0; i < IDs.getTextchannelids().size() && commandChannel == null; i++) {
+			commandChannel = shlongshot.getTextChannelById(IDs.getTextchannelids().get(i));
+		}
+		
+		if(!commandChannel.getTopic().contains(VERSION)) {
+			commandChannel.getManager().setTopic("Commands for bot version: " + VERSION).queue();
+			
+			EmbedBuilder eb = new EmbedBuilder();
+
+			eb.setTitle("Commands for shlongbot party system");
+			eb.setColor(Color.magenta);
+			eb.setDescription("These are the commands you can use to control the party system.");
+			eb.addField("limit <user limit>", "Limits the number of people that can join the chat room", false);
+			eb.addField("rename <room name>", "Renames the chat room and any associated text chat rooms to the new name", false);
+			eb.addField("create text", "Creates a text channel for this chat room", false);
+			eb.addField("delete text", "Deletes any text channel for this chat room", false);
+			
+			eb.setFooter("For version: " + VERSION);
+
+			MessageEmbed embed = eb.build();
+
+			commandChannel.sendMessage(embed).complete();
 		}
 	}
 
@@ -131,6 +172,9 @@ public class PartyRoom extends ListenerAdapter {
 						try {
 							// rename the channel and set valid command to true
 							channel.getManager().setName(command.replace("rename ", "")).queue();
+							if(chatroomToTextroom.containsKey(channel)) {
+								chatroomToTextroom.get(channel).getManager().setName(command.replace("rename ", "")).queue();
+							}
 							valid = true;
 						} catch (IllegalArgumentException e1) {
 
@@ -152,6 +196,27 @@ public class PartyRoom extends ListenerAdapter {
 
 					} catch (IllegalArgumentException e1) {
 
+					}
+				}else if(command.equalsIgnoreCase("create text")) {
+					// get the voice channel
+					VoiceChannel channel = event.getMember().getVoiceState().getChannel();
+					
+					if(channel != null && !chatroomToTextroom.containsKey(channel)) {
+						TextChannel tx = shlongshot.createTextChannel(channel.getName()).setParent(chatRoomsCat)
+						.complete();
+						chatroomToTextroom.put(channel, tx);
+						valid = true;
+					}
+				}else if(command.equalsIgnoreCase("delete text")) {
+					// get the voice channel
+					VoiceChannel channel = event.getMember().getVoiceState().getChannel();
+					
+					if(channel != null && chatroomToTextroom.containsKey(channel)) {
+						
+						chatroomToTextroom.get(channel).delete().queue();
+						chatroomToTextroom.remove(channel);
+						
+						valid = true;
 					}
 				}
 
@@ -179,6 +244,10 @@ public class PartyRoom extends ListenerAdapter {
 				&& leftChannel.getParent().equals(chatRoomsCat) && leftChannel.getMembers().size() <= 0) {
 			// delete the channel
 			leftChannel.delete().queue();
+			if(chatroomToTextroom.containsKey(leftChannel)) {
+				chatroomToTextroom.get(leftChannel).delete().queue();
+				chatroomToTextroom.remove(leftChannel);
+			}
 		}
 	}
 
