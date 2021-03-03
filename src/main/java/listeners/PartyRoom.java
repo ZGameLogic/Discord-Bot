@@ -1,9 +1,14 @@
 package listeners;
 
 import java.awt.Color;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.Scanner;
 
 import data.IDs;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -42,6 +47,7 @@ public class PartyRoom extends ListenerAdapter {
 	// IDs for text channels that can be sent commands too
 	private LinkedList<Long> textChannelIDS;
 	
+	// Store connections from voice channels and text channels
 	private Map<VoiceChannel, TextChannel> chatroomToTextroom;
 	
 	public PartyRoom() {
@@ -86,6 +92,30 @@ public class PartyRoom extends ListenerAdapter {
 		}
 		
 		if(!commandChannel.getTopic().contains(VERSION)) {
+			
+			File messageIDFile = new File("message.txt");
+			
+			// delete old message
+			Long oldMessageID = -1l;
+			if(messageIDFile.exists()) {
+				try {
+					Scanner fileInput = new Scanner(messageIDFile);
+					oldMessageID = Long.parseLong(fileInput.nextLine());
+					fileInput.close();
+					commandChannel.deleteMessageById(oldMessageID).queue();
+					
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+			}else {
+				try {
+					messageIDFile.createNewFile();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			
 			commandChannel.getManager().setTopic("Commands for bot version: " + VERSION).queue();
 			
 			EmbedBuilder eb = new EmbedBuilder();
@@ -102,7 +132,18 @@ public class PartyRoom extends ListenerAdapter {
 
 			MessageEmbed embed = eb.build();
 
-			commandChannel.sendMessage(embed).complete();
+			// store new message
+			Long messageID = commandChannel.sendMessage(embed).complete().getIdLong();
+			try {
+				PrintWriter fileout = new PrintWriter(messageIDFile);
+				
+				fileout.println(messageID);
+				
+				fileout.flush();
+				fileout.close();
+			} catch (FileNotFoundException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
