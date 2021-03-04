@@ -1,4 +1,4 @@
-package listeners;
+package partybot.listeners;
 
 import java.awt.Color;
 import java.io.File;
