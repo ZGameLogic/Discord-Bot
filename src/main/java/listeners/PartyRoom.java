@@ -12,6 +12,7 @@ import java.util.Scanner;
 
 import data.IDs;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Category;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -30,7 +31,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 public class PartyRoom extends ListenerAdapter {
 	
 	//PartyBot version
-	private static final String VERSION = "1.0.0";
+	private static final String VERSION = "1.0.1";
 	
 	// main guild
 	private Guild shlongshot;
@@ -125,7 +126,7 @@ public class PartyRoom extends ListenerAdapter {
 			eb.setDescription("These are the commands you can use to control the party system.");
 			eb.addField("limit <user limit>", "Limits the number of people that can join the chat room", false);
 			eb.addField("rename <room name>", "Renames the chat room and any associated text chat rooms to the new name", false);
-			eb.addField("create text", "Creates a text channel for this chat room", false);
+			eb.addField("create text", "Creates a private text channel for this chat room", false);
 			eb.addField("delete text", "Deletes any text channel for this chat room", false);
 			
 			eb.setFooter("For version: " + VERSION);
@@ -178,7 +179,7 @@ public class PartyRoom extends ListenerAdapter {
 	 */
 	@Override
 	public void onGuildVoiceMove(GuildVoiceMoveEvent event) {
-		playerLeft(event.getChannelLeft());
+		playerLeft(event.getChannelLeft(), event.getMember());
 		playerJoined(event.getChannelJoined(), event.getMember());
 	}
 
@@ -187,7 +188,7 @@ public class PartyRoom extends ListenerAdapter {
 	 */
 	@Override
 	public void onGuildVoiceLeave(GuildVoiceLeaveEvent event) {
-		playerLeft(event.getChannelLeft());
+		playerLeft(event.getChannelLeft(), event.getMember());
 	}
 
 	/**
@@ -246,6 +247,15 @@ public class PartyRoom extends ListenerAdapter {
 						TextChannel tx = shlongshot.createTextChannel(channel.getName()).setParent(chatRoomsCat)
 						.complete();
 						chatroomToTextroom.put(channel, tx);
+						
+						// Hide the channel
+						tx.createPermissionOverride(shlongshot.getPublicRole()).setDeny(Permission.VIEW_CHANNEL).queue();
+						
+						for(Member x : channel.getMembers()) {
+							tx.createPermissionOverride(x).setAllow(Permission.VIEW_CHANNEL).queue();
+						}
+						
+						
 						valid = true;
 					}
 				}else if(command.equalsIgnoreCase("delete text")) {
@@ -280,15 +290,31 @@ public class PartyRoom extends ListenerAdapter {
 	 * 
 	 * @param leftChannel The channel the player left
 	 */
-	private void playerLeft(VoiceChannel leftChannel) {
-		if (!ignoredChannelIDs.contains(leftChannel.getIdLong()) && leftChannel.getParent() != null
-				&& leftChannel.getParent().equals(chatRoomsCat) && leftChannel.getMembers().size() <= 0) {
-			// delete the channel
-			leftChannel.delete().queue();
+	private void playerLeft(VoiceChannel leftChannel, Member user) {
+		if (!ignoredChannelIDs.contains(leftChannel.getIdLong()) && leftChannel.getParent() != null) {
+			
+			// we need to remove them from being able to view the text channel if it exists
 			if(chatroomToTextroom.containsKey(leftChannel)) {
-				chatroomToTextroom.get(leftChannel).delete().queue();
-				chatroomToTextroom.remove(leftChannel);
+				System.out.println("hm");
+				try {
+					chatroomToTextroom.get(leftChannel).putPermissionOverride(user).setDeny(Permission.VIEW_CHANNEL).queue();
+				} catch(IllegalStateException e) {
+					e.printStackTrace();
+					System.out.println("we died");
+				}
 			}
+			
+			// we do this is there are 0 people left in the room
+			if(leftChannel.getParent().equals(chatRoomsCat) && leftChannel.getMembers().size() <= 0) {
+				// delete the channel
+				leftChannel.delete().queue();
+			
+				if(chatroomToTextroom.containsKey(leftChannel)) {
+					chatroomToTextroom.get(leftChannel).delete().queue();
+					chatroomToTextroom.remove(leftChannel);
+				}
+			}
+			
 		}
 	}
 
@@ -298,7 +324,7 @@ public class PartyRoom extends ListenerAdapter {
 	 * @param joinChannel The channel the player joined
 	 * @param user        The player
 	 */
-	private void playerJoined(VoiceChannel joinChannel, Member user) {
+	private void playerJoined(VoiceChannel joinChannel, Member user) {		
 		// joined create channel
 		if (createChatIDs.contains(joinChannel.getIdLong())) {
 			int number = 1;
@@ -308,6 +334,17 @@ public class PartyRoom extends ListenerAdapter {
 			VoiceChannel newChannel = shlongshot.createVoiceChannel("Chatroom " + number).setParent(chatRoomsCat)
 					.complete();
 			shlongshot.moveVoiceMember(user, newChannel).queue();
+		}else if(joinChannel.getParent() == chatRoomsCat){
+			//we get here if they join a chatroom and it isnt the create chatroom but is a created chatroom
+			try {
+				// we need to add them to being able to view the text channel if it exists
+				if(chatroomToTextroom.containsKey(joinChannel)) {
+					chatroomToTextroom.get(joinChannel).putPermissionOverride(user).setAllow(Permission.VIEW_CHANNEL).queue();
+				}
+			} catch(IllegalStateException e) {
+				
+			}
+			
 		}
 	}
 }
