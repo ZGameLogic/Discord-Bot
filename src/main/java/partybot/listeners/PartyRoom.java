@@ -69,7 +69,6 @@ public class PartyRoom extends ListenerAdapter {
 	public void onReady(ReadyEvent event) {
 		for (Guild x : event.getJDA().getGuilds()) {
 			if (x.getName().contains("MemeBot test server") || x.getName().contains("Shlongshot")) {
-				System.out.println("Found guild");
 				shlongshot = x;
 				break;
 			}
@@ -78,7 +77,6 @@ public class PartyRoom extends ListenerAdapter {
 		// Get the category (This is for determining if the chat room should be deleted when done)
 		for (Category x : event.getJDA().getCategories()) {
 			if (x.getName().contains("Chat Rooms")) {
-				System.out.println("Found category");
 				chatRoomsCat = x;
 				break;
 			}
