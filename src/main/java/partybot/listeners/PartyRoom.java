@@ -10,7 +10,7 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.Scanner;
 
-import data.IDs;
+import data.ConfigLoader;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Category;
@@ -51,13 +51,13 @@ public class PartyRoom extends ListenerAdapter {
 	// Store connections from voice channels and text channels
 	private Map<VoiceChannel, TextChannel> chatroomToTextroom;
 	
-	public PartyRoom() {
+	public PartyRoom(ConfigLoader cl) {
 		
-		createChatIDs = IDs.getCreatechatids();
+		createChatIDs = cl.getCreateChatIDs();
 
-		ignoredChannelIDs = IDs.getIgnoredchannelids();
+		ignoredChannelIDs = cl.getIgnoredChannelIDs();
 
-		textChannelIDS = IDs.getTextchannelids();
+		textChannelIDS = cl.getTextChannelIDs();
 		
 		chatroomToTextroom = new HashMap<VoiceChannel, TextChannel>(); 
 	}
@@ -69,7 +69,6 @@ public class PartyRoom extends ListenerAdapter {
 	public void onReady(ReadyEvent event) {
 		for (Guild x : event.getJDA().getGuilds()) {
 			if (x.getName().contains("MemeBot test server") || x.getName().contains("Shlongshot")) {
-				System.out.println("Found guild");
 				shlongshot = x;
 				break;
 			}
@@ -78,7 +77,6 @@ public class PartyRoom extends ListenerAdapter {
 		// Get the category (This is for determining if the chat room should be deleted when done)
 		for (Category x : event.getJDA().getCategories()) {
 			if (x.getName().contains("Chat Rooms")) {
-				System.out.println("Found category");
 				chatRoomsCat = x;
 				break;
 			}
@@ -88,8 +86,8 @@ public class PartyRoom extends ListenerAdapter {
 		
 		TextChannel commandChannel = null;
 		
-		for(int i = 0; i < IDs.getTextchannelids().size() && commandChannel == null; i++) {
-			commandChannel = shlongshot.getTextChannelById(IDs.getTextchannelids().get(i));
+		for(int i = 0; i < textChannelIDS.size() && commandChannel == null; i++) {
+			commandChannel = shlongshot.getTextChannelById(textChannelIDS.get(i));
 		}
 		
 		if(!commandChannel.getTopic().contains(VERSION)) {
