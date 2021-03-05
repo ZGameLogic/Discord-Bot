@@ -4,7 +4,7 @@ import javax.security.auth.login.LoginException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import data.ConfigLoader;
-import listeners.PrivateMessage;
+import general.listeners.PrivateMessage;
 import net.dv8tion.jda.api.JDABuilder;
 import partybot.listeners.PartyRoom;
 import twilio.TextMessageHandler;
