@@ -16,10 +16,10 @@ public class ConfigLoader {
 	@Value("${Create.Voice.IDs}")
 	private String[] createChatIDs;
 	
-	@Value("${Ignored.Channel.IDs}")
+	@Value("${Ignored.Voice.Channel.IDs}")
 	private String[] ignoredChannelIDs;
 	
-	@Value("${Text.Channel.IDs}")
+	@Value("${Command.Text.Channel.IDs}")
 	private String[] textChannelIDs;
 	
 	public LinkedList<Long> getTextChannelIDs(){
