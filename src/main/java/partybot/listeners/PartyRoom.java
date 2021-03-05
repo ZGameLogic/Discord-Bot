@@ -92,7 +92,7 @@ public class PartyRoom extends ListenerAdapter {
 		
 		if(!commandChannel.getTopic().contains(VERSION)) {
 			
-			File messageIDFile = new File("message.txt");
+			File messageIDFile = new File("MessageIDs\\PartyBotCommandID.txt");
 			
 			// delete old message
 			Long oldMessageID = -1l;
@@ -108,6 +108,7 @@ public class PartyRoom extends ListenerAdapter {
 				}
 			}else {
 				try {
+					messageIDFile.getParentFile().mkdirs();
 					messageIDFile.createNewFile();
 				} catch (IOException e) {
 					e.printStackTrace();
