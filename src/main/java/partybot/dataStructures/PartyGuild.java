@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -32,7 +33,7 @@ public class PartyGuild {
 	// Channel to create a chat room
 	private VoiceChannel createRoom;
 
-	// ignored channels to not delete
+	// Ignored channels to not delete
 	private LinkedList<VoiceChannel> ignoredChannels;
 
 	// Links between the voice channels and their text channels
@@ -41,7 +42,7 @@ public class PartyGuild {
 	public PartyGuild(Guild guild) {
 
 		this.guild = guild;
-		
+
 		// get the guild file
 		File guildProperties = new File("BotData\\GuildData\\" + guild.getId() + "\\data.txt");
 
@@ -65,13 +66,13 @@ public class PartyGuild {
 				e.printStackTrace();
 			}
 		}
-		
-		if(checkPartyBotCommand()) {
+
+		if (checkPartyBotCommand()) {
 			postPartybotCommand();
 		}
 
 		ignoredChannels = new LinkedList<VoiceChannel>();
-		
+
 		ignoredChannels.add(createRoom);
 
 		if (guild.getAfkChannel() != null) {
@@ -80,30 +81,22 @@ public class PartyGuild {
 
 		channelLinks = new HashMap<VoiceChannel, TextChannel>();
 	}
-	
+
 	public Category getPartyChatroomCategory() {
 		return partyChatroomCategory;
 	}
-
-
 
 	public VoiceChannel getCreateRoom() {
 		return createRoom;
 	}
 
-
-
 	public LinkedList<VoiceChannel> getIgnoredChannels() {
 		return ignoredChannels;
 	}
 
-
-
 	public Map<VoiceChannel, TextChannel> getChannelLinks() {
 		return channelLinks;
 	}
-
-
 
 	private Map<String, String> loadGuildDataFile(File guildData) throws FileNotFoundException {
 		Map<String, String> data = new HashMap<String, String>();
@@ -116,7 +109,6 @@ public class PartyGuild {
 
 		return data;
 	}
-
 
 	private void createGuildDataFile(File guildData) throws IOException {
 		guildData.getParentFile().mkdirs();
@@ -149,7 +141,7 @@ public class PartyGuild {
 			// if the server doesnt have a create chatroom, make one
 			createRoom = guild.createVoiceChannel("Create chatroom", partyChatroomCategory).complete();
 		}
-		
+
 		output.println("Command.Channel.ID=" + commandChannel.getId());
 		output.println("Party.Chatroom.Category.ID=" + partyChatroomCategory.getId());
 		output.println("Create.Voice.Channel.ID=" + createRoom.getId());
@@ -157,71 +149,99 @@ public class PartyGuild {
 		output.flush();
 		output.close();
 	}
-	
-	/**
-	 * Check the command channel to see what party bot version message is inside
-	 * @return true if the message is out of date, false if the message is up to date
-	 */
-	private boolean checkPartyBotCommand() {
-		if(commandChannel.getTopic() == null || !commandChannel.getTopic().contains(PartyRoom.VERSION)) {
-			return true;
-		}
-		
-		return false;
-	}
-	
-	private void postPartybotCommand() {
-		
-		File commandMessageIDFile = new File("BotData\\GuildData\\" + guild.getId() + "\\CommandMessageID.txt");
-		
+
+	private Long getPartybotMessageCommandID() {
+		File commandMessageIDFile = new File("BotData\\GuildData\\" + guild.getId() + "\\PartyCommandMessageID.txt");
+
 		// delete previous message
-		if(commandMessageIDFile.exists()) {
+		if (commandMessageIDFile.exists()) {
 			try {
 				Scanner in = new Scanner(commandMessageIDFile);
 				Long id = in.nextLong();
 				in.close();
-				if(commandChannel.retrieveMessageById(id) != null) {
-					commandChannel.deleteMessageById(id).queue();
-				}
+				return id;
 			} catch (FileNotFoundException e) {
-				e.printStackTrace();
+			} catch (NoSuchElementException e) {
+				
 			}
-		}else {
+		} else {
 			commandMessageIDFile.getParentFile().mkdirs();
 			try {
 				commandMessageIDFile.createNewFile();
 			} catch (IOException e) {
-				e.printStackTrace();
 			}
 		}
+
+		return null;
+	}
+
+	/**
+	 * Check the command channel to see what party bot version message is inside
+	 * 
+	 * @return true if the message is out of date, false if the message is up to
+	 *         date
+	 */
+	private boolean checkPartyBotCommand() {
+
+		Long id = getPartybotMessageCommandID();
+		try {
+		if (id != null && commandChannel.retrieveMessageById(id).complete() != null && !commandChannel.retrieveMessageById(id).complete().getEmbeds().get(0).getFooter().getText().contains(PartyRoom.VERSION)) {
+			return true;
+		}
+		} catch (net.dv8tion.jda.api.exceptions.ErrorResponseException e) {
+			return true;
+		}
 		
-		commandChannel.getManager().setTopic("Commands for bot version: " + PartyRoom.VERSION).queue();
-		
+		if(id == null) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private void postPartybotCommand() {
+
+		Long id = getPartybotMessageCommandID();
+
+		// delete previous message
+		if (id != null) {
+			try {
+				if (commandChannel.retrieveMessageById(id) != null) {
+					commandChannel.deleteMessageById(id).queue();
+				}
+			} catch(Exception e1) {
+				
+			}
+		}
+
+		//commandChannel.getManager().setTopic("Commands for bot version: " + PartyRoom.VERSION).queue();
+
 		EmbedBuilder eb = new EmbedBuilder();
 
 		eb.setTitle("Commands for shlongbot party system");
 		eb.setColor(Color.magenta);
 		eb.setDescription("These are the commands you can use to control the party system.");
 		eb.addField("limit <user limit>", "Limits the number of people that can join the chat room", false);
-		eb.addField("rename <room name>", "Renames the chat room and any associated text chat rooms to the new name", false);
+		eb.addField("rename <room name>", "Renames the chat room and any associated text chat rooms to the new name",
+				false);
 		eb.addField("create text", "Creates a private text channel for this chat room", false);
 		eb.addField("delete text", "Deletes any text channel for this chat room", false);
-		
+
 		eb.setFooter("For version: " + PartyRoom.VERSION);
 
 		MessageEmbed embed = eb.build();
 
 		// store new message
 		Long messageID = commandChannel.sendMessage(embed).complete().getIdLong();
-		
+
 		try {
-			PrintWriter output = new PrintWriter(new File("BotData\\GuildData\\" + guild.getId() + "\\CommandMessageID.txt"));
-			
+			PrintWriter output = new PrintWriter(new File("BotData\\GuildData\\" + guild.getId() + "\\PartyCommandMessageID.txt"));
+
 			output.println(messageID);
-			
+
 			output.flush();
 			output.close();
-			
+
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
@@ -230,7 +250,5 @@ public class PartyGuild {
 	public TextChannel getCommandChannel() {
 		return commandChannel;
 	}
-	
-	
 
 }
