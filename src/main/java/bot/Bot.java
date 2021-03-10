@@ -4,9 +4,9 @@ import javax.security.auth.login.LoginException;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import data.ConfigLoader;
-import general.listeners.PrivateMessage;
+import general.listeners.PrivateMessageListener;
 import net.dv8tion.jda.api.JDABuilder;
-import partybot.listeners.PartyRoom;
+import partybot.listeners.PartyRoomListener;
 
 public class Bot {
 
@@ -22,8 +22,8 @@ public class Bot {
 
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
 
-		bot.addEventListeners(new PartyRoom(config));
-		bot.addEventListeners(new PrivateMessage());
+		bot.addEventListeners(new PartyRoomListener(config));
+		bot.addEventListeners(new PrivateMessageListener());
 		
 		// Login
 		try {

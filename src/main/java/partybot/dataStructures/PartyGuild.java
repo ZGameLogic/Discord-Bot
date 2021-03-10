@@ -17,7 +17,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.VoiceChannel;
-import partybot.listeners.PartyRoom;
+import partybot.listeners.PartyRoomListener;
 
 public class PartyGuild {
 
@@ -185,7 +185,7 @@ public class PartyGuild {
 
 		Long id = getPartybotMessageCommandID();
 		try {
-		if (id != null && commandChannel.retrieveMessageById(id).complete() != null && !commandChannel.retrieveMessageById(id).complete().getEmbeds().get(0).getFooter().getText().contains(PartyRoom.VERSION)) {
+		if (id != null && commandChannel.retrieveMessageById(id).complete() != null && !commandChannel.retrieveMessageById(id).complete().getEmbeds().get(0).getFooter().getText().contains(PartyRoomListener.VERSION)) {
 			return true;
 		}
 		} catch (net.dv8tion.jda.api.exceptions.ErrorResponseException e) {
@@ -227,7 +227,7 @@ public class PartyGuild {
 		eb.addField("create text", "Creates a private text channel for this chat room", false);
 		eb.addField("delete text", "Deletes any text channel for this chat room", false);
 
-		eb.setFooter("For version: " + PartyRoom.VERSION);
+		eb.setFooter("For version: " + PartyRoomListener.VERSION);
 		
 
 		MessageEmbed embed = eb.build();
