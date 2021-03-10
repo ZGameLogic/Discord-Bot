@@ -13,28 +13,18 @@ public class ConfigLoader {
 	@Value("${bot.token}")
 	private String botToken;
 	
-	@Value("${Create.Voice.IDs}")
-	private String[] createChatIDs;
+	@Value("${Party.Guild.IDs}")
+	private String[] partyGuildIDs;
 	
-	@Value("${Ignored.Channel.IDs}")
-	private String[] ignoredChannelIDs;
+	@Value("${Meme.Guild.IDs}")
+	private String[] memeGuildIDs;
 	
-	@Value("${Text.Channel.IDs}")
-	private String[] textChannelIDs;
-	
-	public LinkedList<Long> getTextChannelIDs(){
-		return stringToLongList(textChannelIDs);
+	public LinkedList<Long> getMemeGuildIDs(){
+		return stringToLongList(memeGuildIDs);
 	}
 	
-	public LinkedList<Long> getCreateChatIDs(){
-		return stringToLongList(createChatIDs);
-	}
-	
-	public LinkedList<Long> getIgnoredChannelIDs(){
-		LinkedList<Long> allIgnore = new LinkedList<Long>();
-		allIgnore.addAll(stringToLongList(ignoredChannelIDs));
-		allIgnore.addAll(stringToLongList(createChatIDs));
-		return allIgnore;
+	public LinkedList<Long> getPartyGuildIDs(){
+		return stringToLongList(partyGuildIDs);
 	}
 	
 	public String getBotToken() {
