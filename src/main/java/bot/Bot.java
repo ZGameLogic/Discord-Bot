@@ -3,6 +3,7 @@ import javax.security.auth.login.LoginException;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
+import EventBot.listeners.EventBotListener;
 import data.ConfigLoader;
 import general.listeners.PrivateMessageListener;
 import net.dv8tion.jda.api.JDABuilder;
@@ -24,6 +25,7 @@ public class Bot {
 
 		bot.addEventListeners(new PartyRoomListener(config));
 		bot.addEventListeners(new PrivateMessageListener());
+		bot.addEventListeners(new EventBotListener());
 		
 		// Login
 		try {

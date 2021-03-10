@@ -44,6 +44,8 @@ public class PartyRoomListener extends ListenerAdapter {
 				partyGuilds.put(event.getJDA().getGuildById(id), new PartyGuild(event.getJDA().getGuildById(id)));
 			}
 		}
+		
+		System.out.println("Party Room Listner started...");
 	}
 
 	/**
