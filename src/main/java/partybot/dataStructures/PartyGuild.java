@@ -228,9 +228,11 @@ public class PartyGuild {
 		eb.addField("delete text", "Deletes any text channel for this chat room", false);
 
 		eb.setFooter("For version: " + PartyRoom.VERSION);
+		
 
 		MessageEmbed embed = eb.build();
 
+		
 		// store new message
 		Long messageID = commandChannel.sendMessage(embed).complete().getIdLong();
 
