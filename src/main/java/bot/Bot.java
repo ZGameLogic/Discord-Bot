@@ -9,6 +9,11 @@ import general.listeners.PrivateMessageListener;
 import net.dv8tion.jda.api.JDABuilder;
 import partybot.listeners.PartyRoomListener;
 
+/**
+ * Testing commit stuff 
+ * @author Ben Shabowski
+ *
+ */
 public class Bot {
 
 	public Bot() {
