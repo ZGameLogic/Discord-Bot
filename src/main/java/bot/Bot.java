@@ -10,7 +10,7 @@ import net.dv8tion.jda.api.JDABuilder;
 import partybot.listeners.PartyRoomListener;
 
 /**
- * Testing commit stuff 2
+ * Testing commit stuff 3
  * @author Ben Shabowski
  *
  */
