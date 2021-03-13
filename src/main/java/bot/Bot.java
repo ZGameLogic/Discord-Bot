@@ -7,6 +7,7 @@ import EventBot.listeners.EventBotListener;
 import data.ConfigLoader;
 import general.listeners.PrivateMessageListener;
 import net.dv8tion.jda.api.JDABuilder;
+import oneTimeMessageListener.OneTimeMessageListener;
 import partybot.listeners.PartyRoomListener;
 
 public class Bot {
@@ -26,6 +27,7 @@ public class Bot {
 		bot.addEventListeners(new PartyRoomListener(config));
 		bot.addEventListeners(new PrivateMessageListener());
 		bot.addEventListeners(new EventBotListener());
+		//bot.addEventListeners(new OneTimeMessageListener());
 		
 		// Login
 		try {
