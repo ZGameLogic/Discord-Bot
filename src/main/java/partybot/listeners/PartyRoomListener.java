@@ -17,7 +17,7 @@ import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import partybot.dataStructures.PartyGuild;
 
-public class PartyRoom extends ListenerAdapter {
+public class PartyRoomListener extends ListenerAdapter {
 	
 	//PartyBot version
 	public static final String VERSION = "1.0.1";
@@ -26,7 +26,7 @@ public class PartyRoom extends ListenerAdapter {
 	
 	private ConfigLoader cl;
 	
-	public PartyRoom(ConfigLoader cl) {
+	public PartyRoomListener(ConfigLoader cl) {
 		
 		this.cl = cl;
 		
@@ -44,6 +44,8 @@ public class PartyRoom extends ListenerAdapter {
 				partyGuilds.put(event.getJDA().getGuildById(id), new PartyGuild(event.getJDA().getGuildById(id)));
 			}
 		}
+		
+		System.out.println("Party Room Listner started...");
 	}
 
 	/**

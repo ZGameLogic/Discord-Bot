@@ -5,10 +5,21 @@ import java.awt.Color;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import partybot.dataStructures.PartyGuild;
 
-public class PrivateMessage extends ListenerAdapter {
+public class PrivateMessageListener extends ListenerAdapter {
+	
+	/**
+	 * Login event
+	 */
+	@Override
+	public void onReady(ReadyEvent event) {
+		System.out.println("Private Message Listner started...");
+	}
+	
 	
 	@Override
 	public void onPrivateMessageReceived(PrivateMessageReceivedEvent event) {
