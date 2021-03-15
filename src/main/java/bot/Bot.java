@@ -1,43 +1,40 @@
 package bot;
-
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.Scanner;
-
 import javax.security.auth.login.LoginException;
 
-import listeners.PrivateMessage;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+
+import EventBot.listeners.EventBotListener;
+import data.ConfigLoader;
+import general.listeners.PrivateMessageListener;
 import net.dv8tion.jda.api.JDABuilder;
-import partybot.listeners.PartyRoom;
+import oneTimeMessageListener.OneTimeMessageListener;
+import partybot.listeners.PartyRoomListener;
 
 public class Bot {
 
 	public Bot() {
 		
-		File botInfoFile = new File("bot.info");
+		// Load config
 		
-		String token = "";
-		
-		try {
-			Scanner in = new Scanner(botInfoFile);
-			token = in.nextLine();
-			in.close();
-		} catch (FileNotFoundException e1) {
-			e1.printStackTrace();
-		}
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+		context.scan("data");
+		context.refresh();
+		ConfigLoader config = context.getBean(ConfigLoader.class);
+		context.close();
 
-		JDABuilder bot = JDABuilder.createDefault(token);
+		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
 
-		bot.addEventListeners(new PartyRoom());
-		bot.addEventListeners(new PrivateMessage());
+		bot.addEventListeners(new PartyRoomListener(config));
+		bot.addEventListeners(new PrivateMessageListener());
+		bot.addEventListeners(new EventBotListener());
+		//bot.addEventListeners(new OneTimeMessageListener());
 		
 		// Login
 		try {
 			bot.build().awaitReady();
 		} catch (LoginException | InterruptedException e) {
 			System.out.println("Unable to launch bot");
-		}
-		
+		}		
 	}
 
 	

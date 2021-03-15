@@ -5,5 +5,7 @@
 /userinfo.txt
 /bot.info
 /message.txt
-/discordbot.properties
+/PartyBotCommandID.txt
+/MessageIDs/
 /BotData/
+/discordbot.properties
