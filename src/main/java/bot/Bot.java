@@ -5,9 +5,9 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 
 import EventBot.listeners.EventBotListener;
 import data.ConfigLoader;
+import general.listeners.OneTimeMessageListener;
 import general.listeners.PrivateMessageListener;
 import net.dv8tion.jda.api.JDABuilder;
-import oneTimeMessageListener.OneTimeMessageListener;
 import partybot.listeners.PartyRoomListener;
 
 @SuppressWarnings("unused")

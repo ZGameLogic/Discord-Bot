@@ -1,4 +1,4 @@
-package oneTimeMessageListener;
+package general.listeners;
 
 import java.awt.Color;
 
