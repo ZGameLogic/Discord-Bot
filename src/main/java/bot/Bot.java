@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.JDABuilder;
 import oneTimeMessageListener.OneTimeMessageListener;
 import partybot.listeners.PartyRoomListener;
 
+@SuppressWarnings("unused")
 public class Bot {
 
 	public Bot() {
