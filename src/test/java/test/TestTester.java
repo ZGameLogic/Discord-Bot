@@ -1,8 +1,9 @@
+package test;
 import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-public class testing {
+public class TestTester {
 
 	@Test
 	public void test() {
