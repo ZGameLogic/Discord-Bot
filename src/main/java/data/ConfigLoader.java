@@ -19,6 +19,20 @@ public class ConfigLoader {
 	@Value("${Meme.Guild.IDs}")
 	private String[] memeGuildIDs;
 	
+	@Value("${Meme.Database.Location}")
+	private String databaseLocation;
+	
+	@Value("${Meme.Storage.Location}")
+	private String memeStorageLocation;
+	
+	public String getDatabaseLocation() {
+		return databaseLocation;
+	}
+
+	public String getMemeStorageLocation() {
+		return memeStorageLocation;
+	}
+
 	public LinkedList<Long> getMemeGuildIDs(){
 		return stringToLongList(memeGuildIDs);
 	}
