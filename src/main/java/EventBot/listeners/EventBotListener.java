@@ -5,11 +5,10 @@ import org.slf4j.LoggerFactory;
 
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import partybot.listeners.PartyRoomListener;
 
 public class EventBotListener extends ListenerAdapter {
 
-	private Logger logger = LoggerFactory.getLogger(PartyRoomListener.class);
+	private Logger logger = LoggerFactory.getLogger(EventBotListener.class);
 	
 	/**
 	 * Login event

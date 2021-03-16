@@ -10,11 +10,10 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import partybot.listeners.PartyRoomListener;
 
 public class PrivateMessageListener extends ListenerAdapter {
 	
-	private Logger logger = LoggerFactory.getLogger(PartyRoomListener.class);
+	private Logger logger = LoggerFactory.getLogger(PrivateMessageListener.class);
 	
 	/**
 	 * Login event

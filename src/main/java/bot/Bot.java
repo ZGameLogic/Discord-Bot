@@ -16,7 +16,7 @@ import partybot.listeners.PartyRoomListener;
 @SuppressWarnings("unused")
 public class Bot {
 	
-	private Logger logger = LoggerFactory.getLogger(PartyRoomListener.class);
+	private Logger logger = LoggerFactory.getLogger(Bot.class);
 
 	public Bot() {
 		
