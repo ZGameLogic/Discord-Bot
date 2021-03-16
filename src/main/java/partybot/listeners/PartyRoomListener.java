@@ -3,6 +3,9 @@ package partybot.listeners;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import data.ConfigLoader;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
@@ -18,6 +21,8 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import partybot.dataStructures.PartyGuild;
 
 public class PartyRoomListener extends ListenerAdapter {
+	
+	private Logger logger = LoggerFactory.getLogger(PartyRoomListener.class);
 	
 	//PartyBot version
 	public static final String VERSION = "1.0.1";
@@ -45,7 +50,7 @@ public class PartyRoomListener extends ListenerAdapter {
 			}
 		}
 		
-		System.out.println("Party Room Listner started...");
+		logger.info("Party Room Listener started...");
 	}
 
 	/**

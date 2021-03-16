@@ -2,20 +2,26 @@ package general.listeners;
 
 import java.awt.Color;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.priv.PrivateMessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import partybot.listeners.PartyRoomListener;
 
 public class PrivateMessageListener extends ListenerAdapter {
+	
+	private Logger logger = LoggerFactory.getLogger(PartyRoomListener.class);
 	
 	/**
 	 * Login event
 	 */
 	@Override
 	public void onReady(ReadyEvent event) {
-		System.out.println("Private Message Listner started...");
+		logger.info("Private Message Listener started...");
 	}
 	
 	

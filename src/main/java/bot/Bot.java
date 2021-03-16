@@ -2,6 +2,8 @@ package bot;
 
 import javax.security.auth.login.LoginException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import EventBot.listeners.EventBotListener;
@@ -13,6 +15,8 @@ import partybot.listeners.PartyRoomListener;
 
 @SuppressWarnings("unused")
 public class Bot {
+	
+	private Logger logger = LoggerFactory.getLogger(PartyRoomListener.class);
 
 	public Bot() {
 		
@@ -24,7 +28,7 @@ public class Bot {
 		context.close();
 
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
-
+		
 		bot.addEventListeners(new PartyRoomListener(config));
 		bot.addEventListeners(new PrivateMessageListener());
 		bot.addEventListeners(new EventBotListener());
@@ -34,7 +38,7 @@ public class Bot {
 		try {
 			bot.build().awaitReady();
 		} catch (LoginException | InterruptedException e) {
-			System.out.println("Unable to launch bot");
+			logger.error("Unable to launch bot");
 		}		
 	}
 
