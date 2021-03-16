@@ -1,4 +1,5 @@
 package bot;
+
 import javax.security.auth.login.LoginException;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
@@ -16,7 +17,6 @@ public class Bot {
 	public Bot() {
 		
 		// Load config
-		
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 		context.scan("data");
 		context.refresh();
