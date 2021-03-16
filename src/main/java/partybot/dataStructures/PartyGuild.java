@@ -5,6 +5,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -20,25 +21,31 @@ import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.VoiceChannel;
 import partybot.listeners.PartyRoomListener;
 
-public class PartyGuild {
+public class PartyGuild implements Serializable {
+	
+	private static final long serialVersionUID = 1L;
+	
+	private long commandChannelID;
+	private long partyChatroomCategoryID;
+	private long createVoiceChannelID;
 
 	// Guild all these girls belong too
-	private Guild guild;
+	transient private Guild guild;
 
 	// Command text channel
-	private TextChannel commandChannel;
+	transient private TextChannel commandChannel;
 
 	// Party chat room category
-	private Category partyChatroomCategory;
+	transient private Category partyChatroomCategory;
 
 	// Channel to create a chat room
-	private VoiceChannel createRoom;
+	transient private VoiceChannel createRoom;
 
 	// Ignored channels to not delete
-	private LinkedList<VoiceChannel> ignoredChannels;
+	transient private LinkedList<VoiceChannel> ignoredChannels;
 
 	// Links between the voice channels and their text channels
-	private Map<VoiceChannel, TextChannel> channelLinks;
+	transient private Map<VoiceChannel, TextChannel> channelLinks;
 
 	public PartyGuild(Guild guild) {
 
@@ -49,7 +56,12 @@ public class PartyGuild {
 
 		if (guildProperties.exists()) {
 			// if it exists, load that data in
-			SaveablePartyGuild SPG = new SaveablePartyGuild(guildProperties.getPath());
+			PartyGuild SPG = (PartyGuild) DataCacher.loadSerialized(guildProperties.getPath());
+			
+			commandChannelID =  SPG.getCommandChannelID();
+			partyChatroomCategoryID = SPG.getPartyChatroomCategoryID();
+			createVoiceChannelID = SPG.getCreateVoiceChannelID();
+			
 			commandChannel = guild.getTextChannelById(SPG.getCommandChannelID());
 			partyChatroomCategory = guild.getCategoryById(SPG.getPartyChatroomCategoryID());
 			createRoom = guild.getVoiceChannelById(SPG.getCreateVoiceChannelID());
@@ -118,9 +130,11 @@ public class PartyGuild {
 			createRoom = guild.createVoiceChannel("Create chatroom", partyChatroomCategory).complete();
 		}
 		
-		SaveablePartyGuild SPG = new SaveablePartyGuild(commandChannel.getIdLong(), partyChatroomCategory.getIdLong(), createRoom.getIdLong());
+		commandChannelID =  commandChannel.getIdLong();
+		partyChatroomCategoryID = partyChatroomCategory.getIdLong();
+		createVoiceChannelID = createRoom.getIdLong();
 
-		DataCacher.saveSerialized(SPG, guildData.getPath());
+		DataCacher.saveSerialized(this, guildData.getPath());
 	}
 
 	private Long getPartybotMessageCommandID() {
@@ -225,5 +239,19 @@ public class PartyGuild {
 	public TextChannel getCommandChannel() {
 		return commandChannel;
 	}
+
+	public long getCommandChannelID() {
+		return commandChannelID;
+	}
+
+	public long getPartyChatroomCategoryID() {
+		return partyChatroomCategoryID;
+	}
+
+	public long getCreateVoiceChannelID() {
+		return createVoiceChannelID;
+	}
+	
+	
 
 }
