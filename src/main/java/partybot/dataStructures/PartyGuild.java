@@ -5,12 +5,14 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
+import data.DataCacher;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Category;
 import net.dv8tion.jda.api.entities.Guild;
@@ -19,52 +21,53 @@ import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.VoiceChannel;
 import partybot.listeners.PartyRoomListener;
 
-public class PartyGuild {
+public class PartyGuild implements Serializable {
+	
+	private static final long serialVersionUID = 1L;
+	
+	private long commandChannelID;
+	private long partyChatroomCategoryID;
+	private long createVoiceChannelID;
 
 	// Guild all these girls belong too
-	private Guild guild;
+	transient private Guild guild;
 
 	// Command text channel
-	private TextChannel commandChannel;
+	transient private TextChannel commandChannel;
 
 	// Party chat room category
-	private Category partyChatroomCategory;
+	transient private Category partyChatroomCategory;
 
 	// Channel to create a chat room
-	private VoiceChannel createRoom;
+	transient private VoiceChannel createRoom;
 
 	// Ignored channels to not delete
-	private LinkedList<VoiceChannel> ignoredChannels;
+	transient private LinkedList<VoiceChannel> ignoredChannels;
 
 	// Links between the voice channels and their text channels
-	private Map<VoiceChannel, TextChannel> channelLinks;
+	transient private Map<VoiceChannel, TextChannel> channelLinks;
 
 	public PartyGuild(Guild guild) {
 
 		this.guild = guild;
 
 		// get the guild file
-		File guildProperties = new File("BotData\\GuildData\\" + guild.getId() + "\\data.txt");
+		File guildProperties = new File("BotData\\GuildData\\" + guild.getId() + "\\PartyBotData");
 
 		if (guildProperties.exists()) {
 			// if it exists, load that data in
-			try {
-				Map<String, String> data = loadGuildDataFile(guildProperties);
-
-				commandChannel = guild.getTextChannelById(data.get("Command.Channel.ID"));
-				partyChatroomCategory = guild.getCategoryById(data.get("Party.Chatroom.Category.ID"));
-				createRoom = guild.getVoiceChannelById(data.get("Create.Voice.Channel.ID"));
-
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
+			PartyGuild SPG = (PartyGuild) DataCacher.loadSerialized(guildProperties.getPath());
+			
+			commandChannelID =  SPG.getCommandChannelID();
+			partyChatroomCategoryID = SPG.getPartyChatroomCategoryID();
+			createVoiceChannelID = SPG.getCreateVoiceChannelID();
+			
+			commandChannel = guild.getTextChannelById(SPG.getCommandChannelID());
+			partyChatroomCategory = guild.getCategoryById(SPG.getPartyChatroomCategoryID());
+			createRoom = guild.getVoiceChannelById(SPG.getCreateVoiceChannelID());
 
 		} else {
-			try {
-				createGuildDataFile(guildProperties);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			createGuildDataFile(guildProperties);
 		}
 
 		if (checkPartyBotCommand()) {
@@ -98,22 +101,7 @@ public class PartyGuild {
 		return channelLinks;
 	}
 
-	private Map<String, String> loadGuildDataFile(File guildData) throws FileNotFoundException {
-		Map<String, String> data = new HashMap<String, String>();
-		Scanner fileInput = new Scanner(guildData);
-		while (fileInput.hasNextLine()) {
-			String line = fileInput.nextLine();
-			data.put(line.split("=")[0], line.split("=")[1]);
-		}
-		fileInput.close();
-
-		return data;
-	}
-
-	private void createGuildDataFile(File guildData) throws IOException {
-		guildData.getParentFile().mkdirs();
-		guildData.createNewFile();
-		PrintWriter output = new PrintWriter(guildData);
+	private void createGuildDataFile(File guildData) {
 
 		// Test to see if the guild has a category yet
 		if (guild.getCategoriesByName("chat rooms", true).size() > 0) {
@@ -141,13 +129,12 @@ public class PartyGuild {
 			// if the server doesnt have a create chatroom, make one
 			createRoom = guild.createVoiceChannel("Create chatroom", partyChatroomCategory).complete();
 		}
+		
+		commandChannelID =  commandChannel.getIdLong();
+		partyChatroomCategoryID = partyChatroomCategory.getIdLong();
+		createVoiceChannelID = createRoom.getIdLong();
 
-		output.println("Command.Channel.ID=" + commandChannel.getId());
-		output.println("Party.Chatroom.Category.ID=" + partyChatroomCategory.getId());
-		output.println("Create.Voice.Channel.ID=" + createRoom.getId());
-
-		output.flush();
-		output.close();
+		DataCacher.saveSerialized(this, guildData.getPath());
 	}
 
 	private Long getPartybotMessageCommandID() {
@@ -185,14 +172,16 @@ public class PartyGuild {
 
 		Long id = getPartybotMessageCommandID();
 		try {
-		if (id != null && commandChannel.retrieveMessageById(id).complete() != null && !commandChannel.retrieveMessageById(id).complete().getEmbeds().get(0).getFooter().getText().contains(PartyRoomListener.VERSION)) {
-			return true;
-		}
+			if (id != null && commandChannel.retrieveMessageById(id).complete() != null
+					&& !commandChannel.retrieveMessageById(id).complete().getEmbeds().get(0).getFooter().getText()
+							.contains(PartyRoomListener.VERSION)) {
+				return true;
+			}
 		} catch (net.dv8tion.jda.api.exceptions.ErrorResponseException e) {
 			return true;
 		}
-		
-		if(id == null) {
+
+		if (id == null) {
 			return true;
 		}
 
@@ -213,8 +202,6 @@ public class PartyGuild {
 				
 			}
 		}
-
-		//commandChannel.getManager().setTopic("Commands for bot version: " + PartyRoom.VERSION).queue();
 
 		EmbedBuilder eb = new EmbedBuilder();
 
@@ -252,5 +239,19 @@ public class PartyGuild {
 	public TextChannel getCommandChannel() {
 		return commandChannel;
 	}
+
+	public long getCommandChannelID() {
+		return commandChannelID;
+	}
+
+	public long getPartyChatroomCategoryID() {
+		return partyChatroomCategoryID;
+	}
+
+	public long getCreateVoiceChannelID() {
+		return createVoiceChannelID;
+	}
+	
+	
 
 }
