@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
+import data.DataCacher;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Category;
 import net.dv8tion.jda.api.entities.Guild;
@@ -44,27 +45,18 @@ public class PartyGuild {
 		this.guild = guild;
 
 		// get the guild file
-		File guildProperties = new File("BotData\\GuildData\\" + guild.getId() + "\\data.txt");
+		File guildProperties = new File("BotData\\GuildData\\" + guild.getId() + "\\PartyBotData");
 
 		if (guildProperties.exists()) {
 			// if it exists, load that data in
-			try {
-				Map<String, String> data = loadGuildDataFile(guildProperties);
-
-				commandChannel = guild.getTextChannelById(data.get("Command.Channel.ID"));
-				partyChatroomCategory = guild.getCategoryById(data.get("Party.Chatroom.Category.ID"));
-				createRoom = guild.getVoiceChannelById(data.get("Create.Voice.Channel.ID"));
-
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			}
+			SaveablePartyGuild SPG = (SaveablePartyGuild) DataCacher.loadSerialized(guildProperties.getPath());
+			
+			commandChannel = guild.getTextChannelById(SPG.getCommandChannelID());
+			partyChatroomCategory = guild.getCategoryById(SPG.getPartyChatroomCategoryID());
+			createRoom = guild.getVoiceChannelById(SPG.getCreateVoiceChannelID());
 
 		} else {
-			try {
-				createGuildDataFile(guildProperties);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			createGuildDataFile(guildProperties);
 		}
 
 		if (checkPartyBotCommand()) {
@@ -98,22 +90,7 @@ public class PartyGuild {
 		return channelLinks;
 	}
 
-	private Map<String, String> loadGuildDataFile(File guildData) throws FileNotFoundException {
-		Map<String, String> data = new HashMap<String, String>();
-		Scanner fileInput = new Scanner(guildData);
-		while (fileInput.hasNextLine()) {
-			String line = fileInput.nextLine();
-			data.put(line.split("=")[0], line.split("=")[1]);
-		}
-		fileInput.close();
-
-		return data;
-	}
-
-	private void createGuildDataFile(File guildData) throws IOException {
-		guildData.getParentFile().mkdirs();
-		guildData.createNewFile();
-		PrintWriter output = new PrintWriter(guildData);
+	private void createGuildDataFile(File guildData) {
 
 		// Test to see if the guild has a category yet
 		if (guild.getCategoriesByName("chat rooms", true).size() > 0) {
@@ -141,13 +118,10 @@ public class PartyGuild {
 			// if the server doesnt have a create chatroom, make one
 			createRoom = guild.createVoiceChannel("Create chatroom", partyChatroomCategory).complete();
 		}
+		
+		SaveablePartyGuild SPG = new SaveablePartyGuild(commandChannel.getIdLong(), partyChatroomCategory.getIdLong(), createRoom.getIdLong());
 
-		output.println("Command.Channel.ID=" + commandChannel.getId());
-		output.println("Party.Chatroom.Category.ID=" + partyChatroomCategory.getId());
-		output.println("Create.Voice.Channel.ID=" + createRoom.getId());
-
-		output.flush();
-		output.close();
+		DataCacher.saveSerialized(SPG, guildData.getPath());
 	}
 
 	private Long getPartybotMessageCommandID() {
@@ -185,14 +159,16 @@ public class PartyGuild {
 
 		Long id = getPartybotMessageCommandID();
 		try {
-		if (id != null && commandChannel.retrieveMessageById(id).complete() != null && !commandChannel.retrieveMessageById(id).complete().getEmbeds().get(0).getFooter().getText().contains(PartyRoomListener.VERSION)) {
-			return true;
-		}
+			if (id != null && commandChannel.retrieveMessageById(id).complete() != null
+					&& !commandChannel.retrieveMessageById(id).complete().getEmbeds().get(0).getFooter().getText()
+							.contains(PartyRoomListener.VERSION)) {
+				return true;
+			}
 		} catch (net.dv8tion.jda.api.exceptions.ErrorResponseException e) {
 			return true;
 		}
-		
-		if(id == null) {
+
+		if (id == null) {
 			return true;
 		}
 
@@ -213,8 +189,6 @@ public class PartyGuild {
 				
 			}
 		}
-
-		//commandChannel.getManager().setTopic("Commands for bot version: " + PartyRoom.VERSION).queue();
 
 		EmbedBuilder eb = new EmbedBuilder();
 
