@@ -2,6 +2,8 @@ package partybot.dataStructures;
 
 import java.io.Serializable;
 
+import data.DataCacher;
+
 public class SaveablePartyGuild implements Serializable {
 	
 	private static final long serialVersionUID = 1L;
@@ -20,6 +22,17 @@ public class SaveablePartyGuild implements Serializable {
 		this.commandChannelID = commandChannelID;
 		this.partyChatroomCategoryID = partyChatroomCategoryID;
 		this.createVoiceChannelID = createVoiceChannelID;
+	}
+	
+	/**
+	 * Creates saveable party guild object from filepath
+	 * @param filePath Filepath to create the object from
+	 */
+	public SaveablePartyGuild(String filePath) {
+		SaveablePartyGuild SPG = (SaveablePartyGuild) DataCacher.loadSerialized(filePath);
+		commandChannelID = SPG.getCommandChannelID();
+		partyChatroomCategoryID = SPG.getPartyChatroomCategoryID();
+		createVoiceChannelID = SPG.getCreateVoiceChannelID();
 	}
 	
 	public long getCommandChannelID() {

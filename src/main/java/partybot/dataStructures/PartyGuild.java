@@ -49,8 +49,7 @@ public class PartyGuild {
 
 		if (guildProperties.exists()) {
 			// if it exists, load that data in
-			SaveablePartyGuild SPG = (SaveablePartyGuild) DataCacher.loadSerialized(guildProperties.getPath());
-			
+			SaveablePartyGuild SPG = new SaveablePartyGuild(guildProperties.getPath());
 			commandChannel = guild.getTextChannelById(SPG.getCommandChannelID());
 			partyChatroomCategory = guild.getCategoryById(SPG.getPartyChatroomCategoryID());
 			createRoom = guild.getVoiceChannelById(SPG.getCreateVoiceChannelID());
