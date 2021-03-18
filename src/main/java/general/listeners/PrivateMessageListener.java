@@ -13,7 +13,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class PrivateMessageListener extends ListenerAdapter {
 	
-	private Logger logger = LoggerFactory.getLogger(PrivateMessageListener.class);
+	private Logger logger = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME);
 	
 	/**
 	 * Login event
