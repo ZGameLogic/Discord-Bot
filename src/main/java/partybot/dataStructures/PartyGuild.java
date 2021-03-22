@@ -207,12 +207,12 @@ public class PartyGuild implements Serializable {
 
 		eb.setTitle("Commands for shlongbot party system");
 		eb.setColor(Color.magenta);
-		eb.setDescription("These are the commands you can use to control the party system.");
+		eb.setDescription("These are the commands you can use to control the party system. To use these commands simply start a message anywhere with a / as this is using discords new slash commands feature");
 		eb.addField("limit <user limit>", "Limits the number of people that can join the chat room", false);
 		eb.addField("rename <room name>", "Renames the chat room and any associated text chat rooms to the new name",
 				false);
-		eb.addField("create text", "Creates a private text channel for this chat room", false);
-		eb.addField("delete text", "Deletes any text channel for this chat room", false);
+		eb.addField("create-text", "Creates a private text channel for this chat room", false);
+		eb.addField("delete-text", "Deletes any text channel for this chat room", false);
 
 		eb.setFooter("For version: " + PartyRoomListener.VERSION);
 		

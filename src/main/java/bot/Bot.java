@@ -1,5 +1,7 @@
 package bot;
 
+import java.util.EnumSet;
+
 import javax.security.auth.login.LoginException;
 
 import org.slf4j.Logger;
@@ -10,7 +12,10 @@ import EventBot.listeners.EventBotListener;
 import data.ConfigLoader;
 import general.listeners.OneTimeMessageListener;
 import general.listeners.PrivateMessageListener;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.requests.restaction.CommandUpdateAction;
 import partybot.listeners.PartyRoomListener;
 
 @SuppressWarnings("unused")
@@ -33,6 +38,7 @@ public class Bot {
 		bot.addEventListeners(new PrivateMessageListener());
 		bot.addEventListeners(new EventBotListener());
 		//bot.addEventListeners(new OneTimeMessageListener());
+		
 		
 		// Login
 		try {

@@ -17,6 +17,10 @@
 			<name>jcenter-bintray</name>
 			<url>https://jcenter.bintray.com</url>
 		</repository>
+		<repository>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
+		</repository>
 	</repositories>
 
 	<dependencies>
@@ -26,11 +30,17 @@
 			<artifactId>spring-boot-autoconfigure</artifactId>
 			<version>2.3.2.RELEASE</version>
 		</dependency>
-
+<!--
 		<dependency>
 			<groupId>net.dv8tion</groupId>
 			<artifactId>JDA</artifactId>
 			<version>4.2.0_228</version>
+		</dependency>
+-->
+		<dependency>
+			<groupId>com.github.DV8FromTheWorld</groupId>
+			<artifactId>JDA</artifactId>
+			<version>feature~slash-commands-SNAPSHOT</version>
 		</dependency>
 
 		<dependency>
