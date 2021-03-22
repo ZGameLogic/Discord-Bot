@@ -20,7 +20,7 @@ public class MemeStorageInterfacer {
 	 * Saves an image from a discord message
 	 * @param attachment Attachment from the message
 	 */
-	public void saveImageFromDiscordMessage(Attachment attachment) {
+	public void saveMeme(Attachment attachment) {
 		File imageFile = new File(memeStorageLocation.getAbsolutePath() + "\\" + getNextMemeID() + ".png");
 		attachment.downloadToFile(imageFile).exceptionally( t -> {
 			t.printStackTrace();
@@ -33,19 +33,25 @@ public class MemeStorageInterfacer {
 	 * @param id ID of the image
 	 * @return image file
 	 */
-	public File getImageFileByID(Long id) {
+	public File getMeme(long id) {
 		return new File(memeStorageLocation.getAbsolutePath() + "\\" + id);
+	}
+	
+	/**
+	 * Deletes a meme based off memeID
+	 * @param id ID of meme to be deleted
+	 */
+	public void deleteMeme(long id) {
+		new File(memeStorageLocation.getAbsolutePath() + "\\" + id).delete();
 	}
 	
 	/**
 	 * Get the ID of the next available meme
 	 * @return the next ID of a meme that is available 
 	 */
-	private Long getNextMemeID() {
-		Long id = 0l;
-		
+	private long getNextMemeID() {
+		long id = 0l;
 		boolean found = false;
-		
 		while(true) {
 			for(File x : memeStorageLocation.listFiles()) {
 				if(x.getName().equals(id + ".png")) {

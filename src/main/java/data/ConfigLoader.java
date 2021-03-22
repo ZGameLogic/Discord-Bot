@@ -25,6 +25,14 @@ public class ConfigLoader {
 	@Value("${Meme.Storage.Location}")
 	private String memeStorageLocation;
 	
+	private LinkedList<Long> stringToLongList(String[] array){
+		LinkedList<Long> converted = new LinkedList<Long>();
+		for(String x : array) {
+			converted.add(Long.parseLong(x));
+		}
+		return converted;
+	}
+	
 	public String getDatabaseLocation() {
 		return databaseLocation;
 	}
@@ -44,12 +52,26 @@ public class ConfigLoader {
 	public String getBotToken() {
 		return botToken;
 	}
-	
-	private LinkedList<Long> stringToLongList(String[] array){
-		LinkedList<Long> converted = new LinkedList<Long>();
-		for(String x : array) {
-			converted.add(Long.parseLong(x));
-		}
-		return converted;
+
+	public void setBotToken(String botToken) {
+		this.botToken = botToken;
 	}
+
+	public void setPartyGuildIDs(String[] partyGuildIDs) {
+		this.partyGuildIDs = partyGuildIDs;
+	}
+
+	public void setMemeGuildIDs(String[] memeGuildIDs) {
+		this.memeGuildIDs = memeGuildIDs;
+	}
+
+	public void setDatabaseLocation(String databaseLocation) {
+		this.databaseLocation = databaseLocation;
+	}
+
+	public void setMemeStorageLocation(String memeStorageLocation) {
+		this.memeStorageLocation = memeStorageLocation;
+	}
+	
+	
 }

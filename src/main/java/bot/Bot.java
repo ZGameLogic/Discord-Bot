@@ -1,18 +1,27 @@
 package bot;
 
+import java.util.EnumSet;
+
 import javax.security.auth.login.LoginException;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import EventBot.listeners.EventBotListener;
 import data.ConfigLoader;
 import general.listeners.OneTimeMessageListener;
 import general.listeners.PrivateMessageListener;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.requests.restaction.CommandUpdateAction;
 import partybot.listeners.PartyRoomListener;
 
 @SuppressWarnings("unused")
 public class Bot {
+	
+	private Logger logger = LoggerFactory.getLogger(Bot.class);
 
 	public Bot() {
 		
@@ -24,17 +33,18 @@ public class Bot {
 		context.close();
 
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
-
+		
 		bot.addEventListeners(new PartyRoomListener(config));
 		bot.addEventListeners(new PrivateMessageListener());
 		bot.addEventListeners(new EventBotListener());
 		//bot.addEventListeners(new OneTimeMessageListener());
 		
+		
 		// Login
 		try {
 			bot.build().awaitReady();
 		} catch (LoginException | InterruptedException e) {
-			System.out.println("Unable to launch bot");
+			logger.error("Unable to launch bot");
 		}		
 	}
 
