@@ -93,6 +93,17 @@ public class PartyRoomListener extends ListenerAdapter {
 		playerLeft(event.getChannelLeft(), event.getMember(), event.getGuild());
 		playerJoined(event.getChannelJoined(), event.getMember(), event.getGuild());
 	}
+	
+	/**
+	 * Takes an incoming message event and handles it
+	 * 
+	 * @param event
+	 */
+	public void onGuildMessageRecieved(GuildMessageReceivedEvent event) {
+		if (event.getMessage().getContentDisplay().startsWith("</") && event.getChannel() == partyGuilds.get(event.getGuild()).getCommandChannel()) {
+			event.getMessage().delete().queue();
+		}
+	}
 
 	/**
 	 * On voice chat leave
@@ -195,17 +206,6 @@ public class PartyRoomListener extends ListenerAdapter {
 			}
 		} catch (NullPointerException e) {
 
-		}
-	}
-
-	/**
-	 * Takes an incoming message event and handles it
-	 * 
-	 * @param event
-	 */
-	public void onGuildMessageRecieved(GuildMessageReceivedEvent event) {
-		if (event.getMessage().getContentDisplay().startsWith("</") && event.getChannel() == partyGuilds.get(event.getGuild()).getCommandChannel()) {
-			event.getMessage().delete().queue();
 		}
 	}
 
