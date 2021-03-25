@@ -25,12 +25,19 @@ public class ConfigLoader {
 	@Value("${Meme.Storage.Location}")
 	private String memeStorageLocation;
 	
+	@Value("${Code.Guild.IDs}")
+	private String[] codeGuildIDs;
+	
 	private LinkedList<Long> stringToLongList(String[] array){
 		LinkedList<Long> converted = new LinkedList<Long>();
 		for(String x : array) {
 			converted.add(Long.parseLong(x));
 		}
 		return converted;
+	}
+	
+	public LinkedList<Long> getCodeGuildIDs(){
+		return stringToLongList(codeGuildIDs);
 	}
 	
 	public String getDatabaseLocation() {
