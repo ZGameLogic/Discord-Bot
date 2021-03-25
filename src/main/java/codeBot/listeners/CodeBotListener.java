@@ -40,22 +40,50 @@ public class CodeBotListener extends ListenerAdapter {
 
 	@Override
 	public void onMessageReceived(MessageReceivedEvent event) {
-		if (!event.getAuthor().isBot() && event.getMessage().getContentDisplay().startsWith("compile")) {
+		
+		int messageType = validRequest(event);
+		
+		if (messageType > 0) {
 			
 			if(event.isFromGuild()) {
 				if(CodeGuildIds.contains(event.getGuild().getIdLong())){
 					if (event.getMessage().getContentDisplay().contains("```")) {
 						handleCodeInput(event);
+					}else if(messageType == 2) {
+						handleFileInput(event);
 					}
 				}
 			}else {
 				if (event.getMessage().getContentDisplay().contains("```")) {
 					handleCodeInput(event);
+				} else if(messageType == 2) {
+					handleFileInput(event);
 				} else {
 					privateMessageNotReady(event);
 				}
 			}
 		}
+	}
+	
+	private void handleFileInput(MessageReceivedEvent event) {
+		JavaRunner.runJavaCode(event, codeBase, runtime);
+	}
+
+	/**
+	 * Returns the type of message we are getting
+	 * @param event
+	 * @return 0 for not valid, 1 for message code, 2 for file code
+	 */
+	private int validRequest(MessageReceivedEvent event) {
+		if(!event.getAuthor().isBot()) {
+			if(event.getMessage().getContentDisplay().startsWith("compile")) {
+				return 1;
+			}
+			if(event.getMessage().getAttachments().get(0).getFileExtension().equals("java")) {
+				return 2;
+			}
+		}
+		return 0;
 	}
 
 	private void handleCodeInput(MessageReceivedEvent event) {

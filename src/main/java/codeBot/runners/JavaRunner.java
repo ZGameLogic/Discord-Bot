@@ -18,6 +18,35 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class JavaRunner {
 	
+	public static void runJavaCode(MessageReceivedEvent event, File codeBase, File runtime) {
+		long jobId = System.currentTimeMillis() * 3;
+		long startTime = System.currentTimeMillis();
+		
+		File jobDir = new File(codeBase.getPath() + "\\" + jobId);
+		jobDir.mkdir();
+		
+		String mainClassName = event.getMessage().getAttachments().get(0).getFileName().replace(".java", "");
+		
+		File codeFile = new File(codeBase.getPath() + "\\" + jobId + "\\" + event.getMessage().getAttachments().get(0).getFileName());
+		event.getMessage().getAttachments().get(0).downloadToFile(codeFile).exceptionally( t -> {
+			t.printStackTrace();
+			return null;
+		});
+		
+		while(!codeFile.exists()) {
+			System.out.println("non");
+		}
+		
+		try {
+			Thread.sleep(500);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+		
+		// run files
+		new JavaCodeRunner(event, mainClassName, startTime, jobId, jobDir, runtime).start();
+	}
+	
 	public static void runJavaCode(String code, MessageReceivedEvent event, File codeBase, File runtime) {
 		long jobId = System.currentTimeMillis() * 3;
 		long startTime = System.currentTimeMillis();
