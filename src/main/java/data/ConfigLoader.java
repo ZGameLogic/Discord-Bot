@@ -28,12 +28,19 @@ public class ConfigLoader {
 	@Value("${Code.Guild.IDs}")
 	private String[] codeGuildIDs;
 	
+	@Value("${Java.runtime}")
+	private String javaRuntime;
+	
 	private LinkedList<Long> stringToLongList(String[] array){
 		LinkedList<Long> converted = new LinkedList<Long>();
 		for(String x : array) {
 			converted.add(Long.parseLong(x));
 		}
 		return converted;
+	}
+	
+	public String getJavaRuntime() {
+		return javaRuntime;
 	}
 	
 	public LinkedList<Long> getCodeGuildIDs(){

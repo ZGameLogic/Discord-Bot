@@ -36,7 +36,7 @@ public class Bot {
 		
 		bot.addEventListeners(new PartyRoomListener(config));
 		bot.addEventListeners(new CodeBotListener(config));
-		bot.addEventListeners(new EventBotListener());
+		//bot.addEventListeners(new EventBotListener());
 		//bot.addEventListeners(new OneTimeMessageListener());
 		
 		

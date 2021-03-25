@@ -19,6 +19,7 @@ public class CodeBotListener extends ListenerAdapter {
 
 	private Logger logger = LoggerFactory.getLogger(CodeBotListener.class);
 	private File codeBase;
+	private File runtime;
 	private LinkedList<Long> CodeGuildIds;
 
 	public CodeBotListener(ConfigLoader cl) {
@@ -26,6 +27,7 @@ public class CodeBotListener extends ListenerAdapter {
 		if (!codeBase.exists())
 			codeBase.mkdir();
 		CodeGuildIds = cl.getCodeGuildIDs();
+		runtime = new File(cl.getJavaRuntime());
 	}
 
 	/**
@@ -64,7 +66,7 @@ public class CodeBotListener extends ListenerAdapter {
 		String code = message.substring(startIndex, endIndex);
 
 		if (code.startsWith("java")) {
-			JavaRunner.runJavaCode(code.replaceFirst("java\n", ""), event, codeBase);
+			JavaRunner.runJavaCode(code.replaceFirst("java\n", ""), event, codeBase, runtime);
 		} else {
 			privateMessageNotReady(event);
 		}
