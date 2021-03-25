@@ -18,7 +18,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class JavaRunner {
 	
-	public static void runJavaCode(String code, MessageReceivedEvent event, File codeBase) {
+	public static void runJavaCode(String code, MessageReceivedEvent event, File codeBase, File runtime) {
 		long jobId = System.currentTimeMillis() * 3;
 		long startTime = System.currentTimeMillis();
 
@@ -90,7 +90,7 @@ public class JavaRunner {
 		}
 		
 		// run files
-		new JavaCodeRunner(event, mainClassName, startTime, jobId, jobDir).start();
+		new JavaCodeRunner(event, mainClassName, startTime, jobId, jobDir, runtime).start();
 	}
 	
 	private static int countChar(char c, String string) {
@@ -148,14 +148,16 @@ public class JavaRunner {
 		long startTime;
 		long id;
 		File dir;
+		File runtime;
 		
 		public JavaCodeRunner(MessageReceivedEvent event, String mainClass, long startTime,
-				long id, File dir) {
+				long id, File dir, File runtime) {
 			this.event = event;
 			this.mainClass = mainClass;
 			this.startTime = startTime;
 			this.id = id;
 			this.dir = dir;
+			this.runtime = runtime;
 		}
 		
 		// check mark U+2705
@@ -166,7 +168,7 @@ public class JavaRunner {
 		public void run() {
 			
 			try {
-				Process compile = new ProcessBuilder("cmd", "/c", "javac *.java").directory(dir).start();
+				Process compile = new ProcessBuilder("cmd", "/c", "\"" + runtime.getPath() + "\\javac.exe\" *.java").directory(dir).start();
 				compile.waitFor();
 				if(compile.exitValue() == 0) {
 					event.getMessage().addReaction("U+2705").complete();
@@ -197,7 +199,7 @@ public class JavaRunner {
 			event.getMessage().addReaction("U+27A1").complete();
 			
 			try {
-				Process job = new ProcessBuilder("cmd", "/c", "java " + mainClass).directory(dir).start();
+				Process job = new ProcessBuilder("cmd", "/c", "\"" + runtime.getPath() + "\\java\" " + mainClass).directory(dir).start();
 				job.waitFor();
 				if(job.exitValue() == 0) {
 					String output = "";
