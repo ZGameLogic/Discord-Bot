@@ -34,7 +34,7 @@ public class Bot {
 
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
 		
-		//bot.addEventListeners(new PartyRoomListener(config));
+		bot.addEventListeners(new PartyRoomListener(config));
 		bot.addEventListeners(new CodeBotListener(config));
 		//bot.addEventListeners(new EventBotListener());
 		//bot.addEventListeners(new OneTimeMessageListener());
