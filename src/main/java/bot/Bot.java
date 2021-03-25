@@ -9,9 +9,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import EventBot.listeners.EventBotListener;
+import codeBot.listeners.CodeBotListener;
 import data.ConfigLoader;
 import general.listeners.OneTimeMessageListener;
-import general.listeners.PrivateMessageListener;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -34,9 +34,9 @@ public class Bot {
 
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
 		
-		bot.addEventListeners(new PartyRoomListener(config));
-		bot.addEventListeners(new PrivateMessageListener());
-		bot.addEventListeners(new EventBotListener());
+		//bot.addEventListeners(new PartyRoomListener(config));
+		bot.addEventListeners(new CodeBotListener(config));
+		//bot.addEventListeners(new EventBotListener());
 		//bot.addEventListeners(new OneTimeMessageListener());
 		
 		
