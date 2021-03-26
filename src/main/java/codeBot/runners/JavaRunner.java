@@ -13,10 +13,13 @@ import java.util.HashMap;
 import java.util.Map;
 
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 public class JavaRunner {
+	
+	private static Map<Message, Process> jobs = new HashMap<Message, Process>();
 	
 	public static void runJavaCode(MessageReceivedEvent event, File codeBase, File runtime) {
 		long jobId = System.currentTimeMillis() * 3;
@@ -157,8 +160,8 @@ public class JavaRunner {
 		}
 		
 		eb.setDescription(codeOutput);
-		eb.addField("Exit status", exitStatus + "", false);
-		eb.addField("Execution time", executionTime, false);
+		eb.addField("Exit status", exitStatus + "", true);
+		eb.addField("Execution time", executionTime, true);
 		eb.setFooter("Job id:" + jobId);
 
 		return eb.build();
@@ -168,6 +171,12 @@ public class JavaRunner {
 		DateFormat d = new SimpleDateFormat("mm:ss:SSS");
 		Date finalTime = new Date(end - start);
 		return d.format(finalTime);
+	}
+	
+	public static void endJob(Message message) {
+		if(jobs.get(message).isAlive()) {
+			jobs.get(message).destroy();
+		}		
 	}
 	
 	private static class JavaCodeRunner extends Thread {
@@ -226,9 +235,11 @@ public class JavaRunner {
 			}
 			
 			event.getMessage().addReaction("U+27A1").complete();
+			//event.getMessage().addReaction("U+274C").complete();
 			
 			try {
 				Process job = new ProcessBuilder("cmd", "/c", "\"" + runtime.getPath() + "\\java\" " + mainClass).directory(dir).start();
+				jobs.put(event.getMessage(), job);
 				job.waitFor();
 				if(job.exitValue() == 0) {
 					String output = "";
@@ -243,6 +254,8 @@ public class JavaRunner {
 					job.getErrorStream().close();
 					job.getInputStream().close();
 					job.getOutputStream().close();
+					
+					//event.getMessage().removeReaction("U+274C").complete();
 					
 				} else {
 					String error = "";
