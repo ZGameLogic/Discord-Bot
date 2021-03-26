@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class CodeBotListener extends ListenerAdapter {
@@ -37,6 +38,16 @@ public class CodeBotListener extends ListenerAdapter {
 	public void onReady(ReadyEvent event) {
 		logger.info("Code bot Listener started...");
 	}
+	/*
+	@Override
+	public void onMessageReactionAdd(MessageReactionAddEvent event) {
+		if(!event.getUser().isBot()) {
+			if(event.getReaction().getReactionEmote().toString().contains("U+274c")) {
+				JavaRunner.endJob(event.retrieveMessage().complete());
+			}
+		}
+	}
+	*/
 
 	@Override
 	public void onMessageReceived(MessageReceivedEvent event) {
@@ -79,7 +90,7 @@ public class CodeBotListener extends ListenerAdapter {
 			if(event.getMessage().getContentDisplay().startsWith("compile")) {
 				return 1;
 			}
-			if(event.getMessage().getAttachments().get(0).getFileExtension().equals("java")) {
+			if(!event.getMessage().getAttachments().isEmpty() && event.getMessage().getAttachments().get(0).getFileExtension().equals("java")) {
 				return 2;
 			}
 		}
