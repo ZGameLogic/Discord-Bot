@@ -1,6 +1,8 @@
 package bot;
 
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.LinkedList;
 
 import javax.security.auth.login.LoginException;
 
@@ -23,7 +25,7 @@ public class Bot {
 	
 	private Logger logger = LoggerFactory.getLogger(Bot.class);
 
-	public Bot() {
+	public Bot(String[] args) {
 		
 		// Load config
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
@@ -34,8 +36,19 @@ public class Bot {
 
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
 		
-		bot.addEventListeners(new PartyRoomListener(config));
-		bot.addEventListeners(new CodeBotListener(config));
+		
+		if(args.length > 0) {
+			LinkedList<String> arguments = new LinkedList<String>(Arrays.asList(args));
+			if(arguments.contains("party")) {
+				bot.addEventListeners(new PartyRoomListener(config));
+			}
+			if(arguments.contains("code")) {
+				bot.addEventListeners(new CodeBotListener(config));
+			}
+		}else {
+			bot.addEventListeners(new PartyRoomListener(config));
+			bot.addEventListeners(new CodeBotListener(config));
+		}
 		//bot.addEventListeners(new EventBotListener());
 		//bot.addEventListeners(new OneTimeMessageListener());
 		
