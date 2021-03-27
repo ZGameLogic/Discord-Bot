@@ -165,7 +165,7 @@ public class WebHookListener {
 		
 		private String getCommitList() throws IOException {
 			String link = "https://zgamelogic.com:7990/rest/api/1.0/projects/BSPR/repos/discord-bot/commits/development";
-			
+			// yeet
 			StringBuilder result = new StringBuilder();
 		      URL url = new URL(link);
 		      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
