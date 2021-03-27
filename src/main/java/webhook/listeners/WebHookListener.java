@@ -138,12 +138,13 @@ public class WebHookListener {
 			
 			try {
 				JSONObject commits = new JSONObject(getCommitList());
+				int messageLength = 100;
 				
 				for(int i = 0; i < 5; i++) {
 					String displayID = commits.getJSONArray("values").getJSONObject(i).getString("displayId");
 					String message = commits.getJSONArray("values").getJSONObject(i).getString("message");
-					if(message.length() > 25) {
-						message = message.substring(0, 25) + "...";
+					if(message.length() > messageLength) {
+						message = message.substring(0, messageLength) + "...";
 					}
 					eb.addField(displayID, message, false);
 				}
