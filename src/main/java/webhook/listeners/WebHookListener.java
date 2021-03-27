@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import data.ConfigLoader;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.TextChannel;
 
@@ -122,7 +123,8 @@ public class WebHookListener {
 			
 			MessageEmbed discordMessage = buildBitbucketMessage(commiter, commiterLink, repoName, repoLink);
 			
-			channel.sendMessage(discordMessage).queue();
+			Message discordSentMessage = channel.sendMessage(discordMessage).complete();
+			discordSentMessage.addReaction("U+1F3D7").queue();
 		}
 		
 		private void handleBamboo(JSONObject message) {
@@ -165,7 +167,6 @@ public class WebHookListener {
 		
 		private String getCommitList() throws IOException {
 			String link = "https://zgamelogic.com:7990/rest/api/1.0/projects/BSPR/repos/discord-bot/commits/development";
-			// yeet
 			StringBuilder result = new StringBuilder();
 		      URL url = new URL(link);
 		      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -176,7 +177,6 @@ public class WebHookListener {
 		              result.append(line);
 		          }
 		      }
-		      System.out.println(result);
 		      return result.toString();
 		}
 	}
