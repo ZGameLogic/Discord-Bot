@@ -1,4 +1,5 @@
 package webhook.listeners;
+import java.awt.Color;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -11,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.rsocket.RSocketProperties.Server;
 
 import data.ConfigLoader;
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.TextChannel;
@@ -71,13 +73,9 @@ public class WebHookListener {
 				
 				char inChar = ' ';
 				
-				System.out.println(1);
-				
 				while((inChar = (char) in.read()) != -1 && inChar != 65535) {
 					message += inChar;
 				}
-				
-				System.out.println(4);
 				
 				out.close();
 				in.close();
@@ -85,20 +83,13 @@ public class WebHookListener {
 			} catch (IOException e) {
 				logger.error("IO Exceptions am I right");
 			}
-			
-			System.out.println(6);
-		
-			
 			JSONObject JSONInformation = new JSONObject(message.substring(message.indexOf("{")));
 			
 			if(message.contains("Bitbucket")) {
 				handleBitbucket(JSONInformation);
 			}else if(message.contains("Bamboo")) {
 				handleBamboo(JSONInformation);
-			}
-			
-			
-			
+			}			
 		}
 		
 		private void write(String message, OutputStream os) {
@@ -112,23 +103,33 @@ public class WebHookListener {
 			try {
 				os.write('\n');
 			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				
 			}
 		}
 		
 		private void handleBitbucket(JSONObject message) {
-			System.out.println("We got here");
-			String commiter = message.getJSONObject("repository").getJSONObject("links").getJSONArray("self").getJSONObject(0).getString("href");
-			System.out.println(commiter);
+			String repoName = message.getJSONObject("repository").getString("name");
+			String repoLink = message.getJSONObject("repository").getJSONObject("links").getJSONArray("self").getJSONObject(0).getString("href");
+			String commiter = message.getJSONObject("actor").getString("displayName");
+			String commiterLink = message.getJSONObject("actor").getJSONObject("links").getJSONArray("self").getJSONObject(0).getString("href");
+			
+			MessageEmbed discordMessage = buildBitbucketMessage(commiter, commiterLink, repoName, repoLink);
+			
+			channel.sendMessage(discordMessage).queue();
 		}
 		
 		private void handleBamboo(JSONObject message) {
 			
 		}
 		
-		private MessageEmbed buildBitbucketMessage(String commiter, String repoLink) {
-			return null;
+		private MessageEmbed buildBitbucketMessage(String commiter, String commiterLink, String repoName, String repoLink) {
+			EmbedBuilder eb = new EmbedBuilder();
+			
+			eb.setTitle("Bitbucket push to " + repoName, repoLink);
+			eb.setColor(Color.GRAY);
+			eb.setAuthor(commiter, commiterLink);
+			
+			return eb.build();
 		}
 	}
 }
