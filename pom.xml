@@ -37,6 +37,14 @@
 			<version>4.2.0_228</version>
 		</dependency>
 -->
+
+		<dependency>
+ 		   <groupId>com.atlassian.bitbucket.server</groupId>
+ 		   <artifactId>bitbucket-api</artifactId>
+   			<version>4.0.0-m27</version>
+			<scope>provided</scope>
+		</dependency>
+
 		<dependency>
 			<groupId>com.github.DV8FromTheWorld</groupId>
 			<artifactId>JDA</artifactId>

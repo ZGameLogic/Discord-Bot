@@ -1,15 +1,20 @@
 package webhook.listeners;
 import java.awt.Color;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.ProtocolException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.URL;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.rsocket.RSocketProperties.Server;
 
 import data.ConfigLoader;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -24,6 +29,7 @@ public class WebHookListener {
 	private TextChannel channel;
 	
 	public WebHookListener(ConfigLoader cl, JDA bot) {
+		
 		new Server(cl.getWebHookPort()).start();
 		
 		channel = bot.getGuildById(cl.getBitbucketGuildIDs().get(0)).getTextChannelById(cl.getBitbucketGuildIDs().get(1));
@@ -38,6 +44,7 @@ public class WebHookListener {
 			this.port = port;
 		}
 		
+		@SuppressWarnings("resource")
 		public void run() {
 			try {
 				ServerSocket server = new ServerSocket(port);
@@ -129,7 +136,36 @@ public class WebHookListener {
 			eb.setColor(Color.GRAY);
 			eb.setAuthor(commiter, commiterLink);
 			
+			try {
+				JSONObject commits = new JSONObject(getCommitList());
+				
+				for(int i = 0; i < 5; i++) {
+					System.out.println(commits.getJSONArray("values").get(i));
+				}
+				
+			} catch (JSONException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
 			return eb.build();
+		}
+		
+		private String getCommitList() throws IOException {
+			String link = "https://zgamelogic.com:7990/rest/api/1.0/projects/BSPR/repos/discord-bot/commits";
+			
+			StringBuilder result = new StringBuilder();
+		      URL url = new URL(link);
+		      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+		      conn.setRequestMethod("GET");
+		      try (BufferedReader reader = new BufferedReader(
+		                  new InputStreamReader(conn.getInputStream()))) {
+		          for (String line; (line = reader.readLine()) != null; ) {
+		              result.append(line);
+		          }
+		      }
+		      return result.toString();
 		}
 	}
 }
