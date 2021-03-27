@@ -139,10 +139,18 @@ public class WebHookListener {
 			try {
 				JSONObject commits = new JSONObject(getCommitList());
 				
-				for(int i = 0; i < 5; i++) {
-					String displayID = commits.getJSONArray("values").getJSONObject(i).getString("displayId");
-					String message = commits.getJSONArray("values").getJSONObject(i).getString("message");
+				if(commits.has("values")) {
+				
+					for(int i = 0; i < 5; i++) {
+						String displayID = commits.getJSONArray("values").getJSONObject(i).getString("displayId");
+						String message = commits.getJSONArray("values").getJSONObject(i).getString("message");
 					
+						eb.addField(displayID, message, false);
+					}
+				}else {
+					String displayID = commits.getString("displayId");
+					String message = commits.getString("message");
+				
 					eb.addField(displayID, message, false);
 				}
 				
