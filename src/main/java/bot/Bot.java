@@ -19,6 +19,7 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandUpdateAction;
 import partybot.listeners.PartyRoomListener;
+import webhook.listeners.WebHookListener;
 
 @SuppressWarnings("unused")
 public class Bot {
@@ -55,7 +56,16 @@ public class Bot {
 		
 		// Login
 		try {
-			bot.build().awaitReady();
+			JDA jdaBot = bot.build().awaitReady();
+			
+			if(args.length > 0) {
+				LinkedList<String> arguments = new LinkedList<String>(Arrays.asList(args));
+				if(arguments.contains("webhook")) {
+					new WebHookListener(config, jdaBot);
+				}
+			}else {
+				new WebHookListener(config, jdaBot);
+			}
 		} catch (LoginException | InterruptedException e) {
 			logger.error("Unable to launch bot");
 		}		
