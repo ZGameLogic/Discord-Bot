@@ -168,6 +168,7 @@ public class WebHookListener {
 		              result.append(line);
 		          }
 		      }
+		      System.out.println(result);
 		      return result.toString();
 		}
 	}
