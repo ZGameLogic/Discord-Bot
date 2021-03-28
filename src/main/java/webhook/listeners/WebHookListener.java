@@ -5,8 +5,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.ProtocolException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URL;
@@ -128,7 +126,13 @@ public class WebHookListener {
 		}
 		
 		private void handleBamboo(JSONObject message) {
+			String status = message.getJSONObject("build").getString("status");
 			
+			if(status.equals("SUCCESS")) {
+				WebHookReactionListener.changeStatus(Color.GREEN);
+			}else {
+				WebHookReactionListener.changeStatus(Color.RED);
+			}
 		}
 		
 		private MessageEmbed buildBitbucketMessage(String commiter, String commiterLink, String repoName, String repoLink) {

@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandUpdateAction;
 import partybot.listeners.PartyRoomListener;
 import webhook.listeners.WebHookListener;
+import webhook.listeners.WebHookReactionListener;
 
 @SuppressWarnings("unused")
 public class Bot {
@@ -46,9 +47,13 @@ public class Bot {
 			if(arguments.contains("code")) {
 				bot.addEventListeners(new CodeBotListener(config));
 			}
+			if(arguments.contains("webhook")) {
+				bot.addEventListeners(new WebHookReactionListener(config));
+			}
 		}else {
 			bot.addEventListeners(new PartyRoomListener(config));
 			bot.addEventListeners(new CodeBotListener(config));
+			bot.addEventListeners(new WebHookReactionListener(config));
 		}
 		//bot.addEventListeners(new EventBotListener());
 		//bot.addEventListeners(new OneTimeMessageListener());
