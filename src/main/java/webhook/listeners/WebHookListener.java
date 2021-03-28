@@ -127,7 +127,6 @@ public class WebHookListener {
 		
 		private void handleBamboo(JSONObject message) {
 			String status = message.getJSONObject("build").getString("status");
-			
 			if(status.equals("SUCCESS")) {
 				WebHookReactionListener.changeStatus(Color.GREEN);
 			}else {

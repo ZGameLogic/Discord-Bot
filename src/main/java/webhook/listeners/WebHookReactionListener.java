@@ -42,7 +42,6 @@ public class WebHookReactionListener extends ListenerAdapter {
 	public void onMessageReactionAdd(MessageReactionAddEvent event) {
 		if(!event.getUser().isBot() && event.getChannel().equals(channel)) {
 			if(event.getReaction().toString().contains("RE:U+1f3d7")){
-				
 				currentMessage = event.retrieveMessage().complete();
 				
 				EmbedBuilder eb = new EmbedBuilder();
@@ -74,7 +73,7 @@ public class WebHookReactionListener extends ListenerAdapter {
 			eb.addField(x);
 		}
 		
-		eb.setColor(Color.BLUE);
+		eb.setColor(color);
 		
 		currentMessage.editMessage(eb.build()).complete();
 	}
