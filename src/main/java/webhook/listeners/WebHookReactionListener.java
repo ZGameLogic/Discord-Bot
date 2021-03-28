@@ -63,6 +63,8 @@ public class WebHookReactionListener extends ListenerAdapter {
 	
 	public static void changeStatus(Color color) {
 		
+		if(currentMessage != null) {
+		
 		EmbedBuilder eb = new EmbedBuilder();
 		MessageEmbed old = currentMessage.getEmbeds().get(0);
 		
@@ -76,5 +78,7 @@ public class WebHookReactionListener extends ListenerAdapter {
 		eb.setColor(color);
 		
 		currentMessage.editMessage(eb.build()).complete();
+		currentMessage = null;
+		}
 	}
 }
