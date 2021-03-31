@@ -18,6 +18,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import webhook.listeners.WebHookListener;
+import webhook.listeners.WebHookReactionListener;
 
 @RestController
 public class WebHookController {
@@ -41,6 +42,21 @@ public class WebHookController {
 	@PostMapping("/webhook/bamboo")
 	public void bambooWebhook(@RequestBody String valueOne) {
 		System.out.println("Request from bitbucket" + "\n" + valueOne);
+		try {
+			JSONObject JSONInformation = new JSONObject(valueOne);
+			handleBamboo(JSONInformation);
+		} catch (JSONException e) {
+			 
+		}
+	}
+	
+	private void handleBamboo(JSONObject message) throws JSONException {
+		String status = message.getJSONObject("build").getString("status");
+		if(status.equals("SUCCESS")) {
+			WebHookReactionListener.changeStatus(Color.GREEN);
+		}else {
+			WebHookReactionListener.changeStatus(Color.RED);
+		}
 	}
 	
 	private void handleBitbucket(JSONObject message) throws JSONException {
