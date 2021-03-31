@@ -1,0 +1,106 @@
+package webhook;
+
+import java.awt.Color;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import webhook.listeners.WebHookListener;
+
+@RestController
+public class WebHookController {
+
+	@GetMapping("/greeting")
+	public String greeting() {
+		return "Boop";
+	}
+	
+	@PostMapping("/webhook/bitbucket")
+	public void bitbucketWebhook(@RequestBody String valueOne) {
+		System.out.println("Request from bitbucket" + "\n" + valueOne);
+		try {
+			JSONObject JSONInformation = new JSONObject(valueOne);
+			handleBitbucket(JSONInformation);
+		} catch (JSONException e) {
+			
+		}
+	}
+	
+	@PostMapping("/webhook/bamboo")
+	public void bambooWebhook(@RequestBody String valueOne) {
+		System.out.println("Request from bitbucket" + "\n" + valueOne);
+	}
+	
+	private void handleBitbucket(JSONObject message) throws JSONException {
+		String repoName = message.getJSONObject("repository").getString("name");
+		String repoLink = message.getJSONObject("repository").getJSONObject("links").getJSONArray("self").getJSONObject(0).getString("href");
+		String commiter = message.getJSONObject("actor").getString("displayName");
+		String commiterLink = message.getJSONObject("actor").getJSONObject("links").getJSONArray("self").getJSONObject(0).getString("href");
+		
+		MessageEmbed discordMessage = buildBitbucketMessage(commiter, commiterLink, repoName, repoLink);
+		
+		Message discordSentMessage = WebHookListener.getChannel().sendMessage(discordMessage).complete();
+		discordSentMessage.addReaction("U+1F3D7").queue();
+	}
+	
+	private MessageEmbed buildBitbucketMessage(String commiter, String commiterLink, String repoName, String repoLink) {
+		EmbedBuilder eb = new EmbedBuilder();
+		
+		eb.setTitle("Bitbucket push to " + repoName, repoLink);
+		eb.setColor(Color.GRAY);
+		eb.setAuthor(commiter, commiterLink);
+		
+		try {
+			JSONObject commits = new JSONObject(getCommitList());
+			
+			if(commits.has("values")) {
+			
+				for(int i = 0; i < 5; i++) {
+					String displayID = commits.getJSONArray("values").getJSONObject(i).getString("displayId");
+					String message = commits.getJSONArray("values").getJSONObject(i).getString("message");
+				
+					eb.addField(displayID, message, false);
+				}
+			}else {
+				String displayID = commits.getString("displayId");
+				String message = commits.getString("message");
+			
+				eb.addField(displayID, message, false);
+			}
+			
+		} catch (JSONException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return eb.build();
+	}
+	
+	private String getCommitList() throws IOException {
+		String link = "https://zgamelogic.com:7990/rest/api/1.0/projects/BSPR/repos/discord-bot/commits/development";
+		StringBuilder result = new StringBuilder();
+	      URL url = new URL(link);
+	      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+	      conn.setRequestMethod("GET");
+	      try (BufferedReader reader = new BufferedReader(
+	                  new InputStreamReader(conn.getInputStream()))) {
+	          for (String line; (line = reader.readLine()) != null; ) {
+	              result.append(line);
+	          }
+	      }
+	      return result.toString();
+	}
+}
