@@ -1,18 +1,13 @@
 package webhook;
 
 import java.awt.Color;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.client.RestTemplate;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
@@ -22,15 +17,9 @@ import webhook.listeners.WebHookReactionListener;
 
 @RestController
 public class WebHookController {
-
-	@GetMapping("/greeting")
-	public String greeting() {
-		return "Boop";
-	}
 	
 	@PostMapping("/webhook/bitbucket")
 	public void bitbucketWebhook(@RequestBody String valueOne) {
-		System.out.println("Request from bitbucket" + "\n" + valueOne);
 		try {
 			JSONObject JSONInformation = new JSONObject(valueOne);
 			handleBitbucket(JSONInformation);
@@ -41,7 +30,6 @@ public class WebHookController {
 	
 	@PostMapping("/webhook/bamboo")
 	public void bambooWebhook(@RequestBody String valueOne) {
-		System.out.println("Request from bitbucket" + "\n" + valueOne);
 		try {
 			JSONObject JSONInformation = new JSONObject(valueOne);
 			handleBamboo(JSONInformation);
@@ -98,25 +86,15 @@ public class WebHookController {
 			
 		} catch (JSONException e) {
 			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
 		
 		return eb.build();
 	}
-	
-	private String getCommitList() throws IOException {
+
+	private static String getCommitList() {
 		String link = "https://zgamelogic.com:7990/rest/api/1.0/projects/BSPR/repos/discord-bot/commits/development";
-		StringBuilder result = new StringBuilder();
-	      URL url = new URL(link);
-	      HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-	      conn.setRequestMethod("GET");
-	      try (BufferedReader reader = new BufferedReader(
-	                  new InputStreamReader(conn.getInputStream()))) {
-	          for (String line; (line = reader.readLine()) != null; ) {
-	              result.append(line);
-	          }
-	      }
-	      return result.toString();
+		RestTemplate restTemplate = new RestTemplate();
+		String result = restTemplate.getForObject(link, String.class);
+		return result;
 	}
 }
