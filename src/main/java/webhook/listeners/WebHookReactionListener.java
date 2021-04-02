@@ -59,10 +59,6 @@ public class WebHookReactionListener extends ListenerAdapter {
 					JSONObject resultPull = new JSONObject(createPullRequest(event.retrieveMember().complete().getEffectiveName()));
 					String id = resultPull.getString("id");
 					JSONObject resultMerge = new JSONObject(mergePullRequest(id));
-					if(!resultMerge.getBoolean("closed")) {
-						return;
-					}
-					
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
