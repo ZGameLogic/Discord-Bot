@@ -1,6 +1,8 @@
 package bot;
 
+import java.util.Arrays;
 import java.util.EnumSet;
+import java.util.LinkedList;
 
 import javax.security.auth.login.LoginException;
 
@@ -17,13 +19,15 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandUpdateAction;
 import partybot.listeners.PartyRoomListener;
+import webhook.listeners.WebHookListener;
+import webhook.listeners.WebHookReactionListener;
 
 @SuppressWarnings("unused")
 public class Bot {
 	
 	private Logger logger = LoggerFactory.getLogger(Bot.class);
 
-	public Bot() {
+	public Bot(String[] args) {
 		
 		// Load config
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
@@ -34,15 +38,39 @@ public class Bot {
 
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
 		
-		bot.addEventListeners(new PartyRoomListener(config));
-		bot.addEventListeners(new CodeBotListener(config));
+		
+		if(args.length > 0) {
+			LinkedList<String> arguments = new LinkedList<String>(Arrays.asList(args));
+			if(arguments.contains("party")) {
+				bot.addEventListeners(new PartyRoomListener(config));
+			}
+			if(arguments.contains("code")) {
+				bot.addEventListeners(new CodeBotListener(config));
+			}
+			if(arguments.contains("webhook")) {
+				bot.addEventListeners(new WebHookReactionListener(config));
+			}
+		}else {
+			bot.addEventListeners(new PartyRoomListener(config));
+			bot.addEventListeners(new CodeBotListener(config));
+			bot.addEventListeners(new WebHookReactionListener(config));
+		}
 		//bot.addEventListeners(new EventBotListener());
 		//bot.addEventListeners(new OneTimeMessageListener());
 		
 		
 		// Login
 		try {
-			bot.build().awaitReady();
+			JDA jdaBot = bot.build().awaitReady();
+			
+			if(args.length > 0) {
+				LinkedList<String> arguments = new LinkedList<String>(Arrays.asList(args));
+				if(arguments.contains("webhook")) {
+					new WebHookListener(config, jdaBot);
+				}
+			}else {
+				new WebHookListener(config, jdaBot);
+			}
 		} catch (LoginException | InterruptedException e) {
 			logger.error("Unable to launch bot");
 		}		

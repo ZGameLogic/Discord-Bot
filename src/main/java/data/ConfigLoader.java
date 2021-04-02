@@ -31,6 +31,11 @@ public class ConfigLoader {
 	@Value("${Java.runtime}")
 	private String javaRuntime;
 	
+	@Value("${Webhook.port}")
+	private int webHookPort;
+	@Value("${Bitbucket.Guild.IDs}")
+	private String[] bitbucketGuildIDs;
+	
 	private LinkedList<Long> stringToLongList(String[] array){
 		LinkedList<Long> converted = new LinkedList<Long>();
 		for(String x : array) {
@@ -39,10 +44,18 @@ public class ConfigLoader {
 		return converted;
 	}
 	
+	public LinkedList<Long> getBitbucketGuildIDs(){
+		return stringToLongList(bitbucketGuildIDs);
+	}
+	
 	public String getJavaRuntime() {
 		return javaRuntime;
 	}
 	
+	public int getWebHookPort() {
+		return webHookPort;
+	}
+
 	public LinkedList<Long> getCodeGuildIDs(){
 		return stringToLongList(codeGuildIDs);
 	}
