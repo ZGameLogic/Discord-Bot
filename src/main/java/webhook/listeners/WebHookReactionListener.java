@@ -22,6 +22,11 @@ import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
+/**
+ * 
+ * @author Ben Shabowski
+ *
+ */
 public class WebHookReactionListener extends ListenerAdapter {
 	
 	private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
