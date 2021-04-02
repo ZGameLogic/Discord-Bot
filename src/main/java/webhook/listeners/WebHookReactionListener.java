@@ -59,10 +59,6 @@ public class WebHookReactionListener extends ListenerAdapter {
 					JSONObject resultPull = new JSONObject(createPullRequest(event.retrieveMember().complete().getEffectiveName()));
 					String id = resultPull.getString("id");
 					JSONObject resultMerge = new JSONObject(mergePullRequest(id));
-					if(!resultMerge.getBoolean("closed")) {
-						return;
-					}
-					
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
@@ -70,6 +66,7 @@ public class WebHookReactionListener extends ListenerAdapter {
 				currentMessage = event.retrieveMessage().complete();
 				
 				EmbedBuilder eb = new EmbedBuilder();
+				
 				MessageEmbed old = event.retrieveMessage().complete().getEmbeds().get(0);
 				
 				eb.setTitle(old.getTitle(),"https://zgamelogic.com:7990/projects/BSPR/repos/discord-bot/browse");
