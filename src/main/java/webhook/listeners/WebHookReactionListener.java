@@ -66,6 +66,7 @@ public class WebHookReactionListener extends ListenerAdapter {
 				currentMessage = event.retrieveMessage().complete();
 				
 				EmbedBuilder eb = new EmbedBuilder();
+				
 				MessageEmbed old = event.retrieveMessage().complete().getEmbeds().get(0);
 				
 				eb.setTitle(old.getTitle(),"https://zgamelogic.com:7990/projects/BSPR/repos/discord-bot/browse");
