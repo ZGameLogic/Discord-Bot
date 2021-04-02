@@ -3,6 +3,8 @@ package webhook.listeners;
 import java.awt.Color;
 
 import org.apache.tomcat.util.codec.binary.Base64;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
@@ -47,6 +49,19 @@ public class WebHookReactionListener extends ListenerAdapter {
 	public void onMessageReactionAdd(MessageReactionAddEvent event) {
 		if(!event.getUser().isBot() && event.getChannel().equals(channel)) {
 			if(event.getReaction().toString().contains("RE:U+1f3d7")){
+				
+				try {
+					JSONObject resultPull = new JSONObject(createPullRequest(event.retrieveMember().complete().getEffectiveName()));
+					String id = resultPull.getString("id");
+					JSONObject resultMerge = new JSONObject(mergePullRequest(id));
+					if(!resultMerge.getBoolean("closed")) {
+						return;
+					}
+					
+				} catch (JSONException e) {
+					e.printStackTrace();
+				}
+				
 				currentMessage = event.retrieveMessage().complete();
 				
 				EmbedBuilder eb = new EmbedBuilder();
@@ -59,9 +74,9 @@ public class WebHookReactionListener extends ListenerAdapter {
 					eb.addField(x);
 				}
 				
-				eb.setColor(Color.BLUE);
-				
-				event.retrieveMessage().complete().editMessage(eb.build()).complete();
+				eb.setColor(Color.BLUE);				
+				currentMessage.editMessage(eb.build()).complete();
+				currentMessage.clearReactions().complete();
 			}
 		}
 	}
@@ -99,14 +114,14 @@ public class WebHookReactionListener extends ListenerAdapter {
 	    String base64Creds = new String(base64CredsBytes);
 
 	    headers.add("Authorization", "Basic " + base64Creds);
-		HttpEntity<String> request = new HttpEntity<String>("");
+		HttpEntity<String> request = new HttpEntity<String>("{}", headers);
 	    
 	    String result = restTemplate.postForObject(link, request, String.class);
 	    
 		return result;
 	}
 	
-	private String createPullRequest() {
+	private String createPullRequest(String requester) {
 		String link = "https://zgamelogic.com:7990/rest/api/1.0/projects/BSPR/repos/discord-bot/pull-requests";
 		RestTemplate restTemplate = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
@@ -119,8 +134,8 @@ public class WebHookReactionListener extends ListenerAdapter {
 
 	    headers.add("Authorization", "Basic " + base64Creds);
 	    
-	    String pullRequestTitle = "";
-	    String pullRequestDescription = "";
+	    String pullRequestTitle = "Pull request made from discord";
+	    String pullRequestDescription = "This pull request is being created by " + requester;
 	    
 		HttpEntity<String> request = new HttpEntity<String>("{\r\n" + 
 				"  \"title\": \"" + pullRequestTitle + "\",\r\n" + 

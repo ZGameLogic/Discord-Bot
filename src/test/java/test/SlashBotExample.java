@@ -14,11 +14,11 @@ public class SlashBotExample
 {
     public static void main(String[] args) throws JSONException
     {
-    	System.out.println(createPullRequest());
+    	System.out.println(mergePullRequest("26"));
     }
     
-    private static String createPullRequest() {
-		String link = "https://zgamelogic.com:7990/rest/api/1.0/projects/BSPR/repos/discord-bot/pull-requests";
+	private static String mergePullRequest(String pullRequestID) {
+		String link = "https://zgamelogic.com:7990/rest/api/1.0/projects/BSPR/repos/discord-bot/pull-requests/" + pullRequestID + "/merge?version=0";
 		RestTemplate restTemplate = new RestTemplate();
 		HttpHeaders headers = new HttpHeaders();
 	    headers.setContentType(MediaType.APPLICATION_JSON);
@@ -29,46 +29,10 @@ public class SlashBotExample
 	    String base64Creds = new String(base64CredsBytes);
 
 	    headers.add("Authorization", "Basic " + base64Creds);
+		HttpEntity<String> request = new HttpEntity<String>("{}", headers);
 	    
-	    String pullRequestTitle = "This is the title";
-	    String pullRequestDescription = "This is the description";
+	    String result = restTemplate.postForObject(link, request, String.class);
 	    
-		HttpEntity<String> request = new HttpEntity<String>("{\r\n" + 
-				"  \"title\": \"" + pullRequestTitle + "\",\r\n" + 
-				"  \"description\": \"" + pullRequestDescription + "\",\r\n" + 
-				"  \"state\": \"OPEN\",\r\n" + 
-				"  \"open\": true,\r\n" + 
-				"  \"closed\": false,\r\n" + 
-				"  \"fromRef\": {\r\n" + 
-				"    \"id\": \"refs/heads/development\",\r\n" + 
-				"    \"repository\": {\r\n" + 
-				"      \"slug\": \"discord-bot\",\r\n" + 
-				"      \"name\": null,\r\n" + 
-				"      \"project\": {\r\n" + 
-				"        \"key\": \"BSPR\"\r\n" + 
-				"      }\r\n" + 
-				"    }\r\n" + 
-				"  },\r\n" + 
-				"  \"toRef\": {\r\n" + 
-				"    \"id\": \"refs/heads/master\",\r\n" + 
-				"    \"repository\": {\r\n" + 
-				"      \"slug\": \"discord-bot\",\r\n" + 
-				"      \"name\": null,\r\n" + 
-				"      \"project\": {\r\n" + 
-				"        \"key\": \"BSPR\"\r\n" + 
-				"      }\r\n" + 
-				"    }\r\n" + 
-				"  },\r\n" + 
-				"  \"locked\": false,\r\n" + 
-				"  \"reviewers\": [\r\n" + 
-				"    {\r\n" + 
-				"      \"user\": {\r\n" + 
-				"        \"name\": \"BShabowski\"\r\n" + 
-				"      }\r\n" + 
-				"    }\r\n" + 
-				"  ]\r\n" + 
-				"}", headers);
-		String result = restTemplate.postForObject(link, request, String.class);
 		return result;
 	}
 }
