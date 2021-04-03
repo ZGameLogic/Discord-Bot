@@ -58,12 +58,10 @@ public class WebHookReactionListener extends ListenerAdapter {
 				try {
 					JSONObject resultPull = new JSONObject(createPullRequest(event.retrieveMember().complete().getEffectiveName()));
 					String id = resultPull.getString("id");
-					JSONObject resultMerge = new JSONObject(mergePullRequest(id));
+					new JSONObject(mergePullRequest(id));
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
-				
-				currentMessage = event.retrieveMessage().complete();
 				
 				EmbedBuilder eb = new EmbedBuilder();
 				
@@ -78,7 +76,8 @@ public class WebHookReactionListener extends ListenerAdapter {
 				
 				eb.setColor(Color.BLUE);				
 				event.retrieveMessage().complete().editMessage(eb.build()).complete();
-				currentMessage.clearReactions().complete();
+				event.retrieveMessage().complete().clearReactions().complete();
+				currentMessage = event.retrieveMessage().complete();
 			}
 		}
 	}
@@ -87,20 +86,20 @@ public class WebHookReactionListener extends ListenerAdapter {
 		
 		if(currentMessage != null) {
 		
-		EmbedBuilder eb = new EmbedBuilder();
-		MessageEmbed old = currentMessage.getEmbeds().get(0);
+			EmbedBuilder eb = new EmbedBuilder();
+			MessageEmbed old = currentMessage.getEmbeds().get(0);
 		
-		eb.setTitle(old.getTitle(),"https://zgamelogic.com:7990/projects/BSPR/repos/discord-bot/browse");
-		eb.setAuthor(old.getAuthor().getName(), old.getAuthor().getUrl());
+			eb.setTitle(old.getTitle(),"https://zgamelogic.com:7990/projects/BSPR/repos/discord-bot/browse");
+			eb.setAuthor(old.getAuthor().getName(), old.getAuthor().getUrl());
 		
-		for(Field x : old.getFields()) {
-			eb.addField(x);
-		}
+			for(Field x : old.getFields()) {
+				eb.addField(x);
+			}
 		
-		eb.setColor(color);
+			eb.setColor(color);
 		
-		currentMessage.editMessage(eb.build()).complete();
-		currentMessage = null;
+			currentMessage.editMessage(eb.build()).complete();
+			currentMessage = null;
 		}
 	}
 	
