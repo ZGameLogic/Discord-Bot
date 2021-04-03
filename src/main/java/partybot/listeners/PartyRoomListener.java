@@ -62,6 +62,8 @@ public class PartyRoomListener extends ListenerAdapter {
 								.addOption(new OptionData(INTEGER, "count", "Number of people allowed in the chatroom").setRequired(true)));
 				commands.addCommands(new CommandData("create-text","Creates a text chatroom that only people in the voice channel can see"));
 				commands.addCommands(new CommandData("delete-text","Deletes any associated text chat rooms tied to the voice channel"));
+				commands.addCommands(new CommandData("search", "Searches google and responds with the top 10 results")
+						.addOption(new OptionData(STRING, "Query", "What to search on google").setRequired(true)));
 				commands.queue();
 			}
 		}
