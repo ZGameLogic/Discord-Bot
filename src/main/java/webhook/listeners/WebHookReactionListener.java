@@ -77,7 +77,7 @@ public class WebHookReactionListener extends ListenerAdapter {
 				}
 				
 				eb.setColor(Color.BLUE);				
-				currentMessage.editMessage(eb.build()).complete();
+				event.retrieveMessage().complete().editMessage(eb.build()).complete();
 				currentMessage.clearReactions().complete();
 			}
 		}
