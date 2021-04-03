@@ -109,10 +109,7 @@ public class WebHookReactionListener extends ListenerAdapter {
 		HttpHeaders headers = new HttpHeaders();
 	    headers.setContentType(MediaType.APPLICATION_JSON);
 	    
-	    String plainCreds = "BShabowski:NjcwMjk5MDUxOTM3OnLnbm6v5WzJnj8LU2Q4sYn7Nvym";
-	    byte[] plainCredsBytes = plainCreds.getBytes();
-	    byte[] base64CredsBytes = Base64.encodeBase64(plainCredsBytes);
-	    String base64Creds = new String(base64CredsBytes);
+	    String base64Creds = encodedAuthorization();
 
 	    headers.add("Authorization", "Basic " + base64Creds);
 		HttpEntity<String> request = new HttpEntity<String>("{}", headers);
@@ -128,10 +125,7 @@ public class WebHookReactionListener extends ListenerAdapter {
 		HttpHeaders headers = new HttpHeaders();
 	    headers.setContentType(MediaType.APPLICATION_JSON);
 	    
-	    String plainCreds = "BShabowski:NjcwMjk5MDUxOTM3OnLnbm6v5WzJnj8LU2Q4sYn7Nvym";
-	    byte[] plainCredsBytes = plainCreds.getBytes();
-	    byte[] base64CredsBytes = Base64.encodeBase64(plainCredsBytes);
-	    String base64Creds = new String(base64CredsBytes);
+	    String base64Creds = encodedAuthorization();
 
 	    headers.add("Authorization", "Basic " + base64Creds);
 	    
@@ -175,5 +169,16 @@ public class WebHookReactionListener extends ListenerAdapter {
 				"}", headers);
 		String result = restTemplate.postForObject(link, request, String.class);
 		return result;
+	}
+
+	/**
+	 * @return
+	 */
+	private String encodedAuthorization() {
+		String plainCreds = "BShabowski:NjcwMjk5MDUxOTM3OnLnbm6v5WzJnj8LU2Q4sYn7Nvym";
+	    byte[] plainCredsBytes = plainCreds.getBytes();
+	    byte[] base64CredsBytes = Base64.encodeBase64(plainCredsBytes);
+	    String base64Creds = new String(base64CredsBytes);
+		return base64Creds;
 	}
 }
