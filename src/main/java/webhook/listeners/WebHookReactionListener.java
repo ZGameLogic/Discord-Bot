@@ -14,7 +14,6 @@ import org.springframework.web.client.RestTemplate;
 
 import data.ConfigLoader;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.MessageEmbed.Field;
 import net.dv8tion.jda.api.entities.TextChannel;
@@ -31,10 +30,10 @@ public class WebHookReactionListener extends ListenerAdapter {
 	
 	private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 	
-	private TextChannel channel;
+	private static TextChannel channel;
 	private ConfigLoader cl;
 	
-	private static Message currentMessage;
+	private static Long currentMessage;
 	
 	public WebHookReactionListener(ConfigLoader cl) {
 		this.cl = cl;
@@ -77,7 +76,7 @@ public class WebHookReactionListener extends ListenerAdapter {
 				eb.setColor(Color.BLUE);				
 				event.retrieveMessage().complete().editMessage(eb.build()).complete();
 				event.retrieveMessage().complete().clearReactions().complete();
-				currentMessage = event.retrieveMessage().complete();
+				currentMessage = event.retrieveMessage().complete().getIdLong();
 			}
 		}
 	}
@@ -87,7 +86,7 @@ public class WebHookReactionListener extends ListenerAdapter {
 		if(currentMessage != null) {
 		
 			EmbedBuilder eb = new EmbedBuilder();
-			MessageEmbed old = currentMessage.getEmbeds().get(0);
+			MessageEmbed old = channel.retrieveMessageById(currentMessage).complete().getEmbeds().get(0);
 		
 			eb.setTitle(old.getTitle(),"https://zgamelogic.com:7990/projects/BSPR/repos/discord-bot/browse");
 			eb.setAuthor(old.getAuthor().getName(), old.getAuthor().getUrl());
@@ -98,7 +97,7 @@ public class WebHookReactionListener extends ListenerAdapter {
 		
 			eb.setColor(color);
 		
-			currentMessage.editMessage(eb.build()).complete();
+			channel.editMessageById(currentMessage, eb.build()).complete();
 			currentMessage = null;
 		}
 	}
