@@ -38,7 +38,6 @@ public class Bot {
 
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
 		
-		
 		if(args.length > 0) {
 			LinkedList<String> arguments = new LinkedList<String>(Arrays.asList(args));
 			if(arguments.contains("party")) {
@@ -54,10 +53,7 @@ public class Bot {
 			bot.addEventListeners(new PartyRoomListener(config));
 			bot.addEventListeners(new CodeBotListener(config));
 			bot.addEventListeners(new WebHookReactionListener(config));
-		}
-		//bot.addEventListeners(new EventBotListener());
-		//bot.addEventListeners(new OneTimeMessageListener());
-		
+		}		
 		
 		// Login
 		try {
