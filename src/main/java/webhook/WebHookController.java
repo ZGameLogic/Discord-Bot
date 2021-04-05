@@ -48,8 +48,7 @@ public class WebHookController {
 	}
 	
 	private void handleBitbucket(JSONObject message) throws JSONException {
-		System.out.println(message);
-		if(message.get("eventKey").equals("repo:refs_changed")) {
+		if(message.getJSONArray("changes").getJSONObject(0).getJSONObject("ref").get("displayId").equals("development")) {
 			String repoName = message.getJSONObject("repository").getString("name");
 			String repoLink = message.getJSONObject("repository").getJSONObject("links").getJSONArray("self").getJSONObject(0).getString("href");
 			String commiter = message.getJSONObject("actor").getString("displayName");
