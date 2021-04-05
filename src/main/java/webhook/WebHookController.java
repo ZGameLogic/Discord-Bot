@@ -48,15 +48,18 @@ public class WebHookController {
 	}
 	
 	private void handleBitbucket(JSONObject message) throws JSONException {
-		String repoName = message.getJSONObject("repository").getString("name");
-		String repoLink = message.getJSONObject("repository").getJSONObject("links").getJSONArray("self").getJSONObject(0).getString("href");
-		String commiter = message.getJSONObject("actor").getString("displayName");
-		String commiterLink = message.getJSONObject("actor").getJSONObject("links").getJSONArray("self").getJSONObject(0).getString("href");
+		System.out.println(message);
+		if(message.get("eventKey").equals("repo:refs_changed")) {
+			String repoName = message.getJSONObject("repository").getString("name");
+			String repoLink = message.getJSONObject("repository").getJSONObject("links").getJSONArray("self").getJSONObject(0).getString("href");
+			String commiter = message.getJSONObject("actor").getString("displayName");
+			String commiterLink = message.getJSONObject("actor").getJSONObject("links").getJSONArray("self").getJSONObject(0).getString("href");
 		
-		MessageEmbed discordMessage = buildBitbucketMessage(commiter, commiterLink, repoName, repoLink);
+			MessageEmbed discordMessage = buildBitbucketMessage(commiter, commiterLink, repoName, repoLink);
 		
-		Message discordSentMessage = WebHookListener.getChannel().sendMessage(discordMessage).complete();
-		discordSentMessage.addReaction("U+1F3D7").queue();
+			Message discordSentMessage = WebHookListener.getChannel().sendMessage(discordMessage).complete();
+			discordSentMessage.addReaction("U+1F3D7").queue();
+		}
 	}
 	
 	private MessageEmbed buildBitbucketMessage(String commiter, String commiterLink, String repoName, String repoLink) {
