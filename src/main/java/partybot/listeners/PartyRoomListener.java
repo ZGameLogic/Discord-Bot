@@ -152,11 +152,11 @@ public class PartyRoomListener extends ListenerAdapter {
 		event.acknowledge(true).queue();
 		VoiceChannel channel = event.getMember().getVoiceState().getChannel();
 		if(event.getMember().getActivities().size() > 0 && channel != null) {
-			Activity activity = event.getMember().getActivities().get(0);
-			VoiceChannel newVoiceChannel = event.getGuild().createVoiceChannel(activity.getName())
+			String activity = event.getMember().getActivities().get(0).getName();
+			VoiceChannel newVoiceChannel = event.getGuild().createVoiceChannel(activity)
 					.setParent(partyGuilds.get(event.getGuild()).getPartyChatroomCategory()).complete();
 			for(Member x : channel.getMembers()) {
-				if(x.getActivities().size() > 0 && x.getActivities().get(0).equals(activity)) {
+				if(x.getActivities().size() > 0 && x.getActivities().get(0).getName().equals(activity)) {
 					event.getGuild().moveVoiceMember(x, newVoiceChannel).queue();
 				}
 			}
