@@ -213,6 +213,7 @@ public class PartyGuild implements Serializable {
 				false);
 		eb.addField("create-text", "Creates a private text channel for this chat room", false);
 		eb.addField("delete-text", "Deletes any text channel for this chat room", false);
+		eb.addField("breakout", "Creates a new chatroom and moves all people playing the same game as the user who issued the command into the new room", false);
 
 		eb.setFooter("For version: " + PartyRoomListener.VERSION);
 		

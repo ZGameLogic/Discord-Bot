@@ -1,8 +1,5 @@
 package test;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.json.JSONException;
 import org.springframework.http.HttpEntity;
