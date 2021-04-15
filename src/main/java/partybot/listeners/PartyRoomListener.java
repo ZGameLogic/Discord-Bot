@@ -26,6 +26,11 @@ import net.dv8tion.jda.api.requests.restaction.CommandUpdateAction.CommandData;
 import net.dv8tion.jda.api.requests.restaction.CommandUpdateAction.OptionData;
 import static net.dv8tion.jda.api.entities.Command.OptionType.*;
 
+/**
+ * 
+ * @author Ben Shabowski
+ *
+ */
 public class PartyRoomListener extends ListenerAdapter {
 
 	private Logger logger = LoggerFactory.getLogger(PartyRoomListener.class);
