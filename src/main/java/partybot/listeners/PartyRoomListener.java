@@ -151,9 +151,7 @@ public class PartyRoomListener extends ListenerAdapter {
 		String activity = "";
 		if(event.getMember().getActivities().size() > 0 && channel != null) {
 			for(Activity x : event.getMember().getActivities()) {
-				if(x.isRich()) {
-					activity = x.getName();
-				}
+				activity = x.getName();
 			}
 			
 			if(activity.equals("")) {
