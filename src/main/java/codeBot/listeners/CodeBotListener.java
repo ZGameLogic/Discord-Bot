@@ -93,6 +93,7 @@ public class CodeBotListener extends ListenerAdapter {
 				return 2;
 			}
 		}
+		
 		return 0;
 	}
 

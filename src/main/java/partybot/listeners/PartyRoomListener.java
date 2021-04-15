@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import data.ConfigLoader;
 import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.TextChannel;
@@ -30,7 +31,7 @@ public class PartyRoomListener extends ListenerAdapter {
 	private Logger logger = LoggerFactory.getLogger(PartyRoomListener.class);
 
 	// PartyBot version
-	public static final String VERSION = "1.1.0";
+	public static final String VERSION = "1.1.1";
 
 	private Map<Guild, PartyGuild> partyGuilds;
 
@@ -62,8 +63,7 @@ public class PartyRoomListener extends ListenerAdapter {
 								.addOption(new OptionData(INTEGER, "count", "Number of people allowed in the chatroom").setRequired(true)));
 				commands.addCommands(new CommandData("create-text","Creates a text chatroom that only people in the voice channel can see"));
 				commands.addCommands(new CommandData("delete-text","Deletes any associated text chat rooms tied to the voice channel"));
-				commands.addCommands(new CommandData("search", "Searches google and responds with the top 10 results")
-						.addOption(new OptionData(STRING, "Query", "What to search on google").setRequired(true)));
+				commands.addCommands(new CommandData("breakout","Creates a new chatroom and moves all people playing the same game as the user who issued the command into the new room"));
 				commands.queue();
 			}
 		}
@@ -134,9 +134,27 @@ public class PartyRoomListener extends ListenerAdapter {
 		case "delete-text":
 			deleteText(event);
 			break;
+		case "breakout":
+			breakoutRoom(event);
+			break;
 		default:
 			event.reply("I do not know what that command is").setEphemeral(true).queue();
 
+		}
+	}
+	
+	private void breakoutRoom(SlashCommandEvent event) {
+		event.acknowledge(true).queue();
+		VoiceChannel channel = event.getMember().getVoiceState().getChannel();
+		if(event.getMember().getActivities().size() > 0 && channel != null) {
+			Activity activity = event.getMember().getActivities().get(0);
+			VoiceChannel newVoiceChannel = event.getGuild().createVoiceChannel(activity.getName())
+					.setParent(partyGuilds.get(event.getGuild()).getPartyChatroomCategory()).complete();
+			for(Member x : channel.getMembers()) {
+				if(x.getActivities().size() > 0 && x.getActivities().get(0).equals(activity)) {
+					event.getGuild().moveVoiceMember(x, newVoiceChannel).queue();
+				}
+			}
 		}
 	}
 
