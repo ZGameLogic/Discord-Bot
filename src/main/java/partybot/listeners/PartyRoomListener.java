@@ -108,8 +108,6 @@ public class PartyRoomListener extends ListenerAdapter {
 		if (event.getMessage().getContentDisplay().startsWith("</") && event.getChannel() == partyGuilds.get(event.getGuild()).getCommandChannel()) {
 			event.getMessage().delete().queue();
 		}
-		
-		System.out.println(event.getMember().getActivities());
 	}
 
 	/**
@@ -149,19 +147,32 @@ public class PartyRoomListener extends ListenerAdapter {
 	}
 	
 	private void breakoutRoom(SlashCommandEvent event) {
-		event.acknowledge(true).queue();
 		VoiceChannel channel = event.getMember().getVoiceState().getChannel();
+		String activity = "";
 		if(event.getMember().getActivities().size() > 0 && channel != null) {
-			String activity = event.getMember().getActivities().get(0).getName();
+			for(Activity x : event.getMember().getActivities()) {
+				if(x.isRich()) {
+					activity = x.getName();
+				}
+			}
+			
+			if(activity.equals("")) {
+				event.reply("You must be playing a game to use this command").queue();
+				return;
+			}
+			
 			VoiceChannel newVoiceChannel = event.getGuild().createVoiceChannel(activity)
 					.setParent(partyGuilds.get(event.getGuild()).getPartyChatroomCategory()).complete();
 			for(Member x : channel.getMembers()) {
-				if(x.getActivities().size() > 0 && x.getActivities().get(0).getName().equals(activity)) {
-					event.getGuild().moveVoiceMember(x, newVoiceChannel).queue();
+				for(Activity y : x.getActivities()) {
+					if(y.getName().equals(activity)) {
+						event.getGuild().moveVoiceMember(x, newVoiceChannel).queue();
+						break;
+					}
 				}
 			}
 		}
-		
+		event.acknowledge(true).queue();
 	}
 
 	private void deleteText(SlashCommandEvent event) {
