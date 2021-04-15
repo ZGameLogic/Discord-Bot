@@ -18,6 +18,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.requests.restaction.CommandUpdateAction;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import partybot.listeners.PartyRoomListener;
 import webhook.listeners.WebHookListener;
 import webhook.listeners.WebHookReactionListener;
@@ -37,6 +38,8 @@ public class Bot {
 		context.close();
 
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
+		bot.enableIntents(GatewayIntent.GUILD_PRESENCES);
+		bot.enableCache(CacheFlag.ACTIVITY);
 		
 		if(args.length > 0) {
 			LinkedList<String> arguments = new LinkedList<String>(Arrays.asList(args));

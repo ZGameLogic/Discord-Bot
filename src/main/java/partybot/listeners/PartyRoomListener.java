@@ -58,13 +58,16 @@ public class PartyRoomListener extends ListenerAdapter {
 				commands.addCommands(
 						new CommandData("rename", "Renames the chatroom and any related text rooms to a new name")
 								.addOption(new OptionData(STRING, "name", "Name to rename too").setRequired(true)));
-				commands.addCommands(
-						new CommandData("limit", "Limits the amount of people who can enter a chatroom")
+				commands.addCommands(new CommandData("limit", "Limits the amount of people who can enter a chatroom")
 								.addOption(new OptionData(INTEGER, "count", "Number of people allowed in the chatroom").setRequired(true)));
 				commands.addCommands(new CommandData("create-text","Creates a text chatroom that only people in the voice channel can see"));
 				commands.addCommands(new CommandData("delete-text","Deletes any associated text chat rooms tied to the voice channel"));
 				commands.addCommands(new CommandData("breakout","Creates a new chatroom and moves all people playing the same game"));
-				commands.queue();
+				try {
+					commands.complete();
+				}catch(Exception e) {
+					logger.error("We have done too many updates on commands for today");
+				}
 			}
 		}
 
@@ -105,6 +108,8 @@ public class PartyRoomListener extends ListenerAdapter {
 		if (event.getMessage().getContentDisplay().startsWith("</") && event.getChannel() == partyGuilds.get(event.getGuild()).getCommandChannel()) {
 			event.getMessage().delete().queue();
 		}
+		
+		System.out.println(event.getMember().getActivities());
 	}
 
 	/**
@@ -156,6 +161,7 @@ public class PartyRoomListener extends ListenerAdapter {
 				}
 			}
 		}
+		
 	}
 
 	private void deleteText(SlashCommandEvent event) {
