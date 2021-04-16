@@ -170,16 +170,16 @@ public class PartyRoomListener extends ListenerAdapter {
 			VoiceChannel newVoiceChannel = event.getGuild().createVoiceChannel(activity)
 					.setParent(partyGuilds.get(event.getGuild()).getPartyChatroomCategory()).complete();
 			for(Member x : channel.getMembers()) {
-				try {
 					for(Activity y : x.getActivities()) {
-						if(y.getName().equals(activity)) {
-							event.getGuild().moveVoiceMember(x, newVoiceChannel).queue();
-							break;
+						try {
+							if(y.getName().equals(activity)) {
+								event.getGuild().moveVoiceMember(x, newVoiceChannel).queue();
+								break;
+							}
+						} catch (IllegalArgumentException e) {
+							logger.error("User has invalid activity for breakout");
 						}
 					}
-				} catch (IllegalArgumentException e) {
-					logger.error("User has invalid activity for breakout");
-				}
 			}
 		}
 		event.acknowledge(true).queue();
