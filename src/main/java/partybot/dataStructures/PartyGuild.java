@@ -20,7 +20,11 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.VoiceChannel;
 import partybot.listeners.PartyRoomListener;
-
+/**
+ * 
+ * @author Ben Shabowski
+ *
+ */
 public class PartyGuild implements Serializable {
 	
 	private static final long serialVersionUID = 1L;

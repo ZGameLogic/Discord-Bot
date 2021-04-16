@@ -155,10 +155,13 @@ public class PartyRoomListener extends ListenerAdapter {
 		VoiceChannel channel = event.getMember().getVoiceState().getChannel();
 		String activity = "";
 		if(event.getMember().getActivities().size() > 0 && channel != null) {
-			for(Activity x : event.getMember().getActivities()) {
-				activity = x.getName();
+			try {
+				for(Activity x : event.getMember().getActivities()) {
+					activity = x.getName();
+				}
+			} catch (IllegalArgumentException e) {
+				logger.error("User has invalid activity for breakout");
 			}
-			
 			if(activity.equals("")) {
 				event.reply("You must be playing a game to use this command").queue();
 				return;
@@ -167,11 +170,15 @@ public class PartyRoomListener extends ListenerAdapter {
 			VoiceChannel newVoiceChannel = event.getGuild().createVoiceChannel(activity)
 					.setParent(partyGuilds.get(event.getGuild()).getPartyChatroomCategory()).complete();
 			for(Member x : channel.getMembers()) {
-				for(Activity y : x.getActivities()) {
-					if(y.getName().equals(activity)) {
-						event.getGuild().moveVoiceMember(x, newVoiceChannel).queue();
-						break;
+				try {
+					for(Activity y : x.getActivities()) {
+						if(y.getName().equals(activity)) {
+							event.getGuild().moveVoiceMember(x, newVoiceChannel).queue();
+							break;
+						}
 					}
+				} catch (IllegalArgumentException e) {
+					logger.error("User has invalid activity for breakout");
 				}
 			}
 		}
