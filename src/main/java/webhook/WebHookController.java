@@ -4,6 +4,8 @@ import java.awt.Color;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,6 +45,22 @@ public class WebHookController {
 		}
 	}
 	
+	@PostMapping("/sendMessage")
+	public void sendMessageWebhook(@RequestBody String valueOne) {
+		try {
+			JSONObject JSONInformation = new JSONObject(valueOne);
+			sendMessage(JSONInformation);
+		} catch (JSONException e) {
+			
+		}
+	}
+	
+	@GetMapping("/channellist")
+	public ResponseEntity<String> getChannelList() {
+		System.out.println(WebHookReactionListener.getChannelList().toString());
+		return ResponseEntity.ok(WebHookReactionListener.getChannelList().toString());
+	}
+	
 	@PostMapping("/webhook/bamboo")
 	public void bambooWebhook(@RequestBody String valueOne) {
 		try {
@@ -51,6 +69,10 @@ public class WebHookController {
 		} catch (JSONException e) {
 			 
 		}
+	}
+	
+	private void sendMessage(JSONObject message) throws JSONException {
+		
 	}
 	
 	private void updateStatus(JSONObject message) throws JSONException {

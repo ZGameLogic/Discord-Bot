@@ -1,6 +1,7 @@
 package webhook.listeners;
 
 import java.awt.Color;
+import java.util.LinkedList;
 
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.json.JSONException;
@@ -33,14 +34,14 @@ public class WebHookReactionListener extends ListenerAdapter {
 	private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 	
 	private static TextChannel channel;
-	private ConfigLoader cl;
+	private static ConfigLoader cl;
 	
 	private static JDA bot;
 	
 	private static Long currentMessage;
 	
 	public WebHookReactionListener(ConfigLoader cl) {
-		this.cl = cl;
+		WebHookReactionListener.cl = cl;
 	}
 	
 	/**
@@ -79,6 +80,24 @@ public class WebHookReactionListener extends ListenerAdapter {
 			//TODO clear the bot activity
 			bot.getPresence().setActivity(null);
 		}
+	}
+	
+	public static JSONObject getChannelList() {
+		JSONObject channelList = new JSONObject();
+		
+		LinkedList<String> channelNames = new LinkedList<String>();
+		
+		for(TextChannel x : bot.getGuildById(cl.getPartyGuildIDs().get(0)).getTextChannels()) {
+			channelNames.add(x.getName());
+		}
+		
+		try {
+			channelList.put("channels", channelNames);
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		
+		return channelList;
 	}
 	
 	@Override
