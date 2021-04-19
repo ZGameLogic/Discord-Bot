@@ -57,7 +57,6 @@ public class WebHookController {
 	
 	@GetMapping("/channellist")
 	public ResponseEntity<String> getChannelList() {
-		System.out.println(WebHookReactionListener.getChannelList().toString());
 		return ResponseEntity.ok(WebHookReactionListener.getChannelList().toString());
 	}
 	
