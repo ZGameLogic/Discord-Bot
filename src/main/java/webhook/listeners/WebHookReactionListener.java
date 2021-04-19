@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.LinkedList;
 
 import org.apache.tomcat.util.codec.binary.Base64;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -82,22 +83,16 @@ public class WebHookReactionListener extends ListenerAdapter {
 		}
 	}
 	
-	public static JSONObject getChannelList() {
-		JSONObject channelList = new JSONObject();
-		
-		LinkedList<String> channelNames = new LinkedList<String>();
+	public static JSONArray getChannelList() throws JSONException {
+		JSONArray channelNames = new JSONArray();
 		
 		for(TextChannel x : bot.getGuildById(cl.getPartyGuildIDs().get(0)).getTextChannels()) {
-			channelNames.add(x.getName());
+			JSONObject channel = new JSONObject();
+			channel.put("name", x.getName());
+			channelNames.put(channel);
 		}
 		
-		try {
-			channelList.put("channels", channelNames);
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-		
-		return channelList;
+		return channelNames;
 	}
 	
 	@Override
