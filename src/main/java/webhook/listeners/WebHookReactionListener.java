@@ -14,6 +14,8 @@ import org.springframework.web.client.RestTemplate;
 
 import data.ConfigLoader;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.MessageEmbed.Field;
 import net.dv8tion.jda.api.entities.TextChannel;
@@ -33,6 +35,8 @@ public class WebHookReactionListener extends ListenerAdapter {
 	private static TextChannel channel;
 	private ConfigLoader cl;
 	
+	private static JDA bot;
+	
 	private static Long currentMessage;
 	
 	public WebHookReactionListener(ConfigLoader cl) {
@@ -44,10 +48,38 @@ public class WebHookReactionListener extends ListenerAdapter {
 	 */
 	@Override
 	public void onReady(ReadyEvent event) {
+		bot = event.getJDA();
 		logger.info("Webhook Reaction Listener started...");
 		channel = event.getJDA().getGuildById(cl.getBitbucketGuildIDs().get(0)).getTextChannelById(cl.getBitbucketGuildIDs().get(1));
 	}
 	
+	/**
+	 * Sets the status of the bot to this for this amount of time
+	 * @param status
+	 * @param type
+	 * @param time
+	 */
+	public static void changeStatus(String status, String type, String time) {
+		if(!status.equals("clear")) {
+			switch(type) {
+			case "listening":
+				bot.getPresence().setActivity(Activity.listening(status));
+				break;
+			case "playing":
+				bot.getPresence().setActivity(Activity.playing(status));
+				break;
+			case "watching":
+				bot.getPresence().setActivity(Activity.watching(status));
+				break;
+			case "competing":
+				bot.getPresence().setActivity(Activity.competing(status));
+				break;
+			}
+		}else {
+			//TODO clear the bot activity
+			bot.getPresence().setActivity(null);
+		}
+	}
 	
 	@Override
 	public void onMessageReactionAdd(MessageReactionAddEvent event) {
