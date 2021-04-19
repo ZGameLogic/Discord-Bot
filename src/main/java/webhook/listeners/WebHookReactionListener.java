@@ -129,6 +129,7 @@ public class WebHookReactionListener extends ListenerAdapter {
 	
 	public static void postMessage(long channelID, String message) {
 		System.out.println(channelID + "\n" + message);
+		bot.getGuildById(cl.getPartyGuildIDs().get(0)).getTextChannelById(channelID).sendMessage(message).queue();
 	}
 	
 	public static void changeStatus(Color color) {
