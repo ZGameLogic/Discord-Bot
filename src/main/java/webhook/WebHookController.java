@@ -33,6 +33,16 @@ public class WebHookController {
 		}
 	}
 	
+	@PostMapping("/update")
+	public void updateStatusWebhook(@RequestBody String valueOne) {
+		try {
+			JSONObject JSONInformation = new JSONObject(valueOne);
+			updateStatus(JSONInformation);
+		} catch (JSONException e) {
+			
+		}
+	}
+	
 	@PostMapping("/webhook/bamboo")
 	public void bambooWebhook(@RequestBody String valueOne) {
 		try {
@@ -41,6 +51,10 @@ public class WebHookController {
 		} catch (JSONException e) {
 			 
 		}
+	}
+	
+	private void updateStatus(JSONObject message) throws JSONException {
+		WebHookReactionListener.changeStatus(message.getString("status"), message.getString("activity"), "");
 	}
 	
 	private void handleBamboo(JSONObject message) throws JSONException {
