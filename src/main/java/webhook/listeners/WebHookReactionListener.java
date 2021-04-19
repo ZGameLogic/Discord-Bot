@@ -1,7 +1,6 @@
 package webhook.listeners;
 
 import java.awt.Color;
-import java.util.LinkedList;
 
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.json.JSONArray;
@@ -89,6 +88,7 @@ public class WebHookReactionListener extends ListenerAdapter {
 		for(TextChannel x : bot.getGuildById(cl.getPartyGuildIDs().get(0)).getTextChannels()) {
 			JSONObject channel = new JSONObject();
 			channel.put("name", x.getName());
+			channel.put("id", x.getIdLong());
 			channelNames.put(channel);
 		}
 		
@@ -125,6 +125,10 @@ public class WebHookReactionListener extends ListenerAdapter {
 				currentMessage = event.retrieveMessage().complete().getIdLong();
 			}
 		}
+	}
+	
+	public static void postMessage(long channelID, String message) {
+		System.out.println(channelID + "\n" + message);
 	}
 	
 	public static void changeStatus(Color color) {
