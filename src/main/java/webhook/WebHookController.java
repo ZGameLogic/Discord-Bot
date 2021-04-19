@@ -45,7 +45,7 @@ public class WebHookController {
 		}
 	}
 	
-	@PostMapping("/sendMessage")
+	@PostMapping("/sendmessage")
 	public void sendMessageWebhook(@RequestBody String valueOne) {
 		try {
 			JSONObject JSONInformation = new JSONObject(valueOne);
@@ -76,7 +76,7 @@ public class WebHookController {
 	}
 	
 	private void sendMessage(JSONObject message) throws JSONException {
-		
+		WebHookReactionListener.postMessage(message.getLong("id"), message.getString("message"));
 	}
 	
 	private void updateStatus(JSONObject message) throws JSONException {
