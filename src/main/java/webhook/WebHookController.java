@@ -57,7 +57,12 @@ public class WebHookController {
 	
 	@GetMapping("/channellist")
 	public ResponseEntity<String> getChannelList() {
-		return ResponseEntity.ok(WebHookReactionListener.getChannelList().toString());
+		try {
+			return ResponseEntity.ok(WebHookReactionListener.getChannelList().toString());
+		} catch (JSONException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 	
 	@PostMapping("/webhook/bamboo")
