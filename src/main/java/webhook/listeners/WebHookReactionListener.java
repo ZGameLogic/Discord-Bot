@@ -40,8 +40,11 @@ public class WebHookReactionListener extends ListenerAdapter {
 	
 	private static Long currentMessage;
 	
+	private static String password;
+	
 	public WebHookReactionListener(ConfigLoader cl) {
 		WebHookReactionListener.cl = cl;
+		password = cl.getPassword();
 	}
 	
 	/**
@@ -93,6 +96,10 @@ public class WebHookReactionListener extends ListenerAdapter {
 		}
 		
 		return channelNames;
+	}
+	
+	public static String getPassword() {
+		return password;
 	}
 	
 	@Override

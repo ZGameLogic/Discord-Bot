@@ -1,6 +1,7 @@
 package webhook;
 
 import java.awt.Color;
+import java.util.Stack;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -23,7 +24,9 @@ import webhook.listeners.WebHookReactionListener;
  *
  */
 @RestController
-public class WebHookController {
+public class APIController {
+	
+	private Stack<String> tokens = new Stack<String>();
 	
 	@PostMapping("/webhook/bitbucket")
 	public void bitbucketWebhook(@RequestBody String valueOne) {
@@ -39,7 +42,9 @@ public class WebHookController {
 	public void updateStatusWebhook(@RequestBody String valueOne) {
 		try {
 			JSONObject JSONInformation = new JSONObject(valueOne);
-			updateStatus(JSONInformation);
+			if(validate(JSONInformation.getString("token"))) {
+				updateStatus(JSONInformation);
+			}
 		} catch (JSONException e) {
 			
 		}
@@ -49,16 +54,21 @@ public class WebHookController {
 	public void sendMessageWebhook(@RequestBody String valueOne) {
 		try {
 			JSONObject JSONInformation = new JSONObject(valueOne);
-			sendMessage(JSONInformation);
+			if(validate(JSONInformation.getString("token"))) {
+				sendMessage(JSONInformation);
+			}
 		} catch (JSONException e) {
 			
 		}
 	}
 	
 	@GetMapping("/channellist")
-	public ResponseEntity<String> getChannelList() {
+	public ResponseEntity<String> getChannelList(@RequestBody String valueOne) {
 		try {
-			return ResponseEntity.ok(WebHookReactionListener.getChannelList().toString());
+			JSONObject JSONInformation = new JSONObject(valueOne);
+			if(validate(JSONInformation.getString("token"))) {
+				return ResponseEntity.ok(WebHookReactionListener.getChannelList().toString());
+			}
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
@@ -73,6 +83,38 @@ public class WebHookController {
 		} catch (JSONException e) {
 			 
 		}
+	}
+	
+	@PostMapping("/login")
+	public ResponseEntity<String> loginWebhook(@RequestBody String body) {
+		try {
+			JSONObject JSONInformation = new JSONObject(body);
+			return ResponseEntity.ok(login(JSONInformation).toString());
+		} catch (JSONException e) {
+			 
+		}
+		return null;
+	}
+	
+	public JSONObject login(JSONObject input) throws JSONException {
+		JSONObject output = new JSONObject();
+		if(input.getString("password").equals(WebHookReactionListener.getPassword())) {
+			String token = System.currentTimeMillis() + "";
+			tokens.add(token);
+			
+			if(tokens.size() > 10) {
+				tokens.remove(9);
+			}
+			
+			output.put("token", token);
+		}else {
+			output.put("token", "");
+		}
+		return output;
+	}
+	
+	private boolean validate(String token) {
+		return tokens.contains(token);
 	}
 	
 	private void sendMessage(JSONObject message) throws JSONException {
