@@ -31,8 +31,12 @@ public class ConfigLoader {
 	@Value("${Java.runtime}")
 	private String javaRuntime;
 	
+	@Value("${Admin.password}")
+	private String password;
+	
 	@Value("${Webhook.port}")
 	private int webHookPort;
+	
 	@Value("${Bitbucket.Guild.IDs}")
 	private String[] bitbucketGuildIDs;
 	
@@ -50,6 +54,10 @@ public class ConfigLoader {
 	
 	public String getJavaRuntime() {
 		return javaRuntime;
+	}
+	
+	public String getPassword() {
+		return password;
 	}
 	
 	public int getWebHookPort() {
