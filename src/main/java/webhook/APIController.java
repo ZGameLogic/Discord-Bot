@@ -62,7 +62,7 @@ public class APIController {
 		}
 	}
 	
-	@GetMapping("/channellist")
+	@PostMapping("/channellist")
 	public ResponseEntity<String> getChannelList(@RequestBody String valueOne) {
 		try {
 			JSONObject JSONInformation = new JSONObject(valueOne);
@@ -100,8 +100,7 @@ public class APIController {
 		JSONObject output = new JSONObject();
 		if(input.getString("password").equals(WebHookReactionListener.getPassword())) {
 			String token = System.currentTimeMillis() + "";
-			tokens.add(token);
-			
+			tokens.add(0, token);
 			if(tokens.size() > 10) {
 				tokens.remove(9);
 			}
