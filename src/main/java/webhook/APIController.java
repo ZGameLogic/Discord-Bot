@@ -6,7 +6,6 @@ import java.util.Stack;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,76 +28,53 @@ public class APIController {
 	private Stack<String> tokens = new Stack<String>();
 	
 	@PostMapping("/webhook/bitbucket")
-	public void bitbucketWebhook(@RequestBody String valueOne) {
-		try {
-			JSONObject JSONInformation = new JSONObject(valueOne);
-			handleBitbucket(JSONInformation);
-		} catch (JSONException e) {
-			 
-		}
+	public void bitbucketWebhook(@RequestBody String valueOne) throws JSONException {
+		JSONObject JSONInformation = new JSONObject(valueOne);
+		handleBitbucket(JSONInformation);
 	}
 	
 	@PostMapping("/update")
-	public void updateStatusWebhook(@RequestBody String valueOne) {
-		try {
-			JSONObject JSONInformation = new JSONObject(valueOne);
-			if(validate(JSONInformation.getString("token"))) {
-				updateStatus(JSONInformation);
-			}
-		} catch (JSONException e) {
-			
+	public void updateStatusWebhook(@RequestBody String valueOne) throws JSONException {
+		
+		JSONObject JSONInformation = new JSONObject(valueOne);
+		if(validate(JSONInformation.getString("token"))) {
+			updateStatus(JSONInformation);
 		}
 	}
 	
 	@PostMapping("/sendmessage")
-	public void sendMessageWebhook(@RequestBody String valueOne) {
-		try {
-			JSONObject JSONInformation = new JSONObject(valueOne);
-			if(validate(JSONInformation.getString("token"))) {
-				sendMessage(JSONInformation);
-			}
-		} catch (JSONException e) {
-			
+	public void sendMessageWebhook(@RequestBody String valueOne) throws JSONException {
+		JSONObject JSONInformation = new JSONObject(valueOne);
+		if(validate(JSONInformation.getString("token"))) {
+			sendMessage(JSONInformation);
 		}
 	}
 	
 	@PostMapping("/channellist")
-	public ResponseEntity<String> getChannelList(@RequestBody String valueOne) {
-		try {
-			JSONObject JSONInformation = new JSONObject(valueOne);
-			if(validate(JSONInformation.getString("token"))) {
-				return ResponseEntity.ok(WebHookReactionListener.getChannelList().toString());
-			}
-		} catch (JSONException e) {
-			e.printStackTrace();
+	public ResponseEntity<String> getChannelList(@RequestBody String valueOne) throws JSONException {
+		JSONObject JSONInformation = new JSONObject(valueOne);
+		if(validate(JSONInformation.getString("token"))) {
+			return ResponseEntity.ok(WebHookReactionListener.getChannelList().toString());
 		}
 		return null;
 	}
 	
 	@PostMapping("/webhook/bamboo")
-	public void bambooWebhook(@RequestBody String valueOne) {
-		try {
-			JSONObject JSONInformation = new JSONObject(valueOne);
-			handleBamboo(JSONInformation);
-		} catch (JSONException e) {
-			 
-		}
+	public void bambooWebhook(@RequestBody String valueOne) throws JSONException {
+		JSONObject JSONInformation = new JSONObject(valueOne);
+		handleBamboo(JSONInformation);
 	}
 	
 	@PostMapping("/login")
-	public ResponseEntity<String> loginWebhook(@RequestBody String body) {
-		try {
+	public ResponseEntity<String> loginWebhook(@RequestBody String body) throws JSONException {
 			JSONObject JSONInformation = new JSONObject(body);
 			return ResponseEntity.ok(login(JSONInformation).toString());
-		} catch (JSONException e) {
-			 
-		}
-		return null;
 	}
 	
-	public JSONObject login(JSONObject input) throws JSONException {
+	private JSONObject login(JSONObject input) throws JSONException {
 		JSONObject output = new JSONObject();
-		if(input.getString("password").equals(WebHookReactionListener.getPassword())) {
+		
+		if(input.has("password") && input.getString("password").equals(WebHookReactionListener.getPassword())) {
 			String token = System.currentTimeMillis() + "";
 			tokens.add(0, token);
 			if(tokens.size() > 10) {
@@ -106,7 +82,9 @@ public class APIController {
 			}
 			
 			output.put("token", token);
-		}else {
+		}else if(input.has("token") && validate(input.getString("token"))) {
+			output.put("token", input.getString("token"));
+		} else {
 			output.put("token", "");
 		}
 		return output;
