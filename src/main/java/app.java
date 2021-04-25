@@ -12,7 +12,6 @@ public class app {
 		Properties props = new Properties();
 		props.setProperty("server.port", "2000");
 		props.setProperty("spring.main.banner-mode", "off");
-		props.setProperty("logging.pattern.console", "");
 		props.setProperty("logging.level.root", "INFO");
         app.setDefaultProperties(props);
         app.run(args);
