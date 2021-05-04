@@ -14,6 +14,7 @@ import EventBot.listeners.EventBotListener;
 import codeBot.listeners.CodeBotListener;
 import data.ConfigLoader;
 import general.listeners.OneTimeMessageListener;
+import musicBot.listeners.MusicBotListener;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
@@ -26,9 +27,19 @@ import webhook.listeners.WebHookReactionListener;
 @SuppressWarnings("unused")
 public class Bot {
 	
+	private static String TITLE = "\r\n" + 
+			"   ____  ___  _                   _   ___      _  ______  \r\n" + 
+			"  / /\\ \\|   \\(_)___ __ ___ _ _ __| | | _ ) ___| |_\\ \\ \\ \\ \r\n" + 
+			" < <  > > |) | (_-</ _/ _ \\ '_/ _` | | _ \\/ _ \\  _|> > > >\r\n" + 
+			"  \\_\\/_/|___/|_/__/\\__\\___/_| \\__,_| |___/\\___/\\__/_/_/_/ \r\n" + 
+			"  v1.1.0\tBen Shabowski\tJacob Marszalek\r\n" + 
+			"";
+	
 	private Logger logger = LoggerFactory.getLogger(Bot.class);
 
 	public Bot(String[] args) {
+		
+		System.out.println(TITLE);
 		
 		// Load config
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
@@ -52,10 +63,19 @@ public class Bot {
 			if(arguments.contains("webhook")) {
 				bot.addEventListeners(new WebHookReactionListener(config));
 			}
+			if(arguments.contains("music")) {
+				bot.addEventListeners(new MusicBotListener(config));
+			}
+			if(arguments.contains("event")) {
+				bot.addEventListeners(new EventBotListener(config));
+				bot.addEventListeners(new WebHookReactionListener(config));
+			}
 		}else {
 			bot.addEventListeners(new PartyRoomListener(config));
 			bot.addEventListeners(new CodeBotListener(config));
 			bot.addEventListeners(new WebHookReactionListener(config));
+			bot.addEventListeners(new MusicBotListener(config));
+			bot.addEventListeners(new EventBotListener(config));
 		}		
 		
 		// Login
