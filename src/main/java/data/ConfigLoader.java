@@ -16,6 +16,12 @@ public class ConfigLoader {
 	@Value("${Party.Guild.IDs}")
 	private String[] partyGuildIDs;
 	
+	@Value("${Event.Guild.IDs}")
+	private String[] eventGuildIDs;
+	
+	@Value("${Event.Channel.IDs}")
+	private String[] eventChannelIDs;
+	
 	@Value("${Meme.Guild.IDs}")
 	private String[] memeGuildIDs;
 	
@@ -66,6 +72,14 @@ public class ConfigLoader {
 
 	public LinkedList<Long> getCodeGuildIDs(){
 		return stringToLongList(codeGuildIDs);
+	}
+	
+	public LinkedList<Long> getEventGuildIDs(){
+		return stringToLongList(eventGuildIDs);
+	}
+	
+	public LinkedList<Long> getEventChannelIDs(){
+		return stringToLongList(eventChannelIDs);
 	}
 	
 	public String getDatabaseLocation() {

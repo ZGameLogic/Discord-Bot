@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.MessageEmbed.Field;
 import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.entities.VoiceChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -98,6 +99,19 @@ public class WebHookReactionListener extends ListenerAdapter {
 		return channelNames;
 	}
 	
+	public static JSONArray getVoiceList() throws JSONException {
+		JSONArray channelNames = new JSONArray();
+		
+		for(VoiceChannel x : bot.getGuildById(cl.getPartyGuildIDs().get(0)).getVoiceChannels()) {
+			JSONObject channel = new JSONObject();
+			channel.put("name", x.getName());
+			channel.put("id", x.getIdLong());
+			channelNames.put(channel);
+		}
+		
+		return channelNames;
+	}
+	
 	public static String getPassword() {
 		return password;
 	}
@@ -132,6 +146,14 @@ public class WebHookReactionListener extends ListenerAdapter {
 				currentMessage = event.retrieveMessage().complete().getIdLong();
 			}
 		}
+	}
+	
+	public static void joinChannel(String id) {
+		bot.getGuildById(cl.getPartyGuildIDs().get(0)).getAudioManager().openAudioConnection(bot.getGuildById(cl.getPartyGuildIDs().get(0)).getVoiceChannelById(id));
+	}
+	
+	public static void leaveChannel() {
+		bot.getGuildById(cl.getPartyGuildIDs().get(0)).getAudioManager().closeAudioConnection();
 	}
 	
 	public static void postMessage(long channelID, String message) {

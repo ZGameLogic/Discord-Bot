@@ -5,7 +5,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 import bot.Bot;
 
-@SpringBootApplication(scanBasePackages = {"webhook"})
+@SpringBootApplication(scanBasePackages = {"webhook", "EventBot.controllers"})
 public class app {
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(app.class);

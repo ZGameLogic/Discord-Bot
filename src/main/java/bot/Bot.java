@@ -27,14 +27,13 @@ import webhook.listeners.WebHookReactionListener;
 @SuppressWarnings("unused")
 public class Bot {
 	
-	private static String TITLE = "   _________ _                       _  ______       _  ____   \r\n" + 
-			"  / / /  _  (_)                     | | | ___ \\     | | \\ \\ \\  \r\n" + 
-			" / / /| | | |_ ___  ___ ___  _ __ __| | | |_/ / ___ | |_ \\ \\ \\ \r\n" + 
-			"< < < | | | | / __|/ __/ _ \\| '__/ _` | | ___ \\/ _ \\| __| > > >\r\n" + 
-			" \\ \\ \\| |/ /| \\__ \\ (_| (_) | | | (_| | | |_/ / (_) | |_ / / / \r\n" + 
-			"  \\_\\_\\___/ |_|___/\\___\\___/|_|  \\__,_| \\____/ \\___/ \\__/_/_/  \r\n" + 
-			"v. 1.1.0                                                      \r\n" + 
-			"                                                              ";
+	private static String TITLE = "\r\n" + 
+			"   ____  ___  _                   _   ___      _  ______  \r\n" + 
+			"  / /\\ \\|   \\(_)___ __ ___ _ _ __| | | _ ) ___| |_\\ \\ \\ \\ \r\n" + 
+			" < <  > > |) | (_-</ _/ _ \\ '_/ _` | | _ \\/ _ \\  _|> > > >\r\n" + 
+			"  \\_\\/_/|___/|_/__/\\__\\___/_| \\__,_| |___/\\___/\\__/_/_/_/ \r\n" + 
+			"  v1.1.0\tBen Shabowski\tJacob Marszalek\r\n" + 
+			"";
 	
 	private Logger logger = LoggerFactory.getLogger(Bot.class);
 
@@ -67,11 +66,16 @@ public class Bot {
 			if(arguments.contains("music")) {
 				bot.addEventListeners(new MusicBotListener(config));
 			}
+			if(arguments.contains("event")) {
+				bot.addEventListeners(new EventBotListener(config));
+				bot.addEventListeners(new WebHookReactionListener(config));
+			}
 		}else {
 			bot.addEventListeners(new PartyRoomListener(config));
 			bot.addEventListeners(new CodeBotListener(config));
 			bot.addEventListeners(new WebHookReactionListener(config));
 			bot.addEventListeners(new MusicBotListener(config));
+			bot.addEventListeners(new EventBotListener(config));
 		}		
 		
 		// Login
