@@ -14,18 +14,18 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.VoiceChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
+import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.requests.restaction.CommandUpdateAction;
 import partybot.dataStructures.PartyGuild;
-import net.dv8tion.jda.api.requests.restaction.CommandUpdateAction.CommandData;
-import net.dv8tion.jda.api.requests.restaction.CommandUpdateAction.OptionData;
-import static net.dv8tion.jda.api.entities.Command.OptionType.*;
 
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 /**
  * 
  * @author Ben Shabowski
@@ -62,9 +62,9 @@ public class PartyRoomListener extends ListenerAdapter {
 
 				commands.addCommands(
 						new CommandData("rename", "Renames the chatroom and any related text rooms to a new name")
-								.addOption(new OptionData(STRING, "name", "Name to rename too").setRequired(true)));
+								.addOption(new OptionData(OptionType.STRING, "name", "Name to rename too").setRequired(true)));
 				commands.addCommands(new CommandData("limit", "Limits the amount of people who can enter a chatroom")
-								.addOption(new OptionData(INTEGER, "count", "Number of people allowed in the chatroom").setRequired(true)));
+								.addOption(new OptionData(OptionType.INTEGER, "count", "Number of people allowed in the chatroom").setRequired(true)));
 				commands.addCommands(new CommandData("create-text","Creates a text chatroom that only people in the voice channel can see"));
 				commands.addCommands(new CommandData("delete-text","Deletes any associated text chat rooms tied to the voice channel"));
 				commands.addCommands(new CommandData("breakout","Creates a new chatroom and moves all people playing the same game"));
