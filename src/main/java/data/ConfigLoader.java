@@ -13,6 +13,12 @@ public class ConfigLoader {
 	@Value("${bot.token}")
 	private String botToken;
 	
+	@Value("${keystore.password}")
+	private String keystorePassword;
+	
+	@Value("${keystore.location}")
+	private String keystoreLocation;
+	
 	@Value("${Party.Guild.IDs}")
 	private String[] partyGuildIDs;
 	
@@ -60,6 +66,14 @@ public class ConfigLoader {
 	
 	public String getJavaRuntime() {
 		return javaRuntime;
+	}
+	
+	public String getKeystorePassword() {
+		return keystorePassword;
+	}
+	
+	public String getKeystoreLocation() {
+		return keystoreLocation;
 	}
 	
 	public String getPassword() {
