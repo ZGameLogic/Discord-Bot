@@ -37,16 +37,9 @@ public class Bot {
 	
 	private Logger logger = LoggerFactory.getLogger(Bot.class);
 
-	public Bot(String[] args) {
+	public Bot(String[] args, ConfigLoader config) {
 		
 		System.out.println(TITLE);
-		
-		// Load config
-		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
-		context.scan("data");
-		context.refresh();
-		ConfigLoader config = context.getBean(ConfigLoader.class);
-		context.close();
 
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
 		bot.enableIntents(GatewayIntent.GUILD_PRESENCES);
