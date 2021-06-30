@@ -20,7 +20,7 @@ public class MusicBotListener extends ListenerAdapter {
 	 */
 	@Override
 	public void onReady(ReadyEvent event) {
-		logger.info("Code bot Listener started...");
+		logger.info("Music bot Listener started...");
 		//event.getJDA().getGuildById(738850921706029168l).getAudioManager().openAudioConnection(event.getJDA().getGuildById(738850921706029168l).getVoiceChannelById(738850921706029172l));
 	}
 

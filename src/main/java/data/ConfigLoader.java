@@ -19,32 +19,17 @@ public class ConfigLoader {
 	@Value("${keystore.location}")
 	private String keystoreLocation;
 	
-	@Value("${Party.Guild.IDs}")
-	private String[] partyGuildIDs;
-	
-	@Value("${Event.Guild.IDs}")
-	private String[] eventGuildIDs;
-	
-	@Value("${Event.Channel.IDs}")
-	private String[] eventChannelIDs;
-	
-	@Value("${Meme.Guild.IDs}")
-	private String[] memeGuildIDs;
-	
 	@Value("${Meme.Database.Location}")
 	private String databaseLocation;
 	
 	@Value("${Meme.Storage.Location}")
 	private String memeStorageLocation;
 	
-	@Value("${Code.Guild.IDs}")
-	private String[] codeGuildIDs;
-	
 	@Value("${Java.runtime}")
 	private String javaRuntime;
 	
 	@Value("${Admin.password}")
-	private String password;
+	private String admin;
 	
 	@Value("${Webhook.port}")
 	private int webHookPort;
@@ -58,6 +43,10 @@ public class ConfigLoader {
 			converted.add(Long.parseLong(x));
 		}
 		return converted;
+	}
+	
+	public String getPassword() {
+		return admin;
 	}
 	
 	public LinkedList<Long> getBitbucketGuildIDs(){
@@ -76,24 +65,8 @@ public class ConfigLoader {
 		return keystoreLocation;
 	}
 	
-	public String getPassword() {
-		return password;
-	}
-	
 	public int getWebHookPort() {
 		return webHookPort;
-	}
-
-	public LinkedList<Long> getCodeGuildIDs(){
-		return stringToLongList(codeGuildIDs);
-	}
-	
-	public LinkedList<Long> getEventGuildIDs(){
-		return stringToLongList(eventGuildIDs);
-	}
-	
-	public LinkedList<Long> getEventChannelIDs(){
-		return stringToLongList(eventChannelIDs);
 	}
 	
 	public String getDatabaseLocation() {
@@ -103,14 +76,6 @@ public class ConfigLoader {
 	public String getMemeStorageLocation() {
 		return memeStorageLocation;
 	}
-
-	public LinkedList<Long> getMemeGuildIDs(){
-		return stringToLongList(memeGuildIDs);
-	}
-	
-	public LinkedList<Long> getPartyGuildIDs(){
-		return stringToLongList(partyGuildIDs);
-	}
 	
 	public String getBotToken() {
 		return botToken;
@@ -118,14 +83,6 @@ public class ConfigLoader {
 
 	public void setBotToken(String botToken) {
 		this.botToken = botToken;
-	}
-
-	public void setPartyGuildIDs(String[] partyGuildIDs) {
-		this.partyGuildIDs = partyGuildIDs;
-	}
-
-	public void setMemeGuildIDs(String[] memeGuildIDs) {
-		this.memeGuildIDs = memeGuildIDs;
 	}
 
 	public void setDatabaseLocation(String databaseLocation) {

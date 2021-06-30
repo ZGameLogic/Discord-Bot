@@ -81,7 +81,6 @@ public class WebHookReactionListener extends ListenerAdapter {
 				break;
 			}
 		}else {
-			//TODO clear the bot activity
 			bot.getPresence().setActivity(null);
 		}
 	}
@@ -89,7 +88,7 @@ public class WebHookReactionListener extends ListenerAdapter {
 	public static JSONArray getChannelList() throws JSONException {
 		JSONArray channelNames = new JSONArray();
 		
-		for(TextChannel x : bot.getGuildById(cl.getPartyGuildIDs().get(0)).getTextChannels()) {
+		for(TextChannel x : bot.getGuildById(330751526735970305l).getTextChannels()) {
 			JSONObject channel = new JSONObject();
 			channel.put("name", x.getName());
 			channel.put("id", x.getIdLong());
@@ -102,7 +101,7 @@ public class WebHookReactionListener extends ListenerAdapter {
 	public static JSONArray getVoiceList() throws JSONException {
 		JSONArray channelNames = new JSONArray();
 		
-		for(VoiceChannel x : bot.getGuildById(cl.getPartyGuildIDs().get(0)).getVoiceChannels()) {
+		for(VoiceChannel x : bot.getGuildById(330751526735970305l).getVoiceChannels()) {
 			JSONObject channel = new JSONObject();
 			channel.put("name", x.getName());
 			channel.put("id", x.getIdLong());
@@ -149,15 +148,15 @@ public class WebHookReactionListener extends ListenerAdapter {
 	}
 	
 	public static void joinChannel(String id) {
-		bot.getGuildById(cl.getPartyGuildIDs().get(0)).getAudioManager().openAudioConnection(bot.getGuildById(cl.getPartyGuildIDs().get(0)).getVoiceChannelById(id));
+		bot.getGuildById(330751526735970305l).getAudioManager().openAudioConnection(bot.getGuildById(330751526735970305l).getVoiceChannelById(id));
 	}
 	
 	public static void leaveChannel() {
-		bot.getGuildById(cl.getPartyGuildIDs().get(0)).getAudioManager().closeAudioConnection();
+		bot.getGuildById(330751526735970305l).getAudioManager().closeAudioConnection();
 	}
 	
 	public static void postMessage(long channelID, String message) {
-		bot.getGuildById(cl.getPartyGuildIDs().get(0)).getTextChannelById(channelID).sendMessage(message).queue();
+		bot.getGuildById(330751526735970305l).getTextChannelById(channelID).sendMessage(message).queue();
 	}
 	
 	public static void changeStatus(Color color) {

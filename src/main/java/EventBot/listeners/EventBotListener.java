@@ -19,6 +19,8 @@ import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import setup.data.Guild.GuildType;
+import setup.listeners.SetupListener;
 
 public class EventBotListener extends ListenerAdapter {
 
@@ -27,9 +29,9 @@ public class EventBotListener extends ListenerAdapter {
 	// event list to hold all events
 	private static LinkedList<DiscordEvent> events;
 	private static JDA bot;
-	private static ConfigLoader cl;
+	private static SetupListener sl;
 	
-	public EventBotListener(ConfigLoader cl) {
+	public EventBotListener(SetupListener sl) {
 		events = new LinkedList<DiscordEvent>();
 		
 		File eventDir = new File("BotData\\Events");
@@ -44,7 +46,7 @@ public class EventBotListener extends ListenerAdapter {
 		
 		new Timing().start();
 		
-		EventBotListener.cl = cl;
+		EventBotListener.sl = sl;
 	}
 	
 	/**
@@ -55,7 +57,7 @@ public class EventBotListener extends ListenerAdapter {
 		bot = event.getJDA();
 		logger.info("Event Listener started...");
 		for(DiscordEvent e : events) {
-			bot.getGuildById(cl.getEventGuildIDs().get(0)).getTextChannelById(cl.getEventChannelIDs().get(0)).editMessageById(e.getMessageID(), e.getMessage()).queue();
+			bot.getGuildById(e.getGuildID()).getTextChannelById(e.getTextChannelID()).editMessageById(e.getMessageID(), e.getMessage()).queue();
 		}
 	}
 	
@@ -111,7 +113,7 @@ public class EventBotListener extends ListenerAdapter {
 	
 	public static void addEvent(DiscordEvent event) {
 		events.add(event);
-		TextChannel announ = bot.getGuildById(cl.getEventGuildIDs().get(0)).getTextChannelById(cl.getEventChannelIDs().get(0));
+		TextChannel announ = bot.getGuildById(event.getGuildID()).getTextChannelById(event.getTextChannelID());
 		
 		Message message = announ.sendMessage(event.getMessage()).complete();
 		
@@ -141,7 +143,7 @@ public class EventBotListener extends ListenerAdapter {
 					if(currentTime.after(e.getDate())) {
 						removeEvents.add(e);
 					}else {
-						bot.getGuildById(cl.getEventGuildIDs().get(0)).getTextChannelById(cl.getEventChannelIDs().get(0)).editMessageById(e.getMessageID(), e.getMessage()).queue();
+						bot.getGuildById(e.getGuildID()).getTextChannelById(e.getTextChannelID()).editMessageById(e.getMessageID(), e.getMessage()).queue();
 					}
 				}
 				

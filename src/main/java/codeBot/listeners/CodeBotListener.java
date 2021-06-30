@@ -2,7 +2,6 @@ package codeBot.listeners;
 
 import java.awt.Color;
 import java.io.File;
-import java.util.LinkedList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,19 +13,21 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import setup.data.Guild.GuildType;
+import setup.listeners.SetupListener;
 
 public class CodeBotListener extends ListenerAdapter {
 
 	private Logger logger = LoggerFactory.getLogger(CodeBotListener.class);
 	private File codeBase;
 	private File runtime;
-	private LinkedList<Long> CodeGuildIds;
+	private SetupListener sl;
 
-	public CodeBotListener(ConfigLoader cl) {
+	public CodeBotListener(ConfigLoader cl, SetupListener sl) {
 		codeBase = new File("BotData\\Code base");
 		if (!codeBase.exists())
 			codeBase.mkdir();
-		CodeGuildIds = cl.getCodeGuildIDs();
+		this.sl = sl;
 		runtime = new File(cl.getJavaRuntime());
 	}
 
@@ -56,7 +57,7 @@ public class CodeBotListener extends ListenerAdapter {
 		if (messageType > 0) {
 			
 			if(event.isFromGuild()) {
-				if(CodeGuildIds.contains(event.getGuild().getIdLong())){
+				if(sl.getGuildIDs(GuildType.Code).contains(event.getGuild().getId())){
 					if (event.getMessage().getContentDisplay().contains("```")) {
 						handleCodeInput(event);
 					}else if(messageType == 2) {
