@@ -37,6 +37,8 @@ public class PartyRoomListener extends ListenerAdapter {
 	//private Map<Guild, PartyGuild> partyGuilds;
 
 	private SetupListener sl;
+	
+	public static final String[] chatroomNames = {"Chatroom", "Hangout", "Chillin"};
 
 	public PartyRoomListener(SetupListener sl) {
 
@@ -270,7 +272,7 @@ public class PartyRoomListener extends ListenerAdapter {
 							.setDeny(Permission.VIEW_CHANNEL).queue();
 				} catch (IllegalStateException e) {
 					e.printStackTrace();
-					System.out.println("we died");
+					logger.error("we died");
 				}
 			}
 
@@ -298,10 +300,11 @@ public class PartyRoomListener extends ListenerAdapter {
 		// joined create channel
 		if (sl.getGuildIDs(GuildType.Party).contains(guild.getId()) && sl.getGuildById(guild.getId()).getCreateVoiceChannelID().equals(joinChannel.getId())) {
 			int number = 1;
-			while (guild.getVoiceChannelsByName("Chatroom " + number, true).size() > 0) {
+			String chatroomName = chatroomNames[(int)(Math.random() * chatroomNames.length)];
+			while (guild.getVoiceChannelsByName(chatroomName + " " + number, true).size() > 0) {
 				number++;
 			}
-			VoiceChannel newChannel = guild.createVoiceChannel("Chatroom " + number)
+			VoiceChannel newChannel = guild.createVoiceChannel(chatroomName + " " + number)
 					.setParent(guild.getCategoryById(sl.getGuildById(guild.getId()).getPartyChatroomCategoryID())).complete();
 			guild.moveVoiceMember(user, newChannel).queue();
 		} else if (sl.getGuildIDs(GuildType.Party).contains(guild.getId())
@@ -317,7 +320,6 @@ public class PartyRoomListener extends ListenerAdapter {
 			} catch (IllegalStateException e) {
 
 			}
-
 		}
 	}
 }
