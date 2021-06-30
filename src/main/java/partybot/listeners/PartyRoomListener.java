@@ -1,14 +1,11 @@
 package partybot.listeners;
 
-import java.util.HashMap;
-import java.util.Map;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import data.ConfigLoader;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Activity;
+import net.dv8tion.jda.api.entities.Category;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.TextChannel;
@@ -18,13 +15,12 @@ import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
-import net.dv8tion.jda.api.events.message.guild.GuildMessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
-import net.dv8tion.jda.api.requests.restaction.CommandUpdateAction;
-import partybot.dataStructures.PartyGuild;
-
+import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
+import setup.data.Guild.GuildType;
+import setup.listeners.SetupListener;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 /**
  * 
@@ -38,15 +34,15 @@ public class PartyRoomListener extends ListenerAdapter {
 	// PartyBot version
 	public static final String VERSION = "1.1.1";
 
-	private Map<Guild, PartyGuild> partyGuilds;
+	//private Map<Guild, PartyGuild> partyGuilds;
 
-	private ConfigLoader cl;
+	private SetupListener sl;
 
-	public PartyRoomListener(ConfigLoader cl) {
+	public PartyRoomListener(SetupListener sl) {
 
-		this.cl = cl;
+		this.sl = sl;
 
-		partyGuilds = new HashMap<Guild, PartyGuild>();
+		//partyGuilds = new HashMap<Guild, PartyGuild>();
 	}
 
 	/**
@@ -55,36 +51,41 @@ public class PartyRoomListener extends ListenerAdapter {
 	@Override
 	public void onReady(ReadyEvent event) {
 
-		for (Long id : cl.getPartyGuildIDs()) {
+		for (String id : sl.getGuildIDs(GuildType.Party)) {
 			if (event.getJDA().getGuildById(id) != null) {
-				partyGuilds.put(event.getJDA().getGuildById(id), new PartyGuild(event.getJDA().getGuildById(id)));
-				CommandUpdateAction commands = event.getJDA().getGuildById(id).updateCommands();
+				CommandListUpdateAction commands = event.getJDA().getGuildById(id).updateCommands();
 
 				commands.addCommands(
 						new CommandData("rename", "Renames the chatroom and any related text rooms to a new name")
-								.addOption(new OptionData(OptionType.STRING, "name", "Name to rename too").setRequired(true)));
+								.addOptions(new OptionData(OptionType.STRING, "name", "Name to rename too").setRequired(true)));
 				commands.addCommands(new CommandData("limit", "Limits the amount of people who can enter a chatroom")
-								.addOption(new OptionData(OptionType.INTEGER, "count", "Number of people allowed in the chatroom").setRequired(true)));
+								.addOptions(new OptionData(OptionType.INTEGER, "count", "Number of people allowed in the chatroom").setRequired(true)));
 				commands.addCommands(new CommandData("create-text","Creates a text chatroom that only people in the voice channel can see"));
 				commands.addCommands(new CommandData("delete-text","Deletes any associated text chat rooms tied to the voice channel"));
 				commands.addCommands(new CommandData("breakout","Creates a new chatroom and moves all people playing the same game"));
 				try {
+					commands.submit();
 					commands.complete();
 				}catch(Exception e) {
 					logger.error("We have done too many updates on commands for today");
 				}
+				
+				// Update party guild ignored channels
+				try {
+					sl.getGuildById(id).getIgnoredChannelList().add(event.getJDA().getGuildById(id).getAfkChannel());
+				} catch(NullPointerException e) {
+					
+				}
+				try {
+					sl.getGuildById(id).getIgnoredChannelList().add(event.getJDA().getGuildById(id).getVoiceChannelById(sl.getGuildById(id).getCreateVoiceChannelID()));
+				} catch(NullPointerException e) {
+					
+				}
+				
 			}
 		}
 
 		logger.info("Party Room Listener started...");
-	}
-
-	/**
-	 * When we get a message
-	 */
-	@Override
-	public void onGuildMessageReceived(GuildMessageReceivedEvent event) {
-		onGuildMessageRecieved(event);
 	}
 
 	/**
@@ -102,17 +103,6 @@ public class PartyRoomListener extends ListenerAdapter {
 	public void onGuildVoiceMove(GuildVoiceMoveEvent event) {
 		playerLeft(event.getChannelLeft(), event.getMember(), event.getGuild());
 		playerJoined(event.getChannelJoined(), event.getMember(), event.getGuild());
-	}
-	
-	/**
-	 * Takes an incoming message event and handles it
-	 * 
-	 * @param event
-	 */
-	public void onGuildMessageRecieved(GuildMessageReceivedEvent event) {
-		if (event.getMessage().getContentDisplay().startsWith("</") && event.getChannel() == partyGuilds.get(event.getGuild()).getCommandChannel()) {
-			event.getMessage().delete().queue();
-		}
 	}
 
 	/**
@@ -167,8 +157,9 @@ public class PartyRoomListener extends ListenerAdapter {
 				return;
 			}
 			
-			VoiceChannel newVoiceChannel = event.getGuild().createVoiceChannel(activity)
-					.setParent(partyGuilds.get(event.getGuild()).getPartyChatroomCategory()).complete();
+			Category cat = event.getGuild().getCategoryById(sl.getGuildById(event.getGuild().getId()).getPartyChatroomCategoryID());
+			
+			VoiceChannel newVoiceChannel = event.getGuild().createVoiceChannel(activity).setParent(cat).complete();
 			for(Member x : channel.getMembers()) {
 					for(Activity y : x.getActivities()) {
 						try {
@@ -182,27 +173,19 @@ public class PartyRoomListener extends ListenerAdapter {
 					}
 			}
 		}
-		event.acknowledge(true).queue();
-	}
-
-	private void deleteText(SlashCommandEvent event) {
-		event.acknowledge(true).queue();
-		VoiceChannel channel = event.getMember().getVoiceState().getChannel();
-
-		if (channel != null && partyGuilds.get(event.getGuild()).getChannelLinks().containsKey(channel)) {
-			partyGuilds.get(event.getGuild()).getChannelLinks().get(channel).delete().queue();
-			partyGuilds.get(event.getGuild()).getChannelLinks().remove(channel);
-		}
+		
+		event.reply("").queue();
 	}
 
 	private void createText(SlashCommandEvent event) {
-		event.acknowledge(true).queue();
+		event.reply("").queue();
+		Category cat = event.getGuild().getCategoryById(sl.getGuildById(event.getGuild().getId()).getPartyChatroomCategoryID());
 		VoiceChannel channel = event.getMember().getVoiceState().getChannel();
 
-		if (channel != null && !partyGuilds.get(event.getGuild()).getChannelLinks().containsKey(channel)) {
+		if (channel != null && !sl.getGuildById(event.getGuild().getId()).getChannelLinks().containsKey(channel)) {
 			TextChannel tx = event.getGuild().createTextChannel(channel.getName())
-					.setParent(partyGuilds.get(event.getGuild()).getPartyChatroomCategory()).complete();
-			partyGuilds.get(event.getGuild()).getChannelLinks().put(channel, tx);
+					.setParent(cat).complete();
+			sl.getGuildById(event.getGuild().getId()).getChannelLinks().put(channel, tx);
 
 			// Hide the channel
 			tx.createPermissionOverride(event.getGuild().getPublicRole()).setDeny(Permission.VIEW_CHANNEL).queue();
@@ -214,21 +197,31 @@ public class PartyRoomListener extends ListenerAdapter {
 
 	}
 	
+	private void deleteText(SlashCommandEvent event) {
+		event.reply("").queue();
+		VoiceChannel channel = event.getMember().getVoiceState().getChannel();
+
+		if (channel != null && sl.getGuildById(event.getGuild().getId()).getChannelLinks().containsKey(channel)) {
+			sl.getGuildById(event.getGuild().getId()).getChannelLinks().get(channel).delete().queue();
+			sl.getGuildById(event.getGuild().getId()).getChannelLinks().remove(channel);
+		}
+	}
+	
 	/**
 	 * Renames chat room
 	 * 
 	 * @param event
 	 */
 	private void rename(SlashCommandEvent event) {
-		event.acknowledge(true).queue();
+		event.reply("").queue();
 		try {
 			VoiceChannel channel = event.getMember().getVoiceState().getChannel();
 			if (channel != null) {
 				try {
 					// rename the channel and set valid command to true
 					channel.getManager().setName(event.getOption("name").getAsString()).queue();
-					if (partyGuilds.get(event.getGuild()).getChannelLinks().containsKey(channel)) {
-						partyGuilds.get(event.getGuild()).getChannelLinks().get(channel).getManager()
+					if (sl.getGuildById(event.getGuild().getId()).getChannelLinks().containsKey(channel)) {
+						sl.getGuildById(event.getGuild().getId()).getChannelLinks().get(channel).getManager()
 								.setName(event.getOption("name").getAsString()).queue();
 					}
 				} catch (IllegalArgumentException e1) {
@@ -241,7 +234,7 @@ public class PartyRoomListener extends ListenerAdapter {
 	}
 	
 	private void limit(SlashCommandEvent event) {
-		event.acknowledge(true).queue();
+		event.reply("").queue();
 		try {
 			VoiceChannel channel = event.getMember().getVoiceState().getChannel();
 			if (channel != null) {
@@ -263,13 +256,17 @@ public class PartyRoomListener extends ListenerAdapter {
 	 * @param leftChannel The channel the player left
 	 */
 	private void playerLeft(VoiceChannel leftChannel, Member user, Guild guild) {
-		if (partyGuilds.containsKey(guild) && !partyGuilds.get(guild).getIgnoredChannels().contains(leftChannel)
-				&& leftChannel.getParent() != null) {
+		if (sl.getGuildIDs(GuildType.Party).contains(guild.getId()) && 
+				!sl.getGuildById(
+						guild.getId())
+				.getIgnoredChannelList()
+				.contains(leftChannel) && 
+				leftChannel.getParent() != null) {
 
 			// we need to remove them from being able to view the text channel if it exists
-			if (partyGuilds.get(guild).getChannelLinks().containsKey(leftChannel)) {
+			if (sl.getGuildById(guild.getId()).getChannelLinks().containsKey(leftChannel)) {
 				try {
-					partyGuilds.get(guild).getChannelLinks().get(leftChannel).putPermissionOverride(user)
+					sl.getGuildById(guild.getId()).getChannelLinks().get(leftChannel).putPermissionOverride(user)
 							.setDeny(Permission.VIEW_CHANNEL).queue();
 				} catch (IllegalStateException e) {
 					e.printStackTrace();
@@ -278,14 +275,14 @@ public class PartyRoomListener extends ListenerAdapter {
 			}
 
 			// we do this is there are 0 people left in the room
-			if (leftChannel.getParent().equals(partyGuilds.get(guild).getPartyChatroomCategory())
+			if (leftChannel.getParent().equals(guild.getCategoryById(sl.getGuildById(guild.getId()).getPartyChatroomCategoryID()))
 					&& leftChannel.getMembers().size() <= 0) {
 				// delete the channel
 				leftChannel.delete().queue();
 
-				if (partyGuilds.get(guild).getChannelLinks().containsKey(leftChannel)) {
-					partyGuilds.get(guild).getChannelLinks().get(leftChannel).delete().queue();
-					partyGuilds.get(guild).getChannelLinks().remove(leftChannel);
+				if (sl.getGuildById(guild.getId()).getChannelLinks().containsKey(leftChannel)) {
+					sl.getGuildById(guild.getId()).getChannelLinks().get(leftChannel).delete().queue();
+					sl.getGuildById(guild.getId()).getChannelLinks().remove(leftChannel);
 				}
 			}
 		}
@@ -299,22 +296,22 @@ public class PartyRoomListener extends ListenerAdapter {
 	 */
 	private void playerJoined(VoiceChannel joinChannel, Member user, Guild guild) {
 		// joined create channel
-		if (partyGuilds.containsKey(guild) && partyGuilds.get(guild).getCreateRoom() == joinChannel) {
+		if (sl.getGuildIDs(GuildType.Party).contains(guild.getId()) && sl.getGuildById(guild.getId()).getCreateVoiceChannelID().equals(joinChannel.getId())) {
 			int number = 1;
 			while (guild.getVoiceChannelsByName("Chatroom " + number, true).size() > 0) {
 				number++;
 			}
 			VoiceChannel newChannel = guild.createVoiceChannel("Chatroom " + number)
-					.setParent(partyGuilds.get(guild).getPartyChatroomCategory()).complete();
+					.setParent(guild.getCategoryById(sl.getGuildById(guild.getId()).getPartyChatroomCategoryID())).complete();
 			guild.moveVoiceMember(user, newChannel).queue();
-		} else if (partyGuilds.containsKey(guild)
-				&& joinChannel.getParent() == partyGuilds.get(guild).getPartyChatroomCategory()) {
+		} else if (sl.getGuildIDs(GuildType.Party).contains(guild.getId())
+				&& joinChannel.getParent() == guild.getCategoryById(sl.getGuildById(guild.getId()).getPartyChatroomCategoryID())) {
 			// we get here if they join a chatroom and it isnt the create chatroom but is a
 			// created chatroom
 			try {
 				// we need to add them to being able to view the text channel if it exists
-				if (partyGuilds.get(guild).getChannelLinks().containsKey(joinChannel)) {
-					partyGuilds.get(guild).getChannelLinks().get(joinChannel).putPermissionOverride(user)
+				if (sl.getGuildById(guild.getId()).getChannelLinks().containsKey(joinChannel)) {
+					 sl.getGuildById(guild.getId()).getChannelLinks().get(joinChannel).putPermissionOverride(user)
 							.setAllow(Permission.VIEW_CHANNEL).queue();
 				}
 			} catch (IllegalStateException e) {

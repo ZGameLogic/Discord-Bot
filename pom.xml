@@ -49,26 +49,12 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<version>2.4.4</version>
 		</dependency>
-<!--
 		<dependency>
 			<groupId>net.dv8tion</groupId>
 			<artifactId>JDA</artifactId>
-			<version>4.2.1_262</version>
+			<version>4.3.0_277</version>
 		</dependency>
- -->
-		<dependency>
-			<groupId>com.github.DV8FromTheWorld</groupId>
-			<artifactId>JDA</artifactId>
-			<version>feature~slash-commands-SNAPSHOT</version>
-			<exclusions>
-				<exclusion>
-					<groupId>club.minnced</groupId>
-					<artifactId>opus-java</artifactId>
-				</exclusion>
-			</exclusions>
-		</dependency>
-
-
+		
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>

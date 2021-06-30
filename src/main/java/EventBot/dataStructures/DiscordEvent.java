@@ -20,6 +20,8 @@ public class DiscordEvent implements Serializable {
 	private String messageID;
 	private Set<String> userIDs;
 	private String filePath;
+	private String guildID;
+	private String textChannelID;
 	
 	public DiscordEvent(Calendar date, String name, String description) {
 		this.date = date;
@@ -56,6 +58,14 @@ public class DiscordEvent implements Serializable {
 
 	public String getMessageID() {
 		return messageID;
+	}
+
+	public String getGuildID() {
+		return guildID;
+	}
+
+	public String getTextChannelID() {
+		return textChannelID;
 	}
 
 	public void setMessageID(String messageID) {

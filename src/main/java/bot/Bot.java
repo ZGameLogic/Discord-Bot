@@ -18,9 +18,9 @@ import musicBot.listeners.MusicBotListener;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
-import net.dv8tion.jda.api.requests.restaction.CommandUpdateAction;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import partybot.listeners.PartyRoomListener;
+import setup.listeners.SetupListener;
 import webhook.listeners.WebHookListener;
 import webhook.listeners.WebHookReactionListener;
 
@@ -45,13 +45,17 @@ public class Bot {
 		bot.enableIntents(GatewayIntent.GUILD_PRESENCES);
 		bot.enableCache(CacheFlag.ACTIVITY);
 		
+		SetupListener setupListener = new SetupListener();
+		
+		bot.addEventListeners(setupListener);
+		
 		if(args.length > 0) {
 			LinkedList<String> arguments = new LinkedList<String>(Arrays.asList(args));
 			if(arguments.contains("party")) {
-				bot.addEventListeners(new PartyRoomListener(config));
+				bot.addEventListeners(new PartyRoomListener(setupListener));
 			}
 			if(arguments.contains("code")) {
-				bot.addEventListeners(new CodeBotListener(config));
+				bot.addEventListeners(new CodeBotListener(config, setupListener));
 			}
 			if(arguments.contains("webhook")) {
 				bot.addEventListeners(new WebHookReactionListener(config));
@@ -60,15 +64,15 @@ public class Bot {
 				bot.addEventListeners(new MusicBotListener(config));
 			}
 			if(arguments.contains("event")) {
-				bot.addEventListeners(new EventBotListener(config));
+				bot.addEventListeners(new EventBotListener(setupListener));
 				bot.addEventListeners(new WebHookReactionListener(config));
 			}
 		}else {
-			bot.addEventListeners(new PartyRoomListener(config));
-			bot.addEventListeners(new CodeBotListener(config));
+			bot.addEventListeners(new PartyRoomListener(setupListener));
+			bot.addEventListeners(new CodeBotListener(config, setupListener));
 			bot.addEventListeners(new WebHookReactionListener(config));
 			bot.addEventListeners(new MusicBotListener(config));
-			bot.addEventListeners(new EventBotListener(config));
+			bot.addEventListeners(new EventBotListener(setupListener));
 		}		
 		
 		// Login
