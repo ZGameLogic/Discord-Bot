@@ -1,35 +1,51 @@
 package test;
 
-import org.apache.tomcat.util.codec.binary.Base64;
-import org.json.JSONException;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.web.client.RestTemplate;
+import java.util.Properties;
+import org.springframework.boot.SpringApplication;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-public class SlashBotExample
-{
-    public static void main(String[] args) throws JSONException
-    {
-    	System.out.println(mergePullRequest("26"));
-    }
-    
-	private static String mergePullRequest(String pullRequestID) {
-		String link = "https://zgamelogic.com:7990/rest/api/1.0/projects/BSPR/repos/discord-bot/pull-requests/" + pullRequestID + "/merge?version=0";
-		RestTemplate restTemplate = new RestTemplate();
-		HttpHeaders headers = new HttpHeaders();
-	    headers.setContentType(MediaType.APPLICATION_JSON);
-	    
-	    String plainCreds = "BShabowski:NjcwMjk5MDUxOTM3OnLnbm6v5WzJnj8LU2Q4sYn7Nvym";
-	    byte[] plainCredsBytes = plainCreds.getBytes();
-	    byte[] base64CredsBytes = Base64.encodeBase64(plainCredsBytes);
-	    String base64Creds = new String(base64CredsBytes);
+import bot.Bot;
+import data.ConfigLoader;
+import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.requests.GatewayIntent;
+import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
-	    headers.add("Authorization", "Basic " + base64Creds);
-		HttpEntity<String> request = new HttpEntity<String>("{}", headers);
-	    
-	    String result = restTemplate.postForObject(link, request, String.class);
-	    
-		return result;
+public class SlashBotExample {
+	
+	public static void main(String[] args) {
+		SpringApplication app = new SpringApplication(SlashBotExample.class);
+
+		// Load config
+		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
+		context.scan("data");
+		context.refresh();
+		ConfigLoader config = context.getBean(ConfigLoader.class);
+		context.close();
+
+		Properties props = new Properties();
+		props.setProperty("server.port", config.getWebHookPort() + "");
+		props.setProperty("spring.main.banner-mode", "off");
+		props.setProperty("logging.level.root", "INFO");
+
+		// SSL stuff
+
+		props.setProperty("server.ssl.enabled", "true");
+
+		props.setProperty("server.ssl.key-store", config.getKeystoreLocation());
+
+		props.setProperty("server.ssl.key-alias", "tomcat");
+		props.setProperty("server.ssl.key-store-password", config.getKeystorePassword());
+
+		app.setDefaultProperties(props);
+		app.run(args);
+		new Bot(args, config);
 	}
+	
+    public void BotTest(String[] args, ConfigLoader config) { 
+    	
+    	JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
+		bot.enableIntents(GatewayIntent.GUILD_PRESENCES);
+		bot.enableCache(CacheFlag.ACTIVITY);
+		
+    }
 }

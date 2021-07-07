@@ -38,7 +38,7 @@ public class PartyRoomListener extends ListenerAdapter {
 
 	private SetupListener sl;
 	
-	public static final String[] chatroomNames = {"Chatroom", "Hangout", "Chillin"};
+	public static final String[] chatroomNames = {"Chatroom", "Hangout", "Chillin", "Its bedtime"};
 
 	public PartyRoomListener(SetupListener sl) {
 
@@ -64,7 +64,6 @@ public class PartyRoomListener extends ListenerAdapter {
 								.addOptions(new OptionData(OptionType.INTEGER, "count", "Number of people allowed in the chatroom").setRequired(true)));
 				commands.addCommands(new CommandData("create-text","Creates a text chatroom that only people in the voice channel can see"));
 				commands.addCommands(new CommandData("delete-text","Deletes any associated text chat rooms tied to the voice channel"));
-				commands.addCommands(new CommandData("breakout","Creates a new chatroom and moves all people playing the same game"));
 				try {
 					commands.submit();
 					commands.complete();
@@ -139,7 +138,6 @@ public class PartyRoomListener extends ListenerAdapter {
 			break;
 		default:
 			event.reply("I do not know what that command is").setEphemeral(true).queue();
-
 		}
 	}
 	
@@ -180,7 +178,7 @@ public class PartyRoomListener extends ListenerAdapter {
 	}
 
 	private void createText(SlashCommandEvent event) {
-		event.reply("").queue();
+		event.reply("Created text channel").queue();
 		Category cat = event.getGuild().getCategoryById(sl.getGuildById(event.getGuild().getId()).getPartyChatroomCategoryID());
 		VoiceChannel channel = event.getMember().getVoiceState().getChannel();
 
@@ -200,7 +198,7 @@ public class PartyRoomListener extends ListenerAdapter {
 	}
 	
 	private void deleteText(SlashCommandEvent event) {
-		event.reply("").queue();
+		event.reply("Deleted text channel").queue();
 		VoiceChannel channel = event.getMember().getVoiceState().getChannel();
 
 		if (channel != null && sl.getGuildById(event.getGuild().getId()).getChannelLinks().containsKey(channel)) {
@@ -215,7 +213,7 @@ public class PartyRoomListener extends ListenerAdapter {
 	 * @param event
 	 */
 	private void rename(SlashCommandEvent event) {
-		event.reply("").queue();
+		event.reply("Renamed chatroom to " + event.getOption("name").getAsString()).queue();
 		try {
 			VoiceChannel channel = event.getMember().getVoiceState().getChannel();
 			if (channel != null) {
@@ -236,7 +234,7 @@ public class PartyRoomListener extends ListenerAdapter {
 	}
 	
 	private void limit(SlashCommandEvent event) {
-		event.reply("").queue();
+		event.reply("Limited chatroom to " + event.getOption("count").getAsString() + " user(s)").queue();
 		try {
 			VoiceChannel channel = event.getMember().getVoiceState().getChannel();
 			if (channel != null) {

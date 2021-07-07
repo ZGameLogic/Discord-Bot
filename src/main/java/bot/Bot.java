@@ -21,6 +21,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import partybot.listeners.PartyRoomListener;
 import setup.listeners.SetupListener;
+import test.listeners.TestListener;
 import webhook.listeners.WebHookListener;
 import webhook.listeners.WebHookReactionListener;
 
@@ -66,6 +67,9 @@ public class Bot {
 			if(arguments.contains("event")) {
 				bot.addEventListeners(new EventBotListener(setupListener));
 				bot.addEventListeners(new WebHookReactionListener(config));
+			}
+			if(arguments.contains("test")) {
+				bot.addEventListeners(new TestListener());
 			}
 		}else {
 			bot.addEventListeners(new PartyRoomListener(setupListener));

@@ -8,7 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import EventBot.dataStructures.DiscordEvent;
-import data.ConfigLoader;
 import data.DataCacher;
 import java.awt.Color;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -19,7 +18,6 @@ import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import setup.data.Guild.GuildType;
 import setup.listeners.SetupListener;
 
 public class EventBotListener extends ListenerAdapter {
@@ -29,6 +27,7 @@ public class EventBotListener extends ListenerAdapter {
 	// event list to hold all events
 	private static LinkedList<DiscordEvent> events;
 	private static JDA bot;
+	@SuppressWarnings("unused")
 	private static SetupListener sl;
 	
 	public EventBotListener(SetupListener sl) {
