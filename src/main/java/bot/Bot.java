@@ -95,7 +95,4 @@ public class Bot {
 			logger.error("Unable to launch bot");
 		}		
 	}
-
-	
-
 }
