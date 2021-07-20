@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import setup.listeners.SetupListener;
 
+
 public class EventBotListener extends ListenerAdapter {
 
 	private Logger logger = LoggerFactory.getLogger(EventBotListener.class);
