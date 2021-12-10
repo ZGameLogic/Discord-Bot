@@ -8,9 +8,9 @@ import bot.Bot;
 import data.ConfigLoader;
 
 @SpringBootApplication(scanBasePackages = { "webhook", "EventBot.controllers" })
-public class app {
+public class App {
 	public static void main(String[] args) {
-		SpringApplication app = new SpringApplication(app.class);
+		SpringApplication app = new SpringApplication(App.class);
 
 		// Load config
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
