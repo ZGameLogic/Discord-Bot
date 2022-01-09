@@ -37,6 +37,15 @@ public class ConfigLoader {
 	@Value("${Bitbucket.Guild.IDs}")
 	private String[] bitbucketGuildIDs;
 	
+	@Value("${chatroom.cat.id}")
+	private long chatroomCatID;
+	
+	@Value("${create.chat.id}")
+	private long createChatID;
+	
+	@Value("${guild.id}")
+	private long guildID;
+	
 	private LinkedList<Long> stringToLongList(String[] array){
 		LinkedList<Long> converted = new LinkedList<Long>();
 		for(String x : array) {
@@ -80,17 +89,17 @@ public class ConfigLoader {
 	public String getBotToken() {
 		return botToken;
 	}
-
-	public void setBotToken(String botToken) {
-		this.botToken = botToken;
+	
+	public long getChatroomCatID() {
+		return chatroomCatID;
 	}
 
-	public void setDatabaseLocation(String databaseLocation) {
-		this.databaseLocation = databaseLocation;
+	public long getCreateChatID() {
+		return createChatID;
 	}
 
-	public void setMemeStorageLocation(String memeStorageLocation) {
-		this.memeStorageLocation = memeStorageLocation;
+	public long getGuildID() {
+		return guildID;
 	}
 	
 	

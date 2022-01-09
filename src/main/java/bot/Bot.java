@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
+import bot.party.PartyBotListener;
 import data.ConfigLoader;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -37,6 +38,8 @@ public class Bot {
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
 		bot.enableIntents(GatewayIntent.GUILD_PRESENCES);
 		bot.enableCache(CacheFlag.ACTIVITY);		
+		
+		bot.addEventListeners(new PartyBotListener(config));
 		
 		// Login
 		try {
