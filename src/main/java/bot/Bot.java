@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import bot.party.PartyBotListener;
+import bot.slashUtils.SlashBotListener;
 import data.ConfigLoader;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -40,6 +41,7 @@ public class Bot {
 		bot.enableCache(CacheFlag.ACTIVITY);		
 		
 		bot.addEventListeners(new PartyBotListener(config));
+		bot.addEventListeners(new SlashBotListener());
 		
 		// Login
 		try {
