@@ -15,6 +15,18 @@ public class Team implements Comparable<Team>{
 		this.tb = tb;
 	}
 	
+	public String toPlayerString() {
+		String players = "";
+		
+		for(Group g : groups) {
+			for(String p : g.getPlayers()) {
+				players += p + " ";
+			}
+		}
+		
+		return players.trim();
+	}
+	
 	public void addGroup(Group group) {
 		groups.add(group);
 	}

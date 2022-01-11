@@ -1,16 +1,19 @@
 package controllers.team;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.PriorityQueue;
 
 public abstract class TeamGenerator {
 	
-	public static LinkedList<Team> generateTeams(String command) throws GroupCreationException {
-		return parseString(command);
+	@SuppressWarnings("unchecked")
+	public static LinkedList<Team> generateTeams(String command) throws GroupCreationException, TeamNameException {
+		HashMap<String, Object> map = parseString(command);
+		return generateTeams((LinkedList<TeamBuilder>)map.get("teams"), (LinkedList<Group>)map.get("groups"), null);
 	}
 	
-	private static LinkedList<Team> parseString(String command) {
+	private static HashMap<String, Object> parseString(String command) {
 		LinkedList<TeamBuilder> teams = new LinkedList<>();
 		LinkedList<Group> groups = new LinkedList<>();
 		
@@ -84,13 +87,11 @@ public abstract class TeamGenerator {
 		for(int[] index : groupTies) {
 			groups.get(index[0]).addAvoid(groups.get(index[1]));
 		}
+		HashMap<String, Object> map = new HashMap<>();
+		map.put("teams", teams);
+		map.put("groups", groups);
 		
-		try {
-			return generateTeams(teams, groups, null);
-		} catch (GroupCreationException | TeamNameException e) {
-			e.printStackTrace();
-		}
-		return null;
+		return map;
 	}
 	
 	public static String extractString(String all, String start, String end) {
