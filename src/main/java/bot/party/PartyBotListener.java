@@ -12,6 +12,8 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.VoiceChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
+import net.dv8tion.jda.api.events.ReconnectedEvent;
+import net.dv8tion.jda.api.events.ResumedEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
@@ -45,6 +47,18 @@ public class PartyBotListener extends ListenerAdapter {
 	@Override
 	public void onReady(ReadyEvent event) {
 		logger.info("Party bot listener activated");
+		checkCreateChatroom(event.getJDA().getGuildById(guildID).getVoiceChannelById(createChatID), event.getJDA().getGuildById(guildID));
+	}
+	
+	@Override
+	public void onReconnected(ReconnectedEvent event) {
+		logger.info("Party bot listener re-activated");
+		checkCreateChatroom(event.getJDA().getGuildById(guildID).getVoiceChannelById(createChatID), event.getJDA().getGuildById(guildID));
+	}
+	
+	@Override
+	public void onResumed(ResumedEvent event) {
+		logger.info("Party bot listener re-activated");
 		checkCreateChatroom(event.getJDA().getGuildById(guildID).getVoiceChannelById(createChatID), event.getJDA().getGuildById(guildID));
 	}
 	
