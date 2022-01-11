@@ -40,8 +40,10 @@ public class Bot {
 		bot.enableIntents(GatewayIntent.GUILD_PRESENCES);
 		bot.enableCache(CacheFlag.ACTIVITY);		
 		
-		bot.addEventListeners(new PartyBotListener(config));
-		bot.addEventListeners(new SlashBotListener());
+		PartyBotListener PBL = new PartyBotListener(config);
+		
+		bot.addEventListeners(PBL);
+		bot.addEventListeners(new SlashBotListener(PBL));
 		
 		// Login
 		try {

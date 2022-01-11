@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import bot.party.PartyBotListener;
 import controllers.team.Team;
 import controllers.team.TeamGenerator;
 import controllers.team.TeamGenerator.GroupCreationException;
@@ -24,6 +25,12 @@ public class SlashBotListener extends ListenerAdapter {
 	
 	private String lastTeamGen;
 	
+	private PartyBotListener PBL;
+	
+	public SlashBotListener(PartyBotListener PBL) {
+		this.PBL = PBL;
+	}
+	
 	/**
 	 * Login event
 	 */
@@ -32,10 +39,18 @@ public class SlashBotListener extends ListenerAdapter {
 		lastTeamGen = "";
 		logger.info("Slash bot listener activated");
 		CommandListUpdateAction c = event.getJDA().getGuildById(738850921706029168l).updateCommands();
+		
+		// Team commands
 		c.addCommands(new CommandData("teams-help", "PMs the user a message for helping them generate a team"));
 		c.addCommands(new CommandData("teams-generate-again", "Runs the last team generation command again"));
 		c.addCommands(new CommandData("teams-generate", "Generates teams based off an inputted command")
 				.addOption(OptionType.STRING, "command", "Command to generate teams", true));
+		
+		// Party bot commands
+		c.addCommands(new CommandData("create-text", "Creates a text chatroom that only people in the voice channel can see"));
+		c.addCommands(new CommandData("rename-chatroom", "Renames chatroom to a new name")
+				.addOption(OptionType.STRING, "name", "Chatroom name", true));
+		
 		c.submit();
 		c.complete();
 	}
@@ -51,6 +66,12 @@ public class SlashBotListener extends ListenerAdapter {
 			break;
 		case "teams-help":
 			sendTeamHelp(event);
+			break;
+		case "create-text":
+			PBL.createTextChannel(event);
+			break;
+		case "rename-chatroom":
+			PBL.renameChannel(event);
 			break;
 		}
 	}
