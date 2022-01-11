@@ -10,20 +10,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-import EventBot.listeners.EventBotListener;
-import codeBot.listeners.CodeBotListener;
+import bot.party.PartyBotListener;
+import bot.slashUtils.SlashBotListener;
 import data.ConfigLoader;
-import general.listeners.OneTimeMessageListener;
-import musicBot.listeners.MusicBotListener;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
-import partybot.listeners.PartyRoomListener;
-import setup.listeners.SetupListener;
-import test.listeners.TestListener;
-import webhook.listeners.WebHookListener;
-import webhook.listeners.WebHookReactionListener;
 
 
 @SuppressWarnings("unused")
@@ -34,7 +27,7 @@ public class Bot {
 			"  / /\\ \\|   \\(_)___ __ ___ _ _ __| | | _ ) ___| |_\\ \\ \\ \\ \r\n" + 
 			" < <  > > |) | (_-</ _/ _ \\ '_/ _` | | _ \\/ _ \\  _|> > > >\r\n" + 
 			"  \\_\\/_/|___/|_/__/\\__\\___/_| \\__,_| |___/\\___/\\__/_/_/_/ \r\n" + 
-			"  v1.1.0\tBen Shabowski\tJacob Marszalek\r\n" + 
+			"  v2.0.0\tBen Shabowski\tJacob Marszalek\r\n" + 
 			"";
 	
 	private Logger logger = LoggerFactory.getLogger(Bot.class);
@@ -45,53 +38,16 @@ public class Bot {
 
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
 		bot.enableIntents(GatewayIntent.GUILD_PRESENCES);
-		bot.enableCache(CacheFlag.ACTIVITY);
+		bot.enableCache(CacheFlag.ACTIVITY);		
 		
-		SetupListener setupListener = new SetupListener();
+		PartyBotListener PBL = new PartyBotListener(config);
 		
-		bot.addEventListeners(setupListener);
-		
-		if(args.length > 0) {
-			LinkedList<String> arguments = new LinkedList<String>(Arrays.asList(args));
-			if(arguments.contains("party")) {
-				bot.addEventListeners(new PartyRoomListener(setupListener));
-			}
-			if(arguments.contains("code")) {
-				bot.addEventListeners(new CodeBotListener(config, setupListener));
-			}
-			if(arguments.contains("webhook")) {
-				bot.addEventListeners(new WebHookReactionListener(config));
-			}
-			if(arguments.contains("music")) {
-				bot.addEventListeners(new MusicBotListener(config));
-			}
-			if(arguments.contains("event")) {
-				bot.addEventListeners(new EventBotListener(setupListener));
-				bot.addEventListeners(new WebHookReactionListener(config));
-			}
-			if(arguments.contains("test")) {
-				bot.addEventListeners(new TestListener());
-			}
-		}else {
-			bot.addEventListeners(new PartyRoomListener(setupListener));
-			bot.addEventListeners(new CodeBotListener(config, setupListener));
-			bot.addEventListeners(new WebHookReactionListener(config));
-			bot.addEventListeners(new MusicBotListener(config));
-			bot.addEventListeners(new EventBotListener(setupListener));
-		}		
+		bot.addEventListeners(PBL);
+		bot.addEventListeners(new SlashBotListener(PBL, config));
 		
 		// Login
 		try {
 			JDA jdaBot = bot.build().awaitReady();
-			
-			if(args.length > 0) {
-				LinkedList<String> arguments = new LinkedList<String>(Arrays.asList(args));
-				if(arguments.contains("webhook")) {
-					new WebHookListener(config, jdaBot);
-				}
-			}else {
-				new WebHookListener(config, jdaBot);
-			}
 		} catch (LoginException | InterruptedException e) {
 			logger.error("Unable to launch bot");
 		}		
