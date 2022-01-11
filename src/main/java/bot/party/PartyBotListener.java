@@ -106,14 +106,15 @@ public class PartyBotListener extends ListenerAdapter {
 				if (!channelLinks.containsKey(voice)) {
 					TextChannel newChannel = event.getGuild().createTextChannel(voice.getName())
 							.setParent(event.getGuild().getCategoryById(chatroomCatID)).complete();
-					
+
 					// Hide the channel from everyone
-					newChannel.createPermissionOverride(event.getGuild().getPublicRole()).setDeny(Permission.VIEW_CHANNEL).queue();
-					
-					for(Member m : voice.getMembers()) {
+					newChannel.createPermissionOverride(event.getGuild().getPublicRole())
+							.setDeny(Permission.VIEW_CHANNEL).queue();
+
+					for (Member m : voice.getMembers()) {
 						newChannel.createPermissionOverride(m).setAllow(Permission.VIEW_CHANNEL).queue();
 					}
-					
+
 					channelLinks.put(voice, newChannel);
 
 					event.reply("Text channel created").queue();
@@ -131,25 +132,26 @@ public class PartyBotListener extends ListenerAdapter {
 
 	public void renameChannel(SlashCommandEvent event) {
 		// get voice channel the user is is
+		try {
+			AudioChannel voice = event.getMember().getVoiceState().getChannel();
+			if (event.getGuild().getVoiceChannelById(voice.getIdLong()).getParentCategoryIdLong() == chatroomCatID) {
 				try {
-					AudioChannel voice = event.getMember().getVoiceState().getChannel();
-					if (event.getGuild().getVoiceChannelById(voice.getIdLong()).getParentCategoryIdLong() == chatroomCatID) {
-						try {
-							// rename the channel and set valid command to true
-							voice.getManager().setName(event.getOption("name").getAsString()).queue();
-							if (channelLinks.containsKey(voice)) {
-								channelLinks.get(voice).getManager().setName(event.getOption("name").getAsString()).queue();
-							}
-							event.reply("Channel name updated").queue();
-						} catch (IllegalArgumentException e1) {
-							event.reply("Channel name not updated").queue();
-						}
-					} else {
-						event.reply("You are not in a voice channel that supports this command").queue();
+					// rename the channel and set valid command to true
+					voice.getManager().setName(event.getOption("name").getAsString()).queue();
+					if (channelLinks.containsKey(voice)) {
+						channelLinks.get(voice).getManager().setName(event.getOption("name").getAsString()).queue();
 					}
-				} catch (NullPointerException e) {
-					event.reply("You are not in a voice channel that supports this command").queue();
+					event.reply("Channel name updated").queue();
+					logger.info("Renamed chatroom");
+				} catch (IllegalArgumentException e1) {
+					event.reply("Channel name not updated").queue();
 				}
+			} else {
+				event.reply("You are not in a voice channel that supports this command").queue();
+			}
+		} catch (NullPointerException e) {
+			event.reply("You are not in a voice channel that supports this command").queue();
+		}
 	}
 
 	/**
@@ -166,14 +168,16 @@ public class PartyBotListener extends ListenerAdapter {
 			if (channel.getIdLong() != createChatID) {
 				// We get here if the channel left in is the chatroom categories
 				if (channel.getMembers().size() == 0) {
-					if(channelLinks.containsKey(channelLeft)) {
+					if (channelLinks.containsKey(channelLeft)) {
 						channelLinks.get(channelLeft).delete().queue();
 						channelLinks.remove(channelLeft);
+						logger.info("Deleted chatroom");
 					}
 					channel.delete().queue();
 				} else {
-					if(channelLinks.containsKey(channelLeft)) {
-						channelLinks.get(channelLeft).putPermissionOverride(member).setDeny(Permission.VIEW_CHANNEL).queue();
+					if (channelLinks.containsKey(channelLeft)) {
+						channelLinks.get(channelLeft).putPermissionOverride(member).setDeny(Permission.VIEW_CHANNEL)
+								.queue();
 					}
 				}
 			}
@@ -193,8 +197,9 @@ public class PartyBotListener extends ListenerAdapter {
 			if (channel.getIdLong() == createChatID) {
 				checkCreateChatroom(channel, guild);
 			} else {
-				if(channelLinks.containsKey(channelJoined)) {
-					channelLinks.get(channelJoined).createPermissionOverride(member).setAllow(Permission.VIEW_CHANNEL).queue();
+				if (channelLinks.containsKey(channelJoined)) {
+					channelLinks.get(channelJoined).createPermissionOverride(member).setAllow(Permission.VIEW_CHANNEL)
+							.queue();
 				}
 			}
 		}
@@ -215,6 +220,7 @@ public class PartyBotListener extends ListenerAdapter {
 			}
 			VoiceChannel newChannel = guild.createVoiceChannel(chatroomName + " " + number)
 					.setParent(guild.getCategoryById(chatroomCatID)).complete();
+			logger.info("Created chatroom");
 			for (Member member : members) {
 				guild.moveVoiceMember(member, newChannel).queue();
 			}
