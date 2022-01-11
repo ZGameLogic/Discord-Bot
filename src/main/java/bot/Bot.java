@@ -43,7 +43,7 @@ public class Bot {
 		PartyBotListener PBL = new PartyBotListener(config);
 		
 		bot.addEventListeners(PBL);
-		bot.addEventListeners(new SlashBotListener(PBL));
+		bot.addEventListeners(new SlashBotListener(PBL, config));
 		
 		// Login
 		try {

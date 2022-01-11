@@ -7,10 +7,8 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import bot.Bot;
 import data.ConfigLoader;
 
-@SpringBootApplication(scanBasePackages = { "webhook", "EventBot.controllers" })
+@SpringBootApplication(scanBasePackages = {"controllers"})
 public class App {
-	
-	public static ConfigLoader config;
 	
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(App.class);
@@ -28,11 +26,8 @@ public class App {
 		props.setProperty("logging.level.root", "INFO");
 
 		// SSL stuff
-
 		props.setProperty("server.ssl.enabled", "true");
-
 		props.setProperty("server.ssl.key-store", config.getKeystoreLocation());
-
 		props.setProperty("server.ssl.key-alias", "tomcat");
 		props.setProperty("server.ssl.key-store-password", config.getKeystorePassword());
 

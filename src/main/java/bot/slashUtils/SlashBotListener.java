@@ -11,6 +11,7 @@ import controllers.team.Team;
 import controllers.team.TeamGenerator;
 import controllers.team.TeamGenerator.GroupCreationException;
 import controllers.team.TeamGenerator.TeamNameException;
+import data.ConfigLoader;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.ReadyEvent;
@@ -26,9 +27,11 @@ public class SlashBotListener extends ListenerAdapter {
 	private String lastTeamGen;
 	
 	private PartyBotListener PBL;
+	private ConfigLoader CL;
 	
-	public SlashBotListener(PartyBotListener PBL) {
+	public SlashBotListener(PartyBotListener PBL, ConfigLoader CL) {
 		this.PBL = PBL;
+		this.CL = CL;
 	}
 	
 	/**
@@ -38,21 +41,25 @@ public class SlashBotListener extends ListenerAdapter {
 	public void onReady(ReadyEvent event) {
 		lastTeamGen = "";
 		logger.info("Slash bot listener activated");
-		CommandListUpdateAction c = event.getJDA().getGuildById(738850921706029168l).updateCommands();
+		CommandListUpdateAction guild = event.getJDA().getGuildById(CL.getGuildID()).updateCommands();
+		CommandListUpdateAction global = event.getJDA().updateCommands();
 		
 		// Team commands
-		c.addCommands(new CommandData("teams-help", "PMs the user a message for helping them generate a team"));
-		c.addCommands(new CommandData("teams-generate-again", "Runs the last team generation command again"));
-		c.addCommands(new CommandData("teams-generate", "Generates teams based off an inputted command")
+		global.addCommands(new CommandData("teams-help", "PMs the user a message for helping them generate a team"));
+		global.addCommands(new CommandData("teams-generate-again", "Runs the last team generation command again"));
+		global.addCommands(new CommandData("teams-generate", "Generates teams based off an inputted command")
 				.addOption(OptionType.STRING, "command", "Command to generate teams", true));
 		
 		// Party bot commands
-		c.addCommands(new CommandData("create-text", "Creates a text chatroom that only people in the voice channel can see"));
-		c.addCommands(new CommandData("rename-chatroom", "Renames chatroom to a new name")
+		guild.addCommands(new CommandData("create-text", "Creates a text chatroom that only people in the voice channel can see"));
+		guild.addCommands(new CommandData("rename-chatroom", "Renames chatroom to a new name")
 				.addOption(OptionType.STRING, "name", "Chatroom name", true));
 		
-		c.submit();
-		c.complete();
+		guild.submit();
+		guild.complete();
+		
+		global.submit();
+		global.complete();
 	}
 	
 	@Override
@@ -91,7 +98,11 @@ public class SlashBotListener extends ListenerAdapter {
 			};
 			
 			event.reply("Generated teams").queue();
-			event.getTextChannel().sendMessageEmbeds(eb.build()).queue();
+			try {
+				event.getTextChannel().sendMessageEmbeds(eb.build()).queue();
+			} catch (IllegalStateException e) {
+				
+			}
 		} catch (GroupCreationException | TeamNameException e) {
 			event.reply(e.getMessage()).queue();
 		}
