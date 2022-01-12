@@ -33,6 +33,7 @@ public class PartyBotListener extends ListenerAdapter {
 	private long chatroomCatID;
 	private long createChatID;
 	private long guildID;
+	private long AFKID;
 
 	// Map to hold audio channel and text channel links
 	HashMap<AudioChannel, TextChannel> channelLinks;
@@ -42,6 +43,7 @@ public class PartyBotListener extends ListenerAdapter {
 		chatroomCatID = config.getChatroomCatID();
 		createChatID = config.getCreateChatID();
 		guildID = config.getGuildID();
+		AFKID = config.getAFKID();
 
 		channelLinks = new HashMap<>();
 
@@ -49,6 +51,8 @@ public class PartyBotListener extends ListenerAdapter {
 		chatroomNames.add("Chatroom");
 		chatroomNames.add("Hangout");
 		chatroomNames.add("Chillin");
+		chatroomNames.add("Roomchat");
+		
 	}
 
 	/**
@@ -112,7 +116,8 @@ public class PartyBotListener extends ListenerAdapter {
 			// if the member is in a chatroom
 			AudioChannel voice = event.getMember().getVoiceState().getChannel();
 			// if the chatroom is in the chatroom category ID
-			if (event.getGuild().getVoiceChannelById(voice.getIdLong()).getParentCategoryIdLong() == chatroomCatID) {
+			if (event.getGuild().getVoiceChannelById(voice.getIdLong()).getParentCategoryIdLong() == chatroomCatID &&
+					voice.getIdLong() != createChatID && voice.getIdLong() != AFKID) {
 				// if the chatroom doesnt already have a text channel
 				if (!channelLinks.containsKey(voice)) {
 					// create text channel
@@ -183,7 +188,7 @@ public class PartyBotListener extends ListenerAdapter {
 	private void playerLeft(AudioChannel channelLeft, Member member, Guild guild) {
 		VoiceChannel channel = guild.getVoiceChannelById(channelLeft.getIdLong());
 		if (channel.getParentCategoryIdLong() == chatroomCatID) {
-			if (channel.getIdLong() != createChatID) {
+			if (channel.getIdLong() != createChatID && channel.getIdLong() != AFKID) {
 				// We get here if the channel left in is the chatroom categories
 				if (channel.getMembers().size() == 0) {
 					if (channelLinks.containsKey(channelLeft)) {
