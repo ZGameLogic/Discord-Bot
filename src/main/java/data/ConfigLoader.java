@@ -35,4 +35,7 @@ public class ConfigLoader {
 	@Value("${guild.id}")
 	private long guildID;
 	
+	@Value("${afk.id:0}")
+	private long AFKID;
+	
 }
