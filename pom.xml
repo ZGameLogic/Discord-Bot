@@ -31,7 +31,6 @@
 	</repositories>
 
 	<dependencies>
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-autoconfigure</artifactId>
@@ -53,7 +52,7 @@
 		<dependency>
 			<groupId>net.dv8tion</groupId>
 			<artifactId>JDA</artifactId>
-			<version>4.3.0_277</version>
+			<version>5.0.0-alpha.3</version>
 		</dependency>
 		
 		<dependency>
@@ -69,15 +68,14 @@
 		</dependency>
 
 		<dependency>
-			<groupId>org.xerial</groupId>
-			<artifactId>sqlite-jdbc</artifactId>
-			<version>3.34.0</version>
-		</dependency>
-
-		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.13.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.20</version>
 		</dependency>
 	</dependencies>
 
@@ -101,7 +99,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>app.app</mainClass>
+							<mainClass>App</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
@@ -121,7 +119,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>app</mainClass>
+							<mainClass>App</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>
