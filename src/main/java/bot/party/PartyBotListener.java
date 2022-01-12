@@ -27,12 +27,14 @@ public class PartyBotListener extends ListenerAdapter {
 
 	private Logger logger = LoggerFactory.getLogger(PartyBotListener.class);
 
+	// Linked List of names to hold chatroom names
 	private LinkedList<String> chatroomNames;
 
 	private long chatroomCatID;
 	private long createChatID;
 	private long guildID;
 
+	// Map to hold audio channel and text channel links
 	HashMap<AudioChannel, TextChannel> channelLinks;
 
 	public PartyBotListener(ConfigLoader config) {
@@ -98,12 +100,22 @@ public class PartyBotListener extends ListenerAdapter {
 		playerLeft(event.getChannelLeft(), event.getMember(), event.getGuild());
 	}
 
+	/**
+	 * Creates a text channel based off the slash event Also creates a link between
+	 * the text and audio channel the member is in
+	 * 
+	 * @param event
+	 */
 	public void createTextChannel(SlashCommandEvent event) {
 		// get voice channel the user is is
 		try {
+			// if the member is in a chatroom
 			AudioChannel voice = event.getMember().getVoiceState().getChannel();
+			// if the chatroom is in the chatroom category ID
 			if (event.getGuild().getVoiceChannelById(voice.getIdLong()).getParentCategoryIdLong() == chatroomCatID) {
+				// if the chatroom doesnt already have a text channel
 				if (!channelLinks.containsKey(voice)) {
+					// create text channel
 					TextChannel newChannel = event.getGuild().createTextChannel(voice.getName())
 							.setParent(event.getGuild().getCategoryById(chatroomCatID)).complete();
 
@@ -111,6 +123,7 @@ public class PartyBotListener extends ListenerAdapter {
 					newChannel.createPermissionOverride(event.getGuild().getPublicRole())
 							.setDeny(Permission.VIEW_CHANNEL).queue();
 
+					// Add anyone in the text channel to be able to see the text channel
 					for (Member m : voice.getMembers()) {
 						newChannel.createPermissionOverride(m).setAllow(Permission.VIEW_CHANNEL).queue();
 					}
@@ -130,9 +143,14 @@ public class PartyBotListener extends ListenerAdapter {
 
 	}
 
+	/**
+	 * Renames the voice channel Also renames any connected text channels
+	 * 
+	 * @param event
+	 */
 	public void renameChannel(SlashCommandEvent event) {
-		// get voice channel the user is is
 		try {
+			// get voice channel the user is is
 			AudioChannel voice = event.getMember().getVoiceState().getChannel();
 			if (event.getGuild().getVoiceChannelById(voice.getIdLong()).getParentCategoryIdLong() == chatroomCatID) {
 				try {

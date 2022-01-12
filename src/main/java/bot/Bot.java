@@ -36,10 +36,12 @@ public class Bot {
 		
 		System.out.println(TITLE);
 
+		// Create bot
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
 		bot.enableIntents(GatewayIntent.GUILD_PRESENCES);
 		bot.enableCache(CacheFlag.ACTIVITY);		
 		
+		// Add listeners
 		PartyBotListener PBL = new PartyBotListener(config);
 		
 		bot.addEventListeners(PBL);
