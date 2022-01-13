@@ -15,6 +15,11 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import webhook.listeners.WebHookListener;
 import webhook.listeners.WebHookReactionListener;
 
+/**
+ * 
+ * @author Ben Shabowski
+ *
+ */
 @RestController
 public class APIController {
 
