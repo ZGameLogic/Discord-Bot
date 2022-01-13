@@ -1,14 +1,9 @@
 package bot;
 
-import java.util.Arrays;
-import java.util.EnumSet;
-import java.util.LinkedList;
-
 import javax.security.auth.login.LoginException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import bot.party.PartyBotListener;
 import bot.slashUtils.SlashBotListener;
@@ -17,6 +12,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
+import webhook.listeners.WebHookListener;
 import webhook.listeners.WebHookReactionListener;
 
 
@@ -53,8 +49,9 @@ public class Bot {
 		// Login
 		try {
 			JDA jdaBot = bot.build().awaitReady();
+			new WebHookListener(config, jdaBot);
 		} catch (LoginException | InterruptedException e) {
 			logger.error("Unable to launch bot");
-		}		
+		}
 	}
 }

@@ -4,6 +4,11 @@ import data.ConfigLoader;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.TextChannel;
 
+/**
+ * 
+ * @author Ben Shabowski
+ *
+ */
 public class WebHookListener {
 	
 	private static TextChannel channel;
