@@ -7,6 +7,11 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import bot.Bot;
 import data.ConfigLoader;
 
+/**
+ * 
+ * @author Ben Shabowski
+ *
+ */
 @SpringBootApplication(scanBasePackages = {"webhook"})
 public class App {
 	
