@@ -17,6 +17,7 @@ import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
+import webhook.listeners.WebHookReactionListener;
 
 
 @SuppressWarnings("unused")
@@ -43,8 +44,10 @@ public class Bot {
 		
 		// Add listeners
 		PartyBotListener PBL = new PartyBotListener(config);
+		WebHookReactionListener WHRL = new WebHookReactionListener(config);
 		
 		bot.addEventListeners(PBL);
+		bot.addEventListeners(WHRL);
 		bot.addEventListeners(new SlashBotListener(PBL, config));
 		
 		// Login

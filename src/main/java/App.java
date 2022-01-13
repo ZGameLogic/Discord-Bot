@@ -7,7 +7,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import bot.Bot;
 import data.ConfigLoader;
 
-@SpringBootApplication(scanBasePackages = {"controllers"})
+@SpringBootApplication(scanBasePackages = {"webhook"})
 public class App {
 	
 	public static void main(String[] args) {
