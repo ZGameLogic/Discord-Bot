@@ -1,6 +1,11 @@
 package webhook.listeners;
 
 import java.awt.Color;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.util.Scanner;
 
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.json.JSONArray;
@@ -138,6 +143,7 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 				event.retrieveMessage().complete().editMessageEmbeds(eb.build()).complete();
 				event.retrieveMessage().complete().clearReactions().complete();
 				currentMessage = event.retrieveMessage().complete().getIdLong();
+				saveMessageID(currentMessage);
 			}
 		}
 	}
@@ -155,6 +161,10 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 	}
 	
 	public static void changeStatus(Color color) {
+		
+		if(currentMessage == null) {
+			currentMessage = loadMessageID();
+		}
 		
 		if(currentMessage != null) {
 		
@@ -251,5 +261,38 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 	    byte[] base64CredsBytes = Base64.encodeBase64(plainCredsBytes);
 	    String base64Creds = new String(base64CredsBytes);
 		return base64Creds;
+	}
+	
+	private void saveMessageID(Long messageID) {
+		File message = new File("messageID");
+		if(!message.exists()) {
+			try {
+				message.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		try {
+			PrintWriter out = new PrintWriter(message);
+			out.write(messageID + "");
+			out.flush();
+			out.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	private static Long loadMessageID() {
+		Scanner in;
+		try {
+			in = new Scanner(new File("messageID"));
+			Long id = in.nextLong();
+			in.close();
+			return id;
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 }
