@@ -54,12 +54,19 @@ public class SlashBotListener extends ListenerAdapter {
 		guild.addCommands(new CommandData("create-text", "Creates a text chatroom that only people in the voice channel can see"));
 		guild.addCommands(new CommandData("rename-chatroom", "Renames chatroom to a new name")
 				.addOption(OptionType.STRING, "name", "Chatroom name", true));
+		try {
+			guild.submit();
+			guild.complete();
+		} catch (Exception e) {
+			logger.info("Too many guild update commands for today");
+		}
 		
-		guild.submit();
-		guild.complete();
-		
-		global.submit();
-		global.complete();
+		try {
+			global.submit();
+			global.complete();
+		} catch (Exception e) {
+			logger.info("Too many global update commands for today");
+		}
 	}
 	
 	@Override
