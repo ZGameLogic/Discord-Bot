@@ -38,4 +38,10 @@ public class ConfigLoader {
 	@Value("${afk.id:0}")
 	private long AFKID;
 	
+	@Value("${bitbucket.id}")
+	private long bitbucketID;
+	
+	@Value("${admin.password}")
+	private String adminPassword;
+	
 }
