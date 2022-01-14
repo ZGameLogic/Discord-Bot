@@ -176,6 +176,27 @@ public class PartyBotListener extends ListenerAdapter {
 			event.reply("You are not in a voice channel that supports this command").queue();
 		}
 	}
+	
+	public void limit(SlashCommandEvent event) {
+		try {
+			// get voice channel the user is is
+			AudioChannel voice = event.getMember().getVoiceState().getChannel();
+			if (event.getGuild().getVoiceChannelById(voice.getIdLong()).getParentCategoryIdLong() == chatroomCatID) {
+				try {
+					int limit = Integer.parseInt(event.getOption("count").getAsString());
+					event.getGuild().getVoiceChannelById(voice.getIdLong()).getManager().setUserLimit(limit).queue();
+					event.reply("Channel limit updated").queue();
+					logger.info("Limitted chatroom");
+				} catch (IllegalArgumentException e1) {
+					event.reply("Channel limit not updated").queue();
+				}
+			} else {
+				event.reply("You are not in a voice channel that supports this command").queue();
+			}
+		} catch (NullPointerException e) {
+			event.reply("You are not in a voice channel that supports this command").queue();
+		}
+	}
 
 	/**
 	 * Deletes this channel if there are no players in it and it matches the chat
