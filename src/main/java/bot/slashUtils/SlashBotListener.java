@@ -54,6 +54,9 @@ public class SlashBotListener extends ListenerAdapter {
 		guild.addCommands(new CommandData("create-text", "Creates a text chatroom that only people in the voice channel can see"));
 		guild.addCommands(new CommandData("rename-chatroom", "Renames chatroom to a new name")
 				.addOption(OptionType.STRING, "name", "Chatroom name", true));
+		guild.addCommands(new CommandData("limit", "Limits the amount of people who can enter a chatroom")
+				.addOption(OptionType.INTEGER, "count", "Number of people allowed in the chatroom", true));
+		
 		try {
 			guild.submit();
 			guild.complete();
@@ -88,6 +91,8 @@ public class SlashBotListener extends ListenerAdapter {
 		case "rename-chatroom":
 			PBL.renameChannel(event);
 			break;
+		case "limit":
+			PBL.limit(event);
 		}
 	}
 	
