@@ -176,7 +176,7 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 	    headers.add("Authorization", "Basic " + base64Creds);
 	    
 	    String pullRequestTitle = "Pull request made from discord";
-	    String pullRequestDescription = "This pull request is being created by " + requester;
+	    String pullRequestDescription = "This pull request is being created by " + requester + " from discord.";
 	    
 		HttpEntity<String> request = new HttpEntity<String>("{\r\n" + 
 				"  \"title\": \"" + pullRequestTitle + "\",\r\n" + 
