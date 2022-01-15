@@ -57,6 +57,11 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 		channel = bot.getGuildById(cl.getGuildID()).getTextChannelById(cl.getBitbucketID());
 	}
 	
+	/**
+	 * Get the channel list
+	 * @return
+	 * @throws JSONException
+	 */
 	public static JSONArray getChannelList() throws JSONException {
 		JSONArray channelNames = new JSONArray();
 		
