@@ -21,7 +21,6 @@ import org.springframework.web.client.RestTemplate;
 import data.ConfigLoader;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.MessageEmbed.Field;
 import net.dv8tion.jda.api.entities.TextChannel;
@@ -56,33 +55,6 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 		bot = event.getJDA();
 		logger.info("Webhook Reaction Listener activated");
 		channel = bot.getGuildById(cl.getGuildID()).getTextChannelById(cl.getBitbucketID());
-	}
-	
-	/**
-	 * Sets the status of the bot to this for this amount of time
-	 * @param status
-	 * @param type
-	 * @param time
-	 */
-	public static void changeStatus(String status, String type, String time) {
-		if(!status.equals("clear")) {
-			switch(type) {
-			case "listening":
-				bot.getPresence().setActivity(Activity.listening(status));
-				break;
-			case "playing":
-				bot.getPresence().setActivity(Activity.playing(status));
-				break;
-			case "watching":
-				bot.getPresence().setActivity(Activity.watching(status));
-				break;
-			case "competing":
-				bot.getPresence().setActivity(Activity.competing(status));
-				break;
-			}
-		}else {
-			bot.getPresence().setActivity(null);
-		}
 	}
 	
 	public static JSONArray getChannelList() throws JSONException {
@@ -146,18 +118,6 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 				saveMessageID(currentMessage);
 			}
 		}
-	}
-	
-	public static void joinChannel(String id) {
-		bot.getGuildById(330751526735970305l).getAudioManager().openAudioConnection(bot.getGuildById(330751526735970305l).getVoiceChannelById(id));
-	}
-	
-	public static void leaveChannel() {
-		bot.getGuildById(330751526735970305l).getAudioManager().closeAudioConnection();
-	}
-	
-	public static void postMessage(long channelID, String message) {
-		bot.getGuildById(330751526735970305l).getTextChannelById(channelID).sendMessage(message).queue();
 	}
 	
 	public static void changeStatus(Color color) {
