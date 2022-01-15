@@ -1,5 +1,7 @@
 package data;
 
+import java.util.LinkedList;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
@@ -44,4 +46,25 @@ public class ConfigLoader {
 	@Value("${admin.password}")
 	private String adminPassword;
 	
+	@Value("${role.ids}")
+	private String[] roleIDs;
+	
+	@Value("${admin.role.ids}")
+	private String[] adminRoleIDs;
+	
+	public LinkedList<Long> getRoleIDs(){
+		LinkedList<Long> ids = new LinkedList<>();
+		for(String id : roleIDs ) {
+			ids.add(Long.parseLong(id));
+		}
+		return ids;
+	}
+	
+	public LinkedList<Long> getAdminRoleIDs(){
+		LinkedList<Long> ids = new LinkedList<>();
+		for(String id : adminRoleIDs) {
+			ids.add(Long.parseLong(id));
+		}
+		return ids;
+	}
 }
