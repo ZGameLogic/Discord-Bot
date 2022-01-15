@@ -90,7 +90,9 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 	@Override
 	public void onMessageReactionAdd(MessageReactionAddEvent event) {
 		if(!event.getUser().isBot() && event.getChannel().equals(channel)) {
+			System.out.println("is a channel");
 			if(event.getReaction().toString().contains("RE:U+1f3d7")){
+				System.out.println("is a reaction");
 				
 				try {
 					JSONObject resultPull = new JSONObject(createPullRequest(event.retrieveMember().complete().getEffectiveName()));
