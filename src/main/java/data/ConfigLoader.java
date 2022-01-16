@@ -22,9 +22,6 @@ public class ConfigLoader {
 	@Value("${keystore.location}")
 	private String keystoreLocation;
 	
-	@Value("${Admin.password}")
-	private String admin;
-	
 	@Value("${Webhook.port}")
 	private int webHookPort;
 	
@@ -51,6 +48,7 @@ public class ConfigLoader {
 	
 	@Value("${admin.role.ids}")
 	private String[] adminRoleIDs;
+	
 	
 	public LinkedList<Long> getRoleIDs(){
 		LinkedList<Long> ids = new LinkedList<>();

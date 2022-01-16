@@ -51,7 +51,7 @@ public class Bot {
 		bot.addEventListeners(PBL);
 		bot.addEventListeners(WHRL);
 		bot.addEventListeners(RBL);
-		bot.addEventListeners(new SlashBotListener(PBL, config));
+		bot.addEventListeners(new SlashBotListener(PBL, config, RBL));
 		
 		// Login
 		try {

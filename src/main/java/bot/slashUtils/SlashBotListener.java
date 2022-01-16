@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import bot.party.PartyBotListener;
+import bot.role.RoleBotListener;
 import controllers.dice.DiceRollingSimulator;
 import controllers.team.Team;
 import controllers.team.TeamGenerator;
@@ -29,10 +30,12 @@ public class SlashBotListener extends ListenerAdapter {
 	
 	private PartyBotListener PBL;
 	private ConfigLoader CL;
+	private RoleBotListener RBL;
 	
-	public SlashBotListener(PartyBotListener PBL, ConfigLoader CL) {
+	public SlashBotListener(PartyBotListener PBL, ConfigLoader CL, RoleBotListener RBL) {
 		this.PBL = PBL;
 		this.CL = CL;
+		this.RBL = RBL;
 	}
 	
 	/**
@@ -62,24 +65,30 @@ public class SlashBotListener extends ListenerAdapter {
 		guild.addCommands(new CommandData("limit", "Limits the amount of people who can enter a chatroom")
 				.addOption(OptionType.INTEGER, "count", "Number of people allowed in the chatroom", true));
 		
+		// Role bot listener
+		guild.addCommands(new CommandData("stats", "Posts the players stats in chat")
+				.addOption(OptionType.USER, "player", "Player's stats to see", false));
+//		guild.addCommands(new CommandData("challenge", "Challenges a play for their role. A win switches the roles!")
+//				.addOption(OptionType.USER, "player", "The player you wish to challenge", true));
+		
 		try {
 			guild.submit();
 			guild.complete();
 		} catch (Exception e) {
-			logger.info("Too many guild update commands for today");
+			logger.error("Too many guild update commands for today");
 		}
 		
 		try {
 			global.submit();
 			global.complete();
 		} catch (Exception e) {
-			logger.info("Too many global update commands for today");
+			logger.error("Too many global update commands for today");
 		}
 	}
 	
 	@Override
 	public void onSlashCommand(SlashCommandEvent event) {
-		logger.info("Slash command recieved");
+		logger.info("Slash command recieved for " + event.getName());
 		switch(event.getName()) {
 		case "teams-generate":
 			generateTeam(event, event.getOption("command").getAsString());
@@ -100,6 +109,12 @@ public class SlashBotListener extends ListenerAdapter {
 			PBL.limit(event);
 		case "roll-dice":
 			rollDice(event);
+			break;
+		case "stats":
+			RBL.sendStats(event);
+			break;
+		case "challenge":
+			RBL.challenge(event);
 			break;
 		}
 	}
