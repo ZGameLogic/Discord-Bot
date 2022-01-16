@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import bot.party.PartyBotListener;
+import controllers.dice.DiceRollingSimulator;
 import controllers.team.Team;
 import controllers.team.TeamGenerator;
 import controllers.team.TeamGenerator.GroupCreationException;
@@ -49,6 +50,10 @@ public class SlashBotListener extends ListenerAdapter {
 		global.addCommands(new CommandData("teams-generate-again", "Runs the last team generation command again"));
 		global.addCommands(new CommandData("teams-generate", "Generates teams based off an inputted command")
 				.addOption(OptionType.STRING, "command", "Command to generate teams", true));
+		// Dice
+		global.addCommands(new CommandData("roll-dice", "Rolls a dice")
+				.addOption(OptionType.INTEGER, "count", "Number of dice to be rolled", true)
+				.addOption(OptionType.INTEGER, "faces", "Number of faces on each die", true));
 		
 		// Party bot commands
 		guild.addCommands(new CommandData("create-text", "Creates a text chatroom that only people in the voice channel can see"));
@@ -93,7 +98,21 @@ public class SlashBotListener extends ListenerAdapter {
 			break;
 		case "limit":
 			PBL.limit(event);
+		case "roll-dice":
+			rollDice(event);
+			break;
 		}
+	}
+	
+	private void rollDice(SlashCommandEvent event) {
+		long count = event.getOption("count").getAsLong();
+		long faces = event.getOption("faces").getAsLong();
+		
+		if(count <= 0 || faces <= 0) {
+			event.reply("Both count and faces must be a positive whole number").queue();
+			return;
+		}
+		event.reply("Rolled " + count + "d" + faces + ": **" + DiceRollingSimulator.rollDice(count, faces) + "**").queue();;
 	}
 	
 	private void generateTeam(SlashCommandEvent event, String command) {
