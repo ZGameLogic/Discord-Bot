@@ -533,6 +533,7 @@ public class RoleBotListener extends ListenerAdapter {
 				player.setGold((int)(Math.random() * 30));
 				data.saveSerialized(player, f.getName());
 			}
+			event.getPrivateChannel().sendMessage("Reset gold").queue();
 		} else if (message.contains("!reset-challenges")) {
 			logger.info("Resetting challenges");
 			for(File f : data.getFiles()) {
@@ -540,9 +541,11 @@ public class RoleBotListener extends ListenerAdapter {
 				player.newDay();
 				data.saveSerialized(player, f.getName());
 			}
+			event.getPrivateChannel().sendMessage("Reset challenges").queue();
 		} else if(message.contains("!roll-encounter")) {
 			logger.info("Rolling random encounter");
 			rollEncounter();
+			event.getPrivateChannel().sendMessage("Rolled encounter").queue();
 		}
 	}
 	
