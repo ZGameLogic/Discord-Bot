@@ -68,8 +68,10 @@ public class SlashBotListener extends ListenerAdapter {
 		// Role bot listener
 		guild.addCommands(new CommandData("stats", "Posts the players stats in chat")
 				.addOption(OptionType.USER, "player", "Player's stats to see", false));
-//		guild.addCommands(new CommandData("challenge", "Challenges a play for their role. A win switches the roles!")
-//				.addOption(OptionType.USER, "player", "The player you wish to challenge", true));
+		guild.addCommands(new CommandData("challenge", "Challenges a player for their role. A win switches the roles!")
+				.addOption(OptionType.USER, "player", "The player you wish to challenge", true));
+		guild.addCommands(new CommandData("role-stats", "Lists everyone in the caste level and their stats if they can still defend for the day")
+				.addOption(OptionType.ROLE, "role", "Role to see the stats of", true));
 		
 		try {
 			guild.submit();
@@ -88,7 +90,7 @@ public class SlashBotListener extends ListenerAdapter {
 	
 	@Override
 	public void onSlashCommand(SlashCommandEvent event) {
-		logger.info("Slash command recieved for " + event.getName());
+		logger.info("Slash command recieved for " + event.getName() + " by " + event.getMember().getEffectiveName());
 		switch(event.getName()) {
 		case "teams-generate":
 			generateTeam(event, event.getOption("command").getAsString());
@@ -115,6 +117,9 @@ public class SlashBotListener extends ListenerAdapter {
 			break;
 		case "challenge":
 			RBL.challenge(event);
+			break;
+		case "role-stats":
+			RBL.sendRoleStats(event);
 			break;
 		}
 	}
