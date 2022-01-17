@@ -13,9 +13,6 @@ import lombok.ToString;
 @ToString
 public class Player implements Serializable {
 	
-	public static final int DAILY_CHALLENGE_LIMIT = 3;
-	public static final int DAILY_DEFEND_LIMIT = 3;
-	
 	private static final long serialVersionUID = -431615875063733037L;
 	
 	private int strength, agility, knowledge, magic, stamina;
@@ -29,7 +26,7 @@ public class Player implements Serializable {
 	 * @return true if they can challenge
 	 */
 	public boolean canChallenge() {
-		return hasChallengedToday < DAILY_CHALLENGE_LIMIT;
+		return hasChallengedToday < RoleBotListener.dailyChallengeLimit;
 	}
 	
 	/**
@@ -37,11 +34,11 @@ public class Player implements Serializable {
 	 * @return true if they can be fought again
 	 */
 	public boolean canDefend() {
-		return challengedToday < DAILY_DEFEND_LIMIT;
+		return challengedToday < RoleBotListener.dailyDefendLimit;
 	}
 	
 	public String getCompactStats() {
-		return strength + ":" + knowledge + ":" + magic + ":" + agility + ":" + stamina;
+		return strength + ":" + knowledge + ":" + magic + ":" + agility + ":" + stamina + " " + gold;
 	}
 	
 	public void increaseStrength(int num) {
@@ -82,6 +79,22 @@ public class Player implements Serializable {
 	
 	public void newDay() {
 		challengedToday = hasChallengedToday = 0;
+	}
+	
+	public void increaseGold(long amount) {
+		gold += amount;
+	}
+	
+	public void decreaseGold(long amount) {
+		gold -= amount;
+	}
+
+	public Player(EncounterPlayer ep) {
+		strength = ep.getStrength();
+		agility = ep.getAgility();
+		knowledge = ep.getKnowledge();
+		magic = ep.getKnowledge();
+		stamina =  ep.getStamina();
 	}
 
 }

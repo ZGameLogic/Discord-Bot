@@ -56,6 +56,7 @@ public class DataCacher <T> {
 	 * @param file File path to load object from
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public T loadSerialized(String file) {
 		
 		T data1 = null;
@@ -79,5 +80,15 @@ public class DataCacher <T> {
 		}
 		
 		return data1;
+	}
+	
+	public void delete(String file) {
+		File fileToDelete = new File(filePath + "//" + file);
+		fileToDelete.delete();
+	}
+	
+	public File[] getFiles() {
+		File f = new File(filePath);
+		return f.listFiles();
 	}
 }

@@ -90,7 +90,7 @@ public class SlashBotListener extends ListenerAdapter {
 	
 	@Override
 	public void onSlashCommand(SlashCommandEvent event) {
-		logger.info("Slash command recieved for " + event.getName());
+		logger.info("Slash command recieved for " + event.getName() + " by " + event.getMember().getEffectiveName());
 		switch(event.getName()) {
 		case "teams-generate":
 			generateTeam(event, event.getOption("command").getAsString());

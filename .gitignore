@@ -10,5 +10,7 @@
 /BotData/
 /discordbot.properties
 /ssl-keystore
+/src/test/
 /messageID
 /arena/
+/encounter/

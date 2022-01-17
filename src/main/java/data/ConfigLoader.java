@@ -55,6 +55,33 @@ public class ConfigLoader {
 	@Value("${server.booster.padding:0}")
 	private int boosterChange;
 	
+	@Value("${padding.multiplier:8}")
+	private int paddingMultiplier;
+	
+	@Value("${daily.challenge.limit:3}")
+	private int dailyChallengeLimit;
+	
+	@Value("${daily.defend.limit:3}")
+	private int dailyDefendLimit;
+	
+	@Value("${stat.base.change:2}")
+	private int statBaseChange;
+	
+	@Value("${stat.random.change:2}")
+	private int statRandomChange;
+	
+	@Value("${encounter.stat.multiplier:7}")
+	private int encounterStatMultiplier;
+	
+	@Value("${encounters.id}")
+	private long encountersID;
+	
+	@Value("${general.id}")
+	private long generalID;
+	
+	@Value("${fight.id}")
+	private long fightEmojiID;
+	
 	
 	public LinkedList<Long> getRoleIDs(){
 		LinkedList<Long> ids = new LinkedList<>();
