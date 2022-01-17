@@ -39,5 +39,49 @@ public class Player implements Serializable {
 	public boolean canDefend() {
 		return challengedToday < DAILY_DEFEND_LIMIT;
 	}
+	
+	public String getCompactStats() {
+		return strength + ":" + knowledge + ":" + magic + ":" + agility + ":" + stamina;
+	}
+	
+	public void increaseStrength(int num) {
+		strength += num;
+	}
+	
+	public void increaseStamina(int num) {
+		stamina += num;
+	}
+	
+	public void increaseAgility(int num) {
+		agility += num;
+	}
+	
+	public void increaseMagic(int num) {
+		magic += num;
+	}
+
+	public void increaseKnowledge(int num) {
+		knowledge += num;
+	}
+
+	public void won() {
+		wins++;
+	}
+	
+	public void lost() {
+		losses++;
+	}
+	
+	public void hasChallenged() {
+		hasChallengedToday++;
+	}
+	
+	public void wasChallenged() {
+		challengedToday++;
+	}
+	
+	public void newDay() {
+		challengedToday = hasChallengedToday = 0;
+	}
 
 }

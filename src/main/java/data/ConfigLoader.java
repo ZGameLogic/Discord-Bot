@@ -49,6 +49,12 @@ public class ConfigLoader {
 	@Value("${admin.role.ids}")
 	private String[] adminRoleIDs;
 	
+	@Value("${king.role.id}")
+	private long kingRoleID;
+	
+	@Value("${server.booster.padding:0}")
+	private int boosterChange;
+	
 	
 	public LinkedList<Long> getRoleIDs(){
 		LinkedList<Long> ids = new LinkedList<>();
