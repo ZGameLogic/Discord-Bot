@@ -127,7 +127,7 @@ public class RoleBotListener extends ListenerAdapter {
 		eb.addField("Agility", player.getAgility() + "", true);
 		eb.addField("Stamina", player.getStamina() + "", true);
 		
-		eb.addField("Statistics", "Gold: " + player.getGold() + "\nTournement victories: " + player.getTournamentWins() + "\nVictories: " + player.getWins()
+		eb.addField("Statistics", "Gold: " + player.getGold() + "\nTournament victories: " + player.getTournamentWins() + "\nVictories: " + player.getWins()
 			+ "\nDefeats: " + player.getLosses(), false);
 		
 		eb.setFooter("Can attack " + (Player.DAILY_CHALLENGE_LIMIT - player.getHasChallengedToday()) + " more time(s) today\n"
