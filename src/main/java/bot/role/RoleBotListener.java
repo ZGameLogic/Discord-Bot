@@ -339,7 +339,7 @@ public class RoleBotListener extends ListenerAdapter {
 				defender.decreaseGold(goldWon);
 				attacker.increaseGold(goldWon);
 				
-				eb.setDescription(attackerMember.getEffectiveName() + " is now a rank of " + defenderRole.getName() + ". Gold obtained: " + goldWon);
+				eb.setDescription(attackerMember.getEffectiveName() +  " vs " + defenderMember.getEffectiveName() + "\n" + attackerMember.getEffectiveName() + " is now a rank of " + defenderRole.getName() + ". Gold obtained: " + goldWon);
 			} else {
 				long goldWon = 3 + (int)(Math.random() * 3);
 				if(defender.getGold() < goldWon) {
@@ -347,7 +347,7 @@ public class RoleBotListener extends ListenerAdapter {
 				}
 				defender.decreaseGold(goldWon);
 				attacker.increaseGold(goldWon);
-				eb.setDescription("Gold obtained: " + goldWon);
+				eb.setDescription(attackerMember.getEffectiveName() +  " vs " + defenderMember.getEffectiveName() + "\nGold obtained: " + goldWon);
 			}
 			
 			
