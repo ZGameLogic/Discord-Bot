@@ -586,7 +586,7 @@ public class RoleBotListener extends ListenerAdapter {
 		EncounterPlayer baddy = new EncounterPlayer(strength, agility, knowledge, magic, stamina, encounterID, tiers.get(tier) + " " + types.get(type));
 		encounterData.saveSerialized(baddy, baddy.getEncounterID() + "");
 		
-		eb.addField("Stregnth", strength + "", true);
+		eb.addField("Strength", strength + "", true);
 		eb.addField("Knowledge", knowledge + "", true);
 		eb.addField("Magic", magic + "", true);
 		eb.addField("Agility", agility + "", true);
