@@ -268,16 +268,14 @@ public class RoleBotListener extends ListenerAdapter {
 	
 	private FightResults fight(Player attacker, Player defender, int defenderPadding, int boosterPadding) {
 		
-		int booster = 0;
-		
 		attacker.hasChallenged();
 		defender.wasChallenged();
 		
-		int stamina = attacker.getStamina() + defender.getStamina() + defenderPadding * paddingMultiplier + booster;
-		int strength = attacker.getStrength() + defender.getStrength() + defenderPadding * paddingMultiplier + booster;
-		int magic = attacker.getMagic() + defender.getMagic() + defenderPadding * paddingMultiplier + booster;
-		int agility = attacker.getAgility() + defender.getAgility() + defenderPadding * paddingMultiplier + booster;
-		int knowledge = attacker.getKnowledge() + defender.getKnowledge() + defenderPadding * paddingMultiplier + booster;
+		int stamina = attacker.getStamina() + defender.getStamina() + defenderPadding * paddingMultiplier + boosterPadding;
+		int strength = attacker.getStrength() + defender.getStrength() + defenderPadding * paddingMultiplier + boosterPadding;
+		int magic = attacker.getMagic() + defender.getMagic() + defenderPadding * paddingMultiplier + boosterPadding;
+		int agility = attacker.getAgility() + defender.getAgility() + defenderPadding * paddingMultiplier + boosterPadding;
+		int knowledge = attacker.getKnowledge() + defender.getKnowledge() + defenderPadding * paddingMultiplier + boosterPadding;
 		
 		int attackerPoint = 0;
 		int defenderPoint = 0;
