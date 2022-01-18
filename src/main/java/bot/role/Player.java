@@ -38,7 +38,7 @@ public class Player implements Serializable {
 	}
 	
 	public String getCompactStats() {
-		return strength + ":" + knowledge + ":" + magic + ":" + agility + ":" + stamina + " " + gold;
+		return strength + ":" + knowledge + ":" + magic + ":" + agility + ":" + stamina + " " + gold + " " + wins + "/" + losses;
 	}
 	
 	public void increaseStrength(int num) {

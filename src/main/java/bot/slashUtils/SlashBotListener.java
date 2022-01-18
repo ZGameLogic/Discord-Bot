@@ -72,6 +72,8 @@ public class SlashBotListener extends ListenerAdapter {
 				.addOption(OptionType.USER, "player", "The player you wish to challenge", true));
 		guild.addCommands(new CommandData("role-stats", "Lists everyone in the caste level and their stats if they can still defend for the day")
 				.addOption(OptionType.ROLE, "role", "Role to see the stats of", true));
+		guild.addCommands(new CommandData("leader-board", "Get the top 10 players in a specific category")
+				.addOption(OptionType.STRING, "statistic", "Which statistic to get the leader board for", true));
 		
 		try {
 			guild.submit();
@@ -120,6 +122,9 @@ public class SlashBotListener extends ListenerAdapter {
 			break;
 		case "role-stats":
 			RBL.sendRoleStats(event);
+			break;
+		case "leader-board":
+			RBL.leaderBoard(event);
 			break;
 		}
 	}

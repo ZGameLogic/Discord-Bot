@@ -5,7 +5,9 @@ import java.io.File;
 import java.time.Instant;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -490,7 +492,7 @@ public class RoleBotListener extends ListenerAdapter {
 		if(roleIDs.contains(role.getIdLong()) || role.getIdLong() == kingRoleID) {
 			EmbedBuilder eb = new EmbedBuilder();
 			eb.setTitle("Fighter stats for " + role.getName() + "s");
-			eb.setDescription("Stats are encoded as Strength:Knowledge:Magic:Agility:Stamina Gold");
+			eb.setDescription("Stats are encoded as Strength:Knowledge:Magic:Agility:Stamina Gold Wins/Losses");
 			eb.setColor(new Color(113, 94, 115));
 			if(role.getIcon() != null) {
 				eb.setImage(role.getIcon().getIconUrl());
@@ -708,5 +710,64 @@ public class RoleBotListener extends ListenerAdapter {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	public void leaderBoard(SlashCommandEvent event) {
+		Comparator<Player> comparitor;
+		switch(event.getOption("statistic").getAsString().toLowerCase()) {
+		case "strength":
+			comparitor = Comparator.comparing(Player::getStrength);
+			break;
+		case "knowledge":
+			comparitor = Comparator.comparing(Player::getKnowledge);
+			break;
+		case "magic":
+			comparitor = Comparator.comparing(Player::getMagic);
+			break;
+		case "agility":
+			comparitor = Comparator.comparing(Player::getAgility);
+			break;
+		case "stamina":
+			comparitor = Comparator.comparing(Player::getStamina);
+			break;
+		case "gold":
+			comparitor = Comparator.comparing(Player::getGold);
+			break;
+		case "wins":
+			comparitor = Comparator.comparing(Player::getWins);
+			break;
+		case "losses":
+			comparitor = Comparator.comparing(Player::getLosses);
+			break;
+		default:
+			event.reply("Invalid stat. Valid stats are Strength, Knowledge, Magic, Agility, Stamina, Gold, Wins, and Losses").queue();
+			return;
+		}
+		
+		comparitor = Collections.reverseOrder(comparitor);
+		LinkedList<Player> players = new LinkedList<>();
+		HashMap<Player, String> idLink = new HashMap<>();
+		
+		for(File f : data.getFiles()) {
+			Player current = data.loadSerialized(f.getName());
+			players.add(current);
+			idLink.put(current, f.getName());
+		}
+		
+		Collections.sort(players, comparitor);
+		
+		EmbedBuilder eb = new EmbedBuilder();
+		String stat = event.getOption("statistic").getAsString();
+		stat = stat.substring(0,1).toUpperCase() + stat.substring(1);
+		eb.setTitle("Leader board for stat: " + stat);
+		eb.setColor(new Color(102, 107, 14));
+		eb.setDescription("Stats are encoded as Strength:Knowledge:Magic:Agility:Stamina Gold Wins/Losses");
+		
+		for(int i = 0; i < 10 && !players.isEmpty(); i++) {
+			Player current = players.remove();
+			eb.addField(event.getGuild().getMemberById(idLink.get(current)).getEffectiveName(), current.getCompactStats(), true);
+		}
+		
+		event.replyEmbeds(eb.build()).queue();
 	}
 }
