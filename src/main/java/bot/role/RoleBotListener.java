@@ -47,6 +47,7 @@ public class RoleBotListener extends ListenerAdapter {
 	private LinkedList<Long> roleIDs;
 	private DataCacher<Player> data;
 	private DataCacher<EncounterPlayer> encounterData;
+	private DataCacher<KingPlayer> kingData;
 	private final int boosterChange;
 	private long encountersID;
 	private long fightEmojiID;
@@ -61,6 +62,11 @@ public class RoleBotListener extends ListenerAdapter {
 		roleIDs = cl.getRoleIDs();
 		data = new DataCacher<>("arena");
 		encounterData = new DataCacher<>("encounter");
+		kingData = new DataCacher<>("king");
+		
+		if(kingData.getFiles().length == 0) {
+			kingData.saveSerialized(new KingPlayer(), "king");
+		}
 		
 		kingRoleID = cl.getKingRoleID();
 		encountersID = cl.getEncountersID();
@@ -265,13 +271,15 @@ public class RoleBotListener extends ListenerAdapter {
 	
 	private FightResults fight(Player attacker, EncounterPlayer ep) {
 		Player defender = new Player(ep);
-		return fight(attacker, defender, 0, 0);
+		return fight(attacker, defender, 0, 0, false);
 	}
 	
-	private FightResults fight(Player attacker, Player defender, int defenderPadding, int boosterPadding) {
+	private FightResults fight(Player attacker, Player defender, int defenderPadding, int boosterPadding, boolean isKingDefending) {
 		
 		attacker.hasChallenged();
-		defender.wasChallenged();
+		if(!isKingDefending) {
+			defender.wasChallenged();
+		}
 		
 		int stamina = attacker.getStamina() + defender.getStamina() + defenderPadding * paddingMultiplier + boosterPadding;
 		int strength = attacker.getStrength() + defender.getStrength() + defenderPadding * paddingMultiplier + boosterPadding;
@@ -314,7 +322,7 @@ public class RoleBotListener extends ListenerAdapter {
 			booster += boosterChange;
 		}
 		
-		FightResults results = fight(attacker, defender, defenderPadding, booster);
+		FightResults results = fight(attacker, defender, defenderPadding, booster, getCasteRoleIndex(defenderMember) == 0);
 		
 		if(results.isAttackerWon()) {
 			// Attacker wins
@@ -439,7 +447,12 @@ public class RoleBotListener extends ListenerAdapter {
 		Player defender = data.loadSerialized(defenderMember.getIdLong() + "");
 		if(!defenderMember.getUser().isBot()) {
 			if(attacker.canChallenge()) {
-				if(defender.canDefend()) {
+				if((defender.canDefend() && getCasteRoleIndex(defenderMember) != 0) || (getCasteRoleIndex(defenderMember) == 0 && canChallengeKing(attackerMember.getIdLong()))) {
+					if(getCasteRoleIndex(defenderMember) == 0) {
+						KingPlayer kp = kingData.loadSerialized("king");
+						kp.addPlayer(attackerMember.getIdLong());
+						kingData.saveSerialized(kp, "king");
+					}
 					int attackIndex = getCasteRoleIndex(attackerMember);
 					int defendIndex = getCasteRoleIndex(defenderMember);
 					int padding = 0;
@@ -450,10 +463,15 @@ public class RoleBotListener extends ListenerAdapter {
 					if(getCasteRoleIndex(defenderMember) == 0) {
 						padding++;
 					}
+					
 					fight(attackerMember, defenderMember, padding, event);
 					
 				} else {
-					event.reply("The defender has been challenged too many times today.").queue();
+					if(getCasteRoleIndex(defenderMember) == 0) {
+						event.reply("You already challenged the king today.").queue();
+					} else {
+						event.reply("The defender has been challenged too many times today.").queue();
+					}
 				}
 			} else {
 				event.reply("You are weary and cannot attack anymore today.").queue();
@@ -485,6 +503,10 @@ public class RoleBotListener extends ListenerAdapter {
 			}
 		}
 		return null;
+	}
+	
+	private boolean canChallengeKing(long id) {
+		return kingData.loadSerialized("king").canFight(id);
 	}
 
 	public void sendRoleStats(SlashCommandEvent event) {
@@ -543,6 +565,9 @@ public class RoleBotListener extends ListenerAdapter {
 				player.newDay();
 				data.saveSerialized(player, f.getName());
 			}
+			KingPlayer kp = kingData.loadSerialized("king");
+			kp.resetList();
+			kingData.saveSerialized(kp, "king");
 			event.getPrivateChannel().sendMessage("Reset challenges").queue();
 		} else if(message.contains("!roll-encounter")) {
 			logger.info("Rolling random encounter");
@@ -701,6 +726,10 @@ public class RoleBotListener extends ListenerAdapter {
 					}
 					data.saveSerialized(p, f.getName());
 				}
+				
+				KingPlayer kp = kingData.loadSerialized("king");
+				kp.resetList();
+				kingData.saveSerialized(kp, "king");
 			}
 			
 			// sleep for a minute
