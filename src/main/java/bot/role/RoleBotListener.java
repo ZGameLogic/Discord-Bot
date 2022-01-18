@@ -441,7 +441,7 @@ public class RoleBotListener extends ListenerAdapter {
 					int attackIndex = getCasteRoleIndex(attackerMember);
 					int defendIndex = getCasteRoleIndex(defenderMember);
 					int padding = 0;
-					if(attackIndex > defendIndex) {
+					if(attackIndex > defendIndex && attackIndex - defendIndex != 1) {
 						padding = attackIndex - defendIndex;
 					}
 					// Hail to the king
