@@ -520,10 +520,16 @@ public class RoleBotListener extends ListenerAdapter {
 				eb.setImage(role.getIcon().getIconUrl());
 			}
 			
+			boolean includeAll = false;
+			
+			if(event.getOption("include-all") != null) {
+				includeAll = event.getOption("include-all").getAsBoolean();
+			}
+			
 			for(Member m : event.getGuild().getMembersWithRoles(role)) {
 				if(!m.getUser().isBot()) {
 					Player p = data.loadSerialized(m.getId());
-					if(p.canDefend()) {
+					if(p.canDefend() || includeAll) {
 						eb.addField(m.getEffectiveName(), p.getCompactStats(), true);
 					}
 				}

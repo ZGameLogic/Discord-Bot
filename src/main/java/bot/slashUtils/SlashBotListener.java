@@ -71,7 +71,8 @@ public class SlashBotListener extends ListenerAdapter {
 		guild.addCommands(new CommandData("challenge", "Challenges a player for their role. A win switches the roles!")
 				.addOption(OptionType.USER, "player", "The player you wish to challenge", true));
 		guild.addCommands(new CommandData("role-stats", "Lists everyone in the caste level and their stats if they can still defend for the day")
-				.addOption(OptionType.ROLE, "role", "Role to see the stats of", true));
+				.addOption(OptionType.ROLE, "role", "Role to see the stats of", true)
+				.addOption(OptionType.BOOLEAN, "include-all", "Weather or not to include the people who have already defended today", false));
 		guild.addCommands(new CommandData("leader-board", "Get the top 10 players in a specific category")
 				.addOption(OptionType.STRING, "statistic", "Which statistic to get the leader board for", true));
 		
