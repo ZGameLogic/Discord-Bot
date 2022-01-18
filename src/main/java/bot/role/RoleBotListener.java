@@ -417,7 +417,7 @@ public class RoleBotListener extends ListenerAdapter {
 			EmbedBuilder eb = new EmbedBuilder();
 			eb.setTitle("Fight results: " + attackerMember.getEffectiveName() + " lost!");
 			eb.setColor(new Color(84, 25, 25));
-			eb.setDescription("Better luck next time. " + statChanged + " has been increased by " + statNumChanged + " points."
+			eb.setDescription(attackerMember.getEffectiveName() +  " vs " + defenderMember.getEffectiveName() + "\nBetter luck next time. " + statChanged + " has been increased by " + statNumChanged + " points."
 					+ " Gold lost: " + goldLost);
 			eb.addField("Fight statistics", "Attacker points: " + results.getAttackerPoints() + "\nDefender points: " + results.getDefenderPoints(), false);
 			eb.setTimestamp(Instant.now());
@@ -695,7 +695,7 @@ public class RoleBotListener extends ListenerAdapter {
 					p.newDay();
 					p.increaseGold((int)(Math.random() * 20));
 					if(f.getName().contains(kingRoleID + "") ) {
-						p.increaseGold((int)(Math.random() * 100));
+						p.increaseGold((int)(Math.random() * 300) + 150);
 					}
 					data.saveSerialized(p, f.getName());
 				}
