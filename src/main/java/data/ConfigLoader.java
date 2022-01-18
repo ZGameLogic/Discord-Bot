@@ -70,6 +70,9 @@ public class ConfigLoader {
 	@Value("${stat.random.change:2}")
 	private int statRandomChange;
 	
+	@Value("${spawn.chance}")
+	private int spawnChance;
+	
 	@Value("${encounter.stat.multiplier:7}")
 	private int encounterStatMultiplier;
 	

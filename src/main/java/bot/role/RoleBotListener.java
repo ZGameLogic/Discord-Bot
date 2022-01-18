@@ -49,6 +49,7 @@ public class RoleBotListener extends ListenerAdapter {
 	private long encountersID;
 	private long fightEmojiID;
 	private long generalID;
+	private long spawnChance;
 	
 	private TextChannel encountersChannel;
 	private TextChannel generalChannel;
@@ -69,6 +70,7 @@ public class RoleBotListener extends ListenerAdapter {
 		statBaseChange = cl.getStatBaseChange();
 		statRandomChange = cl.getStatRandomChange();
 		encounterStatMultiplier = cl.getEncounterStatMultiplier();
+		spawnChance = cl.getSpawnChance();
 		
 		dailyChallengeLimit = cl.getDailyChallengeLimit();
 		dailyDefendLimit = cl.getDailyDefendLimit();
@@ -672,7 +674,7 @@ public class RoleBotListener extends ListenerAdapter {
 			Calendar date = new GregorianCalendar();
 			if(date.get(Calendar.MINUTE) % 15 == 0) {
 				// 50% chance to spawn an encounter
-				if(((int)(Math.random() * 2)) == 1) {
+				if(((int)(Math.random() * spawnChance)) == 1) {
 					rollEncounter();
 				}
 			}
