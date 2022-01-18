@@ -74,7 +74,8 @@ public class SlashBotListener extends ListenerAdapter {
 				.addOption(OptionType.ROLE, "role", "Role to see the stats of", true)
 				.addOption(OptionType.BOOLEAN, "include-all", "Weather or not to include the people who have already defended today", false));
 		guild.addCommands(new CommandData("leader-board", "Get the top 10 players in a specific category")
-				.addOption(OptionType.STRING, "statistic", "Which statistic to get the leader board for", true));
+				.addOption(OptionType.STRING, "statistic", "Which statistic to get the leader board for", true)
+				.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false));
 		
 		try {
 			guild.submit();

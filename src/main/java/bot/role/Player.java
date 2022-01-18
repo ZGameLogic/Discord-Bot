@@ -85,6 +85,10 @@ public class Player implements Serializable {
 		gold += amount;
 	}
 	
+	public int getIntGold() {
+		return (int)gold;
+	}
+	
 	public void decreaseGold(long amount) {
 		gold -= amount;
 	}
