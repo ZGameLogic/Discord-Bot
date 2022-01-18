@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -520,10 +521,16 @@ public class RoleBotListener extends ListenerAdapter {
 				eb.setImage(role.getIcon().getIconUrl());
 			}
 			
+			boolean includeAll = false;
+			
+			if(event.getOption("include-all") != null) {
+				includeAll = event.getOption("include-all").getAsBoolean();
+			}
+			
 			for(Member m : event.getGuild().getMembersWithRoles(role)) {
 				if(!m.getUser().isBot()) {
 					Player p = data.loadSerialized(m.getId());
-					if(p.canDefend()) {
+					if(p.canDefend() || includeAll) {
 						eb.addField(m.getEffectiveName(), p.getCompactStats(), true);
 					}
 				}
@@ -742,35 +749,43 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 
 	public void leaderBoard(SlashCommandEvent event) {
-		Comparator<Player> comparitor;
+		Function<Player, Integer> function;
 		switch(event.getOption("statistic").getAsString().toLowerCase()) {
 		case "strength":
-			comparitor = Comparator.comparing(Player::getStrength);
+			function = Player::getStrength;
 			break;
 		case "knowledge":
-			comparitor = Comparator.comparing(Player::getKnowledge);
+			function = Player::getKnowledge;
 			break;
 		case "magic":
-			comparitor = Comparator.comparing(Player::getMagic);
+			function = Player::getMagic;
 			break;
 		case "agility":
-			comparitor = Comparator.comparing(Player::getAgility);
+			function = Player::getAgility;
 			break;
 		case "stamina":
-			comparitor = Comparator.comparing(Player::getStamina);
+			function = Player::getStamina;
 			break;
 		case "gold":
-			comparitor = Comparator.comparing(Player::getGold);
+			function = Player::getIntGold;
 			break;
 		case "wins":
-			comparitor = Comparator.comparing(Player::getWins);
+			function = Player::getWins;
 			break;
 		case "losses":
-			comparitor = Comparator.comparing(Player::getLosses);
+			function = Player::getLosses;
 			break;
 		default:
 			event.reply("Invalid stat. Valid stats are Strength, Knowledge, Magic, Agility, Stamina, Gold, Wins, and Losses").queue();
 			return;
+		}
+		
+		Comparator<Player> comparitor = Comparator.comparing(function);
+		
+		boolean showAll = false;
+		
+		if(event.getOption("show-all") != null) {
+			showAll = event.getOption("show-all").getAsBoolean();
 		}
 		
 		comparitor = Collections.reverseOrder(comparitor);
@@ -790,11 +805,17 @@ public class RoleBotListener extends ListenerAdapter {
 		stat = stat.substring(0,1).toUpperCase() + stat.substring(1);
 		eb.setTitle("Leader board for stat: " + stat);
 		eb.setColor(new Color(102, 107, 14));
-		eb.setDescription("Stats are encoded as Strength:Knowledge:Magic:Agility:Stamina Gold Wins/Losses");
-		
-		for(int i = 0; i < 10 && !players.isEmpty(); i++) {
-			Player current = players.remove();
-			eb.addField(event.getGuild().getMemberById(idLink.get(current)).getEffectiveName(), current.getCompactStats(), true);
+		if(showAll) {
+			eb.setDescription("Stats are encoded as Strength:Knowledge:Magic:Agility:Stamina Gold Wins/Losses");
+			for(int i = 0; i < 10 && !players.isEmpty(); i++) {
+				Player current = players.remove();
+				eb.addField(event.getGuild().getMemberById(idLink.get(current)).getEffectiveName(), current.getCompactStats(), true);
+			}
+		} else {
+			for(int i = 0; i < 10 && !players.isEmpty(); i++) {
+				Player current = players.remove();
+				eb.addField(event.getGuild().getMemberById(idLink.get(current)).getEffectiveName(), function.apply(current) + "", true);
+			}
 		}
 		
 		event.replyEmbeds(eb.build()).queue();
