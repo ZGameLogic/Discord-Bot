@@ -695,7 +695,7 @@ public class RoleBotListener extends ListenerAdapter {
 					p.newDay();
 					p.increaseGold((int)(Math.random() * 20));
 					if(f.getName().contains(kingRoleID + "") ) {
-						p.increaseGold((int)(Math.random() * 100));
+						p.increaseGold((int)(Math.random() * 300) + 150);
 					}
 					data.saveSerialized(p, f.getName());
 				}
