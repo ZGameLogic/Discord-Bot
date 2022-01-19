@@ -158,31 +158,35 @@ public class RoleBotListener extends ListenerAdapter {
 		Player defender = data.loadSerialized(defenderMember.getIdLong() + "");
 		if(!defenderMember.getUser().isBot()) {
 			if(attacker.canChallenge()) {
-				if((defender.canDefend() && getCasteRoleIndex(defenderMember) != 0) || (getCasteRoleIndex(defenderMember) == 0 && canChallengeKing(attackerMember.getIdLong()))) {
-					if(getCasteRoleIndex(defenderMember) == 0) {
-						KingPlayer kp = kingData.loadSerialized("king");
-						kp.addPlayer(attackerMember.getIdLong());
-						kingData.saveSerialized(kp, "king");
-					}
-					int attackIndex = getCasteRoleIndex(attackerMember);
-					int defendIndex = getCasteRoleIndex(defenderMember);
-					int padding = 0;
-					if(attackIndex > defendIndex && attackIndex - defendIndex != 1) {
-						padding = attackIndex - defendIndex;
-					}
-					// Hail to the king
-					if(getCasteRoleIndex(defenderMember) == 0) {
-						padding++;
-					}
-					
-					fight(attackerMember, defenderMember, padding, event);
-					
-				} else {
-					if(getCasteRoleIndex(defenderMember) == 0) {
-						event.reply("You already challenged the king today.").queue();
+				if(attackerMember.getIdLong() != defenderMember.getIdLong()) {
+					if((defender.canDefend() && getCasteRoleIndex(defenderMember) != 0) || (getCasteRoleIndex(defenderMember) == 0 && canChallengeKing(attackerMember.getIdLong()))) {
+						if(getCasteRoleIndex(defenderMember) == 0) {
+							KingPlayer kp = kingData.loadSerialized("king");
+							kp.addPlayer(attackerMember.getIdLong());
+							kingData.saveSerialized(kp, "king");
+						}
+						int attackIndex = getCasteRoleIndex(attackerMember);
+						int defendIndex = getCasteRoleIndex(defenderMember);
+						int padding = 0;
+						if(attackIndex > defendIndex && attackIndex - defendIndex != 1) {
+							padding = attackIndex - defendIndex;
+						}
+						// Hail to the king
+						if(getCasteRoleIndex(defenderMember) == 0) {
+							padding++;
+						}
+						
+						fight(attackerMember, defenderMember, padding, event);
+						
 					} else {
-						event.reply("The defender has been challenged too many times today.").queue();
+						if(getCasteRoleIndex(defenderMember) == 0) {
+							event.reply("You already challenged the king today.").queue();
+						} else {
+							event.reply("The defender has been challenged too many times today.").queue();
+						}
 					}
+				}else {
+					event.reply("Are you drunk or something?").queue();
 				}
 			} else {
 				event.reply("You are weary and cannot attack anymore today.").queue();
