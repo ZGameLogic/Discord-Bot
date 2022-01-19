@@ -229,6 +229,9 @@ public class RoleBotListener extends ListenerAdapter {
 	public void leaderBoard(SlashCommandEvent event) {
 		Function<Player, Integer> function;
 		switch(event.getOption("statistic").getAsString().toLowerCase()) {
+		case "factions":
+			leaderboardFaction(event);
+			return;
 		case "strength":
 			function = Player::getStrength;
 			break;
@@ -257,7 +260,7 @@ public class RoleBotListener extends ListenerAdapter {
 			function = Player::getTotal;
 			break;
 		default:
-			event.reply("Invalid stat. Valid stats are Strength, Knowledge, Magic, Agility, Stamina, Gold, Wins, Losses and Total").queue();
+			event.reply("Invalid stat. Valid stats are Strength, Knowledge, Magic, Agility, Stamina, Gold, Wins, Losses, Total and Factions").queue();
 			return;
 		}
 		
@@ -288,7 +291,7 @@ public class RoleBotListener extends ListenerAdapter {
 		EmbedBuilder eb = new EmbedBuilder();
 		String stat = event.getOption("statistic").getAsString();
 		stat = stat.substring(0,1).toUpperCase() + stat.substring(1);
-		eb.setTitle("Leader board for stat: " + stat);
+		eb.setTitle("Leaderboard for stat: " + stat);
 		eb.setColor(new Color(102, 107, 14));
 		if(showAll) {
 			eb.setDescription("Stats are encoded as Strength:Knowledge:Magic:Agility:Stamina Gold Wins/Losses");
@@ -427,6 +430,15 @@ public class RoleBotListener extends ListenerAdapter {
 		}	
 	}
 	
+	private void leaderboardFaction(SlashCommandEvent event) {
+		HashMap<String, Integer> rolePop = new HashMap<>();
+		for(long id: roleIDs) {
+			Role r = guild.getRoleById(id);
+			rolePop.put(r.getName(), guild.getMembersWithRoles(r).size());
+		}
+		event.replyEmbeds(EmbedMessageMaker.leaderboardFaction(rolePop).build()).queue();
+	}
+
 	private void newKing(Member king) {
 		hpData.saveSerialized(new HonorablePromotion(false), "hp");
 		generalChannel.sendMessageEmbeds(EmbedMessageMaker.newKing(king.getEffectiveName(), king.getAvatarUrl()).build()).queue();

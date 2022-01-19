@@ -1,6 +1,7 @@
 package controllers;
 
 import java.awt.Color;
+import java.util.HashMap;
 
 import bot.role.Player;
 import bot.role.RoleBotListener;
@@ -11,6 +12,16 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 
 public abstract class EmbedMessageMaker {
+	
+	public static EmbedBuilder leaderboardFaction(HashMap<String, Integer> rolePop) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setTitle("Leaderboard for caste population ");
+		eb.setColor(new Color(102, 107, 14));
+		for(String key : rolePop.keySet()) {
+			eb.addField(key, rolePop.get(key) + "", true);
+		}
+		return eb;
+	}
 	
 	public static EmbedBuilder honorablePromotion(Member member1, Member member2) {
 		EmbedBuilder eb = new EmbedBuilder();
