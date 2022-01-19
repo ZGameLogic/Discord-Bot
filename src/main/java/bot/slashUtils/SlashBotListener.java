@@ -145,7 +145,7 @@ public class SlashBotListener extends ListenerAdapter {
 		case "distribute-wealth":
 			RBL.distributeWealth(event);
 			break;
-		case "proposesub-tax":
+		case "propose-tax":
 			RBL.submitTax(event);
 			break;
 		case "honorable-promotion":
