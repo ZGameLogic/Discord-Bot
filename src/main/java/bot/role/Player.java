@@ -92,6 +92,10 @@ public class Player implements Serializable {
 	public void decreaseGold(long amount) {
 		gold -= amount;
 	}
+	
+	public int getTotal() {
+		return strength + agility + knowledge + magic + stamina;
+	}
 
 	public Player(EncounterPlayer ep) {
 		strength = ep.getStrength();

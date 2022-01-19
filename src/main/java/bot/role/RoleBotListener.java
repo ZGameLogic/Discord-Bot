@@ -56,6 +56,8 @@ public class RoleBotListener extends ListenerAdapter {
 	private long generalID;
 	private long spawnChance;
 	
+	private Guild guild;
+	
 	private TextChannel encountersChannel;
 	private TextChannel generalChannel;
 	
@@ -92,7 +94,7 @@ public class RoleBotListener extends ListenerAdapter {
 	@Override
 	public void onReady(ReadyEvent event) {
 		logger.info("Role bot listener activated");
-		Guild guild = event.getJDA().getGuildById(guildID);
+		guild = event.getJDA().getGuildById(guildID);
 		encountersChannel = guild.getTextChannelById(encountersID);
 		generalChannel = guild.getTextChannelById(generalID);
 		
@@ -240,8 +242,11 @@ public class RoleBotListener extends ListenerAdapter {
 		case "losses":
 			function = Player::getLosses;
 			break;
+		case "total":
+			function = Player::getTotal;
+			break;
 		default:
-			event.reply("Invalid stat. Valid stats are Strength, Knowledge, Magic, Agility, Stamina, Gold, Wins, and Losses").queue();
+			event.reply("Invalid stat. Valid stats are Strength, Knowledge, Magic, Agility, Stamina, Gold, Wins, Losses and Total").queue();
 			return;
 		}
 		
@@ -251,6 +256,10 @@ public class RoleBotListener extends ListenerAdapter {
 		
 		if(event.getOption("show-all") != null) {
 			showAll = event.getOption("show-all").getAsBoolean();
+		}
+		
+		if(event.getOption("statistic").getAsString().toLowerCase().equals("total")) {
+			showAll = false;
 		}
 		
 		comparitor = Collections.reverseOrder(comparitor);
@@ -611,6 +620,10 @@ public class RoleBotListener extends ListenerAdapter {
 			logger.info("Rolling random encounter");
 			rollEncounter();
 			event.getPrivateChannel().sendMessage("Rolled encounter").queue();
+		} else if(message.contains("!new-day")){
+			logger.info("Its a new day!");
+			dayPassed();
+			event.getPrivateChannel().sendMessage("Its a new day!").queue();
 		}
 	}
 	
@@ -752,24 +765,68 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 	
+	private void dayPassed() {
+		for(File f : data.getFiles()) {
+			Player p = data.loadSerialized(f.getName());
+			p.newDay();
+			p.increaseGold((int)(Math.random() * 20));
+			if(isKing(f.getName())) {
+				p.increaseGold((int)(Math.random() * 300) + 150);
+			}
+			data.saveSerialized(p, f.getName());
+		}
+		
+		KingPlayer kp = kingData.loadSerialized("king");
+		kp.resetList();
+		kingData.saveSerialized(kp, "king");
+		
+		LinkedList<String> starts = new LinkedList<>();
+		starts.add("The sun rises on our wonderful kingdom once again.");
+		starts.add("The light shines through the stained glass portrait of myself, the king/queen.");
+		starts.add("Like honey slowly drooping, light bathes the kingdom in its golden glow.");
+		starts.add("The bees buzz with content as a night of rest comes to an end.");
+		starts.add("New day, new prospects.");
+		starts.add("Like an angry hive, the denizens buzz excitedly for the start of a new day.");
+		starts.add("Good morning my children!");
+		starts.add("The glint from my crown awakens me.");
+		starts.add("Light begins to pour into the streets below.");
+		starts.add("Chiming sounds throughout the castle halls as the sun rises above the horizon.");
+		starts.add("A rooster bores its noise into the ears of all who were in the village, abruptly seizing as a morning’s hunger sets in.");
+
+		LinkedList<String> endings = new LinkedList<>();
+		endings.add(" I can already hear swords being drawn");
+		endings.add(" I wonder what threats we shall see today");
+		endings.add(" I can hear the birds chirping, the cows mooing, and my children already beating the crap out of each other");
+		endings.add(" Is the red color in the streets new?");
+		endings.add(" Another day, another bloodbath");
+		endings.add(" *Screams of agony* .....Wonderful");
+		endings.add(" Squire, does any of this really matter? Like really *really* matter?");
+		endings.add(" Is shlongbot opposed to all the violence or does it like to watch it like some festivities?");
+		endings.add(" The church of shlongbot should be crowded today. A lot of questionable things happened yesterday...");
+		endings.add(" Will the monarchy be overthrown today? Or perhaps the communist revolution? I can hardly wait to find out");
+		endings.add(" Nothing like the scent of fresh stats in the morning");
+		endings.add(" Do keep it down today children, we do not want to upset the bees");
+		endings.add(" Revealed are hordes of undefeated monsters. Perhaps you should get on that?");
+		
+		generalChannel.sendMessage("**A message from the king/queen\n**" + starts.get((int)(Math.random() * starts.size())) + endings.get((int)(Math.random() * endings.size()))).queue();
+	}
+	
+	private boolean isKing(String playerID) {
+		Member player = guild.getMemberById(playerID);
+		for(Role r : player.getRoles()) {
+			if(r.getIdLong() == kingRoleID) {
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	private void midnightReset() {
 		while (true) {
 			Calendar date = new GregorianCalendar();
 			if(date.get(Calendar.HOUR) == 0 && date.get(Calendar.MINUTE) == 0) {
-				// if its midnight
-				for(File f : data.getFiles()) {
-					Player p = data.loadSerialized(f.getName());
-					p.newDay();
-					p.increaseGold((int)(Math.random() * 20));
-					if(f.getName().contains(kingRoleID + "") ) {
-						p.increaseGold((int)(Math.random() * 300) + 150);
-					}
-					data.saveSerialized(p, f.getName());
-				}
-				
-				KingPlayer kp = kingData.loadSerialized("king");
-				kp.resetList();
-				kingData.saveSerialized(kp, "king");
+				logger.info("A new day rises on the kingdom");
+				dayPassed();
 			}
 			
 			// sleep for a minute
