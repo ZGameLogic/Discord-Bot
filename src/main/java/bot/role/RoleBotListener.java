@@ -16,6 +16,7 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import controllers.EmbedMessageMaker;
 import data.ConfigLoader;
 import data.DataCacher;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -144,6 +145,147 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 
+	public void challenge(SlashCommandEvent event) {
+		Member attackerMember = event.getMember();
+		Member defenderMember = event.getOption("player").getAsMember();
+		
+		Player attacker = data.loadSerialized(attackerMember.getIdLong() + "");
+		Player defender = data.loadSerialized(defenderMember.getIdLong() + "");
+		if(!defenderMember.getUser().isBot()) {
+			if(attacker.canChallenge()) {
+				if((defender.canDefend() && getCasteRoleIndex(defenderMember) != 0) || (getCasteRoleIndex(defenderMember) == 0 && canChallengeKing(attackerMember.getIdLong()))) {
+					if(getCasteRoleIndex(defenderMember) == 0) {
+						KingPlayer kp = kingData.loadSerialized("king");
+						kp.addPlayer(attackerMember.getIdLong());
+						kingData.saveSerialized(kp, "king");
+					}
+					int attackIndex = getCasteRoleIndex(attackerMember);
+					int defendIndex = getCasteRoleIndex(defenderMember);
+					int padding = 0;
+					if(attackIndex > defendIndex && attackIndex - defendIndex != 1) {
+						padding = attackIndex - defendIndex;
+					}
+					// Hail to the king
+					if(getCasteRoleIndex(defenderMember) == 0) {
+						padding++;
+					}
+					
+					fight(attackerMember, defenderMember, padding, event);
+					
+				} else {
+					if(getCasteRoleIndex(defenderMember) == 0) {
+						event.reply("You already challenged the king today.").queue();
+					} else {
+						event.reply("The defender has been challenged too many times today.").queue();
+					}
+				}
+			} else {
+				event.reply("You are weary and cannot attack anymore today.").queue();
+			}
+		} else {
+			event.reply("You can't fight a robot").queue();
+		}
+	}
+
+	public void sendRoleStats(SlashCommandEvent event) {
+		Role role = event.getOption("role").getAsRole();
+		if(roleIDs.contains(role.getIdLong()) || role.getIdLong() == kingRoleID) {
+			event.replyEmbeds(EmbedMessageMaker.roleStats(event, data).build()).queue();
+		} else {
+			event.reply("This is not a valid role to get stats for").queue();
+		}
+	}
+
+	public void sendStats(SlashCommandEvent event) {
+		Member member;
+		
+		if(event.getOption("player") == null) {
+			member = event.getMember();
+		} else {
+			member = event.getOption("player").getAsMember();
+		}
+		
+		if(member.getUser().isBot()) {
+			event.reply("Bots can't play and don't have stats......yet").queue();
+			return;
+		}
+		
+		event.replyEmbeds(EmbedMessageMaker.playerStats(member, data).build()).queue();
+	}
+
+	public void leaderBoard(SlashCommandEvent event) {
+		Function<Player, Integer> function;
+		switch(event.getOption("statistic").getAsString().toLowerCase()) {
+		case "strength":
+			function = Player::getStrength;
+			break;
+		case "knowledge":
+			function = Player::getKnowledge;
+			break;
+		case "magic":
+			function = Player::getMagic;
+			break;
+		case "agility":
+			function = Player::getAgility;
+			break;
+		case "stamina":
+			function = Player::getStamina;
+			break;
+		case "gold":
+			function = Player::getIntGold;
+			break;
+		case "wins":
+			function = Player::getWins;
+			break;
+		case "losses":
+			function = Player::getLosses;
+			break;
+		default:
+			event.reply("Invalid stat. Valid stats are Strength, Knowledge, Magic, Agility, Stamina, Gold, Wins, and Losses").queue();
+			return;
+		}
+		
+		Comparator<Player> comparitor = Comparator.comparing(function);
+		
+		boolean showAll = false;
+		
+		if(event.getOption("show-all") != null) {
+			showAll = event.getOption("show-all").getAsBoolean();
+		}
+		
+		comparitor = Collections.reverseOrder(comparitor);
+		LinkedList<Player> players = new LinkedList<>();
+		HashMap<Player, String> idLink = new HashMap<>();
+		
+		for(File f : data.getFiles()) {
+			Player current = data.loadSerialized(f.getName());
+			players.add(current);
+			idLink.put(current, f.getName());
+		}
+		
+		Collections.sort(players, comparitor);
+		
+		EmbedBuilder eb = new EmbedBuilder();
+		String stat = event.getOption("statistic").getAsString();
+		stat = stat.substring(0,1).toUpperCase() + stat.substring(1);
+		eb.setTitle("Leader board for stat: " + stat);
+		eb.setColor(new Color(102, 107, 14));
+		if(showAll) {
+			eb.setDescription("Stats are encoded as Strength:Knowledge:Magic:Agility:Stamina Gold Wins/Losses");
+			for(int i = 0; i < 10 && !players.isEmpty(); i++) {
+				Player current = players.remove();
+				eb.addField(event.getGuild().getMemberById(idLink.get(current)).getEffectiveName(), current.getCompactStats(), true);
+			}
+		} else {
+			for(int i = 0; i < 10 && !players.isEmpty(); i++) {
+				Player current = players.remove();
+				eb.addField(event.getGuild().getMemberById(idLink.get(current)).getEffectiveName(), function.apply(current) + "", true);
+			}
+		}
+		
+		event.replyEmbeds(eb.build()).queue();
+	}
+
 	/**
 	 * Assigns a random role to a member
 	 * @param member
@@ -231,43 +373,6 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 		
 		logger.info("No more roles to assign");
-	}
-	
-	public void sendStats(SlashCommandEvent event) {
-		Member member;
-		
-		if(event.getOption("player") == null) {
-			member = event.getMember();
-		} else {
-			member = event.getOption("player").getAsMember();
-		}
-		
-		if(member.getUser().isBot()) {
-			event.reply("Bots can't play and don't have stats......yet").queue();
-			return;
-		}
-		
-		EmbedBuilder eb = new EmbedBuilder();
-		Player player = data.loadSerialized(member.getIdLong() + "");
-		if(player == null) {
-			
-		}
-		eb.setTitle("Fighter stats for " + member.getEffectiveName());
-		eb.setColor(new Color(113, 94, 115));
-		eb.setThumbnail(member.getEffectiveAvatarUrl());
-		
-		eb.addField("Strength", player.getStrength() + "", true);
-		eb.addField("Knowledge", player.getKnowledge() + "", true);
-		eb.addField("Magic", player.getMagic() + "", true);
-		eb.addField("Agility", player.getAgility() + "", true);
-		eb.addField("Stamina", player.getStamina() + "", true);
-		
-		eb.addField("Statistics", "Gold: " + player.getGold() + "\nTournament victories: " + player.getTournamentWins() + "\nVictories: " + player.getWins()
-			+ "\nDefeats: " + player.getLosses(), false);
-		
-		eb.setFooter("Can attack " + (dailyChallengeLimit - player.getHasChallengedToday()) + " more time(s) today\n"
-				+ "Can defend " + (dailyDefendLimit - player.getChallengedToday()) + " more time(s) today");
-		event.replyEmbeds(eb.build()).queue();
 	}
 	
 	private FightResults fight(Player attacker, EncounterPlayer ep) {
@@ -440,48 +545,6 @@ public class RoleBotListener extends ListenerAdapter {
 		data.saveSerialized(defender, defenderMember.getId());
 	}
 
-	public void challenge(SlashCommandEvent event) {
-		Member attackerMember = event.getMember();
-		Member defenderMember = event.getOption("player").getAsMember();
-		
-		Player attacker = data.loadSerialized(attackerMember.getIdLong() + "");
-		Player defender = data.loadSerialized(defenderMember.getIdLong() + "");
-		if(!defenderMember.getUser().isBot()) {
-			if(attacker.canChallenge()) {
-				if((defender.canDefend() && getCasteRoleIndex(defenderMember) != 0) || (getCasteRoleIndex(defenderMember) == 0 && canChallengeKing(attackerMember.getIdLong()))) {
-					if(getCasteRoleIndex(defenderMember) == 0) {
-						KingPlayer kp = kingData.loadSerialized("king");
-						kp.addPlayer(attackerMember.getIdLong());
-						kingData.saveSerialized(kp, "king");
-					}
-					int attackIndex = getCasteRoleIndex(attackerMember);
-					int defendIndex = getCasteRoleIndex(defenderMember);
-					int padding = 0;
-					if(attackIndex > defendIndex && attackIndex - defendIndex != 1) {
-						padding = attackIndex - defendIndex;
-					}
-					// Hail to the king
-					if(getCasteRoleIndex(defenderMember) == 0) {
-						padding++;
-					}
-					
-					fight(attackerMember, defenderMember, padding, event);
-					
-				} else {
-					if(getCasteRoleIndex(defenderMember) == 0) {
-						event.reply("You already challenged the king today.").queue();
-					} else {
-						event.reply("The defender has been challenged too many times today.").queue();
-					}
-				}
-			} else {
-				event.reply("You are weary and cannot attack anymore today.").queue();
-			}
-		} else {
-			event.reply("You can't fight a robot").queue();
-		}
-	}
-	
 	private int getCasteRoleIndex(Member member) {
 		for(Role r : member.getRoles()) {
 			if(roleIDs.contains(r.getIdLong())) {
@@ -510,38 +573,6 @@ public class RoleBotListener extends ListenerAdapter {
 		return kingData.loadSerialized("king").canFight(id);
 	}
 
-	public void sendRoleStats(SlashCommandEvent event) {
-		Role role = event.getOption("role").getAsRole();
-		if(roleIDs.contains(role.getIdLong()) || role.getIdLong() == kingRoleID) {
-			EmbedBuilder eb = new EmbedBuilder();
-			eb.setTitle("Fighter stats for " + role.getName() + "s");
-			eb.setDescription("Stats are encoded as Strength:Knowledge:Magic:Agility:Stamina Gold Wins/Losses");
-			eb.setColor(new Color(113, 94, 115));
-			if(role.getIcon() != null) {
-				eb.setImage(role.getIcon().getIconUrl());
-			}
-			
-			boolean includeAll = false;
-			
-			if(event.getOption("include-all") != null) {
-				includeAll = event.getOption("include-all").getAsBoolean();
-			}
-			
-			for(Member m : event.getGuild().getMembersWithRoles(role)) {
-				if(!m.getUser().isBot()) {
-					Player p = data.loadSerialized(m.getId());
-					if(p.canDefend() || includeAll) {
-						eb.addField(m.getEffectiveName(), p.getCompactStats(), true);
-					}
-				}
-			}
-			
-			event.replyEmbeds(eb.build()).queue();
-		} else {
-			event.reply("This is not a valid role to get stats for").queue();
-		}
-	}
-	
 	private void processCommand(String message, MessageReceivedEvent event) {
 		if(message.contains("!reroll")) {
 			message = message.replace("!reroll ", "");
@@ -746,78 +777,5 @@ public class RoleBotListener extends ListenerAdapter {
 				e.printStackTrace();
 			}
 		}
-	}
-
-	public void leaderBoard(SlashCommandEvent event) {
-		Function<Player, Integer> function;
-		switch(event.getOption("statistic").getAsString().toLowerCase()) {
-		case "strength":
-			function = Player::getStrength;
-			break;
-		case "knowledge":
-			function = Player::getKnowledge;
-			break;
-		case "magic":
-			function = Player::getMagic;
-			break;
-		case "agility":
-			function = Player::getAgility;
-			break;
-		case "stamina":
-			function = Player::getStamina;
-			break;
-		case "gold":
-			function = Player::getIntGold;
-			break;
-		case "wins":
-			function = Player::getWins;
-			break;
-		case "losses":
-			function = Player::getLosses;
-			break;
-		default:
-			event.reply("Invalid stat. Valid stats are Strength, Knowledge, Magic, Agility, Stamina, Gold, Wins, and Losses").queue();
-			return;
-		}
-		
-		Comparator<Player> comparitor = Comparator.comparing(function);
-		
-		boolean showAll = false;
-		
-		if(event.getOption("show-all") != null) {
-			showAll = event.getOption("show-all").getAsBoolean();
-		}
-		
-		comparitor = Collections.reverseOrder(comparitor);
-		LinkedList<Player> players = new LinkedList<>();
-		HashMap<Player, String> idLink = new HashMap<>();
-		
-		for(File f : data.getFiles()) {
-			Player current = data.loadSerialized(f.getName());
-			players.add(current);
-			idLink.put(current, f.getName());
-		}
-		
-		Collections.sort(players, comparitor);
-		
-		EmbedBuilder eb = new EmbedBuilder();
-		String stat = event.getOption("statistic").getAsString();
-		stat = stat.substring(0,1).toUpperCase() + stat.substring(1);
-		eb.setTitle("Leader board for stat: " + stat);
-		eb.setColor(new Color(102, 107, 14));
-		if(showAll) {
-			eb.setDescription("Stats are encoded as Strength:Knowledge:Magic:Agility:Stamina Gold Wins/Losses");
-			for(int i = 0; i < 10 && !players.isEmpty(); i++) {
-				Player current = players.remove();
-				eb.addField(event.getGuild().getMemberById(idLink.get(current)).getEffectiveName(), current.getCompactStats(), true);
-			}
-		} else {
-			for(int i = 0; i < 10 && !players.isEmpty(); i++) {
-				Player current = players.remove();
-				eb.addField(event.getGuild().getMemberById(idLink.get(current)).getEffectiveName(), function.apply(current) + "", true);
-			}
-		}
-		
-		event.replyEmbeds(eb.build()).queue();
 	}
 }
