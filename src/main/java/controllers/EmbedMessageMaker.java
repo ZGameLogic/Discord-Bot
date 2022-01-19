@@ -39,11 +39,10 @@ public abstract class EmbedMessageMaker {
 		return eb;
 	}
 	
-	public static EmbedBuilder playerStats(Member member, DataCacher<Player> data) {
+	public static EmbedBuilder playerStats(Member member, DataCacher<Player> data, String icon) {
 		EmbedBuilder eb = new EmbedBuilder();
 		Player player = data.loadSerialized(member.getIdLong() + "");
-
-		eb.setTitle("Fighter stats for " + member.getEffectiveName());
+		eb.setTitle("Fighter stats for " + member.getEffectiveName() + " " + icon);
 		eb.setColor(new Color(113, 94, 115));
 		eb.setThumbnail(member.getEffectiveAvatarUrl());
 		
