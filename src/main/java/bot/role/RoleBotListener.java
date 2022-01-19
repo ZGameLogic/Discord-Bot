@@ -53,6 +53,7 @@ public class RoleBotListener extends ListenerAdapter {
 	private final int boosterChange;
 	private long encountersID;
 	private long fightEmojiID;
+	private String[] iconIDs;
 	private long generalID;
 	private long spawnChance;
 	
@@ -77,6 +78,8 @@ public class RoleBotListener extends ListenerAdapter {
 		generalID = cl.getGeneralID();
 		boosterChange = cl.getBoosterChange();
 		fightEmojiID = cl.getFightEmojiID();
+		
+		iconIDs = cl.getIconIDS();
 		
 		paddingMultiplier = cl.getPaddingMultiplier();
 		statBaseChange = cl.getStatBaseChange();
@@ -212,7 +215,7 @@ public class RoleBotListener extends ListenerAdapter {
 			return;
 		}
 		
-		event.replyEmbeds(EmbedMessageMaker.playerStats(member, data).build()).queue();
+		event.replyEmbeds(EmbedMessageMaker.playerStats(member, data, iconIDs[getCasteRoleIndex(member)]).build()).queue();
 	}
 
 	public void leaderBoard(SlashCommandEvent event) {

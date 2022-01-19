@@ -85,6 +85,9 @@ public class ConfigLoader {
 	@Value("${fight.id}")
 	private long fightEmojiID;
 	
+	@Value("${icons.ids}")
+	private String[] iconIDS;
+	
 	
 	public LinkedList<Long> getRoleIDs(){
 		LinkedList<Long> ids = new LinkedList<>();
