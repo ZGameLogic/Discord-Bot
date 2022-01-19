@@ -73,9 +73,23 @@ public class SlashBotListener extends ListenerAdapter {
 		guild.addCommands(new CommandData("role-stats", "Lists everyone in the caste level and their stats if they can still defend for the day")
 				.addOption(OptionType.ROLE, "role", "Role to see the stats of", true)
 				.addOption(OptionType.BOOLEAN, "include-all", "Weather or not to include the people who have already defended today", false));
-		guild.addCommands(new CommandData("leader-board", "Get the top 10 players in a specific category")
+		guild.addCommands(new CommandData("leaderboard", "Get the top 10 players in a specific category")
 				.addOption(OptionType.STRING, "statistic", "Which statistic to get the leader board for", true)
 				.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false));
+		
+		// Role bot king
+		guild.addCommands(new CommandData("distribute-wealth", "Gives some of your wealth to a caste system")
+				.addOption(OptionType.ROLE, "role", "The caste level of where you want your gold to go", true)
+				.addOption(OptionType.INTEGER, "gold", "The amount of gold to distribute", true));
+		
+		guild.addCommands(new CommandData("propose-tax", "Forces a caste to pay a tax at the start of the next day")
+				.addOption(OptionType.ROLE, "role", "The caste level to tax", true)
+				.addOption(OptionType.INTEGER, "gold", "The amount of gold to tax", true));
+		
+		guild.addCommands(new CommandData("honorable-promotion", "Forces two citizens to switch roles. Used once per day")
+				.addOption(OptionType.USER, "citizen-one", "One of the two citizens to switch roles", true)
+				.addOption(OptionType.USER, "citizen-two", "One of the two citizens to switch roles", true));
+		
 		
 		try {
 			guild.submit();
@@ -125,8 +139,17 @@ public class SlashBotListener extends ListenerAdapter {
 		case "role-stats":
 			RBL.sendRoleStats(event);
 			break;
-		case "leader-board":
+		case "leaderboard":
 			RBL.leaderBoard(event);
+			break;
+		case "distribute-wealth":
+			RBL.distributeWealth(event);
+			break;
+		case "proposesub-tax":
+			RBL.submitTax(event);
+			break;
+		case "honorable-promotion":
+			RBL.honorablePromotion(event);
 			break;
 		}
 	}

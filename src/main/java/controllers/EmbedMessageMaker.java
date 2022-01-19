@@ -12,6 +12,44 @@ import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 
 public abstract class EmbedMessageMaker {
 	
+	public static EmbedBuilder honorablePromotion(Member member1, Member member2) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setTitle("The King/Queen has decreed a role change!");
+		eb.setDescription("By the command of our king/queen: " + member1.getEffectiveName() + " and " + member2.getEffectiveName() + " have had their roles swapped!");
+		eb.setColor(new Color(252, 211, 3));
+		return eb;
+	}
+	
+	public static EmbedBuilder newKing(String kingName, String memberIcon) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setTitle("All hail the new King/Queen " + kingName + "!");
+		eb.setImage(memberIcon);
+		eb.setColor(new Color(252, 211, 3));
+		return eb;
+	}
+	
+	public static EmbedBuilder proposeTax(long amount, String roleName, String roleIcon) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setTitle("The King/Queen has proposed a tax on the caste of: " + roleName);
+		eb.setDescription("At the begining of the next day, everyone in that caste will pay the king/queen " + amount + " gold");
+		if(!roleIcon.equals("")) {
+			eb.setThumbnail(roleIcon);
+		}
+		eb.setColor(new Color(252, 211, 3));
+		return eb;
+	}
+	
+	public static EmbedBuilder distributeGold(long initialAmount, String roleName, String roleIcon) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setTitle("The King/Queen bequeathes the caste of " + roleName + " with " + initialAmount + " gold!");
+		if(!roleIcon.equals("")) {
+			eb.setThumbnail(roleIcon);
+		}
+		eb.setDescription("Go now! Check your banks! All hail the King/Queen!!!");
+		eb.setColor(new Color(252, 211, 3));
+		return eb;
+	}
+	
 	public static EmbedBuilder roleStats(SlashCommandEvent event, DataCacher<Player> data) {
 		Role role = event.getOption("role").getAsRole();
 		EmbedBuilder eb = new EmbedBuilder();

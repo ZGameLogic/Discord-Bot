@@ -50,6 +50,8 @@ public class RoleBotListener extends ListenerAdapter {
 	private DataCacher<Player> data;
 	private DataCacher<EncounterPlayer> encounterData;
 	private DataCacher<KingPlayer> kingData;
+	private DataCacher<Tax> taxData;
+	private DataCacher<HonorablePromotion> hpData;
 	private final int boosterChange;
 	private long encountersID;
 	private long fightEmojiID;
@@ -68,6 +70,8 @@ public class RoleBotListener extends ListenerAdapter {
 		data = new DataCacher<>("arena");
 		encounterData = new DataCacher<>("encounter");
 		kingData = new DataCacher<>("king");
+		taxData = new DataCacher<>("tax");
+		hpData = new DataCacher<>("honorablePromotion");
 		
 		if(kingData.getFiles().length == 0) {
 			kingData.saveSerialized(new KingPlayer(), "king");
@@ -302,6 +306,136 @@ public class RoleBotListener extends ListenerAdapter {
 		event.replyEmbeds(eb.build()).queue();
 	}
 
+	public void distributeWealth(SlashCommandEvent event) {
+		if(isKing(event.getMember())) {
+			// if the king is the person giving the command
+			Role role = event.getOption("role").getAsRole();
+			if(roleIDs.contains(role.getIdLong())) {
+				// if the role is a valid role
+				long goldAmount = event.getOption("gold").getAsLong();
+				if(goldAmount > 0) {
+					Player king = data.loadSerialized(event.getMember().getId());
+					if(king.getGold() >= goldAmount) {
+						// if the king has enough gold to give
+						
+						LinkedList<Player> players = new LinkedList<>();
+						HashMap<Player, String> idLinks = new HashMap<>();
+						for(Member m : event.getGuild().getMembersWithRoles(role)) {
+							Player player = data.loadSerialized(m.getId());
+							players.add(player);
+							idLinks.put(player, m.getId());
+						}
+						// Take the gold from the king
+						king.decreaseGold(goldAmount);
+						long initialAmount = goldAmount;
+						// Randomly give each player a gold until the pool is empty
+						while(goldAmount > 0) {
+							players.get((int)(Math.random() * players.size())).increaseGold(1);
+							goldAmount--;
+						}
+						
+						while(players.size() > 0) {
+							Player player = players.remove();
+							data.saveSerialized(player, idLinks.get(player));
+						}
+						
+						data.saveSerialized(king, event.getMember().getId());
+						String iconURL = "";
+						if(role.getIcon() != null) {
+							iconURL = role.getIcon().getIconUrl();
+						}
+						event.replyEmbeds(EmbedMessageMaker.distributeGold(initialAmount, role.getName(), iconURL).build()).queue();
+					} else {
+						event.reply("You do not have enough gold to give this much").queue();
+					}
+				} else {
+					event.reply("You cannot give negative gold!").queue();
+				}
+			} else {
+				event.reply("This is not a valid role to give your gold too").queue();
+			}
+		} else {
+			event.reply("Only the king can use this command").queue();
+		}
+	}
+	
+	public void submitTax(SlashCommandEvent event) {
+		if(isKing(event.getMember())) {
+			// if the king is the person giving the command
+			Role role = event.getOption("role").getAsRole();
+			if(roleIDs.contains(role.getIdLong())) {
+				// if the role is a valid role
+				long goldAmount = event.getOption("gold").getAsLong();
+				if(goldAmount > 0) {
+					if(goldAmount <= 20) {
+						Tax tax = new Tax((int)goldAmount, role.getIdLong());
+						taxData.saveSerialized(tax, "tax");
+						String iconURL = "";
+						if(role.getIcon() != null) {
+							iconURL = role.getIcon().getIconUrl();
+						}
+						event.replyEmbeds(EmbedMessageMaker.proposeTax(goldAmount, role.getName(), iconURL).build()).queue();
+					} else {
+						event.reply("You cannot tax more than 20 gold").queue();
+					}
+				} else {
+					event.reply("You cannot tax negative gold!").queue();
+				}
+			} else {
+				event.reply("This is not a valid role to give your gold too").queue();
+			}
+		} else {
+			event.reply("Only the king can use this command").queue();
+		}
+	}
+	
+	public void honorablePromotion(SlashCommandEvent event) {
+		if(isKing(event.getMember())) {
+			Member member1 = event.getOption("citizen-one").getAsMember();
+			Member member2 = event.getOption("citizen-two").getAsMember();
+			if(!member1.getUser().isBot() && !member2.getUser().isBot()) {
+				if(getCasteRoleIndex(member1) != -1 && getCasteRoleIndex(member2) != -1 && getCasteRoleIndex(member1) != getCasteRoleIndex(member2)) {
+					if(member1.getIdLong() != member2.getIdLong()) {
+						if(hpData.getFiles().length == 0 || !hpData.loadSerialized("hp").isUsedToday()) {
+							hpData.saveSerialized(new HonorablePromotion(true), "hp");
+							Role r1 = getCasteRole(member1);
+							Role r2 = getCasteRole(member2);
+							guild.removeRoleFromMember(member1, r1).queue();
+							guild.addRoleToMember(member1, r2).queue();
+							guild.removeRoleFromMember(member2, r2).queue();
+							guild.addRoleToMember(member2, r1).queue();
+							event.replyEmbeds(EmbedMessageMaker.honorablePromotion(member1, member2).build()).queue();
+							if(getCasteRoleIndex(member2) == 0) {
+								newKing(member1);
+							} else if(getCasteRoleIndex(member1) ==0 ) {
+								newKing(member2);
+							}
+						} else {
+							event.reply("You can only use this once per day!").queue();
+						}
+					} else {
+						event.reply("You cannot swap the role of the same citizen").queue();
+					}
+				} else {
+					event.reply("Both citizens must be in a caste, but not the same caste").queue();
+				}
+			} else {
+				event.reply("Both citizens must not be a bot").queue();
+			}
+		} else {
+			event.reply("Only the king can use this command").queue();
+		}	
+	}
+	
+	private void newKing(Member king) {
+		hpData.saveSerialized(new HonorablePromotion(false), "hp");
+		generalChannel.sendMessageEmbeds(EmbedMessageMaker.newKing(king.getEffectiveName(), king.getAvatarUrl()).build()).queue();
+	}
+	
+	private boolean isKing(Member member) {
+		return getCasteRoleIndex(member) == 0;
+	}
+
 	/**
 	 * Assigns a random role to a member
 	 * @param member
@@ -489,6 +623,10 @@ public class RoleBotListener extends ListenerAdapter {
 			eb.setTimestamp(Instant.now());
 			
 			event.replyEmbeds(eb.build()).queue();
+
+			if(getCasteRoleIndex(defenderMember) == 0) {
+				newKing(attackerMember);
+			}
 		} else {
 			// Attacker loses
 			attacker.lost();
@@ -772,7 +910,29 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 	
-	private void dayPassed() {
+	private void payTax() {
+		if(taxData.getFiles().length > 0) {
+			Tax tax = taxData.loadSerialized("tax");
+			Member kingMember = guild.getMembersWithRoles(guild.getRoleById(kingRoleID)).get(0);
+			Player king = data.loadSerialized(kingMember.getId());
+			for(Member m : guild.getMembersWithRoles(guild.getRoleById(tax.getRoleID()))) {
+				if(!m.getUser().isBot()) {
+					Player p = data.loadSerialized(m.getId());
+					int payAmount = tax.getTaxAmount();
+					if(p.getGold() < payAmount) {
+						payAmount = p.getIntGold();
+					}
+					p.decreaseGold(payAmount);
+					king.increaseGold(payAmount);
+					data.saveSerialized(p, m.getId());
+				}
+			}
+			data.saveSerialized(king, kingMember.getId());
+			taxData.delete("tax");
+		}
+	}
+	
+	private void dailyGoldIncrease() {
 		for(File f : data.getFiles()) {
 			Player p = data.loadSerialized(f.getName());
 			p.newDay();
@@ -782,6 +942,12 @@ public class RoleBotListener extends ListenerAdapter {
 			}
 			data.saveSerialized(p, f.getName());
 		}
+	}
+	
+	private void dayPassed() {
+		payTax();
+		dailyGoldIncrease();
+		hpData.saveSerialized(new HonorablePromotion(false), "hp");
 		
 		KingPlayer kp = kingData.loadSerialized("king");
 		kp.resetList();
