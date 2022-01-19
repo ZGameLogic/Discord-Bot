@@ -656,6 +656,8 @@ public class RoleBotListener extends ListenerAdapter {
 		eb.addField("Magic", magic + "", true);
 		eb.addField("Agility", agility + "", true);
 		eb.addField("Stamina", stamina + "", true);
+
+		eb.setImage("https://zgamelogic.com/downloads/" + tier + "-" + types.get(type) + ".png");
 		
 		eb.setTitle("A " + tiers.get(tier) + " " + types.get(type) + " challenges the kingdom!");
 		eb.setColor(new Color(56, 79, 115));
