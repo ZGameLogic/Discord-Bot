@@ -370,7 +370,8 @@ public class RoleBotListener extends ListenerAdapter {
 				// if the role is a valid role
 				long goldAmount = event.getOption("gold").getAsLong();
 				if(goldAmount > 0) {
-					if(goldAmount <= 20) {
+					if(goldAmount <= 10) {
+						System.out.println(1);
 						Tax tax = new Tax((int)goldAmount, role.getIdLong());
 						taxData.saveSerialized(tax, "tax");
 						String iconURL = "";
@@ -379,7 +380,7 @@ public class RoleBotListener extends ListenerAdapter {
 						}
 						event.replyEmbeds(EmbedMessageMaker.proposeTax(goldAmount, role.getName(), iconURL).build()).queue();
 					} else {
-						event.reply("You cannot tax more than 20 gold").queue();
+						event.reply("You cannot tax more than 10 gold").queue();
 					}
 				} else {
 					event.reply("You cannot tax negative gold!").queue();
