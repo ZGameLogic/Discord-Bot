@@ -299,12 +299,15 @@ public class RoleBotListener extends ListenerAdapter {
 			eb.setDescription("Stats are encoded as Strength:Knowledge:Magic:Agility:Stamina Gold Wins/Losses");
 			for(int i = 0; i < 10 && !players.isEmpty(); i++) {
 				Player current = players.remove();
-				eb.addField(event.getGuild().getMemberById(idLink.get(current)).getEffectiveName(), current.getCompactStats(), true);
+				Member member = event.getGuild().getMemberById(idLink.get(current));
+				eb.addField(member.getEffectiveName()
+						+ " " + iconIDs[getCasteRoleIndex(member)], current.getCompactStats(), true);
 			}
 		} else {
 			for(int i = 0; i < 10 && !players.isEmpty(); i++) {
 				Player current = players.remove();
-				eb.addField(event.getGuild().getMemberById(idLink.get(current)).getEffectiveName(), function.apply(current) + "", true);
+				Member member = event.getGuild().getMemberById(idLink.get(current));
+				eb.addField(member.getEffectiveName() + " " + iconIDs[getCasteRoleIndex(member)], function.apply(current) + "", true);
 			}
 		}
 		
