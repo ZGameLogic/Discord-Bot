@@ -17,12 +17,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import controllers.EmbedMessageMaker;
+import controllers.dice.DiceRollingSimulator;
 import data.ConfigLoader;
 import data.DataCacher;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
@@ -136,7 +138,7 @@ public class RoleBotListener extends ListenerAdapter {
 			if(event.getChannel().getIdLong() == encountersID && event.getReactionEmote().getIdLong() == fightEmojiID) {
 				event.retrieveMessage().queue(message -> {
 					long encounterID = Long.parseLong(message.getEmbeds().get(0).getFooter().getText());
-					EncounterPlayer ep = encounterData.loadSerialized(encounterID + "");
+					EncounterPlayer ep = encounterData.loadSerialized(message.getId());
 					if(ep.canFightPlayer(event.getMember().getIdLong())) {
 						Player p = data.loadSerialized(event.getUserId());
 						if(p.canChallenge()) {
@@ -820,7 +822,6 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 		
 		EncounterPlayer baddy = new EncounterPlayer(strength, agility, knowledge, magic, stamina, encounterID, tiers.get(tier) + " " + types.get(type));
-		encounterData.saveSerialized(baddy, baddy.getEncounterID() + "");
 		
 		eb.addField("Strength", strength + "", true);
 		eb.addField("Knowledge", knowledge + "", true);
@@ -836,6 +837,8 @@ public class RoleBotListener extends ListenerAdapter {
 		eb.setFooter(encounterID + "");
 
 		encountersChannel.sendMessageEmbeds(eb.build()).queue(message -> {
+			baddy.setEncounterID(message.getIdLong());
+			encounterData.saveSerialized(baddy, baddy.getEncounterID() + "");
 			message.addReaction(encountersChannel.getGuild().getEmoteById(fightEmojiID)).queue();
 		});
 		
@@ -905,7 +908,6 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 	
 	private void randomEncounters() {
-		
 		while(true) {
 			Calendar date = new GregorianCalendar();
 			if(date.get(Calendar.MINUTE) % 15 == 0) {
@@ -949,7 +951,7 @@ public class RoleBotListener extends ListenerAdapter {
 		for(File f : data.getFiles()) {
 			Player p = data.loadSerialized(f.getName());
 			p.newDay();
-			p.increaseGold((int)(Math.random() * 20));
+			p.increaseGold(DiceRollingSimulator.rollDice(2, 10));
 			if(isKing(f.getName())) {
 				p.increaseGold((int)(Math.random() * 300) + 150);
 			}
@@ -957,9 +959,29 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 	
+	private void dayPassedEncounter() {
+		for(File f : encounterData.getFiles()) {
+			EncounterPlayer ep = encounterData.loadSerialized(f.getName());
+			boolean delete = ep.dayPassed();
+			if(delete) {
+				encountersChannel.retrieveMessageById(ep.getEncounterID()).queue(message -> {
+					message.delete().queue();
+				});
+				encounterData.delete(f.getName());
+			} else {
+				Message m = encountersChannel.retrieveMessageById(ep.getEncounterID()).complete();
+				EmbedBuilder eb = new EmbedBuilder(m.getEmbeds().get(0));
+				eb.setDescription("This encounter is " + ep.getDaysOld() + " day(s) old");
+				m.editMessageEmbeds(eb.build()).queue();
+				encounterData.saveSerialized(ep, f.getName());
+			}
+		}
+	}
+	
 	private void dayPassed() {
 		payTax();
 		dailyGoldIncrease();
+		dayPassedEncounter();
 		hpData.saveSerialized(new HonorablePromotion(false), "hp");
 		
 		KingPlayer kp = kingData.loadSerialized("king");
