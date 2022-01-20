@@ -17,8 +17,7 @@ import data.ConfigLoader;
 import data.DataCacher;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.MessageEmbed.Field;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.entities.VoiceChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
@@ -33,8 +32,6 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 	private static ConfigLoader cl;
 	
 	private static JDA bot;
-	
-	private static Long currentMessage;
 	
 	private static String password;
 	
@@ -96,58 +93,33 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 		if(!event.getUser().isBot() && event.getChannel().equals(channel)) {
 			if(event.getReaction().toString().contains("RE:U+1f3d7")){
 				
+				Message m = event.retrieveMessage().complete();
+				EmbedBuilder eb = new EmbedBuilder(m.getEmbeds().get(0));
+				
+				eb.setColor(Color.BLUE);
+				m.editMessageEmbeds(eb.build()).complete();
+				m.clearReactions().queue();
+				
+				MessageID  mid = new MessageID(m.getIdLong());
+				messageID.saveSerialized(mid, "id");
+				
 				try {
 					JSONObject resultPull = new JSONObject(createPullRequest(event.retrieveMember().complete().getEffectiveName()));
 					String id = resultPull.getString("id");
-					new JSONObject(mergePullRequest(id));
+					mergePullRequest(id);
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
-				
-				EmbedBuilder eb = new EmbedBuilder();
-				
-				MessageEmbed old = event.retrieveMessage().complete().getEmbeds().get(0);
-				
-				eb.setTitle(old.getTitle(),"https://zgamelogic.com:7990/projects/BSPR/repos/discord-bot/browse");
-				eb.setAuthor(old.getAuthor().getName(), old.getAuthor().getUrl());
-				
-				for(Field x : old.getFields()) {
-					eb.addField(x);
-				}
-				
-				eb.setColor(Color.BLUE);				
-				event.retrieveMessage().complete().editMessageEmbeds(eb.build()).complete();
-				event.retrieveMessage().complete().clearReactions().complete();
-				currentMessage = event.retrieveMessage().complete().getIdLong();
-				MessageID  mid = new MessageID(currentMessage);
-				messageID.saveSerialized(mid, "id");
 			}
 		}
 	}
 	
 	public static void changeStatus(Color color) {
-		
 		if(messageID.getFiles().length > 0) {
-			currentMessage = messageID.loadSerialized("id").getId();
-		} else {
-			currentMessage = null;
-		}
-		
-		if(currentMessage != null) {
-		
-			EmbedBuilder eb = new EmbedBuilder();
-			MessageEmbed old = channel.retrieveMessageById(currentMessage).complete().getEmbeds().get(0);
-		
-			eb.setTitle(old.getTitle(),"https://zgamelogic.com:7990/projects/BSPR/repos/discord-bot/browse");
-			eb.setAuthor(old.getAuthor().getName(), old.getAuthor().getUrl());
-		
-			for(Field x : old.getFields()) {
-				eb.addField(x);
-			}
-		
+			long message = messageID.loadSerialized("id").getId();
+			EmbedBuilder eb = new EmbedBuilder(channel.retrieveMessageById(message).complete().getEmbeds().get(0));
 			eb.setColor(color);
-			channel.editMessageEmbedsById(currentMessage, eb.build()).complete();
-			currentMessage = null;
+			channel.editMessageEmbedsById(message, eb.build()).queue();
 		}
 	}
 	
