@@ -300,14 +300,22 @@ public class RoleBotListener extends ListenerAdapter {
 			for(int i = 0; i < 10 && !players.isEmpty(); i++) {
 				Player current = players.remove();
 				Member member = event.getGuild().getMemberById(idLink.get(current));
+				String icon = "";
+				if(getCasteRoleIndex(member) != -1) {
+					icon = " " + iconIDs[getCasteRoleIndex(member)];
+				}
 				eb.addField(member.getEffectiveName()
-						+ " " + iconIDs[getCasteRoleIndex(member)], current.getCompactStats(), true);
+						+ icon, current.getCompactStats(), true);
 			}
 		} else {
 			for(int i = 0; i < 10 && !players.isEmpty(); i++) {
 				Player current = players.remove();
 				Member member = event.getGuild().getMemberById(idLink.get(current));
-				eb.addField(member.getEffectiveName() + " " + iconIDs[getCasteRoleIndex(member)], function.apply(current) + "", true);
+				String icon = "";
+				if(getCasteRoleIndex(member) != -1) {
+					icon = " " + iconIDs[getCasteRoleIndex(member)];
+				}
+				eb.addField(member.getEffectiveName() + icon, function.apply(current) + "", true);
 			}
 		}
 		
