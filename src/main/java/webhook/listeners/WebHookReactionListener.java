@@ -1,11 +1,6 @@
 package webhook.listeners;
 
 import java.awt.Color;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.util.Scanner;
 
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.json.JSONArray;
@@ -19,6 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.client.RestTemplate;
 
 import data.ConfigLoader;
+import data.DataCacher;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -42,9 +38,12 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 	
 	private static String password;
 	
+	private static DataCacher<MessageID> messageID;
+	
 	public WebHookReactionListener(ConfigLoader cl) {
 		WebHookReactionListener.cl = cl;
 		password = cl.getAdminPassword();
+		messageID = new DataCacher<>("bitbucket message");
 	}
 	
 	/**
@@ -120,15 +119,18 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 				event.retrieveMessage().complete().editMessageEmbeds(eb.build()).complete();
 				event.retrieveMessage().complete().clearReactions().complete();
 				currentMessage = event.retrieveMessage().complete().getIdLong();
-				saveMessageID(currentMessage);
+				MessageID  mid = new MessageID(currentMessage);
+				messageID.saveSerialized(mid, "id");
 			}
 		}
 	}
 	
 	public static void changeStatus(Color color) {
 		
-		if(currentMessage == null) {
-			currentMessage = loadMessageID();
+		if(messageID.getFiles().length > 0) {
+			currentMessage = messageID.loadSerialized("id").getId();
+		} else {
+			currentMessage = null;
 		}
 		
 		if(currentMessage != null) {
@@ -228,36 +230,4 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 		return base64Creds;
 	}
 	
-	private void saveMessageID(Long messageID) {
-		File message = new File("messageID");
-		if(!message.exists()) {
-			try {
-				message.createNewFile();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}
-		
-		try {
-			PrintWriter out = new PrintWriter(message);
-			out.write(messageID + "");
-			out.flush();
-			out.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	private static Long loadMessageID() {
-		Scanner in;
-		try {
-			in = new Scanner(new File("messageID"));
-			Long id = in.nextLong();
-			in.close();
-			return id;
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
 }
