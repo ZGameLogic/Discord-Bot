@@ -162,6 +162,12 @@ public class SlashBotListener extends ListenerAdapter {
 			event.reply("Both count and faces must be a positive whole number").queue();
 			return;
 		}
+		
+		if(count >= 1000 || faces >= 1000) {
+			event.reply("Both count and faces must be less than 999").queue();
+			return;
+		}
+		
 		event.reply("Rolled " + count + "d" + faces + ": **" + DiceRollingSimulator.rollDice(count, faces) + "**").queue();;
 	}
 	
