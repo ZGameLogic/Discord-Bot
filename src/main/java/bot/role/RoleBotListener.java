@@ -444,6 +444,34 @@ public class RoleBotListener extends ListenerAdapter {
 		}	
 	}
 	
+	public void payCitizen(SlashCommandEvent event) {
+		Member citizen = event.getOption("citizen").getAsMember();
+		if(!citizen.getUser().isBot()) {
+			if(citizen.getIdLong() != event.getMember().getIdLong()) {
+				long gold = event.getOption("gold").getAsLong();
+				if(gold > 0) {
+					Player giver = data.loadSerialized(event.getMember().getId());
+					if(gold <= giver.getGold()) {
+						Player taker = data.loadSerialized(citizen.getId());
+						giver.decreaseGold(gold);
+						taker.increaseGold(gold);
+						data.saveSerialized(giver, event.getMember().getId());
+						data.saveSerialized(taker, citizen.getId());
+						event.replyEmbeds(EmbedMessageMaker.giveGold(event.getMember().getEffectiveName(), citizen.getEffectiveName(), gold).build()).queue();
+					} else {
+						event.reply("You do not have that much gold to give").queue();
+					}
+				} else {
+					event.reply("You must give a positive amount of gold").queue();
+				}
+			} else {
+				event.reply("You cannot give yourself gold, but I appreciate your creativity").queue();
+			}
+		} else {
+			event.reply("You cannot give a robot gold").queue();
+		}
+	}
+	
 	private void leaderboardFaction(SlashCommandEvent event) {
 		HashMap<String, Integer> rolePop = new HashMap<>();
 		for(long id: roleIDs) {
@@ -1056,4 +1084,5 @@ public class RoleBotListener extends ListenerAdapter {
 			}
 		}
 	}
+	
 }
