@@ -13,6 +13,14 @@ import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 
 public abstract class EmbedMessageMaker {
 	
+	public static EmbedBuilder giveGold(String giver, String taker, long amount) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setColor(new Color(252, 211, 3));
+		eb.setTitle(giver + " has given some gold to " + taker);
+		eb.setDescription("Amount: " + amount);
+		return eb;
+	}
+	
 	public static EmbedBuilder leaderboardFaction(HashMap<String, Integer> rolePop) {
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setTitle("Leaderboard for caste population ");

@@ -76,6 +76,9 @@ public class SlashBotListener extends ListenerAdapter {
 		guild.addCommands(new CommandData("leaderboard", "Get the top 10 players in a specific category")
 				.addOption(OptionType.STRING, "statistic", "Which statistic to get the leader board for", true)
 				.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false));
+		guild.addCommands(new CommandData("pay-citizen", "Gives your gold to a citizen of your choice")
+				.addOption(OptionType.USER, "citizen", "The citizen to recieve your gold", true)
+				.addOption(OptionType.INTEGER, "gold", "The amount of gold to give", true));
 		
 		// Role bot king
 		guild.addCommands(new CommandData("distribute-wealth", "Gives some of your wealth to a caste system")
@@ -150,6 +153,9 @@ public class SlashBotListener extends ListenerAdapter {
 			break;
 		case "honorable-promotion":
 			RBL.honorablePromotion(event);
+			break;
+		case "pay-citizen":
+			RBL.payCitizen(event);
 			break;
 		}
 	}
