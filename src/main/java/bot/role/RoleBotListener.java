@@ -157,6 +157,12 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 
 	public void challenge(SlashCommandEvent event) {
+		
+		if(event.getChannel().getIdLong() != generalID) {
+			event.reply("You can only challenge in <#" + generalID + ">").queue();
+			return;
+		}
+		
 		Member attackerMember = event.getMember();
 		Member defenderMember = event.getOption("player").getAsMember();
 		
