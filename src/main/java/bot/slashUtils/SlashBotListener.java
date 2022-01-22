@@ -21,6 +21,7 @@ import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 
 public class SlashBotListener extends ListenerAdapter {
@@ -72,10 +73,23 @@ public class SlashBotListener extends ListenerAdapter {
 				.addOption(OptionType.USER, "player", "The player you wish to challenge", true));
 		guild.addCommands(new CommandData("role-stats", "Lists everyone in the caste level and their stats if they can still defend for the day")
 				.addOption(OptionType.ROLE, "role", "Role to see the stats of", true)
-				.addOption(OptionType.BOOLEAN, "include-all", "Weather or not to include the people who have already defended today", false));
+				.addOption(OptionType.BOOLEAN, "include-all", "Whether or not to include the people who have already defended today", false));
 		guild.addCommands(new CommandData("leaderboard", "Get the top 10 players in a specific category")
-				.addOption(OptionType.STRING, "statistic", "Which statistic to get the leader board for", true)
-				.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false));
+				.addSubcommands(new SubcommandData("strength", "Shows the strength statistic")
+						.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
+				.addSubcommands(new SubcommandData("knowledge", "Shows the knowledge statistic")
+						.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
+				.addSubcommands(new SubcommandData("maigc", "Shows the magic statistic")
+						.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
+				.addSubcommands(new SubcommandData("agility", "Shows the agility statistic")
+						.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
+				.addSubcommands(new SubcommandData("stamina", "Shows the stamina statistic")
+						.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
+				.addSubcommands(new SubcommandData("gold", "Shows the richest citizens"))
+				.addSubcommands(new SubcommandData("total", "Shows the citizens with the most stats"))
+				.addSubcommands(new SubcommandData("wins", "Shows the citizens with the most wins"))
+				.addSubcommands(new SubcommandData("losses", "Shows the citizens with the most losses"))
+				);
 		guild.addCommands(new CommandData("pay-citizen", "Gives your gold to a citizen of your choice")
 				.addOption(OptionType.USER, "citizen", "The citizen to recieve your gold", true)
 				.addOption(OptionType.INTEGER, "gold", "The amount of gold to give", true));

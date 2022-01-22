@@ -236,24 +236,40 @@ public class RoleBotListener extends ListenerAdapter {
 
 	public void leaderBoard(SlashCommandEvent event) {
 		Function<Player, Integer> function;
-		switch(event.getOption("statistic").getAsString().toLowerCase()) {
+		boolean showAll = false;
+		switch(event.getSubcommandName()) {
 		case "factions":
 			leaderboardFaction(event);
 			return;
 		case "strength":
 			function = Player::getStrength;
+			if(event.getOption("show-all") != null) {
+				showAll = event.getOption("show-all").getAsBoolean();
+			}
 			break;
 		case "knowledge":
 			function = Player::getKnowledge;
+			if(event.getOption("show-all") != null) {
+				showAll = event.getOption("show-all").getAsBoolean();
+			}
 			break;
 		case "magic":
 			function = Player::getMagic;
+			if(event.getOption("show-all") != null) {
+				showAll = event.getOption("show-all").getAsBoolean();
+			}
 			break;
 		case "agility":
 			function = Player::getAgility;
+			if(event.getOption("show-all") != null) {
+				showAll = event.getOption("show-all").getAsBoolean();
+			}
 			break;
 		case "stamina":
 			function = Player::getStamina;
+			if(event.getOption("show-all") != null) {
+				showAll = event.getOption("show-all").getAsBoolean();
+			}
 			break;
 		case "gold":
 			function = Player::getIntGold;
@@ -274,16 +290,6 @@ public class RoleBotListener extends ListenerAdapter {
 		
 		Comparator<Player> comparitor = Comparator.comparing(function);
 		
-		boolean showAll = false;
-		
-		if(event.getOption("show-all") != null) {
-			showAll = event.getOption("show-all").getAsBoolean();
-		}
-		
-		if(event.getOption("statistic").getAsString().toLowerCase().equals("total")) {
-			showAll = false;
-		}
-		
 		comparitor = Collections.reverseOrder(comparitor);
 		LinkedList<Player> players = new LinkedList<>();
 		HashMap<Player, String> idLink = new HashMap<>();
@@ -297,7 +303,7 @@ public class RoleBotListener extends ListenerAdapter {
 		Collections.sort(players, comparitor);
 		
 		EmbedBuilder eb = new EmbedBuilder();
-		String stat = event.getOption("statistic").getAsString();
+		String stat = event.getSubcommandName();
 		stat = stat.substring(0,1).toUpperCase() + stat.substring(1);
 		eb.setTitle("Leaderboard for stat: " + stat);
 		eb.setColor(new Color(102, 107, 14));
