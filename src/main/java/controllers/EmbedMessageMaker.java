@@ -13,6 +13,14 @@ import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 
 public abstract class EmbedMessageMaker {
 	
+	public static EmbedBuilder goodMorningMessage(String message) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setColor(new Color(119, 21, 161));
+		eb.setTitle("A message from the king/queen");
+		eb.setDescription(message);
+		return eb;
+	}
+	
 	public static EmbedBuilder giveGold(String giver, String taker, long amount) {
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setColor(new Color(252, 211, 3));
