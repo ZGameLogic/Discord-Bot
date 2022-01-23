@@ -1067,7 +1067,9 @@ public class RoleBotListener extends ListenerAdapter {
 		endings.add(" Do keep it down today children, we do not want to upset the bees");
 		endings.add(" Revealed are hordes of undefeated monsters. Perhaps you should get on that?");
 		
-		generalChannel.sendMessage("**A message from the king/queen\n**" + starts.get((int)(Math.random() * starts.size())) + endings.get((int)(Math.random() * endings.size()))).queue();
+		String message = starts.get((int)(Math.random() * starts.size())) + endings.get((int)(Math.random() * endings.size()));
+		
+		generalChannel.sendMessageEmbeds(EmbedMessageMaker.goodMorningMessage(message).build()).queue();
 	}
 	
 	private boolean isKing(String playerID) {
