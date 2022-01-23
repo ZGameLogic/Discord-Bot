@@ -336,6 +336,10 @@ public class RoleBotListener extends ListenerAdapter {
 
 	public void distributeWealth(SlashCommandEvent event) {
 		if(isKing(event.getMember())) {
+			if(event.getChannel().getIdLong() != generalID) {
+				event.reply("You can only distribute wealth in <#" + generalID + ">").queue();
+				return;
+			}
 			// if the king is the person giving the command
 			Role role = event.getOption("role").getAsRole();
 			if(roleIDs.contains(role.getIdLong())) {
@@ -389,6 +393,12 @@ public class RoleBotListener extends ListenerAdapter {
 	
 	public void submitTax(SlashCommandEvent event) {
 		if(isKing(event.getMember())) {
+			
+			if(event.getChannel().getIdLong() != generalID) {
+				event.reply("You can only tax in <#" + generalID + ">").queue();
+				return;
+			}
+			
 			// if the king is the person giving the command
 			Role role = event.getOption("role").getAsRole();
 			if(roleIDs.contains(role.getIdLong())) {
@@ -420,6 +430,12 @@ public class RoleBotListener extends ListenerAdapter {
 	
 	public void honorablePromotion(SlashCommandEvent event) {
 		if(isKing(event.getMember())) {
+			
+			if(event.getChannel().getIdLong() != generalID) {
+				event.reply("You can only promote in <#" + generalID + ">").queue();
+				return;
+			}
+			
 			Member member1 = event.getOption("citizen-one").getAsMember();
 			Member member2 = event.getOption("citizen-two").getAsMember();
 			if(!member1.getUser().isBot() && !member2.getUser().isBot()) {
@@ -457,6 +473,10 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 	
 	public void payCitizen(SlashCommandEvent event) {
+		if(event.getChannel().getIdLong() != generalID) {
+			event.reply("You can only pay citizens in <#" + generalID + ">").queue();
+			return;
+		}
 		Member citizen = event.getOption("citizen").getAsMember();
 		if(!citizen.getUser().isBot()) {
 			if(citizen.getIdLong() != event.getMember().getIdLong()) {

@@ -90,7 +90,7 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 	
 	@Override
 	public void onMessageReactionAdd(MessageReactionAddEvent event) {
-		if(!event.getUser().isBot() && event.getChannel().equals(channel)) {
+		if(!event.getUser().isBot() && event.getChannel().getIdLong() == channel.getIdLong()) {
 			if(event.getReaction().toString().contains("RE:U+1f3d7")){
 				
 				Message m = event.retrieveMessage().complete();
@@ -100,7 +100,7 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 				m.editMessageEmbeds(eb.build()).complete();
 				m.clearReactions().queue();
 				
-				MessageID  mid = new MessageID(m.getIdLong());
+				MessageID  mid = new MessageID(event.getMessageIdLong());
 				messageID.saveSerialized(mid, "id");
 				
 				try {
