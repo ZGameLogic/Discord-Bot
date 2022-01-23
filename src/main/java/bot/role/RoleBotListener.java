@@ -69,11 +69,11 @@ public class RoleBotListener extends ListenerAdapter {
 	public RoleBotListener(ConfigLoader cl) {
 		guildID = cl.getGuildID();
 		roleIDs = cl.getRoleIDs();
-		data = new DataCacher<>("arena");
-		encounterData = new DataCacher<>("encounter");
-		kingData = new DataCacher<>("king");
-		taxData = new DataCacher<>("tax");
-		hpData = new DataCacher<>("honorablePromotion");
+		data = new DataCacher<>("arena//players");
+		encounterData = new DataCacher<>("arena//encounter");
+		kingData = new DataCacher<>("arena//king");
+		taxData = new DataCacher<>("arena//tax");
+		hpData = new DataCacher<>("arena//honorablePromotion");
 		
 		if(kingData.getFiles().length == 0) {
 			kingData.saveSerialized(new KingPlayer(), "king");
