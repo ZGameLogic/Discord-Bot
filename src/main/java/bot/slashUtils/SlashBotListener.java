@@ -89,6 +89,7 @@ public class SlashBotListener extends ListenerAdapter {
 				.addSubcommands(new SubcommandData("total", "Shows the citizens with the most stats"))
 				.addSubcommands(new SubcommandData("wins", "Shows the citizens with the most wins"))
 				.addSubcommands(new SubcommandData("losses", "Shows the citizens with the most losses"))
+				.addSubcommands(new SubcommandData("factions", "Shows the population of each faction"))
 				);
 		guild.addCommands(new CommandData("pay-citizen", "Gives your gold to a citizen of your choice")
 				.addOption(OptionType.USER, "citizen", "The citizen to recieve your gold", true)
