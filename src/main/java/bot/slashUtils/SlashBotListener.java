@@ -79,7 +79,7 @@ public class SlashBotListener extends ListenerAdapter {
 						.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
 				.addSubcommands(new SubcommandData("knowledge", "Shows the knowledge statistic")
 						.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
-				.addSubcommands(new SubcommandData("maigc", "Shows the magic statistic")
+				.addSubcommands(new SubcommandData("magic", "Shows the magic statistic")
 						.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
 				.addSubcommands(new SubcommandData("agility", "Shows the agility statistic")
 						.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
