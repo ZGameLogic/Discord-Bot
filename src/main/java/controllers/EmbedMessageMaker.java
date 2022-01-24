@@ -213,8 +213,9 @@ public abstract class EmbedMessageMaker {
 		eb.addField("Statistics", "Gold: " + player.getGold() + "\nTournament victories: " + player.getTournamentWins() + "\nVictories: " + player.getWins()
 			+ "\nDefeats: " + player.getLosses(), false);
 		String activity = RoleBotListener.dailyChallengeLimit - player.getHasChallengedToday() != 1 ? "activities" : "activity";
+		String time = RoleBotListener.dailyDefendLimit - player.getChallengedToday() != 1 ? "times" : "time";
 		eb.setFooter("Can do " + (RoleBotListener.dailyChallengeLimit - player.getHasChallengedToday()) + " more " + activity + " today\n"
-				+ "Can defend " + (RoleBotListener.dailyDefendLimit - player.getChallengedToday()) + " more time(s) today");
+				+ "Can defend " + (RoleBotListener.dailyDefendLimit - player.getChallengedToday()) + " more " + time + " today");
 		return eb;
 	}
 }
