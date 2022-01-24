@@ -36,7 +36,7 @@ public abstract class EmbedMessageMaker {
 		case Agility:
 			possibleVendorNames.add("Tinúviel");
 			possibleVendorNames.add("Knife Master Uragu");
-			possibleVendorNames.add("A Nimble Theif");
+			possibleVendorNames.add("A Nimble Thief");
 			possibleVendorNames.add("Robin the hooded");
 			possibleVendorNames.add("Vestman Victor");
 			possibleVendorNames.add("A Highwayman Voronin");
