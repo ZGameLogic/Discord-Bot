@@ -1,10 +1,16 @@
 package controllers;
 
 import java.awt.Color;
+import java.time.Clock;
+import java.time.Instant;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Random;
 
 import bot.role.Player;
 import bot.role.RoleBotListener;
+import bot.role.data.Activity;
+import bot.role.data.Activity.ActivityReward;
 import data.DataCacher;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
@@ -12,6 +18,93 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 
 public abstract class EmbedMessageMaker {
+	
+	public static EmbedBuilder activityResults(String user, String stat, int amount) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setColor(new Color(176, 103, 44));
+		eb.setTitle("Activity results for " + user);
+		eb.addField(stat, amount + "", true);
+		return eb;
+	}
+	
+	public static EmbedBuilder activity(Activity activity, Clock retireTime) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setColor(new Color(176, 103, 44));
+		
+		LinkedList<String> possibleVendorNames = new LinkedList<>();
+		switch(activity.getReward()) {
+		case Agility:
+			possibleVendorNames.add("Tinúviel");
+			possibleVendorNames.add("Knife Master Uragu");
+			possibleVendorNames.add("A Nimble Theif");
+			possibleVendorNames.add("Robin the hooded");
+			possibleVendorNames.add("Vestman Victor");
+			possibleVendorNames.add("A Highwayman Voronin");
+			break;
+		case Knowledge:
+			possibleVendorNames.add("A Renown Scholar");
+			possibleVendorNames.add("A Penniless Educator");
+			possibleVendorNames.add("A Curious Librarian");
+			possibleVendorNames.add("Bee farmer Herrold");
+			possibleVendorNames.add("Professor Rendtyk");
+			break;
+		case Magic:
+			possibleVendorNames.add("A Mystical Conjuror");
+			possibleVendorNames.add("A Luthwin Caster");
+			possibleVendorNames.add("Zack the Mage");
+			possibleVendorNames.add("Azathoth the cursed");
+			possibleVendorNames.add("A Hooded Figure");
+			possibleVendorNames.add("Ymir the fallen");
+			break;
+		case Stamina:
+			possibleVendorNames.add("Boic the Brave");
+			possibleVendorNames.add("A Seasoned Warrior");
+			possibleVendorNames.add("A dark Assassin");
+			possibleVendorNames.add("Charlie Lehorse");
+			possibleVendorNames.add("Sword Master Sketh");
+			break;
+		case Strength:
+			possibleVendorNames.add("A Goliath");
+			possibleVendorNames.add("Sir Kendrith the 4th");
+			possibleVendorNames.add("Garrison Commander Lukasz");
+			possibleVendorNames.add("Strongarm Zuq");
+			possibleVendorNames.add("Nagrog the beast");
+			break;
+		case Gold:
+			possibleVendorNames.add("Clean the stables");
+			possibleVendorNames.add("Scrub the church stones");
+			possibleVendorNames.add("Stone the criminals");
+			possibleVendorNames.add("Sweep the castle");
+			possibleVendorNames.add("Dump the chamberpots");
+			possibleVendorNames.add("Clean the bloody swords");
+			possibleVendorNames.add("Educate the children");
+			possibleVendorNames.add("Hold the Shlongbot trials");
+			possibleVendorNames.add("Break up the worker strikes");
+			possibleVendorNames.add("Harvest the beehives");
+			possibleVendorNames.add("Breastfeed the babies");
+			possibleVendorNames.add("Sweeten the honey");
+			possibleVendorNames.add("Pray at the shrine for shlongbot");
+			possibleVendorNames.add("Revive the peasents");
+			break;
+		}
+		
+		if(activity.getReward() != ActivityReward.Gold) {
+			// if its training
+			eb.setTitle(possibleVendorNames.get(new Random().nextInt(possibleVendorNames.size())) + " has posted on the city board: " + activity.getReward().name() + " training!");
+			eb.addField("Activity cost", activity.getActionCost() + "", true);
+			eb.addField("Gold cost", activity.getGoldCost() + "", true);
+			eb.addField("Reward", activity.getRewardAmount() + " " + activity.getReward().name(), true);
+		} else {
+			// if its working
+			eb.setTitle("A job has been posted on the city board: " + possibleVendorNames.get(new Random().nextInt(possibleVendorNames.size())));
+			eb.addField("Activity cost", activity.getActionCost() + "", true);
+			eb.addField("Reward", activity.getRewardAmount() + " Gold", true);
+		}
+		
+		eb.setTimestamp(Instant.now(retireTime));
+		eb.setFooter("Departs: ");
+		return eb;
+	}
 	
 	public static EmbedBuilder goodMorningMessage(String message) {
 		EmbedBuilder eb = new EmbedBuilder();
@@ -120,7 +213,7 @@ public abstract class EmbedMessageMaker {
 		eb.addField("Statistics", "Gold: " + player.getGold() + "\nTournament victories: " + player.getTournamentWins() + "\nVictories: " + player.getWins()
 			+ "\nDefeats: " + player.getLosses(), false);
 		
-		eb.setFooter("Can attack " + (RoleBotListener.dailyChallengeLimit - player.getHasChallengedToday()) + " more time(s) today\n"
+		eb.setFooter("Can do " + (RoleBotListener.dailyChallengeLimit - player.getHasChallengedToday()) + " more thing(s) today\n"
 				+ "Can defend " + (RoleBotListener.dailyDefendLimit - player.getChallengedToday()) + " more time(s) today");
 		return eb;
 	}

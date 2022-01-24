@@ -2,7 +2,10 @@ package bot.role;
 
 import java.awt.Color;
 import java.io.File;
+import java.time.Clock;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.Comparator;
@@ -11,11 +14,14 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
+import java.util.Random;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import bot.role.data.Activity;
+import bot.role.data.Activity.ActivityReward;
 import controllers.EmbedMessageMaker;
 import controllers.dice.DiceRollingSimulator;
 import data.ConfigLoader;
@@ -59,11 +65,17 @@ public class RoleBotListener extends ListenerAdapter {
 	private long fightEmojiID;
 	private String[] iconIDs;
 	private long generalID;
+	private long activitiesID;
 	private long spawnChance;
+	
+	DataCacher<Activity> activityData;
+	private long activitySpawnChance;
+	private long activityDuration;
 	
 	private Guild guild;
 	
 	private TextChannel encountersChannel;
+	private TextChannel activitiesChannel;
 	private TextChannel generalChannel;
 	
 	public RoleBotListener(ConfigLoader cl) {
@@ -74,6 +86,7 @@ public class RoleBotListener extends ListenerAdapter {
 		kingData = new DataCacher<>("arena//king");
 		taxData = new DataCacher<>("arena//tax");
 		hpData = new DataCacher<>("arena//honorablePromotion");
+		activityData = new DataCacher<>("arena//activities");
 		
 		if(kingData.getFiles().length == 0) {
 			kingData.saveSerialized(new KingPlayer(), "king");
@@ -82,6 +95,7 @@ public class RoleBotListener extends ListenerAdapter {
 		kingRoleID = cl.getKingRoleID();
 		encountersID = cl.getEncountersID();
 		generalID = cl.getGeneralID();
+		activitiesID = cl.getActivitiesID();
 		boosterChange = cl.getBoosterChange();
 		fightEmojiID = cl.getFightEmojiID();
 		
@@ -92,6 +106,8 @@ public class RoleBotListener extends ListenerAdapter {
 		statRandomChange = cl.getStatRandomChange();
 		encounterStatMultiplier = cl.getEncounterStatMultiplier();
 		spawnChance = cl.getSpawnChance();
+		activitySpawnChance = cl.getActivitySpawnChance();
+		activityDuration = cl.getDaysToStoreItems();
 		
 		dailyChallengeLimit = cl.getDailyChallengeLimit();
 		dailyDefendLimit = cl.getDailyDefendLimit();
@@ -106,12 +122,13 @@ public class RoleBotListener extends ListenerAdapter {
 		guild = event.getJDA().getGuildById(guildID);
 		encountersChannel = guild.getTextChannelById(encountersID);
 		generalChannel = guild.getTextChannelById(generalID);
+		activitiesChannel = guild.getTextChannelById(activitiesID);
 		
 		checkGuildRoles(guild);
 		// start midnight counter
 		new Thread(() -> midnightReset()).start();
 		// start random encounter
-		new Thread(() -> randomEncounters()).start();
+		new Thread(() -> randomRolls()).start();
 	}
 	
 	@Override
@@ -135,23 +152,74 @@ public class RoleBotListener extends ListenerAdapter {
 	@Override
 	public void onMessageReactionAdd(MessageReactionAddEvent event) {
 		if(!event.getUser().isBot()) {
-			if(event.getChannel().getIdLong() == encountersID && event.getReactionEmote().getIdLong() == fightEmojiID) {
-				event.retrieveMessage().queue(message -> {
-					long encounterID = Long.parseLong(message.getEmbeds().get(0).getFooter().getText());
-					EncounterPlayer ep = encounterData.loadSerialized(message.getId());
-					if(ep.canFightPlayer(event.getMember().getIdLong())) {
-						Player p = data.loadSerialized(event.getUserId());
-						if(p.canChallenge()) {
-							fightEncounter(event.getMember(), ep, event);
-							ep.addPlayerFought(event.getUserIdLong());
-							encounterData.saveSerialized(ep, ep.getEncounterID() + "");
+			if(event.getReactionEmote().getIdLong() == fightEmojiID) {
+				if(event.getChannel().getIdLong() == encountersID) {
+					event.retrieveMessage().queue(message -> {
+						long encounterID = Long.parseLong(message.getEmbeds().get(0).getFooter().getText());
+						EncounterPlayer ep = encounterData.loadSerialized(message.getId());
+						if(ep.canFightPlayer(event.getMember().getIdLong())) {
+							Player p = data.loadSerialized(event.getUserId());
+							if(p.canChallenge()) {
+								fightEncounter(event.getMember(), ep, event);
+								ep.addPlayerFought(event.getUserIdLong());
+								encounterData.saveSerialized(ep, ep.getEncounterID() + "");
+							} else {
+								generalChannel.sendMessage("<@" + event.getUserId() + ">, you are too tired to fight again today").mention(event.getUser()).queue();
+							}
 						} else {
-							generalChannel.sendMessage("<@" + event.getUserId() + ">, you are too tired to fight again today").mention(event.getUser()).queue();
+							generalChannel.sendMessage("<@" + event.getUserId() + ">, you have already fought this encounter. Encounter ID:" + encounterID).mention(event.getUser()).queue();
 						}
-					} else {
-						generalChannel.sendMessage("<@" + event.getUserId() + ">, you have already fought this encounter. Encounter ID:" + encounterID).mention(event.getUser()).queue();
-					}
-				});
+					});
+				} else if(event.getChannel().getIdLong() == activitiesID) {
+					event.retrieveMessage().queue(message -> {
+						Activity activity = activityData.loadSerialized(message.getId());
+						if(activity.canPlayerWork(event.getUserIdLong())) {
+							Player p = data.loadSerialized(event.getUserId());
+							if(dailyChallengeLimit - p.getHasChallengedToday() >= activity.getActionCost()) {
+								if(p.getGold() >= activity.getGoldCost()) {
+									activity.addPlayerWorked(event.getUserIdLong());
+									p.decreaseGold(activity.getGoldCost());
+									switch(activity.getReward()) {
+									case Agility:
+										p.increaseAgility(activity.getRewardAmount());
+										break;
+									case Gold:
+										p.increaseGold(activity.getRewardAmount());
+										break;
+									case Knowledge:
+										p.increaseKnowledge(activity.getRewardAmount());
+										break;
+									case Magic:
+										p.increaseMagic(activity.getRewardAmount());
+										break;
+									case Stamina:
+										p.increaseStamina(activity.getRewardAmount());
+										break;
+									case Strength:
+										p.increaseStrength(activity.getRewardAmount());
+										break;
+									}
+									
+									for(int i = 0; i < activity.getActionCost(); i++) {
+										p.hasChallenged();
+									}
+									
+									generalChannel.sendMessage("<@" + event.getUserId() + ">").queue();
+									generalChannel.sendMessageEmbeds(EmbedMessageMaker.activityResults(event.getMember().getEffectiveName(), activity.getReward().name(), activity.getRewardAmount()).build()).queue();
+									
+									data.saveSerialized(p, event.getUserId());
+									activityData.saveSerialized(activity, message.getId());
+								} else {
+									generalChannel.sendMessage("<@" + event.getUserId() + ">, you do not have enough gold to pay the tutor.").queue();
+								}
+							} else {
+								generalChannel.sendMessage("<@" + event.getUserId() + ">, you are too tired to participate in this activity today.").mention(event.getUser()).queue();
+							}
+						} else {
+							generalChannel.sendMessage("<@" + event.getUserId() + ">, you have already participated in this activity.").mention(event.getUser()).queue();
+						}
+					});
+				}
 			}
 		}
 	}
@@ -836,8 +904,8 @@ public class RoleBotListener extends ListenerAdapter {
 				data.saveSerialized(player, f.getName());
 			}
 			event.getPrivateChannel().sendMessage("Reset gold").queue();
-		} else if (message.contains("!reset-challenges")) {
-			logger.info("Resetting challenges");
+		} else if (message.contains("!reset-activities")) {
+			logger.info("Resetting activities");
 			for(File f : data.getFiles()) {
 				Player player = data.loadSerialized(f.getName());
 				player.newDay();
@@ -846,11 +914,23 @@ public class RoleBotListener extends ListenerAdapter {
 			KingPlayer kp = kingData.loadSerialized("king");
 			kp.resetList();
 			kingData.saveSerialized(kp, "king");
-			event.getPrivateChannel().sendMessage("Reset challenges").queue();
+			event.getPrivateChannel().sendMessage("Reset activities").queue();
 		} else if(message.contains("!roll-encounter")) {
-			logger.info("Rolling random encounter");
+			logger.info("Rolling random activity");
 			rollEncounter();
 			event.getPrivateChannel().sendMessage("Rolled encounter").queue();
+		} else if(message.contains("!roll-activity")) {
+			String left = message.replace("!roll-activity", "");
+			if(left.length() > 0) {
+				for(int i = 0; i < Integer.parseInt(left.trim()); i++) {
+					logger.info("Rolling random encounter");
+					rollActivity();
+				}
+			} else {
+				logger.info("Rolling random encounter");
+				rollActivity();
+			}
+			event.getPrivateChannel().sendMessage("Rolled activity").queue();
 		} else if(message.contains("!new-day")){
 			logger.info("Its a new day!");
 			dayPassed();
@@ -858,6 +938,34 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 	
+	private void rollActivity() {
+		int change = 5;
+		int actionCost = 2;
+		int goldCost = (int)DiceRollingSimulator.rollDice(4, 4);
+		ActivityReward reward = ActivityReward.random();
+		if(reward == ActivityReward.Gold) {
+			change = (int)DiceRollingSimulator.rollDice(3, 8);
+			Random r = new Random(System.currentTimeMillis());
+			if(r.nextBoolean()) {
+				actionCost = 2;
+				change *= 2;
+			} else {
+				actionCost = 1;
+			}
+			goldCost = 0;
+		}
+		
+		Activity item = new Activity(actionCost, change, goldCost, reward);
+		Clock c = Clock.systemUTC();
+		c = Clock.offset(c, Duration.ofDays(activityDuration / 2));
+		activitiesChannel.sendMessageEmbeds(EmbedMessageMaker.activity(item, c).build()).queue(message -> {
+			long id = message.getIdLong();
+			activityData.saveSerialized(item, id + "");
+			message.addReaction(encountersChannel.getGuild().getEmoteById(fightEmojiID)).queue();
+		});
+		
+	}
+
 	private void rollEncounter() {
 		EmbedBuilder eb = new EmbedBuilder();
 		
@@ -978,11 +1086,28 @@ public class RoleBotListener extends ListenerAdapter {
 		data.saveSerialized(attacker, player.getId());
 	}
 	
-	private void randomEncounters() {
+	private void randomRolls() {
 		while(true) {
+			// Delete old arrivals
+			for(File f : activityData.getFiles()){
+				activitiesChannel.retrieveMessageById(f.getName()).queue(message -> {
+					OffsetDateTime departTime = message.getEmbeds().get(0).getTimestamp();
+					OffsetDateTime now = OffsetDateTime.now();
+					if(now.isAfter(departTime)) {
+						// its time to depart
+						message.delete().queue();
+						activityData.delete(f.getName());
+					}
+				});
+			}
+			
+			if(((int)(Math.random() * activitySpawnChance * 4)) == 1) {
+				rollActivity();
+			}
+			
 			Calendar date = new GregorianCalendar();
 			if(date.get(Calendar.MINUTE) % 15 == 0) {
-				// 50% chance to spawn an encounter
+				// n% chance to spawn an encounter
 				if(((int)(Math.random() * spawnChance)) == 1) {
 					rollEncounter();
 				}
@@ -1021,8 +1146,10 @@ public class RoleBotListener extends ListenerAdapter {
 	private void dailyGoldIncrease() {
 		for(File f : data.getFiles()) {
 			Player p = data.loadSerialized(f.getName());
+			if(p.getHasChallengedToday() != 0) {
+				p.increaseGold(DiceRollingSimulator.rollDice(2, 5));
+			}
 			p.newDay();
-			p.increaseGold(DiceRollingSimulator.rollDice(2, 10));
 			if(isKing(f.getName())) {
 				p.increaseGold((int)(Math.random() * 300) + 150);
 			}
