@@ -82,8 +82,17 @@ public class ConfigLoader {
 	@Value("${general.id}")
 	private long generalID;
 	
+	@Value("${activities.id}")
+	private long activitiesID;
+	
 	@Value("${fight.id}")
 	private long fightEmojiID;
+	
+	@Value("${activity.spawn.chance}")
+	private int activitySpawnChance;
+	
+	@Value("${days.to.store.items}")
+	private int daysToStoreItems;
 	
 	@Value("${icons.ids}")
 	private String[] iconIDS;
