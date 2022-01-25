@@ -107,7 +107,7 @@ public class RoleBotListener extends ListenerAdapter {
 		encounterStatMultiplier = cl.getEncounterStatMultiplier();
 		spawnChance = cl.getSpawnChance();
 		activitySpawnChance = cl.getActivitySpawnChance();
-		activityDuration = cl.getDaysToStoreItems();
+		activityDuration = cl.getDaysToStoreActivities();
 		
 		dailyChallengeLimit = cl.getDailyChallengeLimit();
 		dailyDefendLimit = cl.getDailyDefendLimit();
@@ -941,7 +941,7 @@ public class RoleBotListener extends ListenerAdapter {
 	private void rollActivity() {
 		int change = 5;
 		int actionCost = 2;
-		int goldCost = (int)DiceRollingSimulator.rollDice(4, 4);
+		int goldCost = 9 + (int)DiceRollingSimulator.rollDice(4, 4);
 		ActivityReward reward = ActivityReward.random();
 		if(reward == ActivityReward.Gold) {
 			change = (int)DiceRollingSimulator.rollDice(3, 8);
