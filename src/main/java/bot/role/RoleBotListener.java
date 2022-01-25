@@ -60,7 +60,6 @@ public class RoleBotListener extends ListenerAdapter {
 	private DataCacher<EncounterPlayer> encounterData;
 	private DataCacher<KingPlayer> kingData;
 	private DataCacher<Tax> taxData;
-	private DataCacher<HonorablePromotion> hpData;
 	private DataCacher<DailyRemind> remindData;
 	private final int boosterChange;
 	private long encountersID;
@@ -87,8 +86,8 @@ public class RoleBotListener extends ListenerAdapter {
 		encounterData = new DataCacher<>("arena//encounter");
 		kingData = new DataCacher<>("arena//king");
 		taxData = new DataCacher<>("arena//tax");
-		hpData = new DataCacher<>("arena//honorablePromotion");
 		activityData = new DataCacher<>("arena//activities");
+		remindData = new DataCacher<>("arena//reminders");
 		
 		if(kingData.getFiles().length == 0) {
 			kingData.saveSerialized(new KingPlayer(), "king");
@@ -476,14 +475,20 @@ public class RoleBotListener extends ListenerAdapter {
 				long goldAmount = event.getOption("gold").getAsLong();
 				if(goldAmount > 0) {
 					if(goldAmount <= 10) {
-						System.out.println(1);
-						Tax tax = new Tax((int)goldAmount, role.getIdLong());
-						taxData.saveSerialized(tax, "tax");
-						String iconURL = "";
-						if(role.getIcon() != null) {
-							iconURL = role.getIcon().getIconUrl();
+						Player king = data.loadSerialized(event.getMember().getId());
+						if(king.getHasChallengedToday() < dailyChallengeLimit) {
+							king.hasChallenged();
+							data.saveSerialized(king, event.getMember().getId());
+							Tax tax = new Tax((int)goldAmount, role.getIdLong());
+							taxData.saveSerialized(tax, "tax");
+							String iconURL = "";
+							if(role.getIcon() != null) {
+								iconURL = role.getIcon().getIconUrl();
+							}
+							event.replyEmbeds(EmbedMessageMaker.proposeTax(goldAmount, role.getName(), iconURL).build()).queue();
+						} else {
+							event.reply("You do not have enough time to do this today!").queue();
 						}
-						event.replyEmbeds(EmbedMessageMaker.proposeTax(goldAmount, role.getName(), iconURL).build()).queue();
 					} else {
 						event.reply("You cannot tax more than 10 gold").queue();
 					}
@@ -511,8 +516,10 @@ public class RoleBotListener extends ListenerAdapter {
 			if(!member1.getUser().isBot() && !member2.getUser().isBot()) {
 				if(getCasteRoleIndex(member1) != -1 && getCasteRoleIndex(member2) != -1 && getCasteRoleIndex(member1) != getCasteRoleIndex(member2)) {
 					if(member1.getIdLong() != member2.getIdLong()) {
-						if(hpData.getFiles().length == 0 || !hpData.loadSerialized("hp").isUsedToday()) {
-							hpData.saveSerialized(new HonorablePromotion(true), "hp");
+						Player king = data.loadSerialized(event.getMember().getId());
+						if(king.getHasChallengedToday() < dailyChallengeLimit) {
+							king.hasChallenged();
+							data.saveSerialized(king, event.getMember().getId());
 							Role r1 = getCasteRole(member1);
 							Role r2 = getCasteRole(member2);
 							guild.removeRoleFromMember(member1, r1).queue();
@@ -526,7 +533,7 @@ public class RoleBotListener extends ListenerAdapter {
 								newKing(member2);
 							}
 						} else {
-							event.reply("You can only use this once per day!").queue();
+							event.reply("You do not have enough time to do this today!").queue();
 						}
 					} else {
 						event.reply("You cannot swap the role of the same citizen").queue();
@@ -584,7 +591,6 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 
 	private void newKing(Member king) {
-		hpData.saveSerialized(new HonorablePromotion(false), "hp");
 		generalChannel.sendMessageEmbeds(EmbedMessageMaker.newKing(king.getEffectiveName(), king.getAvatarUrl()).build()).queue();
 	}
 	
@@ -784,6 +790,7 @@ public class RoleBotListener extends ListenerAdapter {
 				newKing(attackerMember);
 			}
 		} else {
+			String roleSwap = "";
 			// Attacker loses
 			attacker.lost();
 			defender.won();
@@ -799,6 +806,23 @@ public class RoleBotListener extends ListenerAdapter {
 				defender.increaseGold(goldLost);
 				attacker.decreaseGold(goldLost);
 			} else {
+				// if attacker was attacking down the caste
+				if(dif != 0) {
+					// lower caste switch rolls 
+					Guild guild = event.getGuild();
+					Role attackerRole = getCasteRole(attackerMember);
+					Role defenderRole = getCasteRole(defenderMember);
+					guild.addRoleToMember(attackerMember, defenderRole).queue();
+					guild.removeRoleFromMember(attackerMember, attackerRole).queue();
+					
+					guild.addRoleToMember(defenderMember, attackerRole).queue();
+					guild.removeRoleFromMember(defenderMember, defenderRole).queue();
+					
+					roleSwap = attackerMember.getEffectiveName() + " is now a rank of " + defenderRole.getName() + ".";
+					if(getCasteRoleIndex(attackerMember) == 0) {
+						newKing(defenderMember);
+					}
+				}
 				goldLost = 7 + (int)(Math.random() * 3);
 				if(attacker.getGold() < goldLost) {
 					goldLost = attacker.getGold();
@@ -844,7 +868,7 @@ public class RoleBotListener extends ListenerAdapter {
 			eb.setTitle("Fight results: " + attackerMember.getEffectiveName() + " lost!");
 			eb.setColor(new Color(84, 25, 25));
 			eb.setDescription(attackerMember.getEffectiveName() +  " vs " + defenderMember.getEffectiveName() + "\nBetter luck next time. " + statChanged + " has been increased by " + statNumChanged + " points."
-					+ " Gold lost: " + goldLost);
+					+ " Gold lost: " + goldLost + "\n" + roleSwap);
 			eb.addField("Fight statistics", "Attacker points: " + results.getAttackerPoints() + "\nDefender points: " + results.getDefenderPoints(), false);
 			eb.setTimestamp(Instant.now());
 			
@@ -1153,7 +1177,7 @@ public class RoleBotListener extends ListenerAdapter {
 			}
 			p.newDay();
 			if(isKing(f.getName())) {
-				p.increaseGold((int)(Math.random() * 25) + 15);
+				p.increaseGold((int)(Math.random() * 10) + 10);
 			}
 			data.saveSerialized(p, f.getName());
 		}
@@ -1182,7 +1206,6 @@ public class RoleBotListener extends ListenerAdapter {
 		dailyGoldIncrease();
 		payTax();
 		dayPassedEncounter();
-		hpData.saveSerialized(new HonorablePromotion(false), "hp");
 		
 		KingPlayer kp = kingData.loadSerialized("king");
 		kp.resetList();
