@@ -1179,8 +1179,8 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 	
 	private void dayPassed() {
-		payTax();
 		dailyGoldIncrease();
+		payTax();
 		dayPassedEncounter();
 		hpData.saveSerialized(new HonorablePromotion(false), "hp");
 		
