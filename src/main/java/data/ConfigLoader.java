@@ -91,8 +91,8 @@ public class ConfigLoader {
 	@Value("${activity.spawn.chance}")
 	private int activitySpawnChance;
 	
-	@Value("${days.to.store.items}")
-	private int daysToStoreItems;
+	@Value("${days.to.store.activities}")
+	private int daysToStoreActivities;
 	
 	@Value("${icons.ids}")
 	private String[] iconIDS;
