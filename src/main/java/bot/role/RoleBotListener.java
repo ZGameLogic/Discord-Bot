@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 
 import bot.role.data.Activity;
 import bot.role.data.Activity.ActivityReward;
+import bot.role.data.DailyRemind;
 import controllers.EmbedMessageMaker;
 import controllers.dice.DiceRollingSimulator;
 import data.ConfigLoader;
@@ -60,6 +61,7 @@ public class RoleBotListener extends ListenerAdapter {
 	private DataCacher<KingPlayer> kingData;
 	private DataCacher<Tax> taxData;
 	private DataCacher<HonorablePromotion> hpData;
+	private DataCacher<DailyRemind> remindData;
 	private final int boosterChange;
 	private long encountersID;
 	private long fightEmojiID;
@@ -1151,7 +1153,7 @@ public class RoleBotListener extends ListenerAdapter {
 			}
 			p.newDay();
 			if(isKing(f.getName())) {
-				p.increaseGold((int)(Math.random() * 300) + 150);
+				p.increaseGold((int)(Math.random() * 25) + 15);
 			}
 			data.saveSerialized(p, f.getName());
 		}
