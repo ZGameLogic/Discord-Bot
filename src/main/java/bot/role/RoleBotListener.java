@@ -474,7 +474,7 @@ public class RoleBotListener extends ListenerAdapter {
 				// if the role is a valid role
 				long goldAmount = event.getOption("gold").getAsLong();
 				if(goldAmount > 0) {
-					if(goldAmount <= 10) {
+					if(goldAmount <= 7) {
 						Player king = data.loadSerialized(event.getMember().getId());
 						if(king.getHasChallengedToday() < dailyChallengeLimit) {
 							king.hasChallenged();
@@ -490,7 +490,7 @@ public class RoleBotListener extends ListenerAdapter {
 							event.reply("You do not have enough time to do this today!").queue();
 						}
 					} else {
-						event.reply("You cannot tax more than 10 gold").queue();
+						event.reply("You cannot tax more than 7 gold").queue();
 					}
 				} else {
 					event.reply("You cannot tax negative gold!").queue();
