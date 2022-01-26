@@ -97,6 +97,9 @@ public class ConfigLoader {
 	@Value("${icons.ids}")
 	private String[] iconIDS;
 	
+	@Value("${remind.message.id}")
+	private long remindMessageID;
+	
 	
 	public LinkedList<Long> getRoleIDs(){
 		LinkedList<Long> ids = new LinkedList<>();

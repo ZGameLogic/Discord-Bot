@@ -39,6 +39,7 @@ import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
+import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class RoleBotListener extends ListenerAdapter {
@@ -64,12 +65,13 @@ public class RoleBotListener extends ListenerAdapter {
 	private final int boosterChange;
 	private long encountersID;
 	private long fightEmojiID;
+	private long remindMessageID;
 	private String[] iconIDs;
 	private long generalID;
 	private long activitiesID;
 	private long spawnChance;
 	
-	DataCacher<Activity> activityData;
+	private DataCacher<Activity> activityData;
 	private long activitySpawnChance;
 	private long activityDuration;
 	
@@ -93,12 +95,17 @@ public class RoleBotListener extends ListenerAdapter {
 			kingData.saveSerialized(new KingPlayer(), "king");
 		}
 		
+		if(remindData.getFiles().length == 0) {
+			remindData.saveSerialized(new DailyRemind(), "reminds");
+		}
+		
 		kingRoleID = cl.getKingRoleID();
 		encountersID = cl.getEncountersID();
 		generalID = cl.getGeneralID();
 		activitiesID = cl.getActivitiesID();
 		boosterChange = cl.getBoosterChange();
 		fightEmojiID = cl.getFightEmojiID();
+		remindMessageID = cl.getRemindMessageID();
 		
 		iconIDs = cl.getIconIDS();
 		
@@ -155,71 +162,26 @@ public class RoleBotListener extends ListenerAdapter {
 		if(!event.getUser().isBot()) {
 			if(event.getReactionEmote().getIdLong() == fightEmojiID) {
 				if(event.getChannel().getIdLong() == encountersID) {
-					event.retrieveMessage().queue(message -> {
-						long encounterID = Long.parseLong(message.getEmbeds().get(0).getFooter().getText());
-						EncounterPlayer ep = encounterData.loadSerialized(message.getId());
-						if(ep.canFightPlayer(event.getMember().getIdLong())) {
-							Player p = data.loadSerialized(event.getUserId());
-							if(p.canChallenge()) {
-								fightEncounter(event.getMember(), ep, event);
-								ep.addPlayerFought(event.getUserIdLong());
-								encounterData.saveSerialized(ep, ep.getEncounterID() + "");
-							} else {
-								generalChannel.sendMessage("<@" + event.getUserId() + ">, you are too tired to fight again today").mention(event.getUser()).queue();
-							}
-						} else {
-							generalChannel.sendMessage("<@" + event.getUserId() + ">, you have already fought this encounter. Encounter ID:" + encounterID).mention(event.getUser()).queue();
-						}
-					});
+					encounterReact(event);
 				} else if(event.getChannel().getIdLong() == activitiesID) {
-					event.retrieveMessage().queue(message -> {
-						Activity activity = activityData.loadSerialized(message.getId());
-						if(activity.canPlayerWork(event.getUserIdLong())) {
-							Player p = data.loadSerialized(event.getUserId());
-							if(dailyChallengeLimit - p.getHasChallengedToday() >= activity.getActionCost()) {
-								if(p.getGold() >= activity.getGoldCost()) {
-									activity.addPlayerWorked(event.getUserIdLong());
-									p.decreaseGold(activity.getGoldCost());
-									switch(activity.getReward()) {
-									case Agility:
-										p.increaseAgility(activity.getRewardAmount());
-										break;
-									case Gold:
-										p.increaseGold(activity.getRewardAmount());
-										break;
-									case Knowledge:
-										p.increaseKnowledge(activity.getRewardAmount());
-										break;
-									case Magic:
-										p.increaseMagic(activity.getRewardAmount());
-										break;
-									case Stamina:
-										p.increaseStamina(activity.getRewardAmount());
-										break;
-									case Strength:
-										p.increaseStrength(activity.getRewardAmount());
-										break;
-									}
-									
-									for(int i = 0; i < activity.getActionCost(); i++) {
-										p.hasChallenged();
-									}
-									
-									generalChannel.sendMessage("<@" + event.getUserId() + ">").queue();
-									generalChannel.sendMessageEmbeds(EmbedMessageMaker.activityResults(event.getMember().getEffectiveName(), activity.getReward().name(), activity.getRewardAmount()).build()).queue();
-									
-									data.saveSerialized(p, event.getUserId());
-									activityData.saveSerialized(activity, message.getId());
-								} else {
-									generalChannel.sendMessage("<@" + event.getUserId() + ">, you do not have enough gold to pay the tutor.").queue();
-								}
-							} else {
-								generalChannel.sendMessage("<@" + event.getUserId() + ">, you are too tired to participate in this activity today.").mention(event.getUser()).queue();
-							}
-						} else {
-							generalChannel.sendMessage("<@" + event.getUserId() + ">, you have already participated in this activity.").mention(event.getUser()).queue();
-						}
-					});
+					activityReact(event);
+				} else if(event.getChannel().getIdLong() == event.getGuild().getRulesChannel().getIdLong()) {
+					if(event.getMessageIdLong() == remindMessageID) {
+						reminderReact(event);
+					}
+				}
+			}
+		}
+	}
+	
+	@Override
+	public void onMessageReactionRemove(MessageReactionRemoveEvent event) {
+		if(!event.getUser().isBot()) {
+			if(event.getReactionEmote().getIdLong() == fightEmojiID) {
+				if(event.getChannel().getIdLong() == event.getGuild().getRulesChannel().getIdLong()) {
+					if(event.getMessageIdLong() == remindMessageID) {
+						reminderReactRemove(event);
+					}
 				}
 			}
 		}
@@ -581,6 +543,102 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 	
+	private void reminderReact(MessageReactionAddEvent event) {
+		logger.info(event.getMember().getEffectiveName() + " has opted in to reminders");
+		DailyRemind dr = remindData.loadSerialized("reminds");
+		dr.addID(event.getMember().getIdLong());
+		remindData.saveSerialized(dr, "reminds");
+		event.getUser().openPrivateChannel().queue(channel -> {
+			channel.sendMessage("You have opted into receiving a message when you have not done any activities for the day.").queue();
+		});
+	}
+
+	private void reminderReactRemove(MessageReactionRemoveEvent event) {
+		logger.info(event.getMember().getEffectiveName() + " has opted out of reminders");
+		DailyRemind dr = remindData.loadSerialized("reminds");
+		dr.removeID(event.getMember().getIdLong());
+		remindData.saveSerialized(dr, "reminds");
+		event.getUser().openPrivateChannel().queue(channel -> {
+			channel.sendMessage("You have opted out of receiving a message when you have not done any activities for the day.").queue();
+		});
+	}
+
+	/**
+	 * @param event
+	 */
+	private void activityReact(MessageReactionAddEvent event) {
+		event.retrieveMessage().queue(message -> {
+			Activity activity = activityData.loadSerialized(message.getId());
+			if(activity.canPlayerWork(event.getUserIdLong())) {
+				Player p = data.loadSerialized(event.getUserId());
+				if(dailyChallengeLimit - p.getHasChallengedToday() >= activity.getActionCost()) {
+					if(p.getGold() >= activity.getGoldCost()) {
+						activity.addPlayerWorked(event.getUserIdLong());
+						p.decreaseGold(activity.getGoldCost());
+						switch(activity.getReward()) {
+						case Agility:
+							p.increaseAgility(activity.getRewardAmount());
+							break;
+						case Gold:
+							p.increaseGold(activity.getRewardAmount());
+							break;
+						case Knowledge:
+							p.increaseKnowledge(activity.getRewardAmount());
+							break;
+						case Magic:
+							p.increaseMagic(activity.getRewardAmount());
+							break;
+						case Stamina:
+							p.increaseStamina(activity.getRewardAmount());
+							break;
+						case Strength:
+							p.increaseStrength(activity.getRewardAmount());
+							break;
+						}
+						
+						for(int i = 0; i < activity.getActionCost(); i++) {
+							p.hasChallenged();
+						}
+						
+						generalChannel.sendMessage("<@" + event.getUserId() + ">").queue();
+						generalChannel.sendMessageEmbeds(EmbedMessageMaker.activityResults(event.getMember().getEffectiveName(), activity.getReward().name(), activity.getRewardAmount()).build()).queue();
+						
+						data.saveSerialized(p, event.getUserId());
+						activityData.saveSerialized(activity, message.getId());
+					} else {
+						generalChannel.sendMessage("<@" + event.getUserId() + ">, you do not have enough gold to pay the tutor.").queue();
+					}
+				} else {
+					generalChannel.sendMessage("<@" + event.getUserId() + ">, you are too tired to participate in this activity today.").mention(event.getUser()).queue();
+				}
+			} else {
+				generalChannel.sendMessage("<@" + event.getUserId() + ">, you have already participated in this activity.").mention(event.getUser()).queue();
+			}
+		});
+	}
+
+	/**
+	 * @param event
+	 */
+	private void encounterReact(MessageReactionAddEvent event) {
+		event.retrieveMessage().queue(message -> {
+			long encounterID = Long.parseLong(message.getEmbeds().get(0).getFooter().getText());
+			EncounterPlayer ep = encounterData.loadSerialized(message.getId());
+			if(ep.canFightPlayer(event.getMember().getIdLong())) {
+				Player p = data.loadSerialized(event.getUserId());
+				if(p.canChallenge()) {
+					fightEncounter(event.getMember(), ep, event);
+					ep.addPlayerFought(event.getUserIdLong());
+					encounterData.saveSerialized(ep, ep.getEncounterID() + "");
+				} else {
+					generalChannel.sendMessage("<@" + event.getUserId() + ">, you are too tired to fight again today").mention(event.getUser()).queue();
+				}
+			} else {
+				generalChannel.sendMessage("<@" + event.getUserId() + ">, you have already fought this encounter. Encounter ID:" + encounterID).mention(event.getUser()).queue();
+			}
+		});
+	}
+
 	private void leaderboardFaction(SlashCommandEvent event) {
 		HashMap<String, Integer> rolePop = new HashMap<>();
 		for(long id: roleIDs) {
@@ -1257,6 +1315,9 @@ public class RoleBotListener extends ListenerAdapter {
 	private void midnightReset() {
 		while (true) {
 			Calendar date = new GregorianCalendar();
+			if(date.get(Calendar.HOUR) == 11 && date.get(Calendar.MINUTE) == 0) {
+				notifyThePeople();
+			}
 			if(date.get(Calendar.HOUR) == 0 && date.get(Calendar.MINUTE) == 0) {
 				logger.info("A new day rises on the kingdom");
 				dayPassed();
@@ -1270,5 +1331,15 @@ public class RoleBotListener extends ListenerAdapter {
 			}
 		}
 	}
-	
+
+	private void notifyThePeople() {
+		for(Long id : remindData.loadSerialized("reminds").getIds()) {
+			Player p = data.loadSerialized(id + "");
+			if(p.getHasChallengedToday() == 0) {
+				guild.getMemberById(id).getUser().openPrivateChannel().queue(channel -> {
+					channel.sendMessageEmbeds(EmbedMessageMaker.remindMessage().build()).queue();
+				});
+			}
+		}
+	}
 }

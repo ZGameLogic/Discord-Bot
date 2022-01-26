@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.HashMap;
 
 public class DataCacher <T extends Serializable> {
 	
@@ -91,5 +92,13 @@ public class DataCacher <T extends Serializable> {
 	public File[] getFiles() {
 		File f = new File(filePath);
 		return f.listFiles();
+	}
+	
+	public HashMap<String, T> getData(){
+		HashMap<String, T> map = new HashMap<>();
+		for(File f : getFiles()) {
+			map.put(f.getName(), loadSerialized(f.getName()));
+		}
+		return map;
 	}
 }
