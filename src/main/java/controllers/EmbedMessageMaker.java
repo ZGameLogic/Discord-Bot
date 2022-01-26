@@ -19,6 +19,15 @@ import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 
 public abstract class EmbedMessageMaker {
 	
+	public static EmbedBuilder remindMessage() {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setColor(new Color(64, 141, 148));
+		eb.setTitle("A message to all those people who like to forget");
+		eb.setDescription("Do not forget to do your activities for the day!");
+		eb.setFooter("From your lord and savior, Shlongbot");
+		return eb;
+	}
+	
 	public static EmbedBuilder activityResults(String user, String stat, int amount) {
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setColor(new Color(176, 103, 44));
@@ -84,7 +93,7 @@ public abstract class EmbedMessageMaker {
 			possibleVendorNames.add("Breastfeed the babies");
 			possibleVendorNames.add("Sweeten the honey");
 			possibleVendorNames.add("Pray at the shrine for shlongbot");
-			possibleVendorNames.add("Revive the peasents");
+			possibleVendorNames.add("Revive the peasants");
 			break;
 		}
 		
