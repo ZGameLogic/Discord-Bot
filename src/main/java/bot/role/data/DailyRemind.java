@@ -1,6 +1,7 @@
 package bot.role.data;
 
 import java.io.Serializable;
+import java.util.Collection;
 import java.util.LinkedList;
 
 import lombok.Getter;
@@ -22,5 +23,9 @@ public class DailyRemind implements Serializable {
 	
 	public void removeID(long id) {
 		ids.remove(id);
+	}
+	
+	public void updateData(Collection<Long> collection) {
+		ids = new LinkedList<>(collection);
 	}
 }

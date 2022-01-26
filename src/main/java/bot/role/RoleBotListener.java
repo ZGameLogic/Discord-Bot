@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -119,6 +120,9 @@ public class RoleBotListener extends ListenerAdapter {
 		
 		dailyChallengeLimit = cl.getDailyChallengeLimit();
 		dailyDefendLimit = cl.getDailyDefendLimit();
+		DailyRemind dr = remindData.loadSerialized("reminds");
+		dr.updateData(new HashSet<>(remindData.loadSerialized("reminds").getIds()));
+		remindData.saveSerialized(dr, "reminds");
 	}
 	
 	/**
