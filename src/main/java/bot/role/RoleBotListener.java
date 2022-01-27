@@ -221,6 +221,9 @@ public class RoleBotListener extends ListenerAdapter {
 						// Hail to the king
 						if(getCasteRoleIndex(defenderMember) == 0) {
 							padding++;
+							if(attackIndex != 1 && attackIndex != 2) {
+								padding += attackIndex;
+							}
 						}
 						
 						fight(attackerMember, defenderMember, padding, event);
@@ -1339,7 +1342,7 @@ public class RoleBotListener extends ListenerAdapter {
 	private void notifyThePeople() {
 		for(Long id : remindData.loadSerialized("reminds").getIds()) {
 			Player p = data.loadSerialized(id + "");
-			if(p.getHasChallengedToday() == 0) {
+			if(p.canChallenge()) {
 				guild.getMemberById(id).getUser().openPrivateChannel().queue(channel -> {
 					channel.sendMessageEmbeds(EmbedMessageMaker.remindMessage().build()).queue();
 				});
