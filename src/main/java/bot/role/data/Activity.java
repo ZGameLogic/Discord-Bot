@@ -22,9 +22,9 @@ public class Activity implements Serializable {
 		public static ActivityReward random() {
 			Random r = new Random(System.currentTimeMillis());
 			if(r.nextInt(3) == 1) {
-				return Gold;
+				return ActivityReward.values()[new Random().nextInt(ActivityReward.values().length - 1) + 1];
 			}
-			return ActivityReward.values()[new Random().nextInt(ActivityReward.values().length)];
+			return Gold;
 		}
 	}
 
