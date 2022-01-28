@@ -1,0 +1,56 @@
+package bot.role.data;
+
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+
+public abstract class DailyLogger {
+	
+	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
+	
+	/**
+	 * Writes a string of text to the end of the current days file
+	 * @param line String to be written into the file
+	 */
+	public static void writeToFile(String line) {
+		File out = getDayFile();
+		if(!out.getParentFile().exists()) {
+			out.getParentFile().mkdirs();
+		}
+		if(!out.exists()) {
+			try {
+				out.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		try {
+			PrintWriter output = new PrintWriter(new FileWriter(out, true));
+			output.append(DATE_FORMAT.format(new Date()) + " " + line + "\n");
+			output.flush();
+			output.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Gets the file of the current file that would be writing too based off the day 
+	 * @return file that the current day should be writing too
+	 */
+	private static File getDayFile() {
+		Calendar calendar = Calendar.getInstance();
+		String fileName = "";
+		fileName += (calendar.get(Calendar.MONTH) + 1) + "-";
+		fileName += calendar.get(Calendar.DAY_OF_MONTH) + "-";
+		fileName += calendar.get(Calendar.YEAR);
+		fileName += calendar.get(Calendar.AM_PM) == Calendar.PM ? "-1" : "-0";
+		File file = new File("arena\\logs\\" + fileName + "-log.txt");
+		return file;
+	}
+
+}

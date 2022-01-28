@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 
 import bot.role.data.Activity;
 import bot.role.data.Activity.ActivityReward;
+import bot.role.data.DailyLogger;
 import bot.role.data.DailyRemind;
 import controllers.EmbedMessageMaker;
 import controllers.dice.DiceRollingSimulator;
@@ -414,6 +415,7 @@ public class RoleBotListener extends ListenerAdapter {
 						if(role.getIcon() != null) {
 							iconURL = role.getIcon().getIconUrl();
 						}
+						DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has given " + goldAmount + " gold to " + role.getName() + "s");
 						event.replyEmbeds(EmbedMessageMaker.distributeGold(initialAmount, role.getName(), iconURL).build()).queue();
 					} else {
 						event.reply("You do not have enough gold to give this much").queue();
@@ -454,6 +456,7 @@ public class RoleBotListener extends ListenerAdapter {
 							if(role.getIcon() != null) {
 								iconURL = role.getIcon().getIconUrl();
 							}
+							DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has set a tax on " + role.getName() + "s for " + goldAmount + " gold");
 							event.replyEmbeds(EmbedMessageMaker.proposeTax(goldAmount, role.getName(), iconURL).build()).queue();
 						} else {
 							event.reply("You do not have enough time to do this today!").queue();
@@ -489,6 +492,10 @@ public class RoleBotListener extends ListenerAdapter {
 						if(king.getHasChallengedToday() < dailyChallengeLimit) {
 							king.hasChallenged();
 							data.saveSerialized(king, event.getMember().getId());
+							
+							DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has declared a role swap\n"
+									+ "\t" + getNameWithCaste(member1) + " has swapped with " + getNameWithCaste(member2));
+							
 							Role r1 = getCasteRole(member1);
 							Role r2 = getCasteRole(member2);
 							guild.removeRoleFromMember(member1, r1).queue();
@@ -535,6 +542,7 @@ public class RoleBotListener extends ListenerAdapter {
 						taker.increaseGold(gold);
 						data.saveSerialized(giver, event.getMember().getId());
 						data.saveSerialized(taker, citizen.getId());
+						DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has paid " + getNameWithCaste(citizen) + " " + gold + " gold");
 						event.replyEmbeds(EmbedMessageMaker.giveGold(event.getMember().getEffectiveName(), citizen.getEffectiveName(), gold).build()).queue();
 					} else {
 						event.reply("You do not have that much gold to give").queue();
@@ -609,7 +617,14 @@ public class RoleBotListener extends ListenerAdapter {
 						
 						generalChannel.sendMessage("<@" + event.getUserId() + ">").queue();
 						generalChannel.sendMessageEmbeds(EmbedMessageMaker.activityResults(event.getMember().getEffectiveName(), activity.getReward().name(), activity.getRewardAmount()).build()).queue();
-						
+						if(activity.getReward() == ActivityReward.Gold) {
+							DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has done an activity\n"
+									+ "\tReward: " + activity.getReward().name() + " " + activity.getRewardAmount());
+						} else {
+							DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has done an activity\n"
+									+ "\tReward: " + activity.getReward().name() + " " + activity.getRewardAmount() + "\n"
+									+ "\tCost: " + activity.getGoldCost() + " gold");
+						}
 						data.saveSerialized(p, event.getUserId());
 						activityData.saveSerialized(activity, message.getId());
 					} else {
@@ -657,6 +672,7 @@ public class RoleBotListener extends ListenerAdapter {
 
 	private void newKing(Member king) {
 		generalChannel.sendMessageEmbeds(EmbedMessageMaker.newKing(king.getEffectiveName(), king.getAvatarUrl()).build()).queue();
+		DailyLogger.writeToFile("A new king has been appointed: " + getNameWithCaste(king));
 	}
 	
 	private boolean isKing(Member member) {
@@ -798,6 +814,8 @@ public class RoleBotListener extends ListenerAdapter {
 		Player attacker = data.loadSerialized(attackerMember.getId());
 		Player defender = data.loadSerialized(defenderMember.getId());
 		
+		String logMessage = getNameWithCaste(attackerMember) + " has attacked " + getNameWithCaste(defenderMember) + "\n";
+		
 		int booster = 0;
 		
 		// Add a level of defending for the server boosters
@@ -808,6 +826,7 @@ public class RoleBotListener extends ListenerAdapter {
 		FightResults results = fight(attacker, defender, defenderPadding, booster, getCasteRoleIndex(defenderMember) == 0);
 		
 		if(results.isAttackerWon()) {
+			logMessage += "\tResults: Attacker won\n";
 			// Attacker wins
 			attacker.won();
 			defender.lost();
@@ -824,14 +843,14 @@ public class RoleBotListener extends ListenerAdapter {
 				
 				guild.addRoleToMember(defenderMember, attackerRole).queue();
 				guild.removeRoleFromMember(defenderMember, defenderRole).queue();
-				
+				logMessage += "\t" + attackerMember.getEffectiveName() + " is now a role of " + defenderRole.getName() + "\n";
 				long goldWon = 7 + (int)(Math.random() * 3);
 				if(defender.getGold() < goldWon) {
 					goldWon = defender.getGold();
 				}
 				defender.decreaseGold(goldWon);
 				attacker.increaseGold(goldWon);
-				
+				logMessage += "\tGold won: " + goldWon + "\n";
 				eb.setDescription(attackerMember.getEffectiveName() +  " vs " + defenderMember.getEffectiveName() + "\n" + attackerMember.getEffectiveName() + " is now a rank of " + defenderRole.getName() + ". Gold obtained: " + goldWon);
 			} else {
 				long goldWon = 3 + (int)(Math.random() * 3);
@@ -840,6 +859,7 @@ public class RoleBotListener extends ListenerAdapter {
 				}
 				defender.decreaseGold(goldWon);
 				attacker.increaseGold(goldWon);
+				logMessage += "\tGold won: " + goldWon + "\n";
 				eb.setDescription(attackerMember.getEffectiveName() +  " vs " + defenderMember.getEffectiveName() + "\nGold obtained: " + goldWon);
 			}
 			
@@ -848,13 +868,13 @@ public class RoleBotListener extends ListenerAdapter {
 			eb.setColor(new Color(25, 84, 43));
 			eb.addField("Fight statistics", "Attacker points: " + results.getAttackerPoints() + "\nDefender points: " + results.getDefenderPoints(), false);
 			eb.setTimestamp(Instant.now());
-			
 			event.replyEmbeds(eb.build()).queue();
 
 			if(getCasteRoleIndex(defenderMember) == 0) {
 				newKing(attackerMember);
 			}
 		} else {
+			logMessage += "\tResults: Attacker lost\n";
 			String roleSwap = "";
 			// Attacker loses
 			attacker.lost();
@@ -868,10 +888,19 @@ public class RoleBotListener extends ListenerAdapter {
 				if(attacker.getGold() < goldLost) {
 					goldLost = attacker.getGold();
 				}
+				logMessage += "\tGold lost: " + goldLost + "\n";
 				defender.increaseGold(goldLost);
 				attacker.decreaseGold(goldLost);
 			} else {
 				// if attacker was attacking down the caste
+				goldLost = 7 + (int)(Math.random() * 3);
+				if(attacker.getGold() < goldLost) {
+					goldLost = attacker.getGold();
+				}
+				defender.increaseGold(goldLost);
+				attacker.decreaseGold(goldLost);
+				logMessage += "\tGold lost" + goldLost + "\n";
+				
 				if(dif != 0) {
 					// lower caste switch rolls 
 					Guild guild = event.getGuild();
@@ -883,17 +912,13 @@ public class RoleBotListener extends ListenerAdapter {
 					guild.addRoleToMember(defenderMember, attackerRole).queue();
 					guild.removeRoleFromMember(defenderMember, defenderRole).queue();
 					
+					logMessage += "\t" + attackerMember.getEffectiveName() + " is now a role of " + defenderRole.getName() + "\n";
 					roleSwap = attackerMember.getEffectiveName() + " is now a rank of " + defenderRole.getName() + ".";
 					if(getCasteRoleIndex(attackerMember) == 0) {
 						newKing(defenderMember);
 					}
 				}
-				goldLost = 7 + (int)(Math.random() * 3);
-				if(attacker.getGold() < goldLost) {
-					goldLost = attacker.getGold();
-				}
-				defender.increaseGold(goldLost);
-				attacker.decreaseGold(goldLost);
+				
 			}
 			
 			int stamDif = defender.getStamina() - attacker.getStamina();
@@ -928,7 +953,7 @@ public class RoleBotListener extends ListenerAdapter {
 				statChanged = "Knowledge";
 				attacker.increaseKnowledge(statNumChanged);
 			}
-			
+			logMessage += "\tStat gained: " + statChanged + " " + statNumChanged + "\n";
 			EmbedBuilder eb = new EmbedBuilder();
 			eb.setTitle("Fight results: " + attackerMember.getEffectiveName() + " lost!");
 			eb.setColor(new Color(84, 25, 25));
@@ -939,6 +964,8 @@ public class RoleBotListener extends ListenerAdapter {
 			
 			event.replyEmbeds(eb.build()).queue();
 		}
+		logMessage += "\tAttacker points: " + results.getAttackerPoints() + "\tDefender points: " + results.getDefenderPoints();
+		DailyLogger.writeToFile(logMessage);
 		
 		data.saveSerialized(attacker, attackerMember.getId());
 		data.saveSerialized(defender, defenderMember.getId());
@@ -954,6 +981,18 @@ public class RoleBotListener extends ListenerAdapter {
 			}
 		}
 		return -1;
+	}
+	
+	private String getCasteRoleName(Member member) {
+		Role role = getCasteRole(member);
+		if(role == null) {
+			return "";
+		}
+		return role.getName();
+	}
+	
+	private String getNameWithCaste(Member member) {
+		return member.getEffectiveName() + " (" + getCasteRoleName(member) + ")";
 	}
 	
 	private Role getCasteRole(Member member) {
@@ -1155,6 +1194,11 @@ public class RoleBotListener extends ListenerAdapter {
 				break;
 			}
 			
+			DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has done an encounter\n"
+					+ "\tResult: won\n"
+					+ "\tGold: " + goldWon + "\n"
+					+ "\t" + skillName + ": " + skillInc);
+			
 			eb.setDescription("You have won the fight against a " + ep.getName() + "! Gold gained: " + goldWon + "\n"
 					+ skillName + " increased by: " + skillInc);
 		} else {
@@ -1168,6 +1212,9 @@ public class RoleBotListener extends ListenerAdapter {
 			attacker.decreaseGold(goldLost);
 			eb.setColor(new Color(84, 25, 25));
 			eb.setDescription("You have lost the fight against a " + ep.getName() + ". Gold lost: " + goldLost);
+			DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has done an encounter\n"
+					+ "\tResult: lost\n"
+					+ "\tGold lost: " + goldLost);
 		}
 		
 		eb.addField("Fight statistices", "Attacker points: " + results.getAttackerPoints() + "\nDefender points: " + results.getDefenderPoints(),true);
@@ -1226,6 +1273,7 @@ public class RoleBotListener extends ListenerAdapter {
 					}
 					p.decreaseGold(payAmount);
 					king.increaseGold(payAmount);
+					DailyLogger.writeToFile(getNameWithCaste(m) + " has paid " + getNameWithCaste(kingMember) + " " + payAmount + " gold in tax");
 					data.saveSerialized(p, m.getId());
 				}
 			}
@@ -1268,6 +1316,7 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 	
 	private void dayPassed() {
+		DailyLogger.writeToFile("A new day has come!");
 		dailyGoldIncrease();
 		payTax();
 		dayPassedEncounter();
