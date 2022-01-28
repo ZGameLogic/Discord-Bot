@@ -8,10 +8,10 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-public abstract class DailyLogger {
+public abstract class EndOfDayLogger {
 	
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
-	private static final String PATH = "arena\\logs\\";
+	private static final String PATH = "arena\\logs\\EOD\\";
 	
 	/**
 	 * Writes a string of text to the end of the current days file

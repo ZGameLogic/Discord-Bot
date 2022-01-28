@@ -25,6 +25,7 @@ import bot.role.data.Activity;
 import bot.role.data.Activity.ActivityReward;
 import bot.role.data.DailyLogger;
 import bot.role.data.DailyRemind;
+import bot.role.data.EndOfDayLogger;
 import controllers.EmbedMessageMaker;
 import controllers.dice.DiceRollingSimulator;
 import data.ConfigLoader;
@@ -1205,7 +1206,8 @@ public class RoleBotListener extends ListenerAdapter {
 			DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has done an encounter\n"
 					+ "\tResult: won\n"
 					+ "\tGold: " + goldWon + "\n"
-					+ "\t" + skillName + ": " + skillInc);
+					+ "\t" + skillName + ": " + skillInc + "\n"
+					+ "\tAttacker points: " + results.getAttackerPoints() + "\tDefender points: " + results.getDefenderPoints());
 			
 			eb.setDescription("You have won the fight against a " + ep.getName() + "! Gold gained: " + goldWon + "\n"
 					+ skillName + " increased by: " + skillInc);
@@ -1222,7 +1224,8 @@ public class RoleBotListener extends ListenerAdapter {
 			eb.setDescription("You have lost the fight against a " + ep.getName() + ". Gold lost: " + goldLost);
 			DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has done an encounter\n"
 					+ "\tResult: lost\n"
-					+ "\tGold lost: " + goldLost);
+					+ "\tGold lost: " + goldLost + "\n"
+					+ "\tAttacker points: " + results.getAttackerPoints() + "\tDefender points: " + results.getDefenderPoints());
 		}
 		
 		eb.addField("Fight statistices", "Attacker points: " + results.getAttackerPoints() + "\nDefender points: " + results.getDefenderPoints(),true);
@@ -1323,8 +1326,15 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 	
+	private void saveStats() {
+		data.getData().forEach((id, player) ->{
+			EndOfDayLogger.writeToFile(getNameWithCaste(guild.getMemberById(id)) + " " + player.getCompactStats());
+		});
+	}
+	
 	private void dayPassed() {
 		DailyLogger.writeToFile("A new day has come!");
+		saveStats();
 		dailyGoldIncrease();
 		payTax();
 		dayPassedEncounter();
