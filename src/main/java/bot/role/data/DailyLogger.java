@@ -48,6 +48,14 @@ public abstract class DailyLogger {
 		return null;
 	}
 	
+	public static File getFile(String date) {
+		File file = new File(PATH + date.replaceAll(":", "-") + "-log.txt");
+		if(file.exists()) {
+			return file;
+		}
+		return null;
+	}
+	
 	/**
 	 * Gets the file of the current file that would be writing too based off the day 
 	 * @return file that the current day should be writing too
