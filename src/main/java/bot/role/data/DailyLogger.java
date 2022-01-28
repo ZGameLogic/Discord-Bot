@@ -49,6 +49,9 @@ public abstract class DailyLogger {
 	}
 	
 	public static File getFile(String date) {
+		if(date.length() != 12) {
+			return null;
+		}
 		File file = new File(PATH + date.replaceAll(":", "-") + "-log.txt");
 		if(file.exists()) {
 			return file;
