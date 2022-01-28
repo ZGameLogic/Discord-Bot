@@ -559,6 +559,22 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 	
+	public void getDayHistory(SlashCommandEvent event) {
+		File file;
+		if(event.getOption("specific-day") != null) {
+			file = DailyLogger.getFile(event.getOption("specific-day").getAsString());
+		} else {
+			file = DailyLogger.getCurrentFile();
+		}
+		
+		if(file != null) {
+			event.reply("Let me go to the library to get that history for you").queue();
+			event.getTextChannel().sendFile(file).queue();
+		} else {
+			event.reply("There doesn't seem to be any data in the library for that day").queue();
+		}
+	}
+
 	private void reminderReact(MessageReactionAddEvent event) {
 		logger.info(event.getMember().getEffectiveName() + " has opted in to reminders");
 		DailyRemind dr = remindData.loadSerialized("reminds");
