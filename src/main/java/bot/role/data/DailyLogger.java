@@ -38,6 +38,14 @@ public abstract class DailyLogger {
 		}
 	}
 	
+	public static File getCurrentFile() {
+		File file = getDayFile();
+		if(file.exists()) {
+			return file;
+		}
+		return null;
+	}
+	
 	/**
 	 * Gets the file of the current file that would be writing too based off the day 
 	 * @return file that the current day should be writing too

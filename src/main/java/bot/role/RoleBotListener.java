@@ -1065,6 +1065,14 @@ public class RoleBotListener extends ListenerAdapter {
 			logger.info("Its a new day!");
 			dayPassed();
 			event.getPrivateChannel().sendMessage("Its a new day!").queue();
+		} else if(message.contains("!history")){
+			File file = DailyLogger.getCurrentFile();
+			if(file != null) {
+				event.getPrivateChannel().sendFile(file).queue();
+			} else {
+				event.getPrivateChannel().sendMessage("No files were found for today").queue();
+			}
+			
 		}
 	}
 	
