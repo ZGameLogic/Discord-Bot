@@ -11,6 +11,7 @@ import java.util.Date;
 public abstract class DailyLogger {
 	
 	private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("HH:mm:ss");
+	private static final SimpleDateFormat FILE_FORMAT = new SimpleDateFormat("MM-dd-yyyy");
 	private static final String PATH = "arena\\logs\\";
 	
 	/**
@@ -54,9 +55,7 @@ public abstract class DailyLogger {
 	private static File getDayFile() {
 		Calendar calendar = Calendar.getInstance();
 		String fileName = "";
-		fileName += (calendar.get(Calendar.MONTH) + 1) + "-";
-		fileName += calendar.get(Calendar.DAY_OF_MONTH) + "-";
-		fileName += calendar.get(Calendar.YEAR);
+		fileName += FILE_FORMAT.format(calendar.getTime());
 		fileName += calendar.get(Calendar.AM_PM) == Calendar.PM ? "-1" : "-0";
 		File file = new File(PATH + fileName + "-log.txt");
 		return file;
