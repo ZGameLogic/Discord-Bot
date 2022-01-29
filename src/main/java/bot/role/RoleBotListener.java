@@ -1294,7 +1294,7 @@ public class RoleBotListener extends ListenerAdapter {
 					+ "\tAttacker points: " + results.getAttackerPoints() + "\tDefender points: " + results.getDefenderPoints());
 		}
 		
-		eb.addField("Fight statistices", "Attacker points: " + results.getAttackerPoints() + "\nDefender points: " + results.getDefenderPoints(),true);
+		eb.addField("Fight statistics", "Attacker points: " + results.getAttackerPoints() + "\nDefender points: " + results.getDefenderPoints(),true);
 		eb.setTimestamp(Instant.now());
 		generalChannel.sendMessage("<@" + event.getUserId() + ">").queue();
 		generalChannel.sendMessageEmbeds(eb.build()).queue();
