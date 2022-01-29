@@ -1009,7 +1009,7 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 	
 	private String getNameWithCaste(Member member) {
-		return member.getEffectiveName() + " (" + getCasteRoleName(member) + ")";
+		return member.getUser().getName() + " (" + getCasteRoleName(member) + ")";
 	}
 	
 	private Role getCasteRole(Member member) {
@@ -1370,7 +1370,7 @@ public class RoleBotListener extends ListenerAdapter {
 		starts.add("The glint from my crown awakens me.");
 		starts.add("Light begins to pour into the streets below.");
 		starts.add("Chiming sounds throughout the castle halls as the sun rises above the horizon.");
-		starts.add("A rooster bores its noise into the ears of all who were in the village, abruptly seizing as a morning’s hunger sets in.");
+		starts.add("A rooster bores its noise into the ears of all who were in the village, abruptly seizing as a morningï¿½s hunger sets in.");
 
 		LinkedList<String> endings = new LinkedList<>();
 		endings.add(" I can already hear swords being drawn");
