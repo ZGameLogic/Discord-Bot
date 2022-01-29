@@ -26,6 +26,7 @@ import bot.role.data.Activity.ActivityReward;
 import bot.role.data.DailyLogger;
 import bot.role.data.DailyRemind;
 import bot.role.data.EndOfDayLogger;
+import bot.role.data.FightLogger;
 import controllers.EmbedMessageMaker;
 import controllers.dice.DiceRollingSimulator;
 import data.ConfigLoader;
@@ -155,6 +156,11 @@ public class RoleBotListener extends ListenerAdapter {
 	public void onMessageReceived(MessageReceivedEvent event) {
 		if(event.isFromType(ChannelType.PRIVATE)) {
 			if(event.getAuthor().getIdLong() == 232675572772372481l) {
+				String message = event.getMessage().getContentRaw();
+				processAdminCommand(message, event);
+			} 
+			
+			if (event.getAuthor().getIdLong() == 232675572772372481l || event.getAuthor().getIdLong() == 236337128005566464l) {
 				String message = event.getMessage().getContentRaw();
 				processCommand(message, event);
 			}
@@ -797,11 +803,23 @@ public class RoleBotListener extends ListenerAdapter {
 			defender.wasChallenged();
 		}
 		
-		int stamina = attacker.getStamina() + defender.getStamina() + defenderPadding * paddingMultiplier + boosterPadding;
-		int strength = attacker.getStrength() + defender.getStrength() + defenderPadding * paddingMultiplier + boosterPadding;
-		int magic = attacker.getMagic() + defender.getMagic() + defenderPadding * paddingMultiplier + boosterPadding;
-		int agility = attacker.getAgility() + defender.getAgility() + defenderPadding * paddingMultiplier + boosterPadding;
-		int knowledge = attacker.getKnowledge() + defender.getKnowledge() + defenderPadding * paddingMultiplier + boosterPadding;
+		int attackerStamina = attacker.getStamina();
+		int attackerStrength = attacker.getStrength();
+		int attackerMagic = attacker.getMagic();
+		int attackerAgility = attacker.getAgility();
+		int attackerKnowledge = attacker.getKnowledge();
+		
+		int defenderStamina = defender.getStamina() + defenderPadding * paddingMultiplier + boosterPadding;
+		int defenderStrength = defender.getStrength() + defenderPadding * paddingMultiplier + boosterPadding;
+		int defenderMagic = defender.getMagic() + defenderPadding * paddingMultiplier + boosterPadding;
+		int defenderAgility = defender.getAgility() + defenderPadding * paddingMultiplier + boosterPadding;
+		int defenderKnowledge = defender.getKnowledge() + defenderPadding * paddingMultiplier + boosterPadding;
+		
+		int stamina = attackerStamina + defenderStamina;
+		int strength = attackerStrength  + defenderStrength;
+		int magic = attackerMagic + defenderMagic;
+		int agility = attackerAgility + defenderAgility;
+		int knowledge = attackerKnowledge + defenderKnowledge;
 		
 		int attackerPoint = 0;
 		int defenderPoint = 0;
@@ -818,7 +836,13 @@ public class RoleBotListener extends ListenerAdapter {
 		if(agilWin <= attacker.getAgility()) {attackerPoint++;} else {defenderPoint++;}
 		if(knowWin <= attacker.getKnowledge()) {attackerPoint++;} else {defenderPoint++;}
 		
-		return new FightResults(attackerPoint > defenderPoint, attackerPoint, defenderPoint);
+		return new FightResults(attackerPoint > defenderPoint, attackerPoint, defenderPoint,
+				strength, streWin, magic, magiWin,
+				agility, agilWin, knowledge, knowWin,
+				stamina, stamWin, defenderPadding, boosterPadding, paddingMultiplier,
+				attackerStrength, defenderStrength, attackerStamina, defenderStamina,
+				attackerMagic, defenderMagic, attackerAgility, defenderAgility,
+				attackerKnowledge, defenderKnowledge);
 	}
 	
 	/**
@@ -841,6 +865,15 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 		
 		FightResults results = fight(attacker, defender, defenderPadding, booster, getCasteRoleIndex(defenderMember) == 0);
+		
+		long fightID = new Random().nextLong();
+		while(FightLogger.exists(fightID)) {
+			fightID = new Random(System.currentTimeMillis()).nextLong();
+		}
+		
+		FightLogger.timestampFight(fightID);
+		FightLogger.writeToFile("Fight between " + getNameWithCaste(attackerMember) + " and " + getNameWithCaste(defenderMember), fightID);
+		FightLogger.writeToFile(results.toString(), fightID);
 		
 		if(results.isAttackerWon()) {
 			logMessage += "\tResults: Attacker won\n";
@@ -885,6 +918,7 @@ public class RoleBotListener extends ListenerAdapter {
 			eb.setColor(new Color(25, 84, 43));
 			eb.addField("Fight statistics", "Attacker points: " + results.getAttackerPoints() + "\nDefender points: " + results.getDefenderPoints(), false);
 			eb.setTimestamp(Instant.now());
+			eb.setFooter(fightID + "");
 			event.replyEmbeds(eb.build()).queue();
 
 			if(getCasteRoleIndex(defenderMember) == 0) {
@@ -978,7 +1012,7 @@ public class RoleBotListener extends ListenerAdapter {
 					+ " Gold lost: " + goldLost + "\n" + roleSwap);
 			eb.addField("Fight statistics", "Attacker points: " + results.getAttackerPoints() + "\nDefender points: " + results.getDefenderPoints(), false);
 			eb.setTimestamp(Instant.now());
-			
+			eb.setFooter(fightID + "");
 			event.replyEmbeds(eb.build()).queue();
 		}
 		logMessage += "\tAttacker points: " + results.getAttackerPoints() + "\tDefender points: " + results.getDefenderPoints();
@@ -1027,8 +1061,24 @@ public class RoleBotListener extends ListenerAdapter {
 	private boolean canChallengeKing(long id) {
 		return kingData.loadSerialized("king").canFight(id);
 	}
-
+	
 	private void processCommand(String message, MessageReceivedEvent event) {
+		if(message.contains("!fight-summary")) {
+			message = message.replace("!fight-summary ", "");
+			try {
+				long id = Long.parseLong(message);
+				if(FightLogger.exists(id)) {
+					event.getPrivateChannel().sendFile(FightLogger.getFight(id)).queue();
+				} else {
+					event.getPrivateChannel().sendMessage("Unable to find fight id: " + message).queue();
+				}
+			} catch (NumberFormatException e) {
+				event.getPrivateChannel().sendMessage("Unable to find fight id: " + message).queue();
+			}
+		}
+	}
+	
+	private void processAdminCommand(String message, MessageReceivedEvent event) {
 		if(message.contains("!reroll")) {
 			message = message.replace("!reroll ", "");
 			long userID = Long.parseLong(message);
