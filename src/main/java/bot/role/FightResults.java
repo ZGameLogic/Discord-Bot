@@ -47,7 +47,7 @@ public class FightResults {
 	}
 	
 	public String magicString() {
-		return "Strength: " + (strengthRolled <= attackerStrength ? "won" : "lost") + "\n"
+		return "Magic: " + (magicRolled <= attackerMagic ? "won" : "lost") + "\n"
 				+ "\tAttacker: " + attackerMagic + "\tDefender: " + defenderMagic + "\n"
 				+ "\tTotal: " + magicTotal + "\tRolled: " + magicRolled;
 	}
