@@ -1,10 +1,12 @@
 package bot.role.data;
 
 import java.io.Serializable;
+import java.time.OffsetDateTime;
 import java.util.LinkedList;
 import java.util.Random;
 
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
 public class Activity implements Serializable {
@@ -33,17 +35,20 @@ public class Activity implements Serializable {
 	private int goldCost;
 	private ActivityReward reward;
 	private LinkedList<Long> playersWorked;
+	@Setter
+	private OffsetDateTime timeDepart;
 	
 	/**
 	 * @param actionCost
 	 * @param rewardAmount
 	 * @param reward
 	 */
-	public Activity(int actionCost, int rewardAmount, int goldCost, ActivityReward reward) {
+	public Activity(int actionCost, int rewardAmount, int goldCost, ActivityReward reward, OffsetDateTime timeDepart) {
 		this.actionCost = actionCost;
 		this.rewardAmount = rewardAmount;
 		this.reward = reward;
 		this.goldCost = goldCost;
+		this.timeDepart = timeDepart;
 		playersWorked = new LinkedList<>();
 	}
 	

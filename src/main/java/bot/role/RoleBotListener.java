@@ -40,6 +40,7 @@ import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed.Field;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
@@ -643,19 +644,24 @@ public class RoleBotListener extends ListenerAdapter {
 				item.setCost(goldCost + 5);
 				item.setCurrentBidder(player.getId());
 				EmbedBuilder eb = new EmbedBuilder(message.getEmbeds().get(0));
-				eb.clearFields();
-				eb.addField("Effect", item.getItem().getItemType().getStatDescription(), true);
-				eb.addField("Cuurent bid", item.getCost() + "", true);
-				eb.addField("Current bidder", event.getMember().getEffectiveName(), true);
+				List<Field> fields = eb.getFields();
+				fields.remove(1);
+				fields.remove(1);
+				fields.add(new Field("Current bid", item.getCost() + "", true));
+				fields.add(new Field("Current bidder", event.getMember().getEffectiveName(), true));
 				message.editMessageEmbeds(eb.build()).queue();
-				message.removeReaction(event.getReactionEmote().getEmote(), event.getUser()).queue();
 				itemData.saveSerialized(item, item.getId() + "");
 				data.saveSerialized(player, player.getId() + "");
+				message.removeReaction(event.getReactionEmote().getEmote(), event.getUser()).queue();
 			});
 			
 		} else {
 			generalChannel.sendMessage("<@" + event.getUserId() + ">, you do not have enough gold to bid on this item.").queue();
+			event.retrieveMessage().queue(message -> {
+				message.removeReaction(event.getReactionEmote().getEmote(), event.getUser()).queue();
+			});
 		}
+		
 	}
 
 	private void leaderboardActivities(SlashCommandEvent event) {
@@ -1257,9 +1263,96 @@ public class RoleBotListener extends ListenerAdapter {
 			}
 			logger.info("Rolling random item");
 			event.getPrivateChannel().sendMessage("Rolled item").queue();
+		} else if(message.contains("!gold")) {
+			message = message.replace("!gold ", "");
+			long playerID = Long.parseLong(message.split(" ")[0]);
+			int amount = Integer.parseInt(message.split(" ")[1]);
+			Player p = data.loadSerialized(playerID + "");
+			p.setGold(p.getGold() + amount);
+			data.saveSerialized(p, p.getId() + "");
+			logger.info("Increased gold for " + playerID + " by " + amount);
+			event.getPrivateChannel().sendMessage("Increased gold for " + playerID + " by " + amount).queue();
 		}
 	}
 	
+	private void fightEncounter(Member player, EncounterPlayer ep, MessageReactionAddEvent event) {
+		
+		Player attacker = data.loadSerialized(player.getId());
+		FightResults results;
+		if(attacker.getItem() != null && attacker.getItem().getItemType() == ep.getBane()) {
+			results = new FightResults(true, 100, 0, 100, 1, 100, 1, 100, 1, 100, 1, 100, 1, 0, 0, 0, 100, 0, 100, 0, 100, 0, 100, 0, 100, 0);
+		} else {
+			results = fight(attacker, ep);
+		}
+		
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setTitle("Encounter fight results for " + player.getEffectiveName());
+		
+		if(results.isAttackerWon()) {
+			// we win the encounter
+			// add gold
+			long goldWon = (int)(Math.random() * 20);
+			attacker.increaseGold(goldWon);
+			attacker.won();
+			eb.setColor(new Color(25, 84, 43));
+			String skillName = "";
+			int skillInc = (int)(Math.random() * 3) + 1;
+	
+			switch ((int) (Math.random() * 5)) {
+			case 0:
+				skillName = "Strength";
+				attacker.increaseStrength(skillInc);
+				break;
+			case 1:
+				skillName = "Agility";
+				attacker.increaseAgility(skillInc);
+				break;
+			case 2:
+				skillName = "Magic";
+				attacker.increaseMagic(skillInc);
+				break;
+			case 3:
+				skillName = "Stamina";
+				attacker.increaseStamina(skillInc);
+				break;
+			case 4:
+				skillName = "Knowledge";
+				attacker.increaseKnowledge(skillInc);
+				break;
+			}
+			
+			DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has done an encounter\n"
+					+ "\tResult: won\n"
+					+ "\tGold: " + goldWon + "\n"
+					+ "\t" + skillName + ": " + skillInc + "\n"
+					+ "\tAttacker points: " + results.getAttackerPoints() + "\tDefender points: " + results.getDefenderPoints());
+			
+			eb.setDescription("You have won the fight against a " + ep.getName() + "! Gold gained: " + goldWon + "\n"
+					+ skillName + " increased by: " + skillInc);
+		} else {
+			// we lose the encounter
+			// take away gold
+			long goldLost = (int)(Math.random() * 15);
+			if(attacker.getGold() < goldLost) {
+				goldLost = attacker.getGold();
+			}
+			attacker.lost();
+			attacker.decreaseGold(goldLost);
+			eb.setColor(new Color(84, 25, 25));
+			eb.setDescription("You have lost the fight against a " + ep.getName() + ". Gold lost: " + goldLost);
+			DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has done an encounter\n"
+					+ "\tResult: lost\n"
+					+ "\tGold lost: " + goldLost + "\n"
+					+ "\tAttacker points: " + results.getAttackerPoints() + "\tDefender points: " + results.getDefenderPoints());
+		}
+		
+		eb.addField("Fight statistics", "Attacker points: " + results.getAttackerPoints() + "\nDefender points: " + results.getDefenderPoints(),true);
+		eb.setTimestamp(Instant.now());
+		generalChannel.sendMessage("<@" + event.getUserId() + ">").queue();
+		generalChannel.sendMessageEmbeds(eb.build()).queue();
+		data.saveSerialized(attacker, player.getId());
+	}
+
 	private void rollActivity() {
 		int change = 5;
 		int actionCost = 2;
@@ -1277,9 +1370,9 @@ public class RoleBotListener extends ListenerAdapter {
 			goldCost = 0;
 		}
 		
-		Activity item = new Activity(actionCost, change, goldCost, reward);
 		Clock c = Clock.systemUTC();
 		c = Clock.offset(c, Duration.ofDays(activityDuration / 2));
+		Activity item = new Activity(actionCost, change, goldCost, reward, OffsetDateTime.now(c));
 		activitiesChannel.sendMessageEmbeds(EmbedMessageMaker.activity(item, c).build()).queue(message -> {
 			long id = message.getIdLong();
 			activityData.saveSerialized(item, id + "");
@@ -1306,9 +1399,9 @@ public class RoleBotListener extends ListenerAdapter {
 		
 		int cost = rarity == Rarity.MYTHIC ? 0 : rarity.getMultiplier() * 20 + new Random().nextInt(20);
 		Item item = new Item(rarity, stat, itemName, itemDesc, change);
-		ShopItem sItem = new ShopItem(0l, item, cost, 0l);
 		Clock c = Clock.systemUTC();
 		c = Clock.offset(c, Duration.ofDays(shopDuration / 2));
+		ShopItem sItem = new ShopItem(0l, item, cost, 0l, OffsetDateTime.now(c));
 		itemsChannel.sendMessageEmbeds(EmbedMessageMaker.shopItem(sItem, c).build()).queue(message -> {
 			sItem.setId(message.getIdLong());
 			itemData.saveSerialized(sItem, sItem.getId() + "");
@@ -1384,116 +1477,49 @@ public class RoleBotListener extends ListenerAdapter {
 		logger.info("Adding encounter");
 	}
 	
-	private void fightEncounter(Member player, EncounterPlayer ep, MessageReactionAddEvent event) {
-		
-		Player attacker = data.loadSerialized(player.getId());
-		FightResults results;
-		if(attacker.getItem() != null && attacker.getItem().getItemType() == ep.getBane()) {
-			results = new FightResults(true, 100, 0, 100, 1, 100, 1, 100, 1, 100, 1, 100, 1, 0, 0, 0, 100, 0, 100, 0, 100, 0, 100, 0, 100, 0);
-		} else {
-			results = fight(attacker, ep);
-		}
-		
-		EmbedBuilder eb = new EmbedBuilder();
-		eb.setTitle("Encounter fight results for " + player.getEffectiveName());
-		
-		if(results.isAttackerWon()) {
-			// we win the encounter
-			// add gold
-			long goldWon = (int)(Math.random() * 20);
-			attacker.increaseGold(goldWon);
-			attacker.won();
-			eb.setColor(new Color(25, 84, 43));
-			String skillName = "";
-			int skillInc = (int)(Math.random() * 3) + 1;
-
-			switch ((int) (Math.random() * 5)) {
-			case 0:
-				skillName = "Strength";
-				attacker.increaseStrength(skillInc);
-				break;
-			case 1:
-				skillName = "Agility";
-				attacker.increaseAgility(skillInc);
-				break;
-			case 2:
-				skillName = "Magic";
-				attacker.increaseMagic(skillInc);
-				break;
-			case 3:
-				skillName = "Stamina";
-				attacker.increaseStamina(skillInc);
-				break;
-			case 4:
-				skillName = "Knowledge";
-				attacker.increaseKnowledge(skillInc);
-				break;
-			}
-			
-			DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has done an encounter\n"
-					+ "\tResult: won\n"
-					+ "\tGold: " + goldWon + "\n"
-					+ "\t" + skillName + ": " + skillInc + "\n"
-					+ "\tAttacker points: " + results.getAttackerPoints() + "\tDefender points: " + results.getDefenderPoints());
-			
-			eb.setDescription("You have won the fight against a " + ep.getName() + "! Gold gained: " + goldWon + "\n"
-					+ skillName + " increased by: " + skillInc);
-		} else {
-			// we lose the encounter
-			// take away gold
-			long goldLost = (int)(Math.random() * 15);
-			if(attacker.getGold() < goldLost) {
-				goldLost = attacker.getGold();
-			}
-			attacker.lost();
-			attacker.decreaseGold(goldLost);
-			eb.setColor(new Color(84, 25, 25));
-			eb.setDescription("You have lost the fight against a " + ep.getName() + ". Gold lost: " + goldLost);
-			DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has done an encounter\n"
-					+ "\tResult: lost\n"
-					+ "\tGold lost: " + goldLost + "\n"
-					+ "\tAttacker points: " + results.getAttackerPoints() + "\tDefender points: " + results.getDefenderPoints());
-		}
-		
-		eb.addField("Fight statistics", "Attacker points: " + results.getAttackerPoints() + "\nDefender points: " + results.getDefenderPoints(),true);
-		eb.setTimestamp(Instant.now());
-		generalChannel.sendMessage("<@" + event.getUserId() + ">").queue();
-		generalChannel.sendMessageEmbeds(eb.build()).queue();
-		data.saveSerialized(attacker, player.getId());
-	}
-	
 	private void randomRolls() {
 		while(true) {
 			// Delete old arrivals
 			for(File f : activityData.getFiles()){
-				activitiesChannel.retrieveMessageById(f.getName()).queue(message -> {
-					OffsetDateTime departTime = message.getEmbeds().get(0).getTimestamp();
-					OffsetDateTime now = OffsetDateTime.now();
-					if(now.isAfter(departTime)) {
+				Activity activity = activityData.loadSerialized(f.getName());
+				if(activity.getTimeDepart() == null) {
+					// One time thing to load depart time into storage
+					Message message = activitiesChannel.retrieveMessageById(f.getName()).complete();
+					activity.setTimeDepart((OffsetDateTime)message.getEmbeds().get(0).getTimestamp());
+					activityData.saveSerialized(activity, f.getName());
+					logger.info("Updating activity: " + f.getName());
+				}
+				OffsetDateTime departTime = activity.getTimeDepart();
+				OffsetDateTime now = OffsetDateTime.now();
+				if(now.isAfter(departTime)) {
+					activitiesChannel.retrieveMessageById(f.getName()).queue(message -> {
 						// its time to depart
 						message.delete().queue();
 						activityData.delete(f.getName());
-					}
-				});
+					});
+				}
 			}
 			
+			// Delete old items
 			for(File f : itemData.getFiles()){
-				itemsChannel.retrieveMessageById(f.getName()).queue(message -> {
-					OffsetDateTime departTime = message.getEmbeds().get(0).getTimestamp();
-					OffsetDateTime now = OffsetDateTime.now();
-					if(departTime != null && now.isAfter(departTime)) {
+				OffsetDateTime departTime = itemData.loadSerialized(f.getName()).getTimeDepart();
+				OffsetDateTime now = OffsetDateTime.now();
+				if(now.isAfter(departTime)) {
+					itemsChannel.retrieveMessageById(f.getName()).queue(message -> {
 						// its time to depart
 						ShopItem item = itemData.loadSerialized(f.getName());
 						if(item.getItem().getRarity() == Rarity.MYTHIC) {
-							Player player = data.loadSerialized(item.getCurrentBidder() + "");
-							player.setItem(item.getItem());
-							data.saveSerialized(player, player.getId() + "");
-							generalChannel.sendMessage("");
+							if(item.getCurrentBidder() != 0) {
+								Player player = data.loadSerialized(item.getCurrentBidder() + "");
+								player.setItem(item.getItem());
+								data.saveSerialized(player, player.getId() + "");
+								generalChannel.sendMessage("<@" + player.getId() + ">, Congratulations on your new " + item.getItem().getItemName()).mention(guild.getMemberById(player.getId())).queue();
+							}
 						}
 						message.delete().queue();
 						itemData.delete(f.getName());
-					}
-				});
+					});
+				}
 			}
 			
 			if(((int)(Math.random() * activitySpawnChance * 4)) == 1) {

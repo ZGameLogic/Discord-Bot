@@ -1,6 +1,7 @@
 package bot.role.data;
 
 import java.io.Serializable;
+import java.time.OffsetDateTime;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,5 +19,7 @@ public class ShopItem implements Serializable {
 	private int cost;
 	@Setter
 	private long currentBidder;
+	
+	private OffsetDateTime timeDepart;
 	
 }
