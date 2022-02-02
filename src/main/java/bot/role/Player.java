@@ -2,6 +2,8 @@ package bot.role;
 
 import java.io.Serializable;
 
+import bot.role.data.Item;
+import bot.role.data.Item.StatType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,13 +22,26 @@ public class Player implements Serializable {
 	private int tournamentWins;
 	private int wins,losses;
 	private int challengedToday, hasChallengedToday;
+	private Item item;
+	private int daysSinceLastActive;
+	private long id;
 	
 	/**
 	 * Can the user challenge another user
 	 * @return true if they can challenge
 	 */
 	public boolean canChallenge() {
+		if(item != null && item.getItemType() == StatType.STATIC_MAX_ACTIVITIES) {
+			return hasChallengedToday < RoleBotListener.dailyChallengeLimit + item.getStatIncrease();
+		}
 		return hasChallengedToday < RoleBotListener.dailyChallengeLimit;
+	}
+	
+	public int getActivitiesLeft() {
+		if(item != null && item.getItemType() == StatType.STATIC_MAX_ACTIVITIES) {
+			return RoleBotListener.dailyChallengeLimit + item.getStatIncrease() - hasChallengedToday;
+		}
+		return RoleBotListener.dailyChallengeLimit - hasChallengedToday;
 	}
 	
 	/**
@@ -37,8 +52,89 @@ public class Player implements Serializable {
 		return challengedToday < RoleBotListener.dailyDefendLimit;
 	}
 	
+	@SuppressWarnings("incomplete-switch")
 	public String getCompactStats() {
+		if(item != null && item.isStatic()) {
+			String str = strength + "";
+			String kno = knowledge + "";
+			String mag = magic + "";
+			String agi = agility + "";
+			String sta = stamina + "";
+			switch(item.getItemType()) {
+			case STATIC_AGILITY:
+				agi += "(+" + item.getStatIncrease() + ")";
+				break;
+			case STATIC_KNOWLEDGE:
+				kno += "(+" + item.getStatIncrease() + ")";
+				break;
+			case STATIC_MAGIC:
+				mag += "(+" + item.getStatIncrease() + ")";
+				break;
+			case STATIC_STAMINA:
+				 sta += "(+" + item.getStatIncrease() + ")";
+				break;
+			case STATIC_STRENGTH:
+				str += "(+" + item.getStatIncrease() + ")";
+				break;			
+			}
+			return str + ":" + kno + ":" + mag + ":" + agi + ":" + sta + " " + gold + " " + wins + "/" + losses;
+		}
 		return strength + ":" + knowledge + ":" + magic + ":" + agility + ":" + stamina + " " + gold + " " + wins + "/" + losses;
+	}
+	
+	public int getStrength() {
+		if(item != null && item.getItemType() == StatType.STATIC_STRENGTH) {
+			return strength + item.getStatIncrease();
+		}
+		return strength;
+	}
+	
+	public int getKnowledge() {
+		if(item != null && item.getItemType() == StatType.STATIC_KNOWLEDGE) {
+			return knowledge + item.getStatIncrease();
+		}
+		return knowledge;
+	}
+	
+	public int getStamina() {
+		if(item != null && item.getItemType() == StatType.STATIC_STAMINA) {
+			return stamina + item.getStatIncrease();
+		}
+		return stamina;
+	}
+	
+	public int getAgility() {
+		if(item != null && item.getItemType() == StatType.STATIC_AGILITY) {
+			return agility + item.getStatIncrease();
+		}
+		return agility;
+	}
+	
+	public int getMagic() {
+		if(item != null && item.getItemType() == StatType.STATIC_MAGIC) {
+			return magic + item.getStatIncrease();
+		}
+		return magic;
+	}
+	
+	public int getRawStrength() {
+		return strength;
+	}
+	
+	public int getRawKnowledge() {
+		return knowledge;
+	}
+	
+	public int getRawStamina() {
+		return stamina;
+	}
+	
+	public int getRawAgility() {
+		return agility;
+	}
+	
+	public int getRawMagic() {
+		return magic;
 	}
 	
 	public void increaseStrength(int num) {
@@ -70,6 +166,7 @@ public class Player implements Serializable {
 	}
 	
 	public void hasChallenged() {
+		daysSinceLastActive = 0;
 		hasChallengedToday++;
 	}
 	
@@ -77,7 +174,14 @@ public class Player implements Serializable {
 		challengedToday++;
 	}
 	
+	public boolean isActive() {
+		return daysSinceLastActive < 2;
+	}
+	
 	public void newDay() {
+		if(hasChallengedToday == 0) {
+			daysSinceLastActive++;
+		}
 		challengedToday = hasChallengedToday = 0;
 	}
 	

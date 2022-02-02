@@ -3,6 +3,8 @@ package controllers;
 import java.awt.Color;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Random;
@@ -11,13 +13,63 @@ import bot.role.Player;
 import bot.role.RoleBotListener;
 import bot.role.data.Activity;
 import bot.role.data.Activity.ActivityReward;
+import bot.role.data.Item.Rarity;
+import bot.role.data.Item.StatType;
+import bot.role.data.ShopItem;
 import data.DataCacher;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 
 public abstract class EmbedMessageMaker {
+	
+	public static EmbedBuilder shopItem(ShopItem item, Clock retireTime) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setColor(new Color(68, 145, 143));
+		eb.setTitle(item.getItem().getItemName() + " is in stock today!");
+		eb.setDescription(item.getItem().getItemDescription());
+		eb.setAuthor(item.getItem().getRarity().rarityName());
+		if(item.getItem().getRarity() == Rarity.MYTHIC) {
+			if(item.getItem().isActive()) {
+				if(item.getItem().getItemType() == StatType.ACTIVE_GOLD) {
+					eb.addField("Effect", item.getItem().getItemType().getStatDescription(), true);
+				} else {
+					eb.addField("Effect", item.getItem().getItemType().getStatDescription() + item.getItem().getStatIncrease(), true);
+				}
+			} else if (item.getItem().isBane()) {
+				eb.addField("Effect", item.getItem().getItemType().getStatDescription(), true);
+			}
+			eb.addField("Current bid", "0", true);
+			eb.addField("Current bidder", "No one has bid on this item yet", true);
+		} else {
+			eb.addField("Effect", item.getItem().getItemType().getStatDescription() + item.getItem().getStatIncrease(), true);
+			eb.addField("Cost", item.getCost() + "", true);
+		}
+		
+		eb.setTimestamp(Instant.now(retireTime));
+		eb.setFooter("Expires");
+		
+		return eb;
+	}
+	
+	public static EmbedBuilder activityLeaderboard(HashMap<String, Player> playerMap, Guild guild) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setTitle("Leaderboard for activities");
+		eb.setColor(new Color(102, 107, 14));
+		LinkedList<Player> players = new LinkedList<>(playerMap.values());
+		Comparator<Player> comparitor = Comparator.comparing(Player::getActivitiesLeft);
+		comparitor = comparitor.reversed();
+		Collections.sort(players, comparitor);
+		for(Player p : players) {
+			if(p.isActive()) {
+				eb.appendDescription(guild.getMemberById(p.getId()).getEffectiveName() + " (" + p.getActivitiesLeft() + ")\n");
+			}
+		}
+		
+		return eb;
+	}
 	
 	public static EmbedBuilder remindMessage() {
 		EmbedBuilder eb = new EmbedBuilder();
@@ -94,6 +146,7 @@ public abstract class EmbedMessageMaker {
 			possibleVendorNames.add("Sweeten the honey");
 			possibleVendorNames.add("Pray at the shrine for shlongbot");
 			possibleVendorNames.add("Revive the peasants");
+			possibleVendorNames.add("Fight Kat's principal Jeff");
 			break;
 		}
 		
@@ -212,18 +265,47 @@ public abstract class EmbedMessageMaker {
 		eb.setTitle("Fighter stats for " + member.getEffectiveName() + " " + icon);
 		eb.setColor(new Color(113, 94, 115));
 		eb.setThumbnail(member.getEffectiveAvatarUrl());
+		if(player.getItem() != null && player.getItem().getItemType() == StatType.STATIC_STRENGTH) {
+			eb.addField("Strength", player.getRawStrength() + " (+" + player.getItem().getStatIncrease() + ")", true);
+		} else {
+			eb.addField("Strength", player.getRawStrength() + "", true);
+		}
+		if (player.getItem() != null && player.getItem().getItemType() == StatType.STATIC_KNOWLEDGE) {
+			eb.addField("Knowledge", player.getRawKnowledge() + " (+" + player.getItem().getStatIncrease() + ")", true);
+		} else {
+			eb.addField("Knowledge", player.getRawKnowledge() + "", true);
+		}
+		if (player.getItem() != null && player.getItem().getItemType() == StatType.STATIC_MAGIC) {
+			eb.addField("Magic", player.getRawMagic() + " (+" + player.getItem().getStatIncrease() + ")", true);
+		} else {
+			eb.addField("Magic", player.getRawMagic() + "", true);
+		}
+		if (player.getItem() != null && player.getItem().getItemType() == StatType.STATIC_AGILITY) {
+			eb.addField("Agility", player.getRawAgility() + " (+" + player.getItem().getStatIncrease() + ")", true);
+		} else {
+			eb.addField("Agility", player.getRawAgility() + "", true);
+		}
+		if (player.getItem() != null && player.getItem().getItemType() == StatType.STATIC_STAMINA) {
+			eb.addField("Stamina", player.getRawStamina() + " (+" + player.getItem().getStatIncrease() + ")", true);
+		} else {
+			eb.addField("Stamina", player.getRawStamina() + "", true);
+		}
 		
-		eb.addField("Strength", player.getStrength() + "", true);
-		eb.addField("Knowledge", player.getKnowledge() + "", true);
-		eb.addField("Magic", player.getMagic() + "", true);
-		eb.addField("Agility", player.getAgility() + "", true);
-		eb.addField("Stamina", player.getStamina() + "", true);
+		if(player.getItem() != null) {
+			eb.addField("Item: " + player.getItem().getItemName(), player.getItem().getItemDescription(), false);
+		}
 		
 		eb.addField("Statistics", "Gold: " + player.getGold() + "\nTournament victories: " + player.getTournamentWins() + "\nVictories: " + player.getWins()
 			+ "\nDefeats: " + player.getLosses(), false);
-		String activity = RoleBotListener.dailyChallengeLimit - player.getHasChallengedToday() != 1 ? "activities" : "activity";
+		int activityCount;
+		if(player.getItem() != null && player.getItem().getItemType() == StatType.STATIC_MAX_ACTIVITIES) {
+			activityCount = player.getItem().getStatIncrease() + RoleBotListener.dailyChallengeLimit - player.getHasChallengedToday();
+		} else {
+			activityCount =  RoleBotListener.dailyChallengeLimit - player.getHasChallengedToday();
+		}
+		String activity = activityCount != 1 ? "activities" : "activity";
 		String time = RoleBotListener.dailyDefendLimit - player.getChallengedToday() != 1 ? "times" : "time";
-		eb.setFooter("Can do " + (RoleBotListener.dailyChallengeLimit - player.getHasChallengedToday()) + " more " + activity + " today\n"
+		eb.setFooter("Can do " + activityCount + " more " + activity + " today\n"
 				+ "Can defend " + (RoleBotListener.dailyDefendLimit - player.getChallengedToday()) + " more " + time + " today");
 		return eb;
 	}

@@ -100,6 +100,15 @@ public class ConfigLoader {
 	@Value("${remind.message.id}")
 	private long remindMessageID;
 	
+	@Value("${items.id}")
+	private long itemsID;
+	
+	@Value("${shop.duration}")
+	private int shopDuration;
+	
+	@Value("${item.spawn.chance}")
+	private int itemSpawnChance;
+	
 	
 	public LinkedList<Long> getRoleIDs(){
 		LinkedList<Long> ids = new LinkedList<>();

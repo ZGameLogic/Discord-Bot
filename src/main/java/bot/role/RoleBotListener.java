@@ -27,6 +27,10 @@ import bot.role.data.DailyLogger;
 import bot.role.data.DailyRemind;
 import bot.role.data.EndOfDayLogger;
 import bot.role.data.FightLogger;
+import bot.role.data.Item;
+import bot.role.data.Item.Rarity;
+import bot.role.data.Item.StatType;
+import bot.role.data.ShopItem;
 import controllers.EmbedMessageMaker;
 import controllers.dice.DiceRollingSimulator;
 import data.ConfigLoader;
@@ -36,6 +40,7 @@ import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed.Field;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
@@ -66,6 +71,7 @@ public class RoleBotListener extends ListenerAdapter {
 	private DataCacher<KingPlayer> kingData;
 	private DataCacher<Tax> taxData;
 	private DataCacher<DailyRemind> remindData;
+	private DataCacher<ShopItem> itemData;
 	private final int boosterChange;
 	private long encountersID;
 	private long fightEmojiID;
@@ -73,7 +79,10 @@ public class RoleBotListener extends ListenerAdapter {
 	private String[] iconIDs;
 	private long generalID;
 	private long activitiesID;
+	private long itemsID;
 	private long spawnChance;
+	private int shopDuration;
+	private int itemSpawnChance;
 	
 	private DataCacher<Activity> activityData;
 	private long activitySpawnChance;
@@ -83,6 +92,7 @@ public class RoleBotListener extends ListenerAdapter {
 	
 	private TextChannel encountersChannel;
 	private TextChannel activitiesChannel;
+	private TextChannel itemsChannel;
 	private TextChannel generalChannel;
 	
 	public RoleBotListener(ConfigLoader cl) {
@@ -94,6 +104,7 @@ public class RoleBotListener extends ListenerAdapter {
 		taxData = new DataCacher<>("arena//tax");
 		activityData = new DataCacher<>("arena//activities");
 		remindData = new DataCacher<>("arena//reminders");
+		itemData = new DataCacher<>("arena//items");
 		
 		if(kingData.getFiles().length == 0) {
 			kingData.saveSerialized(new KingPlayer(), "king");
@@ -107,9 +118,12 @@ public class RoleBotListener extends ListenerAdapter {
 		encountersID = cl.getEncountersID();
 		generalID = cl.getGeneralID();
 		activitiesID = cl.getActivitiesID();
+		itemsID = cl.getItemsID();
 		boosterChange = cl.getBoosterChange();
 		fightEmojiID = cl.getFightEmojiID();
 		remindMessageID = cl.getRemindMessageID();
+		shopDuration = cl.getShopDuration();
+		itemSpawnChance = cl.getItemSpawnChance();
 		
 		iconIDs = cl.getIconIDS();
 		
@@ -138,6 +152,13 @@ public class RoleBotListener extends ListenerAdapter {
 		encountersChannel = guild.getTextChannelById(encountersID);
 		generalChannel = guild.getTextChannelById(generalID);
 		activitiesChannel = guild.getTextChannelById(activitiesID);
+		itemsChannel = guild.getTextChannelById(itemsID);
+		
+		for(String id : data.getData().keySet()) {
+			Player player = data.loadSerialized(id);
+			player.setId(Long.parseLong(id));
+			data.saveSerialized(player, id);
+		}
 		
 		checkGuildRoles(guild);
 		// start midnight counter
@@ -181,6 +202,8 @@ public class RoleBotListener extends ListenerAdapter {
 					if(event.getMessageIdLong() == remindMessageID) {
 						reminderReact(event);
 					}
+				} else if(event.getChannel().getIdLong() == itemsID) {
+					itemsReact(event);
 				}
 			}
 		}
@@ -286,6 +309,9 @@ public class RoleBotListener extends ListenerAdapter {
 		switch(event.getSubcommandName()) {
 		case "factions":
 			leaderboardFaction(event);
+			return;
+		case "activities":
+			leaderboardActivities(event);
 			return;
 		case "strength":
 			function = Player::getStrength;
@@ -581,6 +607,67 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 
+	private void itemsReact(MessageReactionAddEvent event) {
+		ShopItem item = itemData.loadSerialized(event.getMessageId());
+		if(item.getItem().getRarity() == Rarity.MYTHIC) {
+			mythicItemReact(event, item);
+		} else {
+			itemReact(event, item);
+		}
+	}
+
+	private void itemReact(MessageReactionAddEvent event, ShopItem item) {
+		int goldCost = item.getCost();
+		Player player = data.loadSerialized(event.getMember().getId());
+		if(player.getGold() >= goldCost) {
+			DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has purched a " + item.getItem().getItemName());
+			player.setItem(item.getItem());
+			player.decreaseGold(goldCost);
+			data.saveSerialized(player, player.getId() + "");
+			generalChannel.sendMessage("<@" + event.getUserId() + ">, congratulations on your new purchase").queue();
+		} else {
+			generalChannel.sendMessage("<@" + event.getUserId() + ">, you do not have enough gold to pay the shop keep.").queue();
+		}
+	}
+
+	private void mythicItemReact(MessageReactionAddEvent event, ShopItem item) {
+		int goldCost = item.getCost();
+		Player player = data.loadSerialized(event.getMember().getId());
+		if(player.getGold() >= goldCost + 5) {			
+			event.retrieveMessage().queue(message -> {
+				if(item.getCurrentBidder() != 0) {
+					Player previous = data.loadSerialized(item.getCurrentBidder() + "");
+					previous.setGold(previous.getGold() + goldCost);
+					player.decreaseGold(goldCost + 5);
+					data.saveSerialized(previous, previous.getId() + "");
+				}
+				item.setCost(goldCost + 5);
+				item.setCurrentBidder(player.getId());
+				EmbedBuilder eb = new EmbedBuilder(message.getEmbeds().get(0));
+				List<Field> fields = eb.getFields();
+				fields.remove(1);
+				fields.remove(1);
+				fields.add(new Field("Current bid", item.getCost() + "", true));
+				fields.add(new Field("Current bidder", event.getMember().getEffectiveName(), true));
+				message.editMessageEmbeds(eb.build()).queue();
+				itemData.saveSerialized(item, item.getId() + "");
+				data.saveSerialized(player, player.getId() + "");
+				message.removeReaction(event.getReactionEmote().getEmote(), event.getUser()).queue();
+			});
+			
+		} else {
+			generalChannel.sendMessage("<@" + event.getUserId() + ">, you do not have enough gold to bid on this item.").queue();
+			event.retrieveMessage().queue(message -> {
+				message.removeReaction(event.getReactionEmote().getEmote(), event.getUser()).queue();
+			});
+		}
+		
+	}
+
+	private void leaderboardActivities(SlashCommandEvent event) {
+		event.replyEmbeds(EmbedMessageMaker.activityLeaderboard(data.getData(), event.getGuild()).build()).queue();
+	}
+
 	private void reminderReact(MessageReactionAddEvent event) {
 		logger.info(event.getMember().getEffectiveName() + " has opted in to reminders");
 		DailyRemind dr = remindData.loadSerialized("reminds");
@@ -722,7 +809,7 @@ public class RoleBotListener extends ListenerAdapter {
 		int magic = (int)(Math.random() * 15);
 		int stamina = (int)(Math.random() * 15);
 		int gold = (int)(Math.random() * 30);
-		Player p = new Player(strength, agility, knowledge, magic, stamina, gold, 0, 0, 0, 0, 0);
+		Player p = new Player(strength, agility, knowledge, magic, stamina, gold, 0, 0, 0, 0, 0, null, 0, member.getIdLong());
 		data.saveSerialized(p, member.getIdLong() + "");
 		logger.info("Creating statis for " + member.getEffectiveName() + ": "
 				+ strength + " " + agility + " " + knowledge + " " + magic + " " + stamina);
@@ -899,6 +986,9 @@ public class RoleBotListener extends ListenerAdapter {
 					goldWon = defender.getGold();
 				}
 				defender.decreaseGold(goldWon);
+				if(attacker.getItem() != null && attacker.getItem().getItemType() == StatType.ACTIVE_GOLD) {
+					attacker.increaseGold(new Random().nextInt(attacker.getItem().getStatIncrease()) + attacker.getItem().getStatIncrease()/2);
+				}
 				attacker.increaseGold(goldWon);
 				logMessage += "\tGold won: " + goldWon + "\n";
 				eb.setDescription(attackerMember.getEffectiveName() +  " vs " + defenderMember.getEffectiveName() + "\n" + attackerMember.getEffectiveName() + " is now a rank of " + defenderRole.getName() + ". Gold obtained: " + goldWon);
@@ -906,6 +996,9 @@ public class RoleBotListener extends ListenerAdapter {
 				long goldWon = 3 + (int)(Math.random() * 3);
 				if(defender.getGold() < goldWon) {
 					goldWon = defender.getGold();
+				}
+				if(attacker.getItem() != null && attacker.getItem().getItemType() == StatType.ACTIVE_GOLD) {
+					attacker.increaseGold(new Random().nextInt(attacker.getItem().getStatIncrease()) + attacker.getItem().getStatIncrease()/2);
 				}
 				defender.decreaseGold(goldWon);
 				attacker.increaseGold(goldWon);
@@ -941,6 +1034,9 @@ public class RoleBotListener extends ListenerAdapter {
 				}
 				logMessage += "\tGold lost: " + goldLost + "\n";
 				defender.increaseGold(goldLost);
+				if(defender.getItem() != null && defender.getItem().getItemType() == StatType.ACTIVE_GOLD) {
+					defender.increaseGold(new Random().nextInt(defender.getItem().getStatIncrease()) + defender.getItem().getStatIncrease()/2);
+				}
 				attacker.decreaseGold(goldLost);
 			} else {
 				// if attacker was attacking down the caste
@@ -949,8 +1045,11 @@ public class RoleBotListener extends ListenerAdapter {
 					goldLost = attacker.getGold();
 				}
 				defender.increaseGold(goldLost);
+				if(defender.getItem() != null && defender.getItem().getItemType() == StatType.ACTIVE_GOLD) {
+					defender.increaseGold(new Random().nextInt(defender.getItem().getStatIncrease()) + defender.getItem().getStatIncrease()/2);
+				}
 				attacker.decreaseGold(goldLost);
-				logMessage += "\tGold lost" + goldLost + "\n";
+				logMessage += "\tGold lost: " + goldLost + "\n";
 				
 				if(dif != 0) {
 					// lower caste switch rolls 
@@ -988,27 +1087,48 @@ public class RoleBotListener extends ListenerAdapter {
 			int statDif = stats.remove();
 			String statChanged = "";
 			int statNumChanged = statBaseChange + (int)(Math.random() * statRandomChange) + 1 - statRandomChange / 2;
+			String itemStatBuff = "";
 			if(stamDif == statDif) {
 				statChanged = "Stamina";
+				if(attacker.getItem() != null && attacker.getItem().getItemType() == StatType.ACTIVE_STAMINA) {
+					attacker.increaseStamina(attacker.getItem().getStatIncrease());
+					itemStatBuff = " (+" + attacker.getItem().getStatIncrease() + ")";
+				}
 				attacker.increaseStamina(statNumChanged);
 			} else if (streDif == statDif) {
 				statChanged = "Strength";
+				if(attacker.getItem() != null && attacker.getItem().getItemType() == StatType.ACTIVE_STRENGTH) {
+					attacker.increaseStrength(attacker.getItem().getStatIncrease());
+					itemStatBuff = " (+" + attacker.getItem().getStatIncrease() + ")";
+				}
 				attacker.increaseStrength(statNumChanged);
 			} else if (magiDif == statDif) {
 				statChanged = "Magic";
+				if(attacker.getItem() != null && attacker.getItem().getItemType() == StatType.STATIC_MAGIC) {
+					attacker.increaseMagic(attacker.getItem().getStatIncrease());
+					itemStatBuff = " (+" + attacker.getItem().getStatIncrease() + ")";
+				}
 				attacker.increaseMagic(statNumChanged);
 			} else if (agilDif == statDif) {
 				statChanged = "Agility";
+				if(attacker.getItem() != null && attacker.getItem().getItemType() == StatType.ACTIVE_AGILITY) {
+					attacker.increaseAgility(attacker.getItem().getStatIncrease());
+					itemStatBuff = " (+" + attacker.getItem().getStatIncrease() + ")";
+				}
 				attacker.increaseAgility(statNumChanged);
 			} else if (knowDif == statDif) {
 				statChanged = "Knowledge";
+				if(attacker.getItem() != null && attacker.getItem().getItemType() == StatType.ACTIVE_KNOWLEDGE) {
+					attacker.increaseKnowledge(attacker.getItem().getStatIncrease());
+					itemStatBuff = " (+" + attacker.getItem().getStatIncrease() + ")";
+				}
 				attacker.increaseKnowledge(statNumChanged);
 			}
 			logMessage += "\tStat gained: " + statChanged + " " + statNumChanged + "\n";
 			EmbedBuilder eb = new EmbedBuilder();
 			eb.setTitle("Fight results: " + attackerMember.getEffectiveName() + " lost!");
 			eb.setColor(new Color(84, 25, 25));
-			eb.setDescription(attackerMember.getEffectiveName() +  " vs " + defenderMember.getEffectiveName() + "\nBetter luck next time. " + statChanged + " has been increased by " + statNumChanged + " points."
+			eb.setDescription(attackerMember.getEffectiveName() +  " vs " + defenderMember.getEffectiveName() + "\nBetter luck next time. " + statChanged + " has been increased by " + statNumChanged + itemStatBuff + " points."
 					+ " Gold lost: " + goldLost + "\n" + roleSwap);
 			eb.addField("Fight statistics", "Attacker points: " + results.getAttackerPoints() + "\nDefender points: " + results.getDefenderPoints(), false);
 			eb.setTimestamp(Instant.now());
@@ -1132,106 +1252,38 @@ public class RoleBotListener extends ListenerAdapter {
 			logger.info("Its a new day!");
 			dayPassed();
 			event.getPrivateChannel().sendMessage("Its a new day!").queue();
-		} else if(message.contains("!history")){
-			File file = DailyLogger.getCurrentFile();
-			if(file != null) {
-				event.getPrivateChannel().sendFile(file).queue();
+		} else if(message.contains("!roll-item")) {
+			String left = message.replace("!roll-item", "");
+			if(left.length() > 0) {
+				for(int i = 0; i < Integer.parseInt(left.trim()); i++) {
+					rollItem();
+				}
 			} else {
-				event.getPrivateChannel().sendMessage("No files were found for today").queue();
+				rollItem();
 			}
-			
+			logger.info("Rolling random item");
+			event.getPrivateChannel().sendMessage("Rolled item").queue();
+		} else if(message.contains("!gold")) {
+			message = message.replace("!gold ", "");
+			long playerID = Long.parseLong(message.split(" ")[0]);
+			int amount = Integer.parseInt(message.split(" ")[1]);
+			Player p = data.loadSerialized(playerID + "");
+			p.setGold(p.getGold() + amount);
+			data.saveSerialized(p, p.getId() + "");
+			logger.info("Increased gold for " + playerID + " by " + amount);
+			event.getPrivateChannel().sendMessage("Increased gold for " + playerID + " by " + amount).queue();
 		}
-	}
-	
-	private void rollActivity() {
-		int change = 5;
-		int actionCost = 2;
-		int goldCost = 9 + (int)DiceRollingSimulator.rollDice(4, 4);
-		ActivityReward reward = ActivityReward.random();
-		if(reward == ActivityReward.Gold) {
-			change = (int)DiceRollingSimulator.rollDice(3, 8);
-			Random r = new Random(System.currentTimeMillis());
-			if(r.nextBoolean()) {
-				actionCost = 2;
-				change *= 2;
-			} else {
-				actionCost = 1;
-			}
-			goldCost = 0;
-		}
-		
-		Activity item = new Activity(actionCost, change, goldCost, reward);
-		Clock c = Clock.systemUTC();
-		c = Clock.offset(c, Duration.ofDays(activityDuration / 2));
-		activitiesChannel.sendMessageEmbeds(EmbedMessageMaker.activity(item, c).build()).queue(message -> {
-			long id = message.getIdLong();
-			activityData.saveSerialized(item, id + "");
-			message.addReaction(encountersChannel.getGuild().getEmoteById(fightEmojiID)).queue();
-		});
-		
-	}
-
-	private void rollEncounter() {
-		EmbedBuilder eb = new EmbedBuilder();
-		
-		LinkedList<String> tiers = new LinkedList<>();
-		LinkedList<String> types = new LinkedList<>();
-		tiers.add("Pitiful");
-		tiers.add("Wimpy");
-		tiers.add("Normal");
-		tiers.add("Skilled");
-		tiers.add("Master");
-		
-		types.add("Bandit");
-		types.add("Blob");
-		types.add("Wizard");
-		types.add("Skeleton");
-		types.add("Wolf");
-		types.add("Ghoul");
-		types.add("Giant");
-		types.add("Troll");
-		
-		int tier = (int)(Math.random() * tiers.size());
-		int type = (int)(Math.random() * types.size());
-		
-		int strength = (int)(Math.random() * 10) + (tier * encounterStatMultiplier);
-		int knowledge = (int)(Math.random() * 10) + (tier * encounterStatMultiplier);
-		int magic = (int)(Math.random() * 10) + (tier * encounterStatMultiplier);
-		int agility = (int)(Math.random() * 10) + (tier * encounterStatMultiplier);
-		int stamina = (int)(Math.random() * 10) + (tier * encounterStatMultiplier);
-		
-		long encounterID = (long)(Math.random() * 100000000);
-		while(encounterData.exists(encounterID + "")) {
-			encounterID = (long)(Math.random() * 100000000);
-		}
-		
-		EncounterPlayer baddy = new EncounterPlayer(strength, agility, knowledge, magic, stamina, encounterID, tiers.get(tier) + " " + types.get(type));
-		
-		eb.addField("Strength", strength + "", true);
-		eb.addField("Knowledge", knowledge + "", true);
-		eb.addField("Magic", magic + "", true);
-		eb.addField("Agility", agility + "", true);
-		eb.addField("Stamina", stamina + "", true);
-
-		eb.setImage("https://zgamelogic.com/downloads/" + tier + "-" + types.get(type) + ".png");
-		
-		eb.setTitle("A " + tiers.get(tier) + " " + types.get(type) + " challenges the kingdom!");
-		eb.setColor(new Color(56, 79, 115));
-				
-		eb.setFooter(encounterID + "");
-
-		encountersChannel.sendMessageEmbeds(eb.build()).queue(message -> {
-			baddy.setEncounterID(message.getIdLong());
-			encounterData.saveSerialized(baddy, baddy.getEncounterID() + "");
-			message.addReaction(encountersChannel.getGuild().getEmoteById(fightEmojiID)).queue();
-		});
-		
-		logger.info("Adding encounter");
 	}
 	
 	private void fightEncounter(Member player, EncounterPlayer ep, MessageReactionAddEvent event) {
+		
 		Player attacker = data.loadSerialized(player.getId());
-		FightResults results = fight(attacker, ep);
+		FightResults results;
+		if(attacker.getItem() != null && attacker.getItem().getItemType() == ep.getBane()) {
+			results = new FightResults(true, 100, 0, 100, 1, 100, 1, 100, 1, 100, 1, 100, 1, 0, 0, 0, 100, 0, 100, 0, 100, 0, 100, 0, 100, 0);
+		} else {
+			results = fight(attacker, ep);
+		}
 		
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setTitle("Encounter fight results for " + player.getEffectiveName());
@@ -1245,7 +1297,7 @@ public class RoleBotListener extends ListenerAdapter {
 			eb.setColor(new Color(25, 84, 43));
 			String skillName = "";
 			int skillInc = (int)(Math.random() * 3) + 1;
-
+	
 			switch ((int) (Math.random() * 5)) {
 			case 0:
 				skillName = "Strength";
@@ -1300,24 +1352,182 @@ public class RoleBotListener extends ListenerAdapter {
 		generalChannel.sendMessageEmbeds(eb.build()).queue();
 		data.saveSerialized(attacker, player.getId());
 	}
+
+	private void rollActivity() {
+		int change = 5;
+		int actionCost = 2;
+		int goldCost = 9 + (int)DiceRollingSimulator.rollDice(4, 4);
+		ActivityReward reward = ActivityReward.random();
+		if(reward == ActivityReward.Gold) {
+			change = (int)DiceRollingSimulator.rollDice(3, 8);
+			Random r = new Random(System.currentTimeMillis());
+			if(r.nextBoolean()) {
+				actionCost = 2;
+				change *= 2;
+			} else {
+				actionCost = 1;
+			}
+			goldCost = 0;
+		}
+		
+		Clock c = Clock.systemUTC();
+		c = Clock.offset(c, Duration.ofDays(activityDuration / 2));
+		Activity item = new Activity(actionCost, change, goldCost, reward, OffsetDateTime.now(c));
+		activitiesChannel.sendMessageEmbeds(EmbedMessageMaker.activity(item, c).build()).queue(message -> {
+			long id = message.getIdLong();
+			activityData.saveSerialized(item, id + "");
+			message.addReaction(encountersChannel.getGuild().getEmoteById(fightEmojiID)).queue();
+		});
+		
+	}
+	
+	private void rollItem() {
+		Rarity rarity = Rarity.getRandomRarity();
+		StatType stat;
+		int change;
+		if(rarity == Rarity.MYTHIC) {
+			stat = StatType.getRandomMythic();
+			change = 1;
+		} else {
+			stat = StatType.getRandomStatic();
+			change = rarity.getMultiplier() * 5 + new Random().nextInt(5);
+		}
+		
+		HashMap<String, String> names = StatType.randomName(stat);
+		String itemName = new LinkedList<String>(names.keySet()).get(new Random().nextInt(names.size()));
+		String itemDesc = names.get(itemName);
+		
+		int cost = rarity == Rarity.MYTHIC ? 0 : rarity.getMultiplier() * 20 + new Random().nextInt(20);
+		Item item = new Item(rarity, stat, itemName, itemDesc, change);
+		Clock c = Clock.systemUTC();
+		c = Clock.offset(c, Duration.ofDays(shopDuration / 2));
+		ShopItem sItem = new ShopItem(0l, item, cost, 0l, OffsetDateTime.now(c));
+		itemsChannel.sendMessageEmbeds(EmbedMessageMaker.shopItem(sItem, c).build()).queue(message -> {
+			sItem.setId(message.getIdLong());
+			itemData.saveSerialized(sItem, sItem.getId() + "");
+			message.addReaction(itemsChannel.getGuild().getEmoteById(fightEmojiID)).queue();
+		});;
+		
+	}
+
+	private void rollEncounter() {
+		EmbedBuilder eb = new EmbedBuilder();
+		
+		LinkedList<String> tiers = new LinkedList<>();
+		LinkedList<String> types = new LinkedList<>();
+		LinkedList<StatType> baneTypes = new LinkedList<>();
+		tiers.add("Pitiful");
+		tiers.add("Wimpy");
+		tiers.add("Normal");
+		tiers.add("Skilled");
+		tiers.add("Master");
+		
+		types.add("Bandit");
+		types.add("Blob");
+		types.add("Wizard");
+		types.add("Skeleton");
+		types.add("Wolf");
+		types.add("Ghoul");
+		types.add("Giant");
+		types.add("Troll");
+		
+		baneTypes.add(StatType.BANE_BANDIT);
+		baneTypes.add(StatType.BANE_BLOB);
+		baneTypes.add(StatType.BANE_WIZARD);
+		baneTypes.add(StatType.BANE_SKELETON);
+		baneTypes.add(StatType.BANE_WOLF);
+		baneTypes.add(StatType.BANE_GHOUL);
+		baneTypes.add(StatType.BANE_GIANT);
+		baneTypes.add(StatType.BANE_TROLL);
+		
+		int tier = (int)(Math.random() * tiers.size());
+		int type = (int)(Math.random() * types.size());
+		
+		int strength = (int)(Math.random() * 10) + (tier * encounterStatMultiplier);
+		int knowledge = (int)(Math.random() * 10) + (tier * encounterStatMultiplier);
+		int magic = (int)(Math.random() * 10) + (tier * encounterStatMultiplier);
+		int agility = (int)(Math.random() * 10) + (tier * encounterStatMultiplier);
+		int stamina = (int)(Math.random() * 10) + (tier * encounterStatMultiplier);
+		
+		long encounterID = (long)(Math.random() * 100000000);
+		while(encounterData.exists(encounterID + "")) {
+			encounterID = (long)(Math.random() * 100000000);
+		}
+		
+		EncounterPlayer baddy = new EncounterPlayer(strength, agility, knowledge, magic, stamina, encounterID, tiers.get(tier) + " " + types.get(type), baneTypes.get(type));
+		
+		eb.addField("Strength", strength + "", true);
+		eb.addField("Knowledge", knowledge + "", true);
+		eb.addField("Magic", magic + "", true);
+		eb.addField("Agility", agility + "", true);
+		eb.addField("Stamina", stamina + "", true);
+
+		eb.setImage("https://zgamelogic.com/downloads/" + tier + "-" + types.get(type) + ".png");
+		
+		eb.setTitle("A " + tiers.get(tier) + " " + types.get(type) + " challenges the kingdom!");
+		eb.setColor(new Color(56, 79, 115));
+		eb.setFooter(encounterID + "");
+
+		encountersChannel.sendMessageEmbeds(eb.build()).queue(message -> {
+			baddy.setEncounterID(message.getIdLong());
+			encounterData.saveSerialized(baddy, baddy.getEncounterID() + "");
+			message.addReaction(encountersChannel.getGuild().getEmoteById(fightEmojiID)).queue();
+		});
+		
+		logger.info("Adding encounter");
+	}
 	
 	private void randomRolls() {
 		while(true) {
 			// Delete old arrivals
 			for(File f : activityData.getFiles()){
-				activitiesChannel.retrieveMessageById(f.getName()).queue(message -> {
-					OffsetDateTime departTime = message.getEmbeds().get(0).getTimestamp();
-					OffsetDateTime now = OffsetDateTime.now();
-					if(now.isAfter(departTime)) {
+				Activity activity = activityData.loadSerialized(f.getName());
+				if(activity.getTimeDepart() == null) {
+					// One time thing to load depart time into storage
+					Message message = activitiesChannel.retrieveMessageById(f.getName()).complete();
+					activity.setTimeDepart((OffsetDateTime)message.getEmbeds().get(0).getTimestamp());
+					activityData.saveSerialized(activity, f.getName());
+					logger.info("Updating activity: " + f.getName());
+				}
+				OffsetDateTime departTime = activity.getTimeDepart();
+				OffsetDateTime now = OffsetDateTime.now();
+				if(now.isAfter(departTime)) {
+					activitiesChannel.retrieveMessageById(f.getName()).queue(message -> {
 						// its time to depart
 						message.delete().queue();
 						activityData.delete(f.getName());
-					}
-				});
+					});
+				}
+			}
+			
+			// Delete old items
+			for(File f : itemData.getFiles()){
+				OffsetDateTime departTime = itemData.loadSerialized(f.getName()).getTimeDepart();
+				OffsetDateTime now = OffsetDateTime.now();
+				if(now.isAfter(departTime)) {
+					itemsChannel.retrieveMessageById(f.getName()).queue(message -> {
+						// its time to depart
+						ShopItem item = itemData.loadSerialized(f.getName());
+						if(item.getItem().getRarity() == Rarity.MYTHIC) {
+							if(item.getCurrentBidder() != 0) {
+								Player player = data.loadSerialized(item.getCurrentBidder() + "");
+								player.setItem(item.getItem());
+								data.saveSerialized(player, player.getId() + "");
+								generalChannel.sendMessage("<@" + player.getId() + ">, Congratulations on your new " + item.getItem().getItemName()).mention(guild.getMemberById(player.getId())).queue();
+							}
+						}
+						message.delete().queue();
+						itemData.delete(f.getName());
+					});
+				}
 			}
 			
 			if(((int)(Math.random() * activitySpawnChance * 4)) == 1) {
 				rollActivity();
+			}
+			
+			if(((int)(Math.random() * itemSpawnChance * 4)) == 1) {
+				rollItem();
 			}
 			
 			Calendar date = new GregorianCalendar();
@@ -1362,12 +1572,12 @@ public class RoleBotListener extends ListenerAdapter {
 	private void dailyGoldIncrease() {
 		for(File f : data.getFiles()) {
 			Player p = data.loadSerialized(f.getName());
-			if(p.getHasChallengedToday() != 0) {
-				p.increaseGold(DiceRollingSimulator.rollDice(2, 5));
+			if(p.isActive()) {
+				p.increaseGold(DiceRollingSimulator.rollDice(1, 4));
 			}
 			p.newDay();
 			if(isKing(f.getName())) {
-				p.increaseGold((int)(Math.random() * 10) + 10);
+				p.increaseGold((int)(Math.random() * 2) + 10);
 			}
 			data.saveSerialized(p, f.getName());
 		}
