@@ -1105,7 +1105,7 @@ public class RoleBotListener extends ListenerAdapter {
 				attacker.increaseStrength(statNumChanged);
 			} else if (magiDif == statDif) {
 				statChanged = "Magic";
-				if(attacker.getItem() != null && attacker.getItem().getItemType() == StatType.STATIC_MAGIC) {
+				if(attacker.getItem() != null && attacker.getItem().getItemType() == StatType.ACTIVE_MAGIC){
 					attacker.increaseMagic(attacker.getItem().getStatIncrease());
 					itemStatBuff = " (+" + attacker.getItem().getStatIncrease() + ")";
 				}
