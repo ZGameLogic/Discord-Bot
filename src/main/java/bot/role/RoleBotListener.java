@@ -624,7 +624,8 @@ public class RoleBotListener extends ListenerAdapter {
 			player.setItem(item.getItem());
 			player.decreaseGold(goldCost);
 			data.saveSerialized(player, player.getId() + "");
-			generalChannel.sendMessage("<@" + event.getUserId() + ">, congratulations on your new purchase").queue();
+			generalChannel.sendMessage("<@" + event.getUserId() + ">, congratulations on your new purchase of " + item.getItem().getItemName()).queue();
+			DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has purchased " + item.getItem().getItemName());
 		} else {
 			generalChannel.sendMessage("<@" + event.getUserId() + ">, you do not have enough gold to pay the shop keep.").queue();
 		}
@@ -1514,6 +1515,7 @@ public class RoleBotListener extends ListenerAdapter {
 								player.setItem(item.getItem());
 								data.saveSerialized(player, player.getId() + "");
 								generalChannel.sendMessage("<@" + player.getId() + ">, Congratulations on your new " + item.getItem().getItemName()).mention(guild.getMemberById(player.getId())).queue();
+								DailyLogger.writeToFile(getNameWithCaste(guild.getMemberById(player.getId())) + " has won " + item.getItem().getItemName() + " in a bid");
 							}
 						}
 						message.delete().queue();
