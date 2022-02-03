@@ -26,7 +26,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class WebHookReactionListener extends ListenerAdapter {
 
-private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
+private static Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 	
 	private static TextChannel channel;
 	private static ConfigLoader cl;
@@ -37,8 +37,11 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 	
 	private static DataCacher<MessageID> messageID;
 	
+	private static boolean botReady;
+	
 	public WebHookReactionListener(ConfigLoader cl) {
 		WebHookReactionListener.cl = cl;
+		botReady = false;
 		password = cl.getAdminPassword();
 		messageID = new DataCacher<>("bitbucket message");
 	}
@@ -50,6 +53,7 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 	public void onReady(ReadyEvent event) {
 		bot = event.getJDA();
 		logger.info("Webhook Reaction Listener activated");
+		botReady = true;
 		channel = bot.getGuildById(cl.getGuildID()).getTextChannelById(cl.getBitbucketID());
 	}
 	
@@ -115,8 +119,17 @@ private Logger logger = LoggerFactory.getLogger(WebHookReactionListener.class);
 	}
 	
 	public static void changeStatus(Color color) {
+		while(!botReady) {
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		if(messageID.getFiles().length > 0) {
 			long message = messageID.loadSerialized("id").getId();
+			logger.info("Updating message id: " + message);
 			EmbedBuilder eb = new EmbedBuilder(channel.retrieveMessageById(message).complete().getEmbeds().get(0));
 			eb.setColor(color);
 			channel.editMessageEmbedsById(message, eb.build()).queue();
