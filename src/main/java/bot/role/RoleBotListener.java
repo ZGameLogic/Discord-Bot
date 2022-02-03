@@ -1273,6 +1273,30 @@ public class RoleBotListener extends ListenerAdapter {
 			data.saveSerialized(p, p.getId() + "");
 			logger.info("Increased gold for " + playerID + " by " + amount);
 			event.getPrivateChannel().sendMessage("Increased gold for " + playerID + " by " + amount).queue();
+		} else if (message.contains("!stats")) {
+			message = message.replace("!stats ", "");
+			Player player = data.loadSerialized(message.split(" ")[0]);
+			int setAmount = Integer.parseInt(message.split(" ")[2]);
+			String thing = message.split(" ")[1].toLowerCase();
+			switch(thing) {
+			case "magic":
+				player.setMagic(setAmount);
+				break;
+			case "knowledge":
+				player.setKnowledge(setAmount);
+				break;
+			case "agility":
+				player.setAgility(setAmount);
+				break;
+			case "strength":
+				player.setStrength(setAmount);
+				break;
+			case "stamina":
+				player.setStamina(setAmount);
+				break;
+			}
+			data.saveSerialized(player, player.getId() + "");
+			event.getPrivateChannel().sendMessage(getNameWithCaste(guild.getMemberById(player.getId())) + " had their " + thing + " set to " + setAmount).queue();
 		}
 	}
 	
