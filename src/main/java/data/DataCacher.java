@@ -7,10 +7,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.io.Serializable;
 import java.util.HashMap;
 
-public class DataCacher <T extends Serializable> {
+public class DataCacher <T extends SaveableData> {
 	
 	private String filePath;
 	

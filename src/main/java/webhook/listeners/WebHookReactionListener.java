@@ -123,12 +123,11 @@ private static Logger logger = LoggerFactory.getLogger(WebHookReactionListener.c
 			try {
 				Thread.sleep(10);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
 		if(messageID.getFiles().length > 0) {
-			long message = messageID.loadSerialized("id").getId();
+			long message = messageID.loadSerialized("id").getIdLong();
 			logger.info("Updating message id: " + message);
 			EmbedBuilder eb = new EmbedBuilder(channel.retrieveMessageById(message).complete().getEmbeds().get(0));
 			eb.setColor(color);

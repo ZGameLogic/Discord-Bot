@@ -1,14 +1,14 @@
 package bot.role;
 
-import java.io.Serializable;
 import java.util.LinkedList;
 
 import bot.role.data.Item.StatType;
+import data.SaveableData;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-public class EncounterPlayer implements Serializable {
+public class EncounterPlayer extends SaveableData {
 
 	private static final long serialVersionUID = 1459401891422720105L;
 
@@ -28,7 +28,8 @@ public class EncounterPlayer implements Serializable {
 	 * @param stamina
 	 * @param encounterID
 	 */
-	public EncounterPlayer(int strength, int agility, int knowledge, int magic, int stamina, long encounterID, String name, StatType bane) {
+	public EncounterPlayer(long id, int strength, int agility, int knowledge, int magic, int stamina, long encounterID, String name, StatType bane) {
+		super(id);
 		this.strength = strength;
 		this.agility = agility;
 		this.knowledge = knowledge;

@@ -23,13 +23,14 @@ import org.slf4j.LoggerFactory;
 
 import bot.role.data.Activity;
 import bot.role.data.Activity.ActivityReward;
-import bot.role.data.DailyLogger;
 import bot.role.data.DailyRemind;
-import bot.role.data.EndOfDayLogger;
-import bot.role.data.FightLogger;
+import bot.role.data.FightResults;
 import bot.role.data.Item;
 import bot.role.data.Item.Rarity;
 import bot.role.data.Item.StatType;
+import bot.role.logging.DailyLogger;
+import bot.role.logging.EndOfDayLogger;
+import bot.role.logging.FightLogger;
 import bot.role.data.ShopItem;
 import controllers.EmbedMessageMaker;
 import controllers.dice.DiceRollingSimulator;
@@ -107,11 +108,11 @@ public class RoleBotListener extends ListenerAdapter {
 		itemData = new DataCacher<>("arena//items");
 		
 		if(kingData.getFiles().length == 0) {
-			kingData.saveSerialized(new KingPlayer(), "king");
+			kingData.saveSerialized(new KingPlayer("king"), "king");
 		}
 		
 		if(remindData.getFiles().length == 0) {
-			remindData.saveSerialized(new DailyRemind(), "reminds");
+			remindData.saveSerialized(new DailyRemind("reminds"), "reminds");
 		}
 		
 		kingRoleID = cl.getKingRoleID();
@@ -483,7 +484,7 @@ public class RoleBotListener extends ListenerAdapter {
 						if(king.getHasChallengedToday() < dailyChallengeLimit) {
 							king.hasChallenged();
 							data.saveSerialized(king, event.getMember().getId());
-							Tax tax = new Tax((int)goldAmount, role.getIdLong());
+							Tax tax = new Tax("tax", (int)goldAmount, role.getIdLong());
 							taxData.saveSerialized(tax, "tax");
 							String iconURL = "";
 							if(role.getIcon() != null) {
@@ -643,7 +644,7 @@ public class RoleBotListener extends ListenerAdapter {
 					data.saveSerialized(previous, previous.getId() + "");
 				}
 				item.setCost(goldCost + 5);
-				item.setCurrentBidder(player.getId());
+				item.setCurrentBidder(player.getIdLong());
 				EmbedBuilder eb = new EmbedBuilder(message.getEmbeds().get(0));
 				List<Field> fields = eb.getFields();
 				fields.remove(1);
@@ -810,7 +811,7 @@ public class RoleBotListener extends ListenerAdapter {
 		int magic = (int)(Math.random() * 15);
 		int stamina = (int)(Math.random() * 15);
 		int gold = (int)(Math.random() * 30);
-		Player p = new Player(strength, agility, knowledge, magic, stamina, gold, 0, 0, 0, 0, 0, null, 0, member.getIdLong());
+		Player p = new Player(member.getIdLong(), strength, agility, knowledge, magic, stamina, gold, 0, 0, 0, 0, 0, null, 0);
 		data.saveSerialized(p, member.getIdLong() + "");
 		logger.info("Creating statis for " + member.getEffectiveName() + ": "
 				+ strength + " " + agility + " " + knowledge + " " + magic + " " + stamina);
@@ -1397,9 +1398,10 @@ public class RoleBotListener extends ListenerAdapter {
 		
 		Clock c = Clock.systemUTC();
 		c = Clock.offset(c, Duration.ofDays(activityDuration / 2));
-		Activity item = new Activity(actionCost, change, goldCost, reward, OffsetDateTime.now(c));
+		Activity item = new Activity(0l, actionCost, change, goldCost, reward, OffsetDateTime.now(c));
 		activitiesChannel.sendMessageEmbeds(EmbedMessageMaker.activity(item, c).build()).queue(message -> {
 			long id = message.getIdLong();
+			
 			activityData.saveSerialized(item, id + "");
 			message.addReaction(encountersChannel.getGuild().getEmoteById(fightEmojiID)).queue();
 		});
@@ -1479,7 +1481,7 @@ public class RoleBotListener extends ListenerAdapter {
 			encounterID = (long)(Math.random() * 100000000);
 		}
 		
-		EncounterPlayer baddy = new EncounterPlayer(strength, agility, knowledge, magic, stamina, encounterID, tiers.get(tier) + " " + types.get(type), baneTypes.get(type));
+		EncounterPlayer baddy = new EncounterPlayer(0l, strength, agility, knowledge, magic, stamina, encounterID, tiers.get(tier) + " " + types.get(type), baneTypes.get(type));
 		
 		eb.addField("Strength", strength + "", true);
 		eb.addField("Knowledge", knowledge + "", true);
@@ -1495,6 +1497,7 @@ public class RoleBotListener extends ListenerAdapter {
 
 		encountersChannel.sendMessageEmbeds(eb.build()).queue(message -> {
 			baddy.setEncounterID(message.getIdLong());
+			baddy.setId(message.getIdLong());
 			encounterData.saveSerialized(baddy, baddy.getEncounterID() + "");
 			message.addReaction(encountersChannel.getGuild().getEmoteById(fightEmojiID)).queue();
 		});

@@ -25,9 +25,16 @@ import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 
 public abstract class EmbedMessageMaker {
 	
+	private static Color ITEM_COLOR = new Color(68, 145, 143);
+	private static Color LEADERBOARD_COLOR = new Color(102, 107, 14);
+	private static Color REMIND_COLOR = new Color(64, 141, 148);
+	private static Color ACTIVITY_COLOR = new Color(176, 103, 44);
+	private static Color KING_COLOR = new Color(252, 211, 3);
+	private static Color STATS_COLOR = new Color(113, 94, 115);
+	
 	public static EmbedBuilder shopItem(ShopItem item, Clock retireTime) {
 		EmbedBuilder eb = new EmbedBuilder();
-		eb.setColor(new Color(68, 145, 143));
+		eb.setColor(ITEM_COLOR);
 		eb.setTitle(item.getItem().getItemName() + " is in stock today!");
 		eb.setDescription(item.getItem().getItemDescription());
 		eb.setAuthor(item.getItem().getRarity().rarityName());
@@ -57,7 +64,7 @@ public abstract class EmbedMessageMaker {
 	public static EmbedBuilder activityLeaderboard(HashMap<String, Player> playerMap, Guild guild) {
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setTitle("Leaderboard for activities");
-		eb.setColor(new Color(102, 107, 14));
+		eb.setColor(LEADERBOARD_COLOR);
 		LinkedList<Player> players = new LinkedList<>(playerMap.values());
 		Comparator<Player> comparitor = Comparator.comparing(Player::getActivitiesLeft);
 		comparitor = comparitor.reversed();
@@ -73,7 +80,7 @@ public abstract class EmbedMessageMaker {
 	
 	public static EmbedBuilder remindMessage() {
 		EmbedBuilder eb = new EmbedBuilder();
-		eb.setColor(new Color(64, 141, 148));
+		eb.setColor(REMIND_COLOR);
 		eb.setTitle("A message to all those people who like to forget");
 		eb.setDescription("Do not forget to do your activities for the day!");
 		eb.setFooter("From your lord and savior, Shlongbot");
@@ -82,7 +89,7 @@ public abstract class EmbedMessageMaker {
 	
 	public static EmbedBuilder activityResults(String user, String stat, int amount) {
 		EmbedBuilder eb = new EmbedBuilder();
-		eb.setColor(new Color(176, 103, 44));
+		eb.setColor(ACTIVITY_COLOR);
 		eb.setTitle("Activity results for " + user);
 		eb.addField(stat, amount + "", true);
 		return eb;
@@ -90,7 +97,7 @@ public abstract class EmbedMessageMaker {
 	
 	public static EmbedBuilder activity(Activity activity, Clock retireTime) {
 		EmbedBuilder eb = new EmbedBuilder();
-		eb.setColor(new Color(176, 103, 44));
+		eb.setColor(ACTIVITY_COLOR);
 		
 		LinkedList<String> possibleVendorNames = new LinkedList<>();
 		switch(activity.getReward()) {
@@ -187,7 +194,7 @@ public abstract class EmbedMessageMaker {
 	public static EmbedBuilder leaderboardFaction(HashMap<String, Integer> rolePop) {
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setTitle("Leaderboard for caste population ");
-		eb.setColor(new Color(102, 107, 14));
+		eb.setColor(LEADERBOARD_COLOR);
 		for(String key : rolePop.keySet()) {
 			eb.addField(key, rolePop.get(key) + "", true);
 		}
@@ -198,7 +205,7 @@ public abstract class EmbedMessageMaker {
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setTitle("The King/Queen has decreed a role change!");
 		eb.setDescription("By the command of our king/queen: " + member1.getEffectiveName() + " and " + member2.getEffectiveName() + " have had their roles swapped!");
-		eb.setColor(new Color(252, 211, 3));
+		eb.setColor(KING_COLOR);
 		return eb;
 	}
 	
@@ -206,7 +213,7 @@ public abstract class EmbedMessageMaker {
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setTitle("All hail the new King/Queen " + kingName + "!");
 		eb.setImage(memberIcon);
-		eb.setColor(new Color(252, 211, 3));
+		eb.setColor(KING_COLOR);
 		return eb;
 	}
 	
@@ -217,7 +224,7 @@ public abstract class EmbedMessageMaker {
 		if(!roleIcon.equals("")) {
 			eb.setThumbnail(roleIcon);
 		}
-		eb.setColor(new Color(252, 211, 3));
+		eb.setColor(KING_COLOR);
 		return eb;
 	}
 	
@@ -228,7 +235,7 @@ public abstract class EmbedMessageMaker {
 			eb.setThumbnail(roleIcon);
 		}
 		eb.setDescription("Go now! Check your banks! All hail the King/Queen!!!");
-		eb.setColor(new Color(252, 211, 3));
+		eb.setColor(KING_COLOR);
 		return eb;
 	}
 	
@@ -237,7 +244,7 @@ public abstract class EmbedMessageMaker {
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setTitle("Fighter stats for " + role.getName() + "s");
 		eb.setDescription("Stats are encoded as Strength:Knowledge:Magic:Agility:Stamina Gold Wins/Losses");
-		eb.setColor(new Color(113, 94, 115));
+		eb.setColor(STATS_COLOR);
 		if(role.getIcon() != null) {
 			eb.setThumbnail(role.getIcon().getIconUrl());
 		}
@@ -263,7 +270,7 @@ public abstract class EmbedMessageMaker {
 		EmbedBuilder eb = new EmbedBuilder();
 		Player player = data.loadSerialized(member.getIdLong() + "");
 		eb.setTitle("Fighter stats for " + member.getEffectiveName() + " " + icon);
-		eb.setColor(new Color(113, 94, 115));
+		eb.setColor(STATS_COLOR);
 		eb.setThumbnail(member.getEffectiveAvatarUrl());
 		if(player.getItem() != null && player.getItem().getItemType() == StatType.STATIC_STRENGTH) {
 			eb.addField("Strength", player.getRawStrength() + " (+" + player.getItem().getStatIncrease() + ")", true);
@@ -292,7 +299,11 @@ public abstract class EmbedMessageMaker {
 		}
 		
 		if(player.getItem() != null) {
-			eb.addField("Item: " + player.getItem().getItemName(), player.getItem().getItemDescription(), false);
+			String description = player.getItem().getItemDescription();
+			if(player.getItem().isActive()) {
+				description += "\n" + player.getItem().getItemType().getStatDescription() + player.getItem().getStatIncrease();
+			}
+			eb.addField("Item: " + player.getItem().getItemName(), description, false);
 		}
 		
 		eb.addField("Statistics", "Gold: " + player.getGold() + "\nTournament victories: " + player.getTournamentWins() + "\nVictories: " + player.getWins()

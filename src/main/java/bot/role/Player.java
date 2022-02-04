@@ -1,19 +1,16 @@
 package bot.role;
 
-import java.io.Serializable;
-
 import bot.role.data.Item;
 import bot.role.data.Item.StatType;
-import lombok.AllArgsConstructor;
+import data.SaveableData;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
 @Getter
 @Setter
-@AllArgsConstructor
 @ToString
-public class Player implements Serializable {
+public class Player extends SaveableData {
 	
 	private static final long serialVersionUID = -431615875063733037L;
 	
@@ -24,7 +21,8 @@ public class Player implements Serializable {
 	private int challengedToday, hasChallengedToday;
 	private Item item;
 	private int daysSinceLastActive;
-	private long id;
+	
+	
 	
 	/**
 	 * Can the user challenge another user
@@ -202,11 +200,47 @@ public class Player implements Serializable {
 	}
 
 	public Player(EncounterPlayer ep) {
+		super(ep.getEncounterID());
 		strength = ep.getStrength();
 		agility = ep.getAgility();
 		knowledge = ep.getKnowledge();
 		magic = ep.getKnowledge();
 		stamina =  ep.getStamina();
+	}
+
+	/**
+	 * @param id
+	 * @param strength
+	 * @param agility
+	 * @param knowledge
+	 * @param magic
+	 * @param stamina
+	 * @param gold
+	 * @param tournamentWins
+	 * @param wins
+	 * @param losses
+	 * @param challengedToday
+	 * @param hasChallengedToday
+	 * @param item
+	 * @param daysSinceLastActive
+	 */
+	public Player(long id, int strength, int agility, int knowledge, int magic, int stamina, long gold,
+			int tournamentWins, int wins, int losses, int challengedToday, int hasChallengedToday, Item item,
+			int daysSinceLastActive) {
+		super(id);
+		this.strength = strength;
+		this.agility = agility;
+		this.knowledge = knowledge;
+		this.magic = magic;
+		this.stamina = stamina;
+		this.gold = gold;
+		this.tournamentWins = tournamentWins;
+		this.wins = wins;
+		this.losses = losses;
+		this.challengedToday = challengedToday;
+		this.hasChallengedToday = hasChallengedToday;
+		this.item = item;
+		this.daysSinceLastActive = daysSinceLastActive;
 	}
 
 }
