@@ -198,8 +198,11 @@ public class Player extends SaveableData {
 	
 	public void increaseGold(long amount) {
 		gold += amount;
-		if(gold > 1000000) {
+		if(gold >= 1000000) {
 			achievements.setMillionare(true);
+		}
+		if(gold >= 1000) {
+			achievements.setGoldenTouch(true);
 		}
 	}
 	

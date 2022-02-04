@@ -26,6 +26,9 @@ public class Achievements implements Serializable {
 	// Have 1,000,000 gold or more at one time
 	private boolean millionare;
 	
+	// Have more than 1000 gold at one time
+	private boolean goldenTouch;
+	
 	// wins: 10, 100, 200, 1000
 	private boolean bloodOnYourHands;
 	private boolean redLedger;
@@ -52,6 +55,7 @@ public class Achievements implements Serializable {
 		itsJustForSport = false;
 		betterThanThePlague = false;
 		oneBirdWithOneStone = false;
+		goldenTouch = false;
 		
 		runningTheGauntletProgress = new HashSet<>();
 		completingTheRoundsProgress = new HashSet<>();
@@ -81,6 +85,8 @@ public class Achievements implements Serializable {
 			names.add("Better than the plague");
 		if(oneBirdWithOneStone)
 			names.add("One bird with one stone");
+		if(goldenTouch)
+			names.add("Golden touch");
 		return names;
 	}
 	
@@ -106,6 +112,13 @@ public class Achievements implements Serializable {
 	
 	public void progressPunchingBad(long id) {
 		punchingBagProgress.add(id);
+	}
+	
+	public void setGoldenTouch(boolean goldenTouch) {
+		if(!this.goldenTouch && goldenTouch) {
+			announce.put("Golden touch", "Have 1,000 or more gold at one time");
+		}
+		this.goldenTouch = goldenTouch;
 	}
 
 	public void setAgainstAllOdds(boolean againstAllOdds) {
@@ -145,28 +158,28 @@ public class Achievements implements Serializable {
 
 	public void setBloodOnYourHands(boolean bloodOnYourHands) {
 		if(!this.bloodOnYourHands && bloodOnYourHands) {
-			announce.put("Blood on your hands", "Win 10 challenges");
+			announce.put("Blood on your hands", "Win 10 fights");
 		}
 		this.bloodOnYourHands = bloodOnYourHands;
 	}
 
 	public void setRedLedger(boolean redLedger) {
 		if(!this.redLedger && redLedger) {
-			announce.put("Red ledger", "Win 100 challenges");
+			announce.put("Red ledger", "Win 100 fights");
 		}
 		this.redLedger = redLedger;
 	}
 
 	public void setItsJustForSport(boolean itsJustForSport) {
 		if(!this.itsJustForSport && itsJustForSport) {
-			announce.put("Its just for sport", "Win 200 challenges");
+			announce.put("Its just for sport", "Win 200 fights");
 		}
 		this.itsJustForSport = itsJustForSport;
 	}
 
 	public void setBetterThanThePlague(boolean betterThanThePlague) {
 		if(!this.betterThanThePlague && betterThanThePlague) {
-			announce.put("Better than the plague", "Win 1000 challenges");
+			announce.put("Better than the plague", "Win 1000 fights");
 		}
 		this.betterThanThePlague = betterThanThePlague;
 	}
