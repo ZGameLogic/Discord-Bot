@@ -1,19 +1,20 @@
 package bot.role.data;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.LinkedList;
 
+import data.SaveableData;
 import lombok.Getter;
 
-public class DailyRemind implements Serializable {
+public class DailyRemind extends SaveableData {
 
 	private static final long serialVersionUID = 1162583863169051454L;
 	
 	@Getter
 	LinkedList<Long> ids;
 	
-	public DailyRemind() {
+	public DailyRemind(String id) {
+		super(id);
 		ids = new LinkedList<>();
 	}
 	

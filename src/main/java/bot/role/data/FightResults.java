@@ -1,4 +1,4 @@
-package bot.role;
+package bot.role.data;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -23,35 +23,35 @@ public class FightResults {
 	private int attackerKnowledge, defenderKnowledge;
 	
 	public String strengthString() {
-		String percentage = String.format("%%%.2f", (attackerStrength / (double) strengthTotal) * 100);
+		String percentage = String.format("%.2f%%", (attackerStrength / (double) strengthTotal) * 100);
 		return "Strength (" + percentage + "): " + (strengthRolled <= attackerStrength ? "won" : "lost") + "\n"
 				+ "\tAttacker: " + attackerStrength + "\tDefender: " + defenderStrength + "\n"
 				+ "\tTotal: " + strengthTotal + "\tRolled: " + strengthRolled;
 	}
 	
 	public String knowledgeString() {
-		String percentage = String.format("%%%.2f", (attackerKnowledge / (double) knowledgeTotal) * 100);
+		String percentage = String.format("%.2f%%", (attackerKnowledge / (double) knowledgeTotal) * 100);
 		return "Knowledge ("  + percentage + "): " + (knowledgeRolled <= attackerKnowledge ? "won" : "lost") + "\n"
 				+ "\tAttacker: " + attackerKnowledge + "\tDefender: " + defenderKnowledge + "\n"
 				+ "\tTotal: " + knowledgeTotal + "\tRolled: " + knowledgeRolled;
 	}
 	
 	public String staminaString() {
-		String percentage = String.format("%%%.2f", (attackerStamina / (double) staminaTotal) * 100);
+		String percentage = String.format("%.2f%%", (attackerStamina / (double) staminaTotal) * 100);
 		return "Stamina (" + percentage + "): " + (staminaRolled <= attackerStamina ? "won" : "lost") + "\n"
 				+ "\tAttacker: " + attackerStamina + "\tDefender: " + defenderStamina + "\n"
 				+ "\tTotal: " + staminaTotal + "\tRolled: " + staminaRolled;
 	}
 	
 	public String agilityString() {
-		String percentage = String.format("%%%.2f", (attackerAgility / (double) agilityTotal) * 100);
+		String percentage = String.format("%.2f%%", (attackerAgility / (double) agilityTotal) * 100);
 		return "Agility (" + percentage + "): " + (agilityRolled <= attackerAgility ? "won" : "lost") + "\n"
 				+ "\tAttacker: " + attackerAgility + "\tDefender: " + defenderAgility + "\n"
 				+ "\tTotal: " + agilityTotal + "\tRolled: " + agilityRolled;
 	}
 	
 	public String magicString() {
-		String percentage = String.format("%%%.2f", (attackerMagic / (double) magicTotal) * 100);
+		String percentage = String.format("%.2f%%", (attackerMagic / (double) magicTotal) * 100);
 		return "Magic ("  + percentage + "): " + (magicRolled <= attackerMagic ? "won" : "lost") + "\n"
 				+ "\tAttacker: " + attackerMagic + "\tDefender: " + defenderMagic + "\n"
 				+ "\tTotal: " + magicTotal + "\tRolled: " + magicRolled;

@@ -1,19 +1,16 @@
 package bot.role.data;
 
-import java.io.Serializable;
 import java.time.OffsetDateTime;
 
-import lombok.AllArgsConstructor;
+import data.SaveableData;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-@AllArgsConstructor
-public class ShopItem implements Serializable {
+public class ShopItem extends SaveableData {
 	
 	private static final long serialVersionUID = -931308626344266341L;
-	@Setter
-	private long id;
+
 	private Item item;
 	@Setter
 	private int cost;
@@ -21,5 +18,22 @@ public class ShopItem implements Serializable {
 	private long currentBidder;
 	
 	private OffsetDateTime timeDepart;
+
+	/**
+	 * @param id
+	 * @param item
+	 * @param cost
+	 * @param currentBidder
+	 * @param timeDepart
+	 */
+	public ShopItem(long id, Item item, int cost, long currentBidder, OffsetDateTime timeDepart) {
+		super(id);
+		this.item = item;
+		this.cost = cost;
+		this.currentBidder = currentBidder;
+		this.timeDepart = timeDepart;
+	}
+	
+	
 	
 }

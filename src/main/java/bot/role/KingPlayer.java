@@ -1,18 +1,19 @@
 package bot.role;
 
-import java.io.Serializable;
 import java.util.LinkedList;
 
+import data.SaveableData;
 import lombok.Getter;
 
-public class KingPlayer implements Serializable {
+public class KingPlayer extends SaveableData {
 
 	private static final long serialVersionUID = 2505140488810302204L;
 
 	@Getter
 	private LinkedList<Long> playersFought;
 	
-	public KingPlayer() {
+	public KingPlayer(String id) {
+		super(id);
 		playersFought = new LinkedList<>();
 	}
 	

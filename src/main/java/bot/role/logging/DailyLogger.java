@@ -1,4 +1,4 @@
-package bot.role.data;
+package bot.role.logging;
 
 import java.io.File;
 import java.io.FileWriter;

@@ -5,11 +5,12 @@ import java.time.OffsetDateTime;
 import java.util.LinkedList;
 import java.util.Random;
 
+import data.SaveableData;
 import lombok.Getter;
 import lombok.Setter;
 
 @Getter
-public class Activity implements Serializable {
+public class Activity extends SaveableData {
 
 	private static final long serialVersionUID = -7376560594118671659L;
 	
@@ -43,7 +44,8 @@ public class Activity implements Serializable {
 	 * @param rewardAmount
 	 * @param reward
 	 */
-	public Activity(int actionCost, int rewardAmount, int goldCost, ActivityReward reward, OffsetDateTime timeDepart) {
+	public Activity(long id, int actionCost, int rewardAmount, int goldCost, ActivityReward reward, OffsetDateTime timeDepart) {
+		super(id);
 		this.actionCost = actionCost;
 		this.rewardAmount = rewardAmount;
 		this.reward = reward;
