@@ -155,7 +155,7 @@ public class RoleBotListener extends ListenerAdapter {
 		activitiesChannel = guild.getTextChannelById(activitiesID);
 		itemsChannel = guild.getTextChannelById(itemsID);
 		
-		for(String id : data.getData().keySet()) {
+		for(String id : data.getMappedData().keySet()) {
 			Player player = data.loadSerialized(id);
 			player.setId(Long.parseLong(id));
 			data.saveSerialized(player, id);
@@ -667,7 +667,7 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 
 	private void leaderboardActivities(SlashCommandEvent event) {
-		event.replyEmbeds(EmbedMessageMaker.activityLeaderboard(data.getData(), event.getGuild()).build()).queue();
+		event.replyEmbeds(EmbedMessageMaker.activityLeaderboard(data.getMappedData(), event.getGuild()).build()).queue();
 	}
 
 	private void reminderReact(MessageReactionAddEvent event) {
@@ -1632,7 +1632,7 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 	
 	private void saveStats() {
-		data.getData().forEach((id, player) ->{
+		data.getMappedData().forEach((id, player) ->{
 			EndOfDayLogger.writeToFile(getNameWithCaste(guild.getMemberById(id)) + " " + player.getCompactStats());
 		});
 	}
