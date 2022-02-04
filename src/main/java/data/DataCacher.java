@@ -8,10 +8,11 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.util.HashMap;
+import java.util.LinkedList;
 
 public class DataCacher <T extends SaveableData> {
 	
-	private String filePath;
+	private final String filePath;
 	
 	public DataCacher(String filePath) {
 		File f = new File(filePath);
@@ -24,6 +25,10 @@ public class DataCacher <T extends SaveableData> {
 	public boolean exists(String file) {
 		File f = new File(filePath + "//" + file);
 		return f.exists();
+	}
+	
+	public void saveSerialized(T yourObject) {
+		saveSerialized(yourObject, yourObject.getId());
 	}
 	
 	/**
@@ -65,7 +70,6 @@ public class DataCacher <T extends SaveableData> {
 		try {
 			FileInputStream fileIn = new FileInputStream(filePath + "//" + file);
 			ObjectInputStream in = new ObjectInputStream(fileIn);
-			
 			try {
 				data1 = (T) in.readObject();
 			} catch (ClassNotFoundException e) {
@@ -93,7 +97,25 @@ public class DataCacher <T extends SaveableData> {
 		return f.listFiles();
 	}
 	
-	public HashMap<String, T> getData(){
+	public void saveSerialized(LinkedList<T> list) {
+		for(T object : list) {
+			saveSerialized(object);
+		}
+	}
+	
+	public LinkedList<T> getData(){
+		LinkedList<T> list = new LinkedList<>();
+		for(File f : getFiles()) {
+			list.add(loadSerialized(f.getName()));
+		}
+		return list;
+	}
+	
+	/**
+	 * Gets a map of the data with the key being the ID of the object
+	 * @return Map of data with the IDs as the keys
+	 */
+	public HashMap<String, T> getMappedData(){
 		HashMap<String, T> map = new HashMap<>();
 		for(File f : getFiles()) {
 			map.put(f.getName(), loadSerialized(f.getName()));
