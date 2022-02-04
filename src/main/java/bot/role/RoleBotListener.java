@@ -1686,25 +1686,6 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 	
-	private void dayPassedEncounter() {
-		for(File f : encounterData.getFiles()) {
-			EncounterPlayer ep = encounterData.loadSerialized(f.getName());
-			boolean delete = ep.dayPassed();
-			if(delete) {
-				encountersChannel.retrieveMessageById(ep.getEncounterID()).queue(message -> {
-					message.delete().queue();
-				});
-				encounterData.delete(f.getName());
-			} else {
-				Message m = encountersChannel.retrieveMessageById(ep.getEncounterID()).complete();
-				EmbedBuilder eb = new EmbedBuilder(m.getEmbeds().get(0));
-				eb.setDescription("This encounter is " + ep.getDaysOld() + " day(s) old");
-				m.editMessageEmbeds(eb.build()).queue();
-				encounterData.saveSerialized(ep, f.getName());
-			}
-		}
-	}
-	
 	private void saveStats() {
 		data.getMappedData().forEach((id, player) ->{
 			EndOfDayLogger.writeToFile(getNameWithCaste(guild.getMemberById(id)) + " " + player.getCompactStats());
@@ -1716,7 +1697,6 @@ public class RoleBotListener extends ListenerAdapter {
 		saveStats();
 		dailyGoldIncrease();
 		payTax();
-		dayPassedEncounter();
 		
 		KingPlayer kp = kingData.loadSerialized("king");
 		kp.resetList();
