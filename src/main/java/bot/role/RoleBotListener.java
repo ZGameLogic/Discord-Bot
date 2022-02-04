@@ -21,6 +21,7 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import bot.role.data.Achievements;
 import bot.role.data.Activity;
 import bot.role.data.Activity.ActivityReward;
 import bot.role.data.DailyRemind;
@@ -28,10 +29,10 @@ import bot.role.data.FightResults;
 import bot.role.data.Item;
 import bot.role.data.Item.Rarity;
 import bot.role.data.Item.StatType;
+import bot.role.data.ShopItem;
 import bot.role.logging.DailyLogger;
 import bot.role.logging.EndOfDayLogger;
 import bot.role.logging.FightLogger;
-import bot.role.data.ShopItem;
 import controllers.EmbedMessageMaker;
 import controllers.dice.DiceRollingSimulator;
 import data.ConfigLoader;
@@ -158,6 +159,9 @@ public class RoleBotListener extends ListenerAdapter {
 		for(String id : data.getMappedData().keySet()) {
 			Player player = data.loadSerialized(id);
 			player.setId(Long.parseLong(id));
+			if(player.getAchievements() == null) {
+				player.setAchievements(new Achievements());
+			}
 			data.saveSerialized(player, id);
 		}
 		
@@ -608,6 +612,17 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 
+	public void sendAchievements(SlashCommandEvent event) {
+		Member member;
+		if(event.getOption("player") != null) {
+			member = event.getOption("player").getAsMember();
+		} else {
+			member = event.getMember();
+		}
+		Player player = data.loadSerialized(member.getId());
+		event.replyEmbeds(EmbedMessageMaker.playerAchievement(getNameWithCaste(member), player.getAchievements()).build()).queue();
+	}
+
 	private void itemsReact(MessageReactionAddEvent event) {
 		ShopItem item = itemData.loadSerialized(event.getMessageId());
 		if(item.getItem().getRarity() == Rarity.MYTHIC) {
@@ -737,6 +752,7 @@ public class RoleBotListener extends ListenerAdapter {
 									+ "\tReward: " + activity.getReward().name() + " " + activity.getRewardAmount() + "\n"
 									+ "\tCost: " + activity.getGoldCost() + " gold");
 						}
+						checkForAchievements(p);
 						data.saveSerialized(p, event.getUserId());
 						activityData.saveSerialized(activity, message.getId());
 					} else {
@@ -1019,6 +1035,14 @@ public class RoleBotListener extends ListenerAdapter {
 			if(getCasteRoleIndex(defenderMember) == 0) {
 				newKing(attackerMember);
 			}
+			
+			// achievement stuff
+			if(defender.getIdLong() == 236262235612250142l) {
+				attacker.getAchievements().setOneBirdWithOneStone(true);
+			}
+			attacker.getAchievements().progressCompletingTheRounds(getCasteRole(defenderMember).getIdLong());
+			attacker.getAchievements().progressRunningTheGauntlet(defenderMember.getIdLong());
+			// end achievement stuff
 		} else {
 			logMessage += "\tResults: Attacker lost\n";
 			String roleSwap = "";
@@ -1136,12 +1160,40 @@ public class RoleBotListener extends ListenerAdapter {
 			eb.setTimestamp(Instant.now());
 			eb.setFooter(fightID + "");
 			event.replyEmbeds(eb.build()).queue();
+			attacker.getAchievements().progressPunchingBad(getCasteRole(defenderMember).getIdLong());
 		}
 		logMessage += "\tAttacker points: " + results.getAttackerPoints() + "\tDefender points: " + results.getDefenderPoints();
 		DailyLogger.writeToFile(logMessage);
 		
+		checkForAchievements(attacker);
+		checkForAchievements(defender);
+		
 		data.saveSerialized(attacker, attackerMember.getId());
 		data.saveSerialized(defender, defenderMember.getId());
+	}
+
+	private void checkForAchievements(Player player) {
+		Achievements a = player.getAchievements();
+		if(a.getRunningTheGauntletProgress() >= guild.getMemberCount()) {
+			//a.setRunningTheGauntlet(true);
+		}
+		if(a.getCompletingTheRoundsProgress() >= roleIDs.size() + 1) {
+			a.setCompletingTheRounds(true);
+		}
+		if(a.getPunchingBagProgress() >= roleIDs.size() + 1) {
+			a.setPunchingBag(true);
+		}
+		announcePlayerAchievments(player);
+	}
+
+	private void announcePlayerAchievments(Player player) {
+		Member member = guild.getMemberById(player.getId());
+		HashMap<String, String> as = player.getAchievements().getAnnounce();
+		for(String key : as.keySet()) {
+			generalChannel.sendMessage("<@" + player.getId() + ">").queue();
+			generalChannel.sendMessageEmbeds(EmbedMessageMaker.achievement(member.getEffectiveName(),key, as.get(key)).build()).queue();
+		}
+		player.getAchievements().clearAnnounce();
 	}
 
 	private int getCasteRoleIndex(Member member) {
@@ -1298,6 +1350,16 @@ public class RoleBotListener extends ListenerAdapter {
 			}
 			data.saveSerialized(player, player.getId() + "");
 			event.getPrivateChannel().sendMessage(getNameWithCaste(guild.getMemberById(player.getId())) + " had their " + thing + " set to " + setAmount).queue();
+		} else if (message.contains("!reset-achievements")) {
+			Player player = data.loadSerialized(message.split(" ")[1]);
+			player.setAchievements(new Achievements());
+			data.saveSerialized(player);
+			event.getPrivateChannel().sendMessage(getNameWithCaste(guild.getMemberById(player.getId())) + " had their achievements reset").queue();
+		}  else if (message.contains("!check-achievements")) {
+			Player player = data.loadSerialized(message.split(" ")[1]);
+			checkForAchievements(player);
+			data.saveSerialized(player);
+			event.getPrivateChannel().sendMessage(getNameWithCaste(guild.getMemberById(player.getId())) + " had their achievements checked").queue();
 		}
 	}
 	
@@ -1376,6 +1438,7 @@ public class RoleBotListener extends ListenerAdapter {
 		eb.setTimestamp(Instant.now());
 		generalChannel.sendMessage("<@" + event.getUserId() + ">").queue();
 		generalChannel.sendMessageEmbeds(eb.build()).queue();
+		checkForAchievements(attacker);
 		data.saveSerialized(attacker, player.getId());
 	}
 
