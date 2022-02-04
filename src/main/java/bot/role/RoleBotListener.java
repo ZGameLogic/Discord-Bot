@@ -772,7 +772,6 @@ public class RoleBotListener extends ListenerAdapter {
 	 */
 	private void encounterReact(MessageReactionAddEvent event) {
 		event.retrieveMessage().queue(message -> {
-			long encounterID = Long.parseLong(message.getEmbeds().get(0).getFooter().getText());
 			EncounterPlayer ep = encounterData.loadSerialized(message.getId());
 			if(ep.canFightPlayer(event.getMember().getIdLong())) {
 				Player p = data.loadSerialized(event.getUserId());
@@ -784,7 +783,7 @@ public class RoleBotListener extends ListenerAdapter {
 					generalChannel.sendMessage("<@" + event.getUserId() + ">, you are too tired to fight again today").mention(event.getUser()).queue();
 				}
 			} else {
-				generalChannel.sendMessage("<@" + event.getUserId() + ">, you have already fought this encounter. Encounter ID:" + encounterID).mention(event.getUser()).queue();
+				generalChannel.sendMessage("<@" + event.getUserId() + ">, you have already fought this encounter.").mention(event.getUser()).queue();
 			}
 		});
 	}
@@ -1355,11 +1354,17 @@ public class RoleBotListener extends ListenerAdapter {
 			player.setAchievements(new Achievements());
 			data.saveSerialized(player);
 			event.getPrivateChannel().sendMessage(getNameWithCaste(guild.getMemberById(player.getId())) + " had their achievements reset").queue();
-		}  else if (message.contains("!check-achievements")) {
+		} else if (message.contains("!check-achievements")) {
 			Player player = data.loadSerialized(message.split(" ")[1]);
 			checkForAchievements(player);
 			data.saveSerialized(player);
 			event.getPrivateChannel().sendMessage(getNameWithCaste(guild.getMemberById(player.getId())) + " had their achievements checked").queue();
+		} else if (message.contains("!reset-encounters")) {
+			for(File f : encounterData.getFiles()) {
+				encountersChannel.deleteMessageById(f.getName()).complete();
+				encounterData.delete(f.getName());
+			}
+			event.getPrivateChannel().sendMessage("Encounters channel reset").queue();
 		}
 	}
 	
@@ -1544,7 +1549,9 @@ public class RoleBotListener extends ListenerAdapter {
 			encounterID = (long)(Math.random() * 100000000);
 		}
 		
-		EncounterPlayer baddy = new EncounterPlayer(0l, strength, agility, knowledge, magic, stamina, encounterID, tiers.get(tier) + " " + types.get(type), baneTypes.get(type));
+		Clock c = Clock.systemUTC();
+		c = Clock.offset(c, Duration.ofDays(4 / 2));
+		EncounterPlayer baddy = new EncounterPlayer(0l, strength, agility, knowledge, magic, stamina, encounterID, tiers.get(tier) + " " + types.get(type), baneTypes.get(type), OffsetDateTime.now(c));
 		
 		eb.addField("Strength", strength + "", true);
 		eb.addField("Knowledge", knowledge + "", true);
@@ -1556,7 +1563,8 @@ public class RoleBotListener extends ListenerAdapter {
 		
 		eb.setTitle("A " + tiers.get(tier) + " " + types.get(type) + " challenges the kingdom!");
 		eb.setColor(new Color(56, 79, 115));
-		eb.setFooter(encounterID + "");
+		eb.setFooter("Departs ");
+		eb.setTimestamp(baddy.getTimeDepart());
 
 		encountersChannel.sendMessageEmbeds(eb.build()).queue(message -> {
 			baddy.setEncounterID(message.getIdLong());
@@ -1573,13 +1581,6 @@ public class RoleBotListener extends ListenerAdapter {
 			// Delete old arrivals
 			for(File f : activityData.getFiles()){
 				Activity activity = activityData.loadSerialized(f.getName());
-				if(activity.getTimeDepart() == null) {
-					// One time thing to load depart time into storage
-					Message message = activitiesChannel.retrieveMessageById(f.getName()).complete();
-					activity.setTimeDepart((OffsetDateTime)message.getEmbeds().get(0).getTimestamp());
-					activityData.saveSerialized(activity, f.getName());
-					logger.info("Updating activity: " + f.getName());
-				}
 				OffsetDateTime departTime = activity.getTimeDepart();
 				OffsetDateTime now = OffsetDateTime.now();
 				if(now.isAfter(departTime)) {
@@ -1614,6 +1615,19 @@ public class RoleBotListener extends ListenerAdapter {
 				}
 			}
 			
+			// Delete old encounters
+			for(File f : encounterData.getFiles()){
+				OffsetDateTime departTime = encounterData.loadSerialized(f.getName()).getTimeDepart();
+				OffsetDateTime now = OffsetDateTime.now();
+				if(now.isAfter(departTime)) {
+					encountersChannel.retrieveMessageById(f.getName()).queue(message -> {
+						// its time to depart
+						message.delete().queue();
+						encounterData.delete(f.getName());
+					});
+				}
+			}
+			
 			if(((int)(Math.random() * activitySpawnChance * 4)) == 1) {
 				rollActivity();
 			}
@@ -1622,13 +1636,10 @@ public class RoleBotListener extends ListenerAdapter {
 				rollItem();
 			}
 			
-			Calendar date = new GregorianCalendar();
-			if(date.get(Calendar.MINUTE) % 15 == 0) {
-				// n% chance to spawn an encounter
-				if(((int)(Math.random() * spawnChance)) == 1) {
-					rollEncounter();
-				}
+			if(((int)(Math.random() * spawnChance * 4)) == 1) {
+				rollEncounter();
 			}
+			
 			// sleep for 1 minute
 			try {
 				Thread.sleep(60000);

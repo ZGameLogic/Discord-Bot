@@ -1,5 +1,6 @@
 package bot.role;
 
+import java.time.OffsetDateTime;
 import java.util.LinkedList;
 
 import bot.role.data.Item.StatType;
@@ -20,6 +21,9 @@ public class EncounterPlayer extends SaveableData {
 	private int daysOld;
 	private StatType bane;
 	
+	@Setter
+	private OffsetDateTime timeDepart;
+	
 	/**
 	 * @param strength
 	 * @param agility
@@ -28,7 +32,7 @@ public class EncounterPlayer extends SaveableData {
 	 * @param stamina
 	 * @param encounterID
 	 */
-	public EncounterPlayer(long id, int strength, int agility, int knowledge, int magic, int stamina, long encounterID, String name, StatType bane) {
+	public EncounterPlayer(long id, int strength, int agility, int knowledge, int magic, int stamina, long encounterID, String name, StatType bane, OffsetDateTime timeDepart) {
 		super(id);
 		this.strength = strength;
 		this.agility = agility;
@@ -39,6 +43,7 @@ public class EncounterPlayer extends SaveableData {
 		this.name = name;
 		daysOld = 0;
 		playersFought = new LinkedList<>();
+		this.timeDepart = timeDepart;
 	}
 	
 	public void addPlayerFought(long id) {
