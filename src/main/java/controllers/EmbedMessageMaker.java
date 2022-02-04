@@ -11,6 +11,7 @@ import java.util.Random;
 
 import bot.role.Player;
 import bot.role.RoleBotListener;
+import bot.role.data.Achievements;
 import bot.role.data.Activity;
 import bot.role.data.Activity.ActivityReward;
 import bot.role.data.Item.Rarity;
@@ -31,6 +32,25 @@ public abstract class EmbedMessageMaker {
 	private static Color ACTIVITY_COLOR = new Color(176, 103, 44);
 	private static Color KING_COLOR = new Color(252, 211, 3);
 	private static Color STATS_COLOR = new Color(113, 94, 115);
+	private static Color ACHIEV_COLOR = new Color(224, 63, 95);
+	
+	public static EmbedBuilder playerAchievement(String playerName, Achievements a) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setColor(ACHIEV_COLOR);
+		eb.setTitle("Achievements earned for " + playerName);
+		for(String title : a.getEarnedAchievements()) {
+			eb.appendDescription(title + "\n");
+		}
+		return eb;
+	}
+	
+	public static EmbedBuilder achievement(String playerName, String name, String desc) {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setColor(ACHIEV_COLOR);
+		eb.setTitle(playerName + " has unlocked the achievement: " + name);
+		eb.setDescription(desc);
+		return eb;
+	}	
 	
 	public static EmbedBuilder shopItem(ShopItem item, Clock retireTime) {
 		EmbedBuilder eb = new EmbedBuilder();

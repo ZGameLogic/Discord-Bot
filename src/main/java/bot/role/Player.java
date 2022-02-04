@@ -1,5 +1,6 @@
 package bot.role;
 
+import bot.role.data.Achievements;
 import bot.role.data.Item;
 import bot.role.data.Item.StatType;
 import data.SaveableData;
@@ -21,7 +22,7 @@ public class Player extends SaveableData {
 	private int challengedToday, hasChallengedToday;
 	private Item item;
 	private int daysSinceLastActive;
-	
+	private Achievements achievements;
 	
 	
 	/**
@@ -157,6 +158,18 @@ public class Player extends SaveableData {
 
 	public void won() {
 		wins++;
+		if(wins >= 10) {
+			achievements.setBloodOnYourHands(true);
+		}
+		if(wins >= 100) {
+			achievements.setRedLedger(true);
+		}
+		if(wins >= 200) {
+			achievements.setItsJustForSport(true);
+		}
+		if(wins >= 1000) {
+			achievements.setBetterThanThePlague(true);
+		}
 	}
 	
 	public void lost() {
@@ -185,6 +198,9 @@ public class Player extends SaveableData {
 	
 	public void increaseGold(long amount) {
 		gold += amount;
+		if(gold > 1000000) {
+			achievements.setMillionare(true);
+		}
 	}
 	
 	public int getIntGold() {
@@ -241,6 +257,7 @@ public class Player extends SaveableData {
 		this.hasChallengedToday = hasChallengedToday;
 		this.item = item;
 		this.daysSinceLastActive = daysSinceLastActive;
+		achievements = new Achievements();
 	}
 
 }

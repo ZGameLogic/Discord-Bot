@@ -97,6 +97,8 @@ public class SlashBotListener extends ListenerAdapter {
 				.addOption(OptionType.INTEGER, "gold", "The amount of gold to give", true));
 		guild.addCommands(new CommandData("day-history", "Shows the event history for the day")
 				.addOption(OptionType.STRING, "specific-day", "Pick a day to show formatted as: mm:dd:yyyy:k. K being the day shlongshot is on", false));
+		guild.addCommands(new CommandData("achievements", "Posts the players achievements in chat")
+				.addOption(OptionType.USER, "player", "Player's achievements to see", false));
 		
 		// Role bot king
 		guild.addCommands(new CommandData("distribute-wealth", "Gives some of your wealth to a caste system")
@@ -177,6 +179,9 @@ public class SlashBotListener extends ListenerAdapter {
 			break;
 		case "day-history":
 			RBL.getDayHistory(event);
+			break;
+		case "achievements":
+			RBL.sendAchievements(event);
 			break;
 		}
 	}
