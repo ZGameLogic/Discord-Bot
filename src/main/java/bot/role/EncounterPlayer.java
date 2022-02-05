@@ -46,6 +46,10 @@ public class EncounterPlayer extends SaveableData {
 		this.timeDepart = timeDepart;
 	}
 	
+	public int getTotal() {
+		return strength + agility + knowledge + magic + stamina;
+	}
+	
 	public void addPlayerFought(long id) {
 		playersFought.add(id);
 	}
