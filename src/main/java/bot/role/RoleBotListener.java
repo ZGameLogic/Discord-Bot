@@ -85,6 +85,8 @@ public class RoleBotListener extends ListenerAdapter {
 	private int shopDuration;
 	private int itemSpawnChance;
 	
+	private long fiveGoldID, tenGoldID, fiftyGoldID;
+	
 	private DataCacher<Activity> activityData;
 	private long activitySpawnChance;
 	private long activityDuration;
@@ -106,6 +108,9 @@ public class RoleBotListener extends ListenerAdapter {
 		activityData = new DataCacher<>("arena//activities");
 		remindData = new DataCacher<>("arena//reminders");
 		itemData = new DataCacher<>("arena//items");
+		fiveGoldID = cl.getFiveGoldID();
+		tenGoldID = cl.getTenGoldID();
+		fiftyGoldID = cl.getFiftyGoldID();
 		
 		if(kingData.getFiles().length == 0) {
 			kingData.saveSerialized(new KingPlayer("king"), "king");
@@ -197,19 +202,25 @@ public class RoleBotListener extends ListenerAdapter {
 	@Override
 	public void onMessageReactionAdd(MessageReactionAddEvent event) {
 		if(!event.getUser().isBot()) {
-			if(event.getReactionEmote().getIdLong() == fightEmojiID) {
-				if(event.getChannel().getIdLong() == encountersID) {
-					encounterReact(event);
-				} else if(event.getChannel().getIdLong() == activitiesID) {
-					activityReact(event);
-				} else if(event.getChannel().getIdLong() == event.getGuild().getRulesChannel().getIdLong()) {
-					if(event.getMessageIdLong() == remindMessageID) {
-						reminderReact(event);
-					}
-				} else if(event.getChannel().getIdLong() == itemsID) {
+			long channelID = event.getChannel().getIdLong();
+			long reactionID = event.getReactionEmote().getIdLong();
+			if(channelID == encountersID || channelID == itemsID || channelID == activitiesID) {
+				if(reactionID == fightEmojiID) {
+					if(event.getChannel().getIdLong() == encountersID) {
+						encounterReact(event);
+					} else if(reactionID == activitiesID) {
+						activityReact(event);
+					} else if(reactionID == event.getGuild().getRulesChannel().getIdLong()) {
+						if(event.getMessageIdLong() == remindMessageID) {
+							reminderReact(event);
+						}
+					} else if(reactionID == itemsID) {
+						itemsReact(event);
+					} 
+				} else if(channelID == itemsID && (reactionID == fiveGoldID || reactionID == tenGoldID || reactionID == fiftyGoldID)) {
 					itemsReact(event);
 				}
-			}
+			} 
 		}
 	}
 	
@@ -648,18 +659,27 @@ public class RoleBotListener extends ListenerAdapter {
 
 	private void mythicItemReact(MessageReactionAddEvent event, ShopItem item) {
 		int goldCost = item.getCost();
+		final int incrementAmount;
+		long emoteID = event.getReactionEmote().getIdLong();
+		if(emoteID == fiftyGoldID) {
+			incrementAmount = 50;
+		} else if(emoteID == tenGoldID) {
+			incrementAmount = 10;
+		} else {
+			incrementAmount = 5;
+		}
 		Player player = data.loadSerialized(event.getMember().getId());
-		if(player.getGold() >= goldCost + 5 || (player.getIdLong() == item.getCurrentBidder() && player.getGold() >= 5)) {			
+		if(player.getGold() >= goldCost + incrementAmount || (player.getIdLong() == item.getCurrentBidder() && player.getGold() >= incrementAmount)) {			
 			event.retrieveMessage().queue(message -> {
 				if(item.getCurrentBidder() == player.getIdLong()) {
-					player.decreaseGold(5);
+					player.decreaseGold(incrementAmount);
 				} else if(item.getCurrentBidder() != 0) {
 					Player previous = data.loadSerialized(item.getCurrentBidder() + "");
 					previous.setGold(previous.getGold() + goldCost);
-					player.decreaseGold(goldCost + 5);
+					player.decreaseGold(goldCost + incrementAmount);
 					data.saveSerialized(previous, previous.getId() + "");
 				}
-				item.setCost(goldCost + 5);
+				item.setCost(goldCost + incrementAmount);
 				item.setCurrentBidder(player.getIdLong());
 				EmbedBuilder eb = new EmbedBuilder(message.getEmbeds().get(0));
 				List<Field> fields = eb.getFields();
@@ -1501,7 +1521,13 @@ public class RoleBotListener extends ListenerAdapter {
 		itemsChannel.sendMessageEmbeds(EmbedMessageMaker.shopItem(sItem, c).build()).queue(message -> {
 			sItem.setId(message.getIdLong());
 			itemData.saveSerialized(sItem, sItem.getId() + "");
-			message.addReaction(itemsChannel.getGuild().getEmoteById(fightEmojiID)).queue();
+			if(sItem.getItem().getRarity() == Rarity.MYTHIC) {
+				message.addReaction(itemsChannel.getGuild().getEmoteById(fiveGoldID)).queue();
+				message.addReaction(itemsChannel.getGuild().getEmoteById(tenGoldID)).queue();
+				message.addReaction(itemsChannel.getGuild().getEmoteById(fiftyGoldID)).queue();
+			} else {
+				message.addReaction(itemsChannel.getGuild().getEmoteById(fightEmojiID)).queue();
+			}
 		});;
 		
 	}
