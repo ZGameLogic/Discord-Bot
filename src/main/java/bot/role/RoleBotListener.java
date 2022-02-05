@@ -1385,7 +1385,7 @@ public class RoleBotListener extends ListenerAdapter {
 		if(results.isAttackerWon()) {
 			// we win the encounter
 			// add gold
-			long goldWon = DiceRollingSimulator.rollDice(2, attacker.getTotal()/2);
+			long goldWon = DiceRollingSimulator.rollDice(2, (int)(ep.getTotal()/4.0));
 			attacker.increaseGold(goldWon);
 			attacker.won();
 			eb.setColor(new Color(25, 84, 43));
