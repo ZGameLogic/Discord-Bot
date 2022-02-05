@@ -649,9 +649,11 @@ public class RoleBotListener extends ListenerAdapter {
 	private void mythicItemReact(MessageReactionAddEvent event, ShopItem item) {
 		int goldCost = item.getCost();
 		Player player = data.loadSerialized(event.getMember().getId());
-		if(player.getGold() >= goldCost + 5) {			
+		if(player.getGold() >= goldCost + 5 || (player.getIdLong() == item.getCurrentBidder() && player.getGold() >= 5)) {			
 			event.retrieveMessage().queue(message -> {
-				if(item.getCurrentBidder() != 0) {
+				if(item.getCurrentBidder() == player.getIdLong()) {
+					player.decreaseGold(5);
+				} else if(item.getCurrentBidder() != 0) {
 					Player previous = data.loadSerialized(item.getCurrentBidder() + "");
 					previous.setGold(previous.getGold() + goldCost);
 					player.decreaseGold(goldCost + 5);
@@ -667,7 +669,7 @@ public class RoleBotListener extends ListenerAdapter {
 				fields.add(new Field("Current bidder", event.getMember().getEffectiveName(), true));
 				message.editMessageEmbeds(eb.build()).queue();
 				itemData.saveSerialized(item, item.getId() + "");
-				data.saveSerialized(player, player.getId() + "");
+				data.saveSerialized(player);
 				message.removeReaction(event.getReactionEmote().getEmote(), event.getUser()).queue();
 			});
 			
