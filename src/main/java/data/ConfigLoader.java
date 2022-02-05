@@ -109,6 +109,14 @@ public class ConfigLoader {
 	@Value("${item.spawn.chance}")
 	private int itemSpawnChance;
 	
+	@Value("${five.gold.id}")
+	private long fiveGoldID;
+	
+	@Value("${ten.gold.id}")
+	private long tenGoldID;
+	
+	@Value("${fifty.gold.id}")
+	private long fiftyGoldID;
 	
 	public LinkedList<Long> getRoleIDs(){
 		LinkedList<Long> ids = new LinkedList<>();
