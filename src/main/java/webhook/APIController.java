@@ -4,6 +4,7 @@ import java.awt.Color;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,6 +34,11 @@ public class APIController {
 	public void bambooWebhook(@RequestBody String valueOne) throws JSONException {
 		JSONObject JSONInformation = new JSONObject(valueOne);
 		handleBamboo(JSONInformation);
+	}
+	
+	@GetMapping("test")
+	public String testMapping() {
+		return "{\"result\":\"success\"}";
 	}
 	
 	private void handleBamboo(JSONObject message) throws JSONException {
