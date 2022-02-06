@@ -204,17 +204,17 @@ public class RoleBotListener extends ListenerAdapter {
 		if(!event.getUser().isBot()) {
 			long channelID = event.getChannel().getIdLong();
 			long reactionID = event.getReactionEmote().getIdLong();
-			if(channelID == encountersID || channelID == itemsID || channelID == activitiesID) {
+			if(channelID == encountersID || channelID == itemsID || channelID == activitiesID || channelID == event.getGuild().getRulesChannel().getIdLong()) {
 				if(reactionID == fightEmojiID) {
-					if(event.getChannel().getIdLong() == encountersID) {
+					if(channelID == encountersID) {
 						encounterReact(event);
-					} else if(reactionID == activitiesID) {
+					} else if(channelID == activitiesID) {
 						activityReact(event);
-					} else if(reactionID == event.getGuild().getRulesChannel().getIdLong()) {
+					} else if(channelID == event.getGuild().getRulesChannel().getIdLong()) {
 						if(event.getMessageIdLong() == remindMessageID) {
 							reminderReact(event);
 						}
-					} else if(reactionID == itemsID) {
+					} else if(channelID == itemsID) {
 						itemsReact(event);
 					} 
 				} else if(channelID == itemsID && (reactionID == fiveGoldID || reactionID == tenGoldID || reactionID == fiftyGoldID)) {
