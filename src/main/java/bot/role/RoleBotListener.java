@@ -65,7 +65,7 @@ public class RoleBotListener extends ListenerAdapter {
 	private Logger logger = LoggerFactory.getLogger(RoleBotListener.class);
 
 	private long guildID;
-	private long kingRoleID;
+	private static long kingRoleID;
 	private LinkedList<Long> roleIDs;
 	private DataCacher<Player> data;
 	private DataCacher<EncounterPlayer> encounterData;
@@ -91,7 +91,7 @@ public class RoleBotListener extends ListenerAdapter {
 	private long activitySpawnChance;
 	private long activityDuration;
 	
-	private Guild guild;
+	private static Guild guild;
 	
 	private TextChannel encountersChannel;
 	private TextChannel activitiesChannel;
@@ -631,6 +631,10 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 		Player player = data.loadSerialized(member.getId());
 		event.replyEmbeds(EmbedMessageMaker.playerAchievement(getNameWithCaste(member), player.getAchievements()).build()).queue();
+	}
+	
+	public static String getKing() {
+		return guild.getMembersWithRoles(guild.getRoleById(kingRoleID)).get(0).getUser().getName();
 	}
 
 	private void itemsReact(MessageReactionAddEvent event) {

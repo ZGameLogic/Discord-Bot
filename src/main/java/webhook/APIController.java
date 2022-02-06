@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
+import bot.role.RoleBotListener;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -34,6 +35,11 @@ public class APIController {
 	public void bambooWebhook(@RequestBody String valueOne) throws JSONException {
 		JSONObject JSONInformation = new JSONObject(valueOne);
 		handleBamboo(JSONInformation);
+	}
+	
+	@GetMapping("king")
+	public String getKing() {
+		return RoleBotListener.getKing();
 	}
 	
 	@GetMapping("test")
