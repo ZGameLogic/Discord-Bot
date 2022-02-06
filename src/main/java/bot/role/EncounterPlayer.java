@@ -43,6 +43,7 @@ public class EncounterPlayer extends SaveableData {
 		this.name = name;
 		daysOld = 0;
 		playersFought = new LinkedList<>();
+		this.bane = bane;
 		this.timeDepart = timeDepart;
 	}
 	

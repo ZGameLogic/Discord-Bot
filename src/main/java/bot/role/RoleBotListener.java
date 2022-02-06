@@ -1663,7 +1663,7 @@ public class RoleBotListener extends ListenerAdapter {
 				rollItem();
 			}
 			
-			if(((int)(Math.random() * spawnChance * 4)) == 1) {
+			if(((int)(Math.random() * spawnChance * 15)) == 1) {
 				rollEncounter();
 			}
 			
