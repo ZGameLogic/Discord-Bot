@@ -72,7 +72,7 @@ public class Bot {
 		// Login
 		try {
 			JDA jdaBot = bot.build().awaitReady();
-			jdaBot.getGuildById(config.getGuildID()).getTextChannelById(config.getBitbucketID());
+			bitBucket = jdaBot.getGuildById(config.getGuildID()).getTextChannelById(config.getBitbucketID());
 		} catch (LoginException | InterruptedException e) {
 			logger.error("Unable to launch bot");
 		}
