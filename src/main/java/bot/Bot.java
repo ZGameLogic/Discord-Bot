@@ -139,14 +139,11 @@ public class Bot {
 			}else {
 				String displayID = commits.getString("displayId");
 				String message = commits.getString("message");
-			
 				eb.addField(displayID, message, false);
 			}
-			
 		} catch (JSONException e) {
 			e.printStackTrace();
 		}
-		
 		return eb.build();
 	}
 	
