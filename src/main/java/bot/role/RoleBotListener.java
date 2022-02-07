@@ -1775,6 +1775,7 @@ public class RoleBotListener extends ListenerAdapter {
 	
 	private boolean isKing(String playerID) {
 		Member player = guild.getMemberById(playerID);
+		if(player != null)
 		for(Role r : player.getRoles()) {
 			if(r.getIdLong() == kingRoleID) {
 				return true;
