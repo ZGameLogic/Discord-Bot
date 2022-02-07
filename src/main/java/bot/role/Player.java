@@ -3,7 +3,7 @@ package bot.role;
 import bot.role.data.Achievements;
 import bot.role.data.Item;
 import bot.role.data.Item.StatType;
-import data.SaveableData;
+import data.serializing.SaveableData;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;

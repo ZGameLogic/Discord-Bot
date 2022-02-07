@@ -2,7 +2,7 @@ package bot.role;
 
 import java.util.LinkedList;
 
-import data.SaveableData;
+import data.serializing.SaveableData;
 import lombok.Getter;
 
 public class KingPlayer extends SaveableData {

@@ -1,6 +1,6 @@
 package bot.role;
 
-import data.SaveableData;
+import data.serializing.SaveableData;
 import lombok.Getter;
 import lombok.Setter;
 

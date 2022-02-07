@@ -36,7 +36,7 @@ import bot.role.logging.FightLogger;
 import controllers.EmbedMessageMaker;
 import controllers.dice.DiceRollingSimulator;
 import data.ConfigLoader;
-import data.DataCacher;
+import data.serializing.DataCacher;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.Guild;

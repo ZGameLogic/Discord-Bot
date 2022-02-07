@@ -14,7 +14,7 @@ import org.springframework.http.MediaType;
 import org.springframework.web.client.RestTemplate;
 
 import data.ConfigLoader;
-import data.DataCacher;
+import data.serializing.DataCacher;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
@@ -30,13 +30,9 @@ private static Logger logger = LoggerFactory.getLogger(WebHookReactionListener.c
 	
 	private static TextChannel channel;
 	private static ConfigLoader cl;
-	
 	private static JDA bot;
-	
 	private static String password;
-	
 	private static DataCacher<MessageID> messageID;
-	
 	private static boolean botReady;
 	
 	public WebHookReactionListener(ConfigLoader cl) {

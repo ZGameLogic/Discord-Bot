@@ -1,15 +1,17 @@
+package application;
 import java.util.Properties;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
-import bot.Bot;
 import data.ConfigLoader;
 
 
-@SpringBootApplication(scanBasePackages = {"webhook"})
+@SpringBootApplication(scanBasePackages = {"webhook", "bot"})
 public class App {
+	
+	public static ConfigLoader config;
 	
 	public static void main(String[] args) {
 		SpringApplication app = new SpringApplication(App.class);
@@ -18,7 +20,7 @@ public class App {
 		AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
 		context.scan("data");
 		context.refresh();
-		ConfigLoader config = context.getBean(ConfigLoader.class);
+		config = context.getBean(ConfigLoader.class);
 		context.close();
 
 		Properties props = new Properties();
@@ -34,6 +36,5 @@ public class App {
 
 		app.setDefaultProperties(props);
 		app.run(args);
-		new Bot(args, config);
 	}
 }

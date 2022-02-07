@@ -2,7 +2,7 @@ package bot.party;
 
 import java.util.HashMap;
 
-import data.SaveableData;
+import data.serializing.SaveableData;
 
 public class Connections extends SaveableData {
 	private static final long serialVersionUID = 1585832051627414082L;

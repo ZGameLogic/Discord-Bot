@@ -5,7 +5,7 @@ import java.time.OffsetDateTime;
 import java.util.LinkedList;
 import java.util.Random;
 
-import data.SaveableData;
+import data.serializing.SaveableData;
 import lombok.Getter;
 import lombok.Setter;
 

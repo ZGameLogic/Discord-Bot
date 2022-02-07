@@ -2,7 +2,7 @@ package bot.role.data;
 
 import java.time.OffsetDateTime;
 
-import data.SaveableData;
+import data.serializing.SaveableData;
 import lombok.Getter;
 import lombok.Setter;
 
