@@ -46,6 +46,7 @@ import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
@@ -167,6 +168,9 @@ public class RoleBotListener extends ListenerAdapter {
 				player.setAchievements(new Achievements());
 			}
 			data.saveSerialized(player, id);
+			if(guild.getMemberById(id) == null) {
+				data.delete(id);
+			}
 		}
 		
 		checkGuildRoles(guild);
@@ -183,6 +187,11 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 	
 	@Override
+	public void onGuildMemberRemove(GuildMemberRemoveEvent event) {
+		data.delete(event.getMember().getIdLong() + "");
+	}
+
+	@Override
 	public void onMessageReceived(MessageReceivedEvent event) {
 		if(event.isFromType(ChannelType.PRIVATE)) {
 			if(event.getAuthor().getIdLong() == 232675572772372481l) {
@@ -196,8 +205,6 @@ public class RoleBotListener extends ListenerAdapter {
 			}
 		}
 	}
-
-	
 
 	@Override
 	public void onMessageReactionAdd(MessageReactionAddEvent event) {
