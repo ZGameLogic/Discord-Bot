@@ -1,6 +1,6 @@
 package webhook.listeners;
 
-import data.SaveableData;
+import data.serializing.SaveableData;
 
 public class MessageID extends SaveableData {
 
