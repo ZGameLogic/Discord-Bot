@@ -1241,7 +1241,14 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 	
 	private String getNameWithCaste(Member member) {
-		return member.getUser().getName() + " (" + getCasteRoleName(member) + ")";
+		if(member != null) {
+			if(member.getUser() != null) {
+				if(member.getUser().getName() != null) {
+					return member.getUser().getName() + " (" + getCasteRoleName(member) + ")";
+				}
+			}
+		}
+		return "";
 	}
 	
 	private Role getCasteRole(Member member) {
