@@ -106,7 +106,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>App</mainClass>
+							<mainClass>application.App</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
@@ -126,7 +126,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
-							<mainClass>App</mainClass>
+							<mainClass>application.App</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>
