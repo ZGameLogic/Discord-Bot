@@ -118,6 +118,15 @@ public class ConfigLoader {
 	@Value("${fifty.gold.id}")
 	private long fiftyGoldID;
 	
+	@Value("${sql.username}")
+	private String sqlUsername;
+	
+	@Value("${sql.password}")
+	private String sqlPassword;
+	
+	@Value("${database.name}")
+	private String databaseName;
+	
 	public LinkedList<Long> getRoleIDs(){
 		LinkedList<Long> ids = new LinkedList<>();
 		for(String id : roleIDs ) {

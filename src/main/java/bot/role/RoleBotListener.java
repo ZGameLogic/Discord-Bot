@@ -20,15 +20,11 @@ import java.util.function.Function;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Sort;
 
-import bot.role.data.Achievements;
 import bot.role.data.Activity;
-import bot.role.data.Activity.ActivityReward;
 import bot.role.data.DailyRemind;
 import bot.role.data.FightResults;
-import bot.role.data.Item;
-import bot.role.data.Item.Rarity;
-import bot.role.data.Item.StatType;
 import bot.role.data.ShopItem;
 import bot.role.logging.DailyLogger;
 import bot.role.logging.EndOfDayLogger;
@@ -36,6 +32,16 @@ import bot.role.logging.FightLogger;
 import controllers.EmbedMessageMaker;
 import controllers.dice.DiceRollingSimulator;
 import data.ConfigLoader;
+import data.database.arena.activity.Activity.ActivityReward;
+import data.database.arena.activity.ActivityRepository;
+import data.database.arena.encounter.Encounter;
+import data.database.arena.encounter.EncounterRepository;
+import data.database.arena.item.Item.Rarity;
+import data.database.arena.item.Item.StatType;
+import data.database.arena.misc.GameInformation;
+import data.database.arena.misc.GameInformationRepository;
+import data.database.arena.player.PlayerRepository;
+import data.database.arena.shopItem.ShopItemRepository;
 import data.serializing.DataCacher;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.ChannelType;
@@ -55,6 +61,12 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 public class RoleBotListener extends ListenerAdapter {
 	
+	private PlayerRepository playerData;
+	private GameInformationRepository gameData;
+	private ShopItemRepository shopItemData;
+	private EncounterRepository encounterData;
+	private ActivityRepository activityData;
+	
 	public static int dailyChallengeLimit;
 	public static int dailyDefendLimit;
 	
@@ -68,12 +80,13 @@ public class RoleBotListener extends ListenerAdapter {
 	private long guildID;
 	private static long kingRoleID;
 	private LinkedList<Long> roleIDs;
-	private DataCacher<Player> data;
-	private DataCacher<EncounterPlayer> encounterData;
+	private DataCacher<Player> olddata;
+	private DataCacher<EncounterPlayer> encounterDataOld;
 	private DataCacher<KingPlayer> kingData;
 	private DataCacher<Tax> taxData;
 	private DataCacher<DailyRemind> remindData;
 	private DataCacher<ShopItem> itemData;
+	private DataCacher<Activity> activityDataOld;
 	private final int boosterChange;
 	private long encountersID;
 	private long fightEmojiID;
@@ -88,7 +101,6 @@ public class RoleBotListener extends ListenerAdapter {
 	
 	private long fiveGoldID, tenGoldID, fiftyGoldID;
 	
-	private DataCacher<Activity> activityData;
 	private long activitySpawnChance;
 	private long activityDuration;
 	
@@ -99,27 +111,30 @@ public class RoleBotListener extends ListenerAdapter {
 	private TextChannel itemsChannel;
 	private TextChannel generalChannel;
 	
-	public RoleBotListener(ConfigLoader cl) {
+	public RoleBotListener(ConfigLoader cl, PlayerRepository playerData, GameInformationRepository gameData, ShopItemRepository shopItemData, EncounterRepository encounterData, ActivityRepository activityData) {
+		this.playerData = playerData;
+		this.gameData = gameData;
+		this.shopItemData = shopItemData;
+		this.encounterData = encounterData;
+		this.activityData = activityData;
+		
 		guildID = cl.getGuildID();
 		roleIDs = cl.getRoleIDs();
-		data = new DataCacher<>("arena//players");
-		encounterData = new DataCacher<>("arena//encounter");
-		kingData = new DataCacher<>("arena//king");
-		taxData = new DataCacher<>("arena//tax");
-		activityData = new DataCacher<>("arena//activities");
-		remindData = new DataCacher<>("arena//reminders");
-		itemData = new DataCacher<>("arena//items");
 		fiveGoldID = cl.getFiveGoldID();
 		tenGoldID = cl.getTenGoldID();
 		fiftyGoldID = cl.getFiftyGoldID();
 		
-		if(kingData.getFiles().length == 0) {
-			kingData.saveSerialized(new KingPlayer("king"), "king");
+		if(gameData.count() == 0) {
+			gameData.save(new GameInformation("game_data", 0, 0, new LinkedList<Long>(), new HashSet<Long>()));
 		}
 		
-		if(remindData.getFiles().length == 0) {
-			remindData.saveSerialized(new DailyRemind("reminds"), "reminds");
-		}
+		olddata = new DataCacher<>("arena//players");
+		encounterDataOld = new DataCacher<>("arena//encounter");
+		kingData = new DataCacher<>("arena//king");
+		taxData = new DataCacher<>("arena//tax");
+		activityDataOld = new DataCacher<>("arena//activities");
+		remindData = new DataCacher<>("arena//reminders");
+		itemData = new DataCacher<>("arena//items");
 		
 		kingRoleID = cl.getKingRoleID();
 		encountersID = cl.getEncountersID();
@@ -144,9 +159,38 @@ public class RoleBotListener extends ListenerAdapter {
 		
 		dailyChallengeLimit = cl.getDailyChallengeLimit();
 		dailyDefendLimit = cl.getDailyDefendLimit();
-		DailyRemind dr = remindData.loadSerialized("reminds");
-		dr.updateData(new HashSet<>(remindData.loadSerialized("reminds").getIds()));
-		remindData.saveSerialized(dr, "reminds");
+		migrateToDatabase();
+	}
+	
+	private void migrateToDatabase() {
+		// Migrate the people, their items, and their achievements 
+		for(Player p : olddata.getData()) {
+			playerData.save(new data.database.arena.player.Player(p));
+		}
+		
+		// Migrate shop item stuff
+		for(ShopItem item : itemData.getData()) {
+			shopItemData.save(new data.database.arena.shopItem.ShopItem(item));
+		}
+		
+		// Migrate encounters
+		for(EncounterPlayer ep : encounterDataOld.getData()) {
+			encounterData.save(new Encounter(ep));
+		}
+		
+		// Migrate activities
+		for(File f : activityDataOld.getFiles()) {
+			Activity a = activityDataOld.loadSerialized(f.getName());
+			a.setId(Long.parseLong(f.getName()));
+			activityData.save(new data.database.arena.activity.Activity(a));
+		}
+		
+		// Migrate random game stuff
+		if(taxData.exists("tax")) {
+			gameData.save(new GameInformation("game_data", taxData.loadSerialized("tax").getRoleID(), taxData.loadSerialized("tax").getTaxAmount(), kingData.loadSerialized("king").getPlayersFought(), new HashSet<Long>(remindData.loadSerialized("reminds").getIds())));
+		} else {
+			//gameData.save(new GameInformation("game_data", 0, 0, kingData.loadSerialized("king").getPlayersFought(), new HashSet<Long>(remindData.loadSerialized("reminds").getIds())));
+		}
 	}
 	
 	/**
@@ -160,18 +204,6 @@ public class RoleBotListener extends ListenerAdapter {
 		generalChannel = guild.getTextChannelById(generalID);
 		activitiesChannel = guild.getTextChannelById(activitiesID);
 		itemsChannel = guild.getTextChannelById(itemsID);
-		
-		for(String id : data.getMappedData().keySet()) {
-			Player player = data.loadSerialized(id);
-			player.setId(Long.parseLong(id));
-			if(player.getAchievements() == null) {
-				player.setAchievements(new Achievements());
-			}
-			data.saveSerialized(player, id);
-			if(guild.getMemberById(id) == null) {
-				data.delete(id);
-			}
-		}
 		
 		checkGuildRoles(guild);
 		// start midnight counter
@@ -188,7 +220,7 @@ public class RoleBotListener extends ListenerAdapter {
 	
 	@Override
 	public void onGuildMemberRemove(GuildMemberRemoveEvent event) {
-		data.delete(event.getMember().getIdLong() + "");
+		playerData.deleteById(event.getMember().getIdLong());
 	}
 
 	@Override
@@ -254,16 +286,16 @@ public class RoleBotListener extends ListenerAdapter {
 		Member attackerMember = event.getMember();
 		Member defenderMember = event.getOption("player").getAsMember();
 		
-		Player attacker = data.loadSerialized(attackerMember.getIdLong() + "");
-		Player defender = data.loadSerialized(defenderMember.getIdLong() + "");
+		data.database.arena.player.Player attacker = playerData.findById(attackerMember.getIdLong()).get();
+		data.database.arena.player.Player defender = playerData.findById(defenderMember.getIdLong()).get();
 		if(!defenderMember.getUser().isBot()) {
 			if(attacker.canChallenge()) {
 				if(attackerMember.getIdLong() != defenderMember.getIdLong()) {
 					if((defender.canDefend() && getCasteRoleIndex(defenderMember) != 0) || (getCasteRoleIndex(defenderMember) == 0 && canChallengeKing(attackerMember.getIdLong()))) {
 						if(getCasteRoleIndex(defenderMember) == 0) {
-							KingPlayer kp = kingData.loadSerialized("king");
-							kp.addPlayer(attackerMember.getIdLong());
-							kingData.saveSerialized(kp, "king");
+							GameInformation info = gameData.findById("game_data").get();
+							info.addPlayerKingFought(attackerMember.getIdLong());
+							gameData.save(info);
 						}
 						int attackIndex = getCasteRoleIndex(attackerMember);
 						int defendIndex = getCasteRoleIndex(defenderMember);
@@ -302,7 +334,7 @@ public class RoleBotListener extends ListenerAdapter {
 	public void sendRoleStats(SlashCommandEvent event) {
 		Role role = event.getOption("role").getAsRole();
 		if(roleIDs.contains(role.getIdLong()) || role.getIdLong() == kingRoleID) {
-			event.replyEmbeds(EmbedMessageMaker.roleStats(event, data).build()).queue();
+			event.replyEmbeds(EmbedMessageMaker.roleStats(event, playerData).build()).queue();
 		} else {
 			event.reply("This is not a valid role to get stats for").queue();
 		}
@@ -321,13 +353,15 @@ public class RoleBotListener extends ListenerAdapter {
 			event.reply("Bots can't play and don't have stats......yet").queue();
 			return;
 		}
-		
-		event.replyEmbeds(EmbedMessageMaker.playerStats(member, data, iconIDs[getCasteRoleIndex(member)]).build()).queue();
+		data.database.arena.player.Player player = playerData.findById(member.getIdLong()).get();
+		event.replyEmbeds(EmbedMessageMaker.playerStats(member, player, iconIDs[getCasteRoleIndex(member)]).build()).queue();
 	}
 
 	public void leaderBoard(SlashCommandEvent event) {
-		Function<Player, Integer> function;
+		String column = "";
 		boolean showAll = false;
+		Function<data.database.arena.player.Player, Integer> function;
+		
 		switch(event.getSubcommandName()) {
 		case "factions":
 			leaderboardFaction(event);
@@ -335,66 +369,62 @@ public class RoleBotListener extends ListenerAdapter {
 		case "activities":
 			leaderboardActivities(event);
 			return;
+		case "total":
+			leaderboardTotal(event);
+			return;
 		case "strength":
-			function = Player::getStrength;
+			function = data.database.arena.player.Player::getStrength;
+			column = event.getSubcommandName();
 			if(event.getOption("show-all") != null) {
 				showAll = event.getOption("show-all").getAsBoolean();
 			}
 			break;
 		case "knowledge":
-			function = Player::getKnowledge;
+			function = data.database.arena.player.Player::getKnowledge;
+			column = event.getSubcommandName();
 			if(event.getOption("show-all") != null) {
 				showAll = event.getOption("show-all").getAsBoolean();
 			}
 			break;
 		case "magic":
-			function = Player::getMagic;
+			function = data.database.arena.player.Player::getMagic;
+			column = event.getSubcommandName();
 			if(event.getOption("show-all") != null) {
 				showAll = event.getOption("show-all").getAsBoolean();
 			}
 			break;
 		case "agility":
-			function = Player::getAgility;
+			function = data.database.arena.player.Player::getAgility;
+			column = event.getSubcommandName();
 			if(event.getOption("show-all") != null) {
 				showAll = event.getOption("show-all").getAsBoolean();
 			}
 			break;
 		case "stamina":
-			function = Player::getStamina;
+			function = data.database.arena.player.Player::getStamina;
+			column = event.getSubcommandName();
 			if(event.getOption("show-all") != null) {
 				showAll = event.getOption("show-all").getAsBoolean();
 			}
 			break;
 		case "gold":
-			function = Player::getIntGold;
+			function = data.database.arena.player.Player::getIntGold;
+			column = event.getSubcommandName();
 			break;
 		case "wins":
-			function = Player::getWins;
+			function = data.database.arena.player.Player::getWins;
+			column = event.getSubcommandName();
 			break;
 		case "losses":
-			function = Player::getLosses;
-			break;
-		case "total":
-			function = Player::getTotal;
+			function = data.database.arena.player.Player::getLosses;
+			column = event.getSubcommandName();
 			break;
 		default:
 			event.reply("Invalid stat. Valid stats are Strength, Knowledge, Magic, Agility, Stamina, Gold, Wins, Losses, Total and Factions").queue();
 			return;
 		}
 		
-		Comparator<Player> comparitor = Comparator.comparing(function);
-		
-		comparitor = Collections.reverseOrder(comparitor);
-		LinkedList<Player> players = new LinkedList<>();
-		HashMap<Player, String> idLink = new HashMap<>();
-		
-		for(File f : data.getFiles()) {
-			Player current = data.loadSerialized(f.getName());
-			players.add(current);
-			idLink.put(current, f.getName());
-		}
-		
-		Collections.sort(players, comparitor);
+		List<data.database.arena.player.Player> players = playerData.findAll(Sort.by(Sort.Direction.DESC, column));
 		
 		EmbedBuilder eb = new EmbedBuilder();
 		String stat = event.getSubcommandName();
@@ -404,8 +434,8 @@ public class RoleBotListener extends ListenerAdapter {
 		if(showAll) {
 			eb.setDescription("Stats are encoded as Strength:Knowledge:Magic:Agility:Stamina Gold Wins/Losses");
 			for(int i = 0; i < 10 && !players.isEmpty(); i++) {
-				Player current = players.remove();
-				Member member = event.getGuild().getMemberById(idLink.get(current));
+				data.database.arena.player.Player current = players.remove(0);
+				Member member = event.getGuild().getMemberById(current.getId());
 				String icon = "";
 				if(getCasteRoleIndex(member) != -1) {
 					icon = " " + iconIDs[getCasteRoleIndex(member)];
@@ -415,8 +445,8 @@ public class RoleBotListener extends ListenerAdapter {
 			}
 		} else {
 			for(int i = 0; i < 10 && !players.isEmpty(); i++) {
-				Player current = players.remove();
-				Member member = event.getGuild().getMemberById(idLink.get(current));
+				data.database.arena.player.Player current = players.remove(0);
+				Member member = event.getGuild().getMemberById(current.getId());
 				String icon = "";
 				if(getCasteRoleIndex(member) != -1) {
 					icon = " " + iconIDs[getCasteRoleIndex(member)];
@@ -440,14 +470,14 @@ public class RoleBotListener extends ListenerAdapter {
 				// if the role is a valid role
 				long goldAmount = event.getOption("gold").getAsLong();
 				if(goldAmount > 0) {
-					Player king = data.loadSerialized(event.getMember().getId());
+					data.database.arena.player.Player king = playerData.findById(event.getMember().getIdLong()).get();
 					if(king.getGold() >= goldAmount) {
 						// if the king has enough gold to give
 						
-						LinkedList<Player> players = new LinkedList<>();
-						HashMap<Player, String> idLinks = new HashMap<>();
+						LinkedList<data.database.arena.player.Player> players = new LinkedList<>();
+						HashMap<data.database.arena.player.Player, String> idLinks = new HashMap<>();
 						for(Member m : event.getGuild().getMembersWithRoles(role)) {
-							Player player = data.loadSerialized(m.getId());
+							data.database.arena.player.Player player = playerData.findById(m.getIdLong()).get();
 							players.add(player);
 							idLinks.put(player, m.getId());
 						}
@@ -461,11 +491,10 @@ public class RoleBotListener extends ListenerAdapter {
 						}
 						
 						while(players.size() > 0) {
-							Player player = players.remove();
-							data.saveSerialized(player, idLinks.get(player));
+							data.database.arena.player.Player player = players.remove();
+							playerData.save(player);
 						}
-						
-						data.saveSerialized(king, event.getMember().getId());
+						playerData.save(king);
 						String iconURL = "";
 						if(role.getIcon() != null) {
 							iconURL = role.getIcon().getIconUrl();
@@ -501,12 +530,13 @@ public class RoleBotListener extends ListenerAdapter {
 				long goldAmount = event.getOption("gold").getAsLong();
 				if(goldAmount > 0) {
 					if(goldAmount <= 7) {
-						Player king = data.loadSerialized(event.getMember().getId());
+						data.database.arena.player.Player king = playerData.findById(event.getMember().getIdLong()).get();
 						if(king.getHasChallengedToday() < dailyChallengeLimit) {
 							king.hasChallenged();
-							data.saveSerialized(king, event.getMember().getId());
-							Tax tax = new Tax("tax", (int)goldAmount, role.getIdLong());
-							taxData.saveSerialized(tax, "tax");
+							playerData.save(king);
+							GameInformation game = gameData.findById("game_data").get();
+							game.setTax(role.getIdLong(), (int)goldAmount);
+							gameData.save(game);
 							String iconURL = "";
 							if(role.getIcon() != null) {
 								iconURL = role.getIcon().getIconUrl();
@@ -543,10 +573,10 @@ public class RoleBotListener extends ListenerAdapter {
 			if(!member1.getUser().isBot() && !member2.getUser().isBot()) {
 				if(getCasteRoleIndex(member1) != -1 && getCasteRoleIndex(member2) != -1 && getCasteRoleIndex(member1) != getCasteRoleIndex(member2)) {
 					if(member1.getIdLong() != member2.getIdLong()) {
-						Player king = data.loadSerialized(event.getMember().getId());
+						data.database.arena.player.Player king = playerData.findById(event.getMember().getIdLong()).get();
 						if(king.getHasChallengedToday() < dailyChallengeLimit) {
 							king.hasChallenged();
-							data.saveSerialized(king, event.getMember().getId());
+							playerData.save(king);
 							
 							DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has declared a role swap\n"
 									+ "\t" + getNameWithCaste(member1) + " has swapped with " + getNameWithCaste(member2));
@@ -590,13 +620,13 @@ public class RoleBotListener extends ListenerAdapter {
 			if(citizen.getIdLong() != event.getMember().getIdLong()) {
 				long gold = event.getOption("gold").getAsLong();
 				if(gold > 0) {
-					Player giver = data.loadSerialized(event.getMember().getId());
+					data.database.arena.player.Player giver = playerData.findById(event.getMember().getIdLong()).get();
 					if(gold <= giver.getGold()) {
-						Player taker = data.loadSerialized(citizen.getId());
+						data.database.arena.player.Player taker = playerData.findById(citizen.getIdLong()).get();
 						giver.decreaseGold(gold);
 						taker.increaseGold(gold);
-						data.saveSerialized(giver, event.getMember().getId());
-						data.saveSerialized(taker, citizen.getId());
+						playerData.save(giver);
+						playerData.save(taker);
 						DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has paid " + getNameWithCaste(citizen) + " " + gold + " gold");
 						event.replyEmbeds(EmbedMessageMaker.giveGold(event.getMember().getEffectiveName(), citizen.getEffectiveName(), gold).build()).queue();
 					} else {
@@ -636,7 +666,7 @@ public class RoleBotListener extends ListenerAdapter {
 		} else {
 			member = event.getMember();
 		}
-		Player player = data.loadSerialized(member.getId());
+		data.database.arena.player.Player player = playerData.findById(member.getIdLong()).get();
 		event.replyEmbeds(EmbedMessageMaker.playerAchievement(getNameWithCaste(member), player.getAchievements()).build()).queue();
 	}
 	
@@ -644,23 +674,47 @@ public class RoleBotListener extends ListenerAdapter {
 		return guild.getMembersWithRoles(guild.getRoleById(kingRoleID)).get(0).getUser().getName();
 	}
 
+	private void leaderboardTotal(SlashCommandEvent event) {
+		List<data.database.arena.player.Player> players = playerData.findAll();
+		Comparator<data.database.arena.player.Player> comparitor = Comparator.comparing(data.database.arena.player.Player::getTotal);
+		comparitor = Collections.reverseOrder(comparitor);
+		EmbedBuilder eb = new EmbedBuilder();
+		String stat = event.getSubcommandName();
+		stat = stat.substring(0,1).toUpperCase() + stat.substring(1);
+		eb.setTitle("Leaderboard for stat: " + stat);
+		eb.setColor(new Color(102, 107, 14));
+		
+		for(int i = 0; i < 10 && !players.isEmpty(); i++) {
+			data.database.arena.player.Player current = players.remove(0);
+			Member member = event.getGuild().getMemberById(current.getId());
+			String icon = "";
+			if(getCasteRoleIndex(member) != -1) {
+				icon = " " + iconIDs[getCasteRoleIndex(member)];
+			}
+			eb.addField(member.getEffectiveName() + icon, current.getTotal() + "", true);
+		}
+		
+		
+		event.replyEmbeds(eb.build()).queue();
+	}
+
 	private void itemsReact(MessageReactionAddEvent event) {
-		ShopItem item = itemData.loadSerialized(event.getMessageId());
-		if(item.getItem().getRarity() == Rarity.MYTHIC) {
+		data.database.arena.shopItem.ShopItem item = shopItemData.findById(event.getMessageIdLong()).get();
+		if(item.getItem().getRarity() == data.database.arena.item.Item.Rarity.MYTHIC) {
 			mythicItemReact(event, item);
 		} else {
 			itemReact(event, item);
 		}
 	}
 
-	private void itemReact(MessageReactionAddEvent event, ShopItem item) {
+	private void itemReact(MessageReactionAddEvent event, data.database.arena.shopItem.ShopItem item) {
 		int goldCost = item.getCost();
-		Player player = data.loadSerialized(event.getMember().getId());
+		data.database.arena.player.Player player = playerData.findById(event.getMember().getIdLong()).get();
 		if(player.getGold() >= goldCost) {
 			DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has purched a " + item.getItem().getItemName());
 			player.setItem(item.getItem());
 			player.decreaseGold(goldCost);
-			data.saveSerialized(player, player.getId() + "");
+			playerData.save(player);
 			generalChannel.sendMessage("<@" + event.getUserId() + ">, congratulations on your new purchase of " + item.getItem().getItemName()).queue();
 			DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has purchased " + item.getItem().getItemName());
 		} else {
@@ -668,7 +722,7 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 
-	private void mythicItemReact(MessageReactionAddEvent event, ShopItem item) {
+	private void mythicItemReact(MessageReactionAddEvent event, data.database.arena.shopItem.ShopItem item) {
 		int goldCost = item.getCost();
 		final int incrementAmount;
 		long emoteID = event.getReactionEmote().getIdLong();
@@ -679,19 +733,19 @@ public class RoleBotListener extends ListenerAdapter {
 		} else {
 			incrementAmount = 5;
 		}
-		Player player = data.loadSerialized(event.getMember().getId());
-		if(player.getGold() >= goldCost + incrementAmount || (player.getIdLong() == item.getCurrentBidder() && player.getGold() >= incrementAmount)) {			
+		data.database.arena.player.Player player = playerData.findById(event.getMember().getIdLong()).get();
+		if(player.getGold() >= goldCost + incrementAmount || (player.getId() == item.getCurrentBidder() && player.getGold() >= incrementAmount)) {			
 			event.retrieveMessage().queue(message -> {
-				if(item.getCurrentBidder() == player.getIdLong()) {
+				if(item.getCurrentBidder() == player.getId()) {
 					player.decreaseGold(incrementAmount);
 				} else if(item.getCurrentBidder() != 0) {
-					Player previous = data.loadSerialized(item.getCurrentBidder() + "");
+					data.database.arena.player.Player previous = playerData.findById(item.getCurrentBidder()).get();
 					previous.setGold(previous.getGold() + goldCost);
 					player.decreaseGold(goldCost + incrementAmount);
-					data.saveSerialized(previous, previous.getId() + "");
+					playerData.save(previous);
 				}
 				item.setCost(goldCost + incrementAmount);
-				item.setCurrentBidder(player.getIdLong());
+				item.setCurrentBidder(player.getId());
 				EmbedBuilder eb = new EmbedBuilder(message.getEmbeds().get(0));
 				List<Field> fields = eb.getFields();
 				fields.remove(1);
@@ -699,8 +753,8 @@ public class RoleBotListener extends ListenerAdapter {
 				fields.add(new Field("Current bid", item.getCost() + "", true));
 				fields.add(new Field("Current bidder", event.getMember().getEffectiveName(), true));
 				message.editMessageEmbeds(eb.build()).queue();
-				itemData.saveSerialized(item, item.getId() + "");
-				data.saveSerialized(player);
+				shopItemData.save(item);
+				playerData.save(player);
 				message.removeReaction(event.getReactionEmote().getEmote(), event.getUser()).queue();
 			});
 			
@@ -714,14 +768,14 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 
 	private void leaderboardActivities(SlashCommandEvent event) {
-		event.replyEmbeds(EmbedMessageMaker.activityLeaderboard(data.getMappedData(), event.getGuild()).build()).queue();
+		event.replyEmbeds(EmbedMessageMaker.activityLeaderboard(playerData.findAll(), event.getGuild()).build()).queue();
 	}
 
 	private void reminderReact(MessageReactionAddEvent event) {
 		logger.info(event.getMember().getEffectiveName() + " has opted in to reminders");
-		DailyRemind dr = remindData.loadSerialized("reminds");
-		dr.addID(event.getMember().getIdLong());
-		remindData.saveSerialized(dr, "reminds");
+		GameInformation game = gameData.findById("game_data").get();
+		game.addDailyID(event.getMember().getIdLong());
+		gameData.save(game);
 		event.getUser().openPrivateChannel().queue(channel -> {
 			channel.sendMessage("You have opted into receiving a message when you have not done any activities for the day.").queue();
 		});
@@ -729,9 +783,9 @@ public class RoleBotListener extends ListenerAdapter {
 
 	private void reminderReactRemove(MessageReactionRemoveEvent event) {
 		logger.info(event.getMember().getEffectiveName() + " has opted out of reminders");
-		DailyRemind dr = remindData.loadSerialized("reminds");
-		dr.removeID(event.getMember().getIdLong());
-		remindData.saveSerialized(dr, "reminds");
+		GameInformation game = gameData.findById("game_data").get();
+		game.removeID(event.getMember().getIdLong());
+		gameData.save(game);
 		event.getUser().openPrivateChannel().queue(channel -> {
 			channel.sendMessage("You have opted out of receiving a message when you have not done any activities for the day.").queue();
 		});
@@ -742,9 +796,9 @@ public class RoleBotListener extends ListenerAdapter {
 	 */
 	private void activityReact(MessageReactionAddEvent event) {
 		event.retrieveMessage().queue(message -> {
-			Activity activity = activityData.loadSerialized(message.getId());
+			data.database.arena.activity.Activity activity = activityData.findById(message.getIdLong()).get();
 			if(activity.canPlayerWork(event.getUserIdLong())) {
-				Player p = data.loadSerialized(event.getUserId());
+				data.database.arena.player.Player p = playerData.findById(event.getUserIdLong()).get();
 				if(dailyChallengeLimit - p.getHasChallengedToday() >= activity.getActionCost()) {
 					if(p.getGold() >= activity.getGoldCost()) {
 						activity.addPlayerWorked(event.getUserIdLong());
@@ -785,8 +839,8 @@ public class RoleBotListener extends ListenerAdapter {
 									+ "\tCost: " + activity.getGoldCost() + " gold");
 						}
 						checkForAchievements(p);
-						data.saveSerialized(p, event.getUserId());
-						activityData.saveSerialized(activity, message.getId());
+						playerData.save(p);
+						activityData.save(activity);
 					} else {
 						generalChannel.sendMessage("<@" + event.getUserId() + ">, you do not have enough gold to pay the tutor.").queue();
 					}
@@ -804,13 +858,13 @@ public class RoleBotListener extends ListenerAdapter {
 	 */
 	private void encounterReact(MessageReactionAddEvent event) {
 		event.retrieveMessage().queue(message -> {
-			EncounterPlayer ep = encounterData.loadSerialized(message.getId());
+			Encounter ep = encounterData.findById(message.getIdLong()).get();
 			if(ep.canFightPlayer(event.getMember().getIdLong())) {
-				Player p = data.loadSerialized(event.getUserId());
+				data.database.arena.player.Player p = playerData.findById(event.getUserIdLong()).get();
 				if(p.canChallenge()) {
 					fightEncounter(event.getMember(), ep, event);
 					ep.addPlayerFought(event.getUserIdLong());
-					encounterData.saveSerialized(ep, ep.getEncounterID() + "");
+					encounterData.save(ep);
 				} else {
 					generalChannel.sendMessage("<@" + event.getUserId() + ">, you are too tired to fight again today").mention(event.getUser()).queue();
 				}
@@ -858,8 +912,8 @@ public class RoleBotListener extends ListenerAdapter {
 		int magic = (int)(Math.random() * 15);
 		int stamina = (int)(Math.random() * 15);
 		int gold = (int)(Math.random() * 30);
-		Player p = new Player(member.getIdLong(), strength, agility, knowledge, magic, stamina, gold, 0, 0, 0, 0, 0, null, 0);
-		data.saveSerialized(p, member.getIdLong() + "");
+		data.database.arena.player.Player p = new data.database.arena.player.Player(member.getIdLong(), strength, agility, knowledge, magic, stamina, gold, 0, 0, 0, 0, 0, null, 0, null);
+		playerData.save(p);
 		logger.info("Creating statis for " + member.getEffectiveName() + ": "
 				+ strength + " " + agility + " " + knowledge + " " + magic + " " + stamina);
 	}
@@ -904,7 +958,7 @@ public class RoleBotListener extends ListenerAdapter {
 			if(!m.getUser().isBot() && !checkRoles(m)) {
 				assignRole(m, guild);
 			}
-			if(!m.getUser().isBot() && !data.exists(m.getIdLong() + "")) {
+			if(!m.getUser().isBot() && !playerData.existsById(m.getIdLong())) {
 				assignStats(m);
 			}
 		}
@@ -927,12 +981,12 @@ public class RoleBotListener extends ListenerAdapter {
 		logger.info("No more roles to assign");
 	}
 	
-	private FightResults fight(Player attacker, EncounterPlayer ep) {
-		Player defender = new Player(ep);
+	private FightResults fight(data.database.arena.player.Player attacker, Encounter ep) {
+		data.database.arena.player.Player defender = new data.database.arena.player.Player(ep);
 		return fight(attacker, defender, 0, 0, false);
 	}
 	
-	private FightResults fight(Player attacker, Player defender, int defenderPadding, int boosterPadding, boolean isKingDefending) {
+	private FightResults fight(data.database.arena.player.Player attacker, data.database.arena.player.Player defender, int defenderPadding, int boosterPadding, boolean isKingDefending) {
 		
 		attacker.hasChallenged();
 		if(!isKingDefending) {
@@ -987,9 +1041,8 @@ public class RoleBotListener extends ListenerAdapter {
 	 * @param defender
 	 */
 	private void fight(Member attackerMember, Member defenderMember, int defenderPadding, SlashCommandEvent event) {
-		
-		Player attacker = data.loadSerialized(attackerMember.getId());
-		Player defender = data.loadSerialized(defenderMember.getId());
+		data.database.arena.player.Player attacker = playerData.findById(attackerMember.getIdLong()).get();
+		data.database.arena.player.Player defender = playerData.findById(attackerMember.getIdLong()).get();
 		
 		String logMessage = getNameWithCaste(attackerMember) + " has attacked " + getNameWithCaste(defenderMember) + "\n";
 		
@@ -1068,7 +1121,7 @@ public class RoleBotListener extends ListenerAdapter {
 			}
 			
 			// achievement stuff
-			if(defender.getIdLong() == 236262235612250142l) {
+			if(defender.getId() == 236262235612250142l) {
 				attacker.getAchievements().setOneBirdWithOneStone(true);
 			}
 			attacker.getAchievements().progressCompletingTheRounds(getCasteRole(defenderMember).getIdLong());
@@ -1199,12 +1252,12 @@ public class RoleBotListener extends ListenerAdapter {
 		checkForAchievements(attacker);
 		checkForAchievements(defender);
 		
-		data.saveSerialized(attacker, attackerMember.getId());
-		data.saveSerialized(defender, defenderMember.getId());
+		playerData.save(attacker);
+		playerData.save(defender);
 	}
 
-	private void checkForAchievements(Player player) {
-		Achievements a = player.getAchievements();
+	private void checkForAchievements(data.database.arena.player.Player p) {
+		data.database.arena.achievements.Achievements a = p.getAchievements();
 		if(a.getRunningTheGauntletProgress() >= guild.getMemberCount()) {
 			//a.setRunningTheGauntlet(true);
 		}
@@ -1214,17 +1267,17 @@ public class RoleBotListener extends ListenerAdapter {
 		if(a.getPunchingBagProgress() >= roleIDs.size() + 1) {
 			a.setPunchingBag(true);
 		}
-		announcePlayerAchievments(player);
+		announcePlayerAchievments(p);
 	}
 
-	private void announcePlayerAchievments(Player player) {
-		Member member = guild.getMemberById(player.getId());
-		HashMap<String, String> as = player.getAchievements().getAnnounce();
+	private void announcePlayerAchievments(data.database.arena.player.Player p) {
+		Member member = guild.getMemberById(p.getId());
+		HashMap<String, String> as = p.getAchievements().getAnnounce();
 		for(String key : as.keySet()) {
-			generalChannel.sendMessage("<@" + player.getId() + ">").queue();
+			generalChannel.sendMessage("<@" + p.getId() + ">").queue();
 			generalChannel.sendMessageEmbeds(EmbedMessageMaker.achievement(member.getEffectiveName(),key, as.get(key)).build()).queue();
 		}
-		player.getAchievements().clearAnnounce();
+		p.getAchievements().clearAnnounce();
 	}
 
 	private int getCasteRoleIndex(Member member) {
@@ -1271,7 +1324,7 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 	
 	private boolean canChallengeKing(long id) {
-		return kingData.loadSerialized("king").canFight(id);
+		return gameData.findById("game_data").get().canFightKing(id);
 	}
 	
 	private void processCommand(String message, MessageReceivedEvent event) {
@@ -1291,125 +1344,110 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 	
 	private void processAdminCommand(String message, MessageReceivedEvent event) {
-		if(message.contains("!reroll")) {
-			message = message.replace("!reroll ", "");
-			long userID = Long.parseLong(message);
-			data.delete(userID + "");
-			Member member = event.getJDA().getGuildById(guildID).getMemberById(userID);
-			logger.info("Private command recieved for stat reroll for " + member.getEffectiveName());
-			assignStats(member);
-			Player stats = data.loadSerialized(userID + "");
-			event.getPrivateChannel().sendMessage("Re-rolled stats for " + member.getEffectiveName() 
-					+ "Strength: " + stats.getStrength() + "\n"
-					+ "Knowledge: " + stats.getKnowledge() + "\n"
-					+ "Magic: " + stats.getMagic() + "\n"
-					+ "Agility: " + stats.getAgility() + "\n"
-					+ "Stamina: " + stats.getStamina() + "\n").queue();
-		} else if (message.contains("!reset-gold")) {
-			logger.info("Resetting gold");
-			for(File f : data.getFiles()) {
-				Player player = data.loadSerialized(f.getName());
-				player.setGold((int)(Math.random() * 30));
-				data.saveSerialized(player, f.getName());
-			}
-			event.getPrivateChannel().sendMessage("Reset gold").queue();
-		} else if (message.contains("!reset-activities")) {
-			logger.info("Resetting activities");
-			for(File f : data.getFiles()) {
-				Player player = data.loadSerialized(f.getName());
-				player.newDay();
-				data.saveSerialized(player, f.getName());
-			}
-			KingPlayer kp = kingData.loadSerialized("king");
-			kp.resetList();
-			kingData.saveSerialized(kp, "king");
-			event.getPrivateChannel().sendMessage("Reset activities").queue();
-		} else if(message.contains("!roll-encounter")) {
-			logger.info("Rolling random activity");
-			rollEncounter();
-			event.getPrivateChannel().sendMessage("Rolled encounter").queue();
-		} else if(message.contains("!roll-activity")) {
-			String left = message.replace("!roll-activity", "");
-			if(left.length() > 0) {
-				for(int i = 0; i < Integer.parseInt(left.trim()); i++) {
-					logger.info("Rolling random encounter");
+		if(message.charAt(0) == '!') {
+			String command = message.split(" ")[0].toLowerCase().substring(1);
+			switch(command) {
+			case "reroll":
+				Member memberToReRoll = guild.getMemberById(message.split(" ")[1]);
+				if(memberToReRoll != null) {
+					playerData.deleteById(memberToReRoll.getIdLong());
+					assignStats(memberToReRoll);
+					event.getPrivateChannel().sendMessage("Player stats have been reset").queue();
+				} else {
+					event.getPrivateChannel().sendMessage("Player with that ID does not exist in this guild").queue();
+				}
+				break;
+			case "new-day":
+				dayPassed();
+				event.getPrivateChannel().sendMessage("A new day has passed").queue();
+				break;
+			case "roll-encounter":
+				for(int i = 0; i < getNumber(message); i++) {
+					rollEncounter();
+				}
+				event.getPrivateChannel().sendMessage("Encounter(s) rolled").queue();
+				break;
+			case "roll-activity":
+				for(int i = 0; i < getNumber(message); i++) {
 					rollActivity();
 				}
-			} else {
-				logger.info("Rolling random encounter");
-				rollActivity();
-			}
-			event.getPrivateChannel().sendMessage("Rolled activity").queue();
-		} else if(message.contains("!new-day")){
-			logger.info("Its a new day!");
-			dayPassed();
-			event.getPrivateChannel().sendMessage("Its a new day!").queue();
-		} else if(message.contains("!roll-item")) {
-			String left = message.replace("!roll-item", "");
-			if(left.length() > 0) {
-				for(int i = 0; i < Integer.parseInt(left.trim()); i++) {
+				event.getPrivateChannel().sendMessage("Activity(s) rolled").queue();
+				break;
+			case "roll-item":
+				for(int i = 0; i < getNumber(message); i++) {
 					rollItem();
 				}
-			} else {
-				rollItem();
+				event.getPrivateChannel().sendMessage("Items(s) rolled").queue();
+				break;
+			case "set":
+				if(message.split(" ").length == 4) {
+					try {
+						Long userID = Long.parseLong(message.split(" ")[1]);
+						String stat = message.split(" ")[2];
+						int amount = Integer.parseInt(message.split(" ")[3]);
+						Member member = guild.getMemberById(userID);
+						if(member != null) {
+							data.database.arena.player.Player player = playerData.findById(userID).get();
+							switch(stat.toLowerCase()) {
+							case "strenght":
+								player.setStrength(amount);
+								event.getPrivateChannel().sendMessage("Stat changed").queue();
+								break;
+							case "knowledge":
+								player.setKnowledge(amount);
+								event.getPrivateChannel().sendMessage("Stat changed").queue();
+								break;
+							case "stamina":
+								player.setStamina(amount);
+								event.getPrivateChannel().sendMessage("Stat changed").queue();
+								break;
+							case "agility":
+								player.setAgility(amount);
+								event.getPrivateChannel().sendMessage("Stat changed").queue();
+								break;
+							case "magic":
+								player.setMagic(amount);
+								event.getPrivateChannel().sendMessage("Stat changed").queue();
+								break;
+							case "gold":
+								player.setGold(amount);
+								event.getPrivateChannel().sendMessage("Stat changed").queue();
+								break;
+							default:
+								event.getPrivateChannel().sendMessage("valid stats are strength, knowledge, stamina, agility, magic and gold").queue();
+								break;
+							}
+						} else {
+							event.getPrivateChannel().sendMessage("Player with that ID does not exist in this guild").queue();
+						}
+					} catch (Exception e) {
+						event.getPrivateChannel().sendMessage("Incorrect arguments").queue();
+					}
+				} else {
+					event.getPrivateChannel().sendMessage("Wrong number of arguments").queue();
+				}
+				break;
+			case "help":
+			default:
+				event.getPrivateChannel().sendMessageEmbeds(EmbedMessageMaker.adminMessage().build()).queue();
+				break;
 			}
-			logger.info("Rolling random item");
-			event.getPrivateChannel().sendMessage("Rolled item").queue();
-		} else if(message.contains("!gold")) {
-			message = message.replace("!gold ", "");
-			long playerID = Long.parseLong(message.split(" ")[0]);
-			int amount = Integer.parseInt(message.split(" ")[1]);
-			Player p = data.loadSerialized(playerID + "");
-			p.setGold(p.getGold() + amount);
-			data.saveSerialized(p, p.getId() + "");
-			logger.info("Increased gold for " + playerID + " by " + amount);
-			event.getPrivateChannel().sendMessage("Increased gold for " + playerID + " by " + amount).queue();
-		} else if (message.contains("!stats")) {
-			message = message.replace("!stats ", "");
-			Player player = data.loadSerialized(message.split(" ")[0]);
-			int setAmount = Integer.parseInt(message.split(" ")[2]);
-			String thing = message.split(" ")[1].toLowerCase();
-			switch(thing) {
-			case "magic":
-				player.setMagic(setAmount);
-				break;
-			case "knowledge":
-				player.setKnowledge(setAmount);
-				break;
-			case "agility":
-				player.setAgility(setAmount);
-				break;
-			case "strength":
-				player.setStrength(setAmount);
-				break;
-			case "stamina":
-				player.setStamina(setAmount);
-				break;
-			}
-			data.saveSerialized(player, player.getId() + "");
-			event.getPrivateChannel().sendMessage(getNameWithCaste(guild.getMemberById(player.getId())) + " had their " + thing + " set to " + setAmount).queue();
-		} else if (message.contains("!reset-achievements")) {
-			Player player = data.loadSerialized(message.split(" ")[1]);
-			player.setAchievements(new Achievements());
-			data.saveSerialized(player);
-			event.getPrivateChannel().sendMessage(getNameWithCaste(guild.getMemberById(player.getId())) + " had their achievements reset").queue();
-		} else if (message.contains("!check-achievements")) {
-			Player player = data.loadSerialized(message.split(" ")[1]);
-			checkForAchievements(player);
-			data.saveSerialized(player);
-			event.getPrivateChannel().sendMessage(getNameWithCaste(guild.getMemberById(player.getId())) + " had their achievements checked").queue();
-		} else if (message.contains("!reset-encounters")) {
-			for(File f : encounterData.getFiles()) {
-				encountersChannel.deleteMessageById(f.getName()).complete();
-				encounterData.delete(f.getName());
-			}
-			event.getPrivateChannel().sendMessage("Encounters channel reset").queue();
 		}
 	}
 	
-	private void fightEncounter(Member player, EncounterPlayer ep, MessageReactionAddEvent event) {
-		
-		Player attacker = data.loadSerialized(player.getId());
+	private int getNumber(String message) {
+		if(message.split(" ").length > 1) {
+			try {
+				return Integer.parseInt(message.split(" ")[1]);
+			} catch (NumberFormatException e) {
+				
+			}
+		}
+		return 1;
+	}
+	
+	private void fightEncounter(Member player, Encounter ep, MessageReactionAddEvent event) {
+		data.database.arena.player.Player attacker = playerData.findById(player.getIdLong()).get();
 		FightResults results;
 		if(attacker.getItem() != null && attacker.getItem().getItemType() == ep.getBane()) {
 			results = new FightResults(true, 100, 0, 100, 1, 100, 1, 100, 1, 100, 1, 100, 1, 0, 0, 0, 100, 0, 100, 0, 100, 0, 100, 0, 100, 0);
@@ -1483,7 +1521,7 @@ public class RoleBotListener extends ListenerAdapter {
 		generalChannel.sendMessage("<@" + event.getUserId() + ">").queue();
 		generalChannel.sendMessageEmbeds(eb.build()).queue();
 		checkForAchievements(attacker);
-		data.saveSerialized(attacker, player.getId());
+		playerData.save(attacker);
 	}
 
 	private void rollActivity() {
@@ -1505,11 +1543,10 @@ public class RoleBotListener extends ListenerAdapter {
 		
 		Clock c = Clock.systemUTC();
 		c = Clock.offset(c, Duration.ofDays(activityDuration / 2));
-		Activity item = new Activity(0l, actionCost, change, goldCost, reward, OffsetDateTime.now(c));
-		activitiesChannel.sendMessageEmbeds(EmbedMessageMaker.activity(item, c).build()).queue(message -> {
-			long id = message.getIdLong();
-			
-			activityData.saveSerialized(item, id + "");
+		data.database.arena.activity.Activity activity = new data.database.arena.activity.Activity(0l, actionCost, change, goldCost, reward, OffsetDateTime.now(c));
+		activitiesChannel.sendMessageEmbeds(EmbedMessageMaker.activity(activity, c).build()).queue(message -> {
+			activity.setId(message.getIdLong());
+			activityData.save(activity);
 			message.addReaction(encountersChannel.getGuild().getEmoteById(fightEmojiID)).queue();
 		});
 		
@@ -1532,13 +1569,13 @@ public class RoleBotListener extends ListenerAdapter {
 		String itemDesc = names.get(itemName);
 		
 		int cost = rarity == Rarity.MYTHIC ? 0 : rarity.getMultiplier() * 20 + new Random().nextInt(20);
-		Item item = new Item(rarity, stat, itemName, itemDesc, change);
+		data.database.arena.item.Item item = new data.database.arena.item.Item(rarity, stat, itemName, itemDesc, change);
 		Clock c = Clock.systemUTC();
 		c = Clock.offset(c, Duration.ofDays(shopDuration / 2));
-		ShopItem sItem = new ShopItem(0l, item, cost, 0l, OffsetDateTime.now(c));
+		data.database.arena.shopItem.ShopItem sItem = new data.database.arena.shopItem.ShopItem(0l, item, cost, 0l, OffsetDateTime.now(c));
 		itemsChannel.sendMessageEmbeds(EmbedMessageMaker.shopItem(sItem, c).build()).queue(message -> {
 			sItem.setId(message.getIdLong());
-			itemData.saveSerialized(sItem, sItem.getId() + "");
+			shopItemData.save(sItem);
 			if(sItem.getItem().getRarity() == Rarity.MYTHIC) {
 				message.addReaction(itemsChannel.getGuild().getEmoteById(fiveGoldID)).queue();
 				message.addReaction(itemsChannel.getGuild().getEmoteById(tenGoldID)).queue();
@@ -1589,15 +1626,10 @@ public class RoleBotListener extends ListenerAdapter {
 		int agility = (int)(Math.random() * 10) + (tier * encounterStatMultiplier);
 		int stamina = (int)(Math.random() * 10) + (tier * encounterStatMultiplier);
 		
-		long encounterID = (long)(Math.random() * 100000000);
-		while(encounterData.exists(encounterID + "")) {
-			encounterID = (long)(Math.random() * 100000000);
-		}
-		
 		Clock c = Clock.systemUTC();
 		c = Clock.offset(c, Duration.ofDays(4 / 2));
-		EncounterPlayer baddy = new EncounterPlayer(0l, strength, agility, knowledge, magic, stamina, encounterID, tiers.get(tier) + " " + types.get(type), baneTypes.get(type), OffsetDateTime.now(c));
-		
+		//Encounter baddy = new Encounter(0l, strength, agility, knowledge, magic, stamina, encounterID, tiers.get(tier) + " " + types.get(type), baneTypes.get(type), OffsetDateTime.now(c));
+		Encounter baddy = new Encounter(0l, strength, agility, knowledge, magic, stamina, tiers.get(tier) + " " + types.get(type), baneTypes.get(type), OffsetDateTime.now(c));
 		eb.addField("Strength", strength + "", true);
 		eb.addField("Knowledge", knowledge + "", true);
 		eb.addField("Magic", magic + "", true);
@@ -1612,9 +1644,8 @@ public class RoleBotListener extends ListenerAdapter {
 		eb.setTimestamp(baddy.getTimeDepart());
 
 		encountersChannel.sendMessageEmbeds(eb.build()).queue(message -> {
-			baddy.setEncounterID(message.getIdLong());
 			baddy.setId(message.getIdLong());
-			encounterData.saveSerialized(baddy, baddy.getEncounterID() + "");
+			encounterData.save(baddy);
 			message.addReaction(encountersChannel.getGuild().getEmoteById(fightEmojiID)).queue();
 		});
 		
@@ -1623,52 +1654,47 @@ public class RoleBotListener extends ListenerAdapter {
 	
 	private void randomRolls() {
 		while(true) {
+			OffsetDateTime now = OffsetDateTime.now();
 			// Delete old arrivals
-			for(File f : activityData.getFiles()){
-				Activity activity = activityData.loadSerialized(f.getName());
+			for(data.database.arena.activity.Activity activity : activityData.findAll()) {
 				OffsetDateTime departTime = activity.getTimeDepart();
-				OffsetDateTime now = OffsetDateTime.now();
 				if(now.isAfter(departTime)) {
-					activitiesChannel.retrieveMessageById(f.getName()).queue(message -> {
+					activitiesChannel.retrieveMessageById(activity.getId()).queue(message -> {
 						// its time to depart
 						message.delete().queue();
-						activityData.delete(f.getName());
+						activityData.delete(activity);
 					});
 				}
 			}
 			
 			// Delete old items
-			for(File f : itemData.getFiles()){
-				OffsetDateTime departTime = itemData.loadSerialized(f.getName()).getTimeDepart();
-				OffsetDateTime now = OffsetDateTime.now();
+			for(data.database.arena.shopItem.ShopItem item : shopItemData.findAll()) {
+				OffsetDateTime departTime = item.getTimeDepart();
 				if(now.isAfter(departTime)) {
-					itemsChannel.retrieveMessageById(f.getName()).queue(message -> {
-						// its time to depart
-						ShopItem item = itemData.loadSerialized(f.getName());
+					itemsChannel.retrieveMessageById(item.getId()).queue(message -> {
 						if(item.getItem().getRarity() == Rarity.MYTHIC) {
 							if(item.getCurrentBidder() != 0) {
-								Player player = data.loadSerialized(item.getCurrentBidder() + "");
+								data.database.arena.player.Player player = playerData.findById(item.getCurrentBidder()).get();
 								player.setItem(item.getItem());
-								data.saveSerialized(player, player.getId() + "");
+								playerData.save(player);
 								generalChannel.sendMessage("<@" + player.getId() + ">, Congratulations on your new " + item.getItem().getItemName()).mention(guild.getMemberById(player.getId())).queue();
 								DailyLogger.writeToFile(getNameWithCaste(guild.getMemberById(player.getId())) + " has won " + item.getItem().getItemName() + " in a bid");
 							}
 						}
 						message.delete().queue();
-						itemData.delete(f.getName());
+						shopItemData.delete(item);
 					});
 				}
 			}
 			
 			// Delete old encounters
-			for(File f : encounterData.getFiles()){
-				OffsetDateTime departTime = encounterData.loadSerialized(f.getName()).getTimeDepart();
-				OffsetDateTime now = OffsetDateTime.now();
+			for(Encounter encounter : encounterData.findAll()) {
+				OffsetDateTime departTime = encounter.getTimeDepart();
 				if(now.isAfter(departTime)) {
-					encountersChannel.retrieveMessageById(f.getName()).queue(message -> {
+					encountersChannel.retrieveMessageById(encounter.getId()).queue(message -> {
 						// its time to depart
 						message.delete().queue();
-						encounterData.delete(f.getName());
+						encounterData.delete(encounter);
 					});
 				}
 			}
@@ -1695,46 +1721,46 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 	
 	private void payTax() {
-		if(taxData.getFiles().length > 0) {
-			Tax tax = taxData.loadSerialized("tax");
+		GameInformation game = gameData.findById("game_data").get();
+		if(game.getTaxAmount() > 0) {
 			Member kingMember = guild.getMembersWithRoles(guild.getRoleById(kingRoleID)).get(0);
-			Player king = data.loadSerialized(kingMember.getId());
-			for(Member m : guild.getMembersWithRoles(guild.getRoleById(tax.getRoleID()))) {
+			data.database.arena.player.Player king = playerData.findById(kingMember.getIdLong()).get();
+			for(Member m : guild.getMembersWithRoles(guild.getRoleById(game.getTaxRoleID()))) {
 				if(!m.getUser().isBot()) {
-					Player p = data.loadSerialized(m.getId());
-					int payAmount = tax.getTaxAmount();
+					data.database.arena.player.Player p = playerData.findById(m.getIdLong()).get();
+					int payAmount = game.getTaxAmount();
 					if(p.getGold() < payAmount) {
 						payAmount = p.getIntGold();
 					}
 					p.decreaseGold(payAmount);
 					king.increaseGold(payAmount);
 					DailyLogger.writeToFile(getNameWithCaste(m) + " has paid " + getNameWithCaste(kingMember) + " " + payAmount + " gold in tax");
-					data.saveSerialized(p, m.getId());
+					playerData.save(p);
 				}
 			}
-			data.saveSerialized(king, kingMember.getId());
-			taxData.delete("tax");
+			playerData.save(king);
+			game.resetTax();
+			gameData.save(game);
 		}
 	}
 	
 	private void dailyGoldIncrease() {
-		for(File f : data.getFiles()) {
-			Player p = data.loadSerialized(f.getName());
+		for(data.database.arena.player.Player p : playerData.findAll()) {
 			if(p.isActive()) {
 				p.increaseGold(DiceRollingSimulator.rollDice(1, 4));
 			}
 			p.newDay();
-			if(isKing(f.getName())) {
+			if(isKing(p.getId() + "")) {
 				p.increaseGold((int)(Math.random() * 2) + 10);
 			}
-			data.saveSerialized(p, f.getName());
+			playerData.save(p);
 		}
 	}
 	
 	private void saveStats() {
-		data.getMappedData().forEach((id, player) ->{
-			EndOfDayLogger.writeToFile(getNameWithCaste(guild.getMemberById(id)) + " " + player.getCompactStats());
-		});
+		for(data.database.arena.player.Player player : playerData.findAll()) {
+			EndOfDayLogger.writeToFile(getNameWithCaste(guild.getMemberById(player.getId())) + " " + player.getCompactStats());
+		}
 	}
 	
 	private void dayPassed() {
@@ -1743,9 +1769,9 @@ public class RoleBotListener extends ListenerAdapter {
 		dailyGoldIncrease();
 		payTax();
 		
-		KingPlayer kp = kingData.loadSerialized("king");
-		kp.resetList();
-		kingData.saveSerialized(kp, "king");
+		GameInformation game = gameData.findById("game_data").get();
+		game.resetList();
+		gameData.save(game);
 		
 		LinkedList<String> starts = new LinkedList<>();
 		starts.add("The sun rises on our wonderful kingdom once again.");
@@ -1812,8 +1838,9 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 
 	private void notifyThePeople() {
-		for(Long id : remindData.loadSerialized("reminds").getIds()) {
-			Player p = data.loadSerialized(id + "");
+		GameInformation game = gameData.findById("game_data").get();
+		for(Long id : game.getDailyRemindIDs()) {
+			data.database.arena.player.Player p = playerData.findById(id).get();
 			if(p.canChallenge()) {
 				guild.getMemberById(id).getUser().openPrivateChannel().queue(channel -> {
 					channel.sendMessageEmbeds(EmbedMessageMaker.remindMessage().build()).queue();

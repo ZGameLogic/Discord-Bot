@@ -7,17 +7,18 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
-import bot.role.Player;
 import bot.role.RoleBotListener;
-import bot.role.data.Achievements;
-import bot.role.data.Activity;
-import bot.role.data.Activity.ActivityReward;
-import bot.role.data.Item.Rarity;
-import bot.role.data.Item.StatType;
-import data.serializing.DataCacher;
-import bot.role.data.ShopItem;
+import data.database.arena.achievements.Achievements;
+import data.database.arena.activity.Activity;
+import data.database.arena.activity.Activity.ActivityReward;
+import data.database.arena.item.Item.Rarity;
+import data.database.arena.item.Item.StatType;
+import data.database.arena.player.Player;
+import data.database.arena.player.PlayerRepository;
+import data.database.arena.shopItem.ShopItem;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -33,6 +34,21 @@ public abstract class EmbedMessageMaker {
 	private static Color KING_COLOR = new Color(252, 211, 3);
 	private static Color STATS_COLOR = new Color(113, 94, 115);
 	private static Color ACHIEV_COLOR = new Color(224, 63, 95);
+	private static Color ADMIN_COLOR = new Color(123, 50, 168);
+	
+	public static EmbedBuilder adminMessage() {
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setColor(ADMIN_COLOR);
+		eb.setTitle("Admin commands");
+		eb.addField("fight-summary <fight id>", "Returns the fight summary for that specific id", true);
+		eb.addField("reroll <user id>", "Re-rolls the stats for user id", true);
+		eb.addField("new-day", "Resets everyones activities", true);
+		eb.addField("roll-encounter [count]", "Rolls count encounters", true);
+		eb.addField("roll-activity [count]", "Rolls count activities", true);
+		eb.addField("roll-item [count]", "Rolls count items", true);
+		eb.addField("set <user id> <stat/gold> <amount>", "Sets user id's stat/gold to amount", true);
+		return eb;
+	}
 	
 	public static EmbedBuilder playerAchievement(String playerName, Achievements a) {
 		EmbedBuilder eb = new EmbedBuilder();
@@ -81,11 +97,11 @@ public abstract class EmbedMessageMaker {
 		return eb;
 	}
 	
-	public static EmbedBuilder activityLeaderboard(HashMap<String, Player> playerMap, Guild guild) {
+	public static EmbedBuilder activityLeaderboard(List<Player> list, Guild guild) {
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setTitle("Leaderboard for activities");
 		eb.setColor(LEADERBOARD_COLOR);
-		LinkedList<Player> players = new LinkedList<>(playerMap.values());
+		LinkedList<Player> players = new LinkedList<>(list);
 		Comparator<Player> comparitor = Comparator.comparing(Player::getActivitiesLeft);
 		comparitor = comparitor.reversed();
 		Collections.sort(players, comparitor);
@@ -259,7 +275,7 @@ public abstract class EmbedMessageMaker {
 		return eb;
 	}
 	
-	public static EmbedBuilder roleStats(SlashCommandEvent event, DataCacher<Player> data) {
+	public static EmbedBuilder roleStats(SlashCommandEvent event, PlayerRepository playerData) {
 		Role role = event.getOption("role").getAsRole();
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setTitle("Fighter stats for " + role.getName() + "s");
@@ -277,7 +293,7 @@ public abstract class EmbedMessageMaker {
 		
 		for(Member m : event.getGuild().getMembersWithRoles(role)) {
 			if(!m.getUser().isBot()) {
-				Player p = data.loadSerialized(m.getId());
+				data.database.arena.player.Player p = playerData.findById(m.getIdLong()).get();
 				if(p.canDefend() || includeAll) {
 					eb.addField(m.getEffectiveName(), p.getCompactStats(), true);
 				}
@@ -286,9 +302,8 @@ public abstract class EmbedMessageMaker {
 		return eb;
 	}
 	
-	public static EmbedBuilder playerStats(Member member, DataCacher<Player> data, String icon) {
+	public static EmbedBuilder playerStats(Member member, data.database.arena.player.Player player, String icon) {
 		EmbedBuilder eb = new EmbedBuilder();
-		Player player = data.loadSerialized(member.getIdLong() + "");
 		eb.setTitle("Fighter stats for " + member.getEffectiveName() + " " + icon);
 		eb.setColor(STATS_COLOR);
 		eb.setThumbnail(member.getEffectiveAvatarUrl());
