@@ -1,15 +1,16 @@
-package bot.role.data;
+package data.database.arena.achievements;
 
-import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 
+import javax.persistence.Embeddable;
+
 import lombok.Getter;
 
 @Getter
-public class Achievements implements Serializable {
-	private static final long serialVersionUID = -8297297915240190808L;
+@Embeddable
+public class Achievements {
 
 	// Challenge and beat the king with lower than a 1% chance of winning
 	private boolean againstAllOdds;
@@ -63,6 +64,25 @@ public class Achievements implements Serializable {
 		announce = new HashMap<>();
 	}
 	
+	public Achievements(bot.role.data.Achievements achievements) {
+		againstAllOdds = achievements.isAgainstAllOdds();
+		runningTheGauntlet = achievements.isRunningTheGauntlet();
+		completingTheRounds = achievements.isCompletingTheRounds();
+		punchingBag = achievements.isPunchingBag();
+		millionare = achievements.isMillionare();
+		bloodOnYourHands = achievements.isBloodOnYourHands();
+		redLedger = achievements.isRedLedger();
+		itsJustForSport = achievements.isItsJustForSport();
+		betterThanThePlague = achievements.isBetterThanThePlague();
+		oneBirdWithOneStone = achievements.isOneBirdWithOneStone();
+		goldenTouch = achievements.isGoldenTouch();
+		
+		runningTheGauntletProgress = achievements.getRunningTheGauntletProgressSet();
+		completingTheRoundsProgress = achievements.getCompletingTheRoundsProgressSet();
+		punchingBagProgress = achievements.getPunchingBagProgressSet();
+		announce = achievements.getAnnounce();
+	}
+
 	public LinkedList<String> getEarnedAchievements(){
 		LinkedList<String> names = new LinkedList<>();
 		if(againstAllOdds)
@@ -193,17 +213,5 @@ public class Achievements implements Serializable {
 	
 	public void clearAnnounce() {
 		announce = new HashMap<String, String>();
-	}
-
-	public HashSet<Long> getRunningTheGauntletProgressSet() {
-		return runningTheGauntletProgress;
-	}
-
-	public HashSet<Long> getCompletingTheRoundsProgressSet() {
-		return completingTheRoundsProgress;
-	}
-
-	public HashSet<Long> getPunchingBagProgressSet() {
-		return punchingBagProgress;
 	}
 }

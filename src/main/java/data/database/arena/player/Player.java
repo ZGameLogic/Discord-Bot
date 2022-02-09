@@ -1,28 +1,67 @@
-package bot.role;
+package data.database.arena.player;
 
-import bot.role.data.Achievements;
-import bot.role.data.Item;
-import bot.role.data.Item.StatType;
-import data.serializing.SaveableData;
+import javax.persistence.Column;
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
+import bot.role.RoleBotListener;
+import data.database.arena.achievements.Achievements;
+import data.database.arena.encounter.Encounter;
+import data.database.arena.item.Item;
+import data.database.arena.item.Item.StatType;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @ToString
-public class Player extends SaveableData {
+@Entity
+@Table(name = "Player_Stats")
+public class Player  {
 	
-	private static final long serialVersionUID = -431615875063733037L;
-	
+    @Id
+    @Column(name = "id")
+    private Long id;
 	private int strength, agility, knowledge, magic, stamina;
 	private long gold;
 	private int tournamentWins;
 	private int wins,losses;
 	private int challengedToday, hasChallengedToday;
+	@Embedded
+	@Column(nullable = true)
 	private Item item;
 	private int daysSinceLastActive;
+	@Embedded
 	private Achievements achievements;
+	
+	public Player (bot.role.Player otherPlayer) {
+		id = otherPlayer.getIdLong();
+		strength = otherPlayer.getStrength();
+		agility = otherPlayer.getAgility();
+		knowledge = otherPlayer.getKnowledge();
+		magic = otherPlayer.getMagic();
+		stamina = otherPlayer.getStamina();
+		gold = otherPlayer.getGold();
+		tournamentWins = otherPlayer.getTournamentWins();
+		wins = otherPlayer.getWins();
+		losses = otherPlayer.getLosses();
+		challengedToday = otherPlayer.getChallengedToday();
+		hasChallengedToday = otherPlayer.getHasChallengedToday();
+		daysSinceLastActive = otherPlayer.getDaysSinceLastActive();
+		if(otherPlayer.getItem() == null) {
+			item = null;
+		} else {
+			item = new Item(otherPlayer.getItem());
+		}
+		achievements = new Achievements(otherPlayer.getAchievements());
+	}
 	
 	/**
 	 * Can the user challenge another user
@@ -217,49 +256,12 @@ public class Player extends SaveableData {
 		return strength + agility + knowledge + magic + stamina;
 	}
 
-	public Player(EncounterPlayer ep) {
-		super(ep.getEncounterID());
+	public Player(Encounter ep) {
 		strength = ep.getStrength();
 		agility = ep.getAgility();
 		knowledge = ep.getKnowledge();
 		magic = ep.getKnowledge();
 		stamina =  ep.getStamina();
-	}
-
-	/**
-	 * @param id
-	 * @param strength
-	 * @param agility
-	 * @param knowledge
-	 * @param magic
-	 * @param stamina
-	 * @param gold
-	 * @param tournamentWins
-	 * @param wins
-	 * @param losses
-	 * @param challengedToday
-	 * @param hasChallengedToday
-	 * @param item
-	 * @param daysSinceLastActive
-	 */
-	public Player(long id, int strength, int agility, int knowledge, int magic, int stamina, long gold,
-			int tournamentWins, int wins, int losses, int challengedToday, int hasChallengedToday, Item item,
-			int daysSinceLastActive) {
-		super(id);
-		this.strength = strength;
-		this.agility = agility;
-		this.knowledge = knowledge;
-		this.magic = magic;
-		this.stamina = stamina;
-		this.gold = gold;
-		this.tournamentWins = tournamentWins;
-		this.wins = wins;
-		this.losses = losses;
-		this.challengedToday = challengedToday;
-		this.hasChallengedToday = hasChallengedToday;
-		this.item = item;
-		this.daysSinceLastActive = daysSinceLastActive;
-		achievements = new Achievements();
 	}
 
 }

@@ -9,6 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -21,6 +22,11 @@ import bot.role.RoleBotListener;
 import bot.slashUtils.SlashBotListener;
 import bot.steam.SteamListener;
 import data.ConfigLoader;
+import data.database.arena.activity.ActivityRepository;
+import data.database.arena.encounter.EncounterRepository;
+import data.database.arena.misc.GameInformationRepository;
+import data.database.arena.player.PlayerRepository;
+import data.database.arena.shopItem.ShopItemRepository;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -34,6 +40,21 @@ import webhook.listeners.WebHookReactionListener;
 
 @RestController
 public class Bot {
+	
+	@Autowired
+	PlayerRepository playerData;
+	
+	@Autowired
+	GameInformationRepository gameData;
+	
+	@Autowired
+	ShopItemRepository shopItemData;
+	
+	@Autowired
+	EncounterRepository encounterData;
+	
+	@Autowired
+	ActivityRepository activityData;
 	
 	private static String TITLE = "\r\n" + 
 			"   ____  ___  _                   _   ___      _  ______  \r\n" + 
@@ -50,7 +71,7 @@ public class Bot {
 	public void start() {
 		ConfigLoader config = App.config;
 		System.out.println(TITLE);
-
+		
 		// Create bot
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
 		bot.enableIntents(GatewayIntent.GUILD_PRESENCES);
@@ -61,7 +82,7 @@ public class Bot {
 		// Add listeners
 		PartyBotListener PBL = new PartyBotListener(config);
 		WebHookReactionListener WHRL = new WebHookReactionListener(config);
-		RoleBotListener RBL = new RoleBotListener(config);
+		RoleBotListener RBL = new RoleBotListener(config, playerData, gameData, shopItemData, encounterData, activityData);
 		
 		bot.addEventListeners(PBL);
 		bot.addEventListeners(WHRL);
