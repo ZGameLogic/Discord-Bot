@@ -7,7 +7,6 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import bot.role.EncounterPlayer;
 import data.database.arena.item.Item.StatType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -51,45 +50,6 @@ public class Encounter {
 		playersFought = new LinkedList<>();
 		this.bane = bane;
 		this.timeDepart = timeDepart;
-	}
-	
-	public Encounter(EncounterPlayer ep) {
-		id = ep.getIdLong();
-		this.strength = ep.getStrength();
-		this.agility = ep.getAgility();
-		this.knowledge = ep.getKnowledge();
-		this.magic = ep.getMagic();
-		this.stamina = ep.getStamina();
-		this.name = ep.getName();
-		daysOld = ep.getDaysOld();
-		playersFought = ep.getPlayersFought();
-		switch(ep.getBane()) {
-		case BANE_BANDIT:
-			bane = StatType.BANE_BANDIT;
-			break;
-		case BANE_BLOB:
-			bane = StatType.BANE_BLOB;
-			break;
-		case BANE_GHOUL:
-			bane = StatType.BANE_GHOUL;
-			break;
-		case BANE_GIANT:
-			bane = StatType.BANE_GIANT;
-			break;
-		case BANE_SKELETON:
-			bane = StatType.BANE_SKELETON;
-			break;
-		case BANE_TROLL:
-			bane = StatType.BANE_TROLL;
-			break;
-		case BANE_WIZARD:
-			bane = StatType.BANE_WIZARD;
-			break;
-		case BANE_WOLF:
-			bane = StatType.BANE_WOLF;
-			break;
-		}
-		this.timeDepart = ep.getTimeDepart();
 	}
 	
 	public int getTotal() {
