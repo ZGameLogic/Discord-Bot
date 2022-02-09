@@ -1383,6 +1383,10 @@ public class RoleBotListener extends ListenerAdapter {
 					event.getPrivateChannel().sendMessage("Wrong number of arguments").queue();
 				}
 				break;
+			case "fedup":
+				fixPlz();
+				event.getPrivateChannel().sendMessage("Fixed").queue();
+				break;
 			case "help":
 			default:
 				event.getPrivateChannel().sendMessageEmbeds(EmbedMessageMaker.adminMessage().build()).queue();
@@ -1391,6 +1395,31 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 	
+	private void fixPlz() {
+		for(Player p : playerData.findAll()) {
+			if(p.getItem() != null){
+				switch(p.getItem().getItemType()) {
+				case STATIC_AGILITY:
+					p.setAgility(p.getRawAgility() - p.getItem().getStatIncrease());
+					break;
+				case STATIC_KNOWLEDGE:
+					p.setKnowledge(p.getRawKnowledge() - p.getItem().getStatIncrease());
+					break;
+				case STATIC_MAGIC:
+					p.setMagic(p.getRawMagic() - p.getItem().getStatIncrease());
+					break;
+				case STATIC_STAMINA:
+					p.setStamina(p.getRawStamina() - p.getItem().getStatIncrease());
+					break;
+				case STATIC_STRENGTH:
+					p.setStrength(p.getRawStrength() - p.getItem().getStatIncrease());
+					break;
+				}
+				playerData.save(p);
+			}
+		}
+	}
+
 	private int getNumber(String message) {
 		if(message.split(" ").length > 1) {
 			try {
