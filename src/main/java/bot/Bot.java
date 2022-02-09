@@ -43,16 +43,12 @@ public class Bot {
 	
 	@Autowired
 	PlayerRepository playerData;
-	
 	@Autowired
 	GameInformationRepository gameData;
-	
 	@Autowired
 	ShopItemRepository shopItemData;
-	
 	@Autowired
 	EncounterRepository encounterData;
-	
 	@Autowired
 	ActivityRepository activityData;
 	
