@@ -637,6 +637,7 @@ public class RoleBotListener extends ListenerAdapter {
 		stat = stat.substring(0,1).toUpperCase() + stat.substring(1);
 		eb.setTitle("Leaderboard for stat: " + stat);
 		eb.setColor(new Color(102, 107, 14));
+		Collections.sort(players, comparitor);
 		
 		for(int i = 0; i < 10 && !players.isEmpty(); i++) {
 			Player current = players.remove(0);
