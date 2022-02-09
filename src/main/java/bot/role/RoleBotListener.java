@@ -327,35 +327,35 @@ public class RoleBotListener extends ListenerAdapter {
 			leaderboardTotal(event);
 			return;
 		case "strength":
-			function = Player::getStrength;
+			function = Player::getRawStrength;
 			column = event.getSubcommandName();
 			if(event.getOption("show-all") != null) {
 				showAll = event.getOption("show-all").getAsBoolean();
 			}
 			break;
 		case "knowledge":
-			function = Player::getKnowledge;
+			function = Player::getRawKnowledge;
 			column = event.getSubcommandName();
 			if(event.getOption("show-all") != null) {
 				showAll = event.getOption("show-all").getAsBoolean();
 			}
 			break;
 		case "magic":
-			function = Player::getMagic;
+			function = Player::getRawMagic;
 			column = event.getSubcommandName();
 			if(event.getOption("show-all") != null) {
 				showAll = event.getOption("show-all").getAsBoolean();
 			}
 			break;
 		case "agility":
-			function = Player::getAgility;
+			function = Player::getRawAgility;
 			column = event.getSubcommandName();
 			if(event.getOption("show-all") != null) {
 				showAll = event.getOption("show-all").getAsBoolean();
 			}
 			break;
 		case "stamina":
-			function = Player::getStamina;
+			function = Player::getRawStamina;
 			column = event.getSubcommandName();
 			if(event.getOption("show-all") != null) {
 				showAll = event.getOption("show-all").getAsBoolean();
