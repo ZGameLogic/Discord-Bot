@@ -1,5 +1,8 @@
 package bot.role.data;
 
+import java.util.Collections;
+import java.util.LinkedList;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -57,6 +60,36 @@ public class FightResults {
 				+ "\tTotal: " + magicTotal + "\tRolled: " + magicRolled;
 	}
 	
+	private double attackerStatWinPercentage() {
+		LinkedList<Double> winPercentages = new LinkedList<>();
+		winPercentages.add(attackerStrength / (double) strengthTotal);
+		winPercentages.add(attackerMagic / (double) magicTotal);
+		winPercentages.add(attackerKnowledge / (double) knowledgeTotal);
+		winPercentages.add(attackerStamina / (double) staminaTotal);
+		winPercentages.add(attackerAgility / (double) agilityTotal);
+		Collections.sort(winPercentages, Collections.reverseOrder());
+		return winPercentages.remove() * winPercentages.remove() * winPercentages.remove();
+	}
+	
+	
+	private double defenderStatWinPercentage() {
+		LinkedList<Double> winPercentages = new LinkedList<>();
+		winPercentages.add(defenderStrength / (double) strengthTotal);
+		winPercentages.add(defenderMagic / (double) magicTotal);
+		winPercentages.add(defenderKnowledge / (double) knowledgeTotal);
+		winPercentages.add(defenderStamina / (double) staminaTotal);
+		winPercentages.add(defenderAgility / (double) agilityTotal);
+		Collections.sort(winPercentages, Collections.reverseOrder());
+		return winPercentages.remove() * winPercentages.remove() * winPercentages.remove();
+	}
+	
+	public double attackerWinPercentage() {
+		double aswp = attackerStatWinPercentage();
+		double dswp = defenderStatWinPercentage();
+		double total = aswp + dswp;
+		return aswp/total*100;
+	}
+	
 	public String toString() {
 		return "Attacker win: " + attackerWon +"\n"
 				+ "Score: " + attackerPoints + " " + defenderPoints + "\n"
@@ -64,6 +97,7 @@ public class FightResults {
 				+ "Padding Multiplier: x" + paddingMultiplier + "\n"
 				+ "Defender padding level: " + defenderPadding + "\n"
 				+ "Defender total stat padding: " + (defenderPadding * paddingMultiplier + boosterPadding) + "\n"
+				+ String.format("Attacker win percentage: %.2f%%\n", attackerWinPercentage())
 				+ strengthString() + "\n"
 				+ staminaString() + "\n"
 				+ agilityString() + "\n"

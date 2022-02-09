@@ -996,7 +996,7 @@ public class RoleBotListener extends ListenerAdapter {
 	 */
 	private void fight(Member attackerMember, Member defenderMember, int defenderPadding, SlashCommandEvent event) {
 		Player attacker = playerData.findById(attackerMember.getIdLong()).get();
-		Player defender = playerData.findById(attackerMember.getIdLong()).get();
+		Player defender = playerData.findById(defenderMember.getIdLong()).get();
 		
 		String logMessage = getNameWithCaste(attackerMember) + " has attacked " + getNameWithCaste(defenderMember) + "\n";
 		
@@ -1314,6 +1314,8 @@ public class RoleBotListener extends ListenerAdapter {
 			case "new-day":
 				dayPassed();
 				event.getPrivateChannel().sendMessage("A new day has passed").queue();
+				break;
+			case "fight-summary":
 				break;
 			case "roll-encounter":
 				for(int i = 0; i < getNumber(message); i++) {
