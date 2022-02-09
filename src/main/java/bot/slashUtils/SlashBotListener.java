@@ -113,6 +113,8 @@ public class SlashBotListener extends ListenerAdapter {
 				.addOption(OptionType.USER, "citizen-one", "One of the two citizens to switch roles", true)
 				.addOption(OptionType.USER, "citizen-two", "One of the two citizens to switch roles", true));
 		
+		guild.addCommands(new CommandData("pray", "Pray to Shlongbot"));
+		
 		
 		try {
 			guild.submit();
@@ -133,6 +135,9 @@ public class SlashBotListener extends ListenerAdapter {
 	public void onSlashCommand(SlashCommandEvent event) {
 		logger.info("Slash command recieved for " + event.getName() + " by " + event.getMember().getEffectiveName());
 		switch(event.getName()) {
+		case "pray":
+			event.reply("Thank you, my child.").queue();
+			break;
 		case "teams-generate":
 			generateTeam(event, event.getOption("command").getAsString());
 			break;
