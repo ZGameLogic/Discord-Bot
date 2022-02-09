@@ -41,28 +41,6 @@ public class Player  {
 	@Embedded
 	private Achievements achievements;
 	
-	public Player (bot.role.Player otherPlayer) {
-		id = otherPlayer.getIdLong();
-		strength = otherPlayer.getStrength();
-		agility = otherPlayer.getAgility();
-		knowledge = otherPlayer.getKnowledge();
-		magic = otherPlayer.getMagic();
-		stamina = otherPlayer.getStamina();
-		gold = otherPlayer.getGold();
-		tournamentWins = otherPlayer.getTournamentWins();
-		wins = otherPlayer.getWins();
-		losses = otherPlayer.getLosses();
-		challengedToday = otherPlayer.getChallengedToday();
-		hasChallengedToday = otherPlayer.getHasChallengedToday();
-		daysSinceLastActive = otherPlayer.getDaysSinceLastActive();
-		if(otherPlayer.getItem() == null) {
-			item = null;
-		} else {
-			item = new Item(otherPlayer.getItem());
-		}
-		achievements = new Achievements(otherPlayer.getAchievements());
-	}
-	
 	/**
 	 * Can the user challenge another user
 	 * @return true if they can challenge

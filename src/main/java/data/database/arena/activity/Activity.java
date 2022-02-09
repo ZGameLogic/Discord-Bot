@@ -50,36 +50,6 @@ public class Activity {
 	private LinkedList<Long> playersWorked;
 	private OffsetDateTime timeDepart;
 	
-	public Activity(bot.role.data.Activity a) {
-		id = a.getIdLong();
-		actionCost = a.getActionCost();
-		rewardAmount = a.getRewardAmount();
-		goldCost = a.getGoldCost();
-		playersWorked = a.getPlayersWorked();
-		timeDepart = a.getTimeDepart();
-		switch(a.getReward()) {
-		case Agility:
-			reward = ActivityReward.Agility;
-			break;
-		case Gold:
-			reward = ActivityReward.Gold;
-			break;
-		case Knowledge:
-			reward = ActivityReward.Knowledge;
-			break;
-		case Magic:
-			reward = ActivityReward.Magic;
-			break;
-		case Stamina:
-			reward = ActivityReward.Stamina;
-			break;
-		case Strength:
-			reward = ActivityReward.Strength;
-			break;
-		
-		}
-	}
-	
 	/**
 	 * @param actionCost
 	 * @param rewardAmount

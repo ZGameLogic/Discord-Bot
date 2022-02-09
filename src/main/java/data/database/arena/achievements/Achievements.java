@@ -63,25 +63,6 @@ public class Achievements {
 		punchingBagProgress = new HashSet<>();
 		announce = new HashMap<>();
 	}
-	
-	public Achievements(bot.role.data.Achievements achievements) {
-		againstAllOdds = achievements.isAgainstAllOdds();
-		runningTheGauntlet = achievements.isRunningTheGauntlet();
-		completingTheRounds = achievements.isCompletingTheRounds();
-		punchingBag = achievements.isPunchingBag();
-		millionare = achievements.isMillionare();
-		bloodOnYourHands = achievements.isBloodOnYourHands();
-		redLedger = achievements.isRedLedger();
-		itsJustForSport = achievements.isItsJustForSport();
-		betterThanThePlague = achievements.isBetterThanThePlague();
-		oneBirdWithOneStone = achievements.isOneBirdWithOneStone();
-		goldenTouch = achievements.isGoldenTouch();
-		
-		runningTheGauntletProgress = achievements.getRunningTheGauntletProgressSet();
-		completingTheRoundsProgress = achievements.getCompletingTheRoundsProgressSet();
-		punchingBagProgress = achievements.getPunchingBagProgressSet();
-		announce = achievements.getAnnounce();
-	}
 
 	public LinkedList<String> getEarnedAchievements(){
 		LinkedList<String> names = new LinkedList<>();

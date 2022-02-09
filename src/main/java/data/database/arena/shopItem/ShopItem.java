@@ -28,13 +28,4 @@ public class ShopItem {
 	private int cost;
 	private long currentBidder;
 	private OffsetDateTime timeDepart;
-	
-	
-	public ShopItem(bot.role.data.ShopItem item2) {
-		id = item2.getIdLong();
-		item = new Item(item2.getItem());
-		cost = item2.getCost();
-		currentBidder = item2.getCurrentBidder();
-		timeDepart = item2.getTimeDepart();
-	}
 }
