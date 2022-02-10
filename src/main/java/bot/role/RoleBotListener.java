@@ -900,14 +900,6 @@ public class RoleBotListener extends ListenerAdapter {
 	 */
 	private void checkGuildRoles(Guild guild) {
 		logger.info("Checking roles on shlongshot");
-		for(Member m: guild.getMembers()) {
-			if(!m.getUser().isBot() && !checkRoles(m)) {
-				assignRole(m, guild);
-			}
-			if(!m.getUser().isBot() && !playerData.existsById(m.getIdLong())) {
-				assignStats(m);
-			}
-		}
 		logger.info("Checking for king");
 		
 		if(checkForKing(guild)) {
