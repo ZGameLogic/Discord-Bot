@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -117,11 +116,6 @@ public class RoleBotListener extends ListenerAdapter {
 		fiveGoldID = cl.getFiveGoldID();
 		tenGoldID = cl.getTenGoldID();
 		fiftyGoldID = cl.getFiftyGoldID();
-		
-		if(gameData.count() == 0) {
-			gameData.save(new GameInformation("game_data", 0, 0, new LinkedList<Long>(), new HashSet<Long>()));
-		}
-		
 		kingRoleID = cl.getKingRoleID();
 		encountersID = cl.getEncountersID();
 		generalID = cl.getGeneralID();
@@ -132,9 +126,7 @@ public class RoleBotListener extends ListenerAdapter {
 		remindMessageID = cl.getRemindMessageID();
 		shopDuration = cl.getShopDuration();
 		itemSpawnChance = cl.getItemSpawnChance();
-		
 		iconIDs = cl.getIconIDS();
-		
 		paddingMultiplier = cl.getPaddingMultiplier();
 		statBaseChange = cl.getStatBaseChange();
 		statRandomChange = cl.getStatRandomChange();
@@ -142,7 +134,6 @@ public class RoleBotListener extends ListenerAdapter {
 		spawnChance = cl.getSpawnChance();
 		activitySpawnChance = cl.getActivitySpawnChance();
 		activityDuration = cl.getDaysToStoreActivities();
-		
 		dailyChallengeLimit = cl.getDailyChallengeLimit();
 		dailyDefendLimit = cl.getDailyDefendLimit();
 	}
@@ -1418,7 +1409,7 @@ public class RoleBotListener extends ListenerAdapter {
 		if(results.isAttackerWon()) {
 			// we win the encounter
 			// add gold
-			long goldWon = DiceRollingSimulator.rollDice(2, (int)(ep.getTotal()/4.0));
+			long goldWon = DiceRollingSimulator.rollDice(2, (int)(ep.getTotal()/8.0));
 			attacker.increaseGold(goldWon);
 			attacker.won();
 			eb.setColor(new Color(25, 84, 43));
