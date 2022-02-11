@@ -2,6 +2,7 @@ package bot.role;
 
 import java.awt.Color;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.time.Clock;
@@ -20,6 +21,9 @@ import java.util.Random;
 import java.util.Scanner;
 import java.util.function.Function;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Sort;
@@ -619,6 +623,44 @@ public class RoleBotListener extends ListenerAdapter {
 	
 	public static String getKing() {
 		return guild.getMembersWithRoles(guild.getRoleById(kingRoleID)).get(0).getUser().getName();
+	}
+
+	public String audit(long long1) throws JSONException {
+		String output = "";
+		Member m = guild.getMemberById(long1);
+		if(m != null) {
+			for(File f : EndOfDayLogger.getDir().listFiles()) {
+				try {
+					Scanner in = new Scanner(f);
+					while(in.hasNextLine()) {
+						String line = in.nextLine();
+						if(line.contains(m.getUser().getName())) {
+							output += f.getName() + " " + line + "\n";
+						}
+					}
+					in.close();
+				} catch (FileNotFoundException e) {
+					e.printStackTrace();
+				}
+			}
+			
+		} else {
+			output = "Member not found";
+		}
+		return output;
+	}
+	
+	public JSONObject getPlayerList() throws JSONException {
+		JSONArray jarray = new JSONArray();
+		for(Member m : guild.getMembers()) {
+			JSONObject member = new JSONObject();
+			member.put("user_name", m.getUser().getName());
+			member.put("user_id", m.getIdLong());
+			jarray.put(member);
+		}
+		JSONObject j = new JSONObject();
+		j.put("player_names", jarray);
+		return j;
 	}
 
 	private void leaderboardTotal(SlashCommandEvent event) {

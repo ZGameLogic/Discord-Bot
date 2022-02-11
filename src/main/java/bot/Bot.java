@@ -52,6 +52,8 @@ public class Bot {
 	@Autowired
 	ActivityRepository activityData;
 	
+	private RoleBotListener RBL;
+	
 	private static String TITLE = "\r\n" + 
 			"   ____  ___  _                   _   ___      _  ______  \r\n" + 
 			"  / /\\ \\|   \\(_)___ __ ___ _ _ __| | | _ ) ___| |_\\ \\ \\ \\ \r\n" + 
@@ -78,7 +80,7 @@ public class Bot {
 		// Add listeners
 		PartyBotListener PBL = new PartyBotListener(config);
 		WebHookReactionListener WHRL = new WebHookReactionListener(config);
-		RoleBotListener RBL = new RoleBotListener(config, playerData, gameData, shopItemData, encounterData, activityData);
+		RBL = new RoleBotListener(config, playerData, gameData, shopItemData, encounterData, activityData);
 		
 		bot.addEventListeners(PBL);
 		bot.addEventListeners(WHRL);
@@ -107,9 +109,22 @@ public class Bot {
 		handleBamboo(JSONInformation);
 	}
 	
-	@GetMapping("king")
+	@GetMapping("/king")
 	public String getKing() {
 		return RoleBotListener.getKing();
+	}
+	
+	@GetMapping("/auditPlayer")
+	public String auditPlayer(@RequestBody String valueOne) throws JSONException {
+		JSONObject JSONInformation = new JSONObject(valueOne);
+		JSONObject json = new JSONObject();
+		json.put("result", RBL.audit(JSONInformation.getLong("player_id")));
+		return json.toString();
+	}
+	
+	@GetMapping("/listMembers")
+	public String listMembers() throws JSONException {
+		return RBL.getPlayerList().toString();
 	}
 	
 	private void handleBamboo(JSONObject message) throws JSONException {
