@@ -1381,7 +1381,7 @@ public class RoleBotListener extends ListenerAdapter {
 				while(in.hasNextLine()) {
 					String line = in.nextLine();
 					if(line.contains(playerName)) {
-						out.println(line);
+						out.println(f.getName() + " " + line);
 					}
 				}
 				in.close();
