@@ -39,6 +39,10 @@ public abstract class EndOfDayLogger {
 		}
 	}
 	
+	public static File getDir() {
+		return new File(PATH);
+	}
+	
 	public static File getCurrentFile() {
 		File file = getDayFile();
 		if(file.exists()) {

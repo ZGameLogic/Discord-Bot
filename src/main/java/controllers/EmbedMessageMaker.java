@@ -40,6 +40,7 @@ public abstract class EmbedMessageMaker {
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setColor(ADMIN_COLOR);
 		eb.setTitle("Admin commands");
+		eb.addField("audit <player id>", "Returns the stats for each player on each day at the end of the day", true);
 		eb.addField("fight-summary <fight id>", "Returns the fight summary for that specific id", true);
 		eb.addField("reroll <user id>", "Re-rolls the stats for user id", true);
 		eb.addField("new-day", "Resets everyones activities", true);
