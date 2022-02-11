@@ -2,6 +2,8 @@ package bot.role;
 
 import java.awt.Color;
 import java.io.File;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -15,6 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.Random;
+import java.util.Scanner;
 import java.util.function.Function;
 
 import org.slf4j.Logger;
@@ -149,7 +152,6 @@ public class RoleBotListener extends ListenerAdapter {
 		generalChannel = guild.getTextChannelById(generalID);
 		activitiesChannel = guild.getTextChannelById(activitiesID);
 		itemsChannel = guild.getTextChannelById(itemsID);
-		
 		checkGuildRoles(guild);
 		// start midnight counter
 		new Thread(() -> midnightReset()).start();
@@ -865,20 +867,6 @@ public class RoleBotListener extends ListenerAdapter {
 	}
 	
 	/**
-	 * Check a member if they are one of the roles
-	 * @param member
-	 * @return
-	 */
-	private boolean checkRoles(Member member) {
-		for(Role role : member.getRoles()) {
-			if(roleIDs.contains(role.getIdLong()) || kingRoleID == role.getIdLong()){
-				return true;
-			}
-		}
-		return false;
-	}
-	
-	/**
 	 * Checks the guild for a king role
 	 * @param guild
 	 * @return true if the kind exists
@@ -1295,6 +1283,14 @@ public class RoleBotListener extends ListenerAdapter {
 					event.getPrivateChannel().sendMessage("Player with that ID does not exist in this guild").queue();
 				}
 				break;
+			case "audit":
+				Member member1 = guild.getMemberById(message.split(" ")[1]);
+				if(member1 != null) {
+					auditPlayer(event, member1.getUser().getName());
+				} else {
+					event.getPrivateChannel().sendMessage("This player does not exist").queue();
+				}
+				break;
 			case "new-day":
 				dayPassed();
 				event.getPrivateChannel().sendMessage("A new day has passed").queue();
@@ -1372,6 +1368,29 @@ public class RoleBotListener extends ListenerAdapter {
 				event.getPrivateChannel().sendMessageEmbeds(EmbedMessageMaker.adminMessage().build()).queue();
 				break;
 			}
+		}
+	}
+
+	private void auditPlayer(MessageReceivedEvent event, String playerName) {
+		File outFile = new File("audit.txt");
+		try {
+			outFile.createNewFile();
+			PrintWriter out = new PrintWriter(outFile);
+			for(File f : EndOfDayLogger.getDir().listFiles()) {
+				Scanner in = new Scanner(f);
+				while(in.hasNextLine()) {
+					String line = in.nextLine();
+					if(line.contains(playerName)) {
+						out.println(line);
+					}
+				}
+				in.close();
+			}
+			out.close();
+			event.getPrivateChannel().sendFile(outFile).queue();
+			outFile.delete();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 
