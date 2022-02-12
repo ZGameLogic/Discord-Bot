@@ -3,6 +3,7 @@ package data.database.arena.misc;
 import java.util.HashSet;
 import java.util.LinkedList;
 
+import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -10,9 +11,11 @@ import javax.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 @Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
@@ -28,6 +31,10 @@ public class GameInformation {
 	
     // king stuff
     private LinkedList<Long> playersFoughtKing;
+    @Column(columnDefinition = "bigint default 0")
+    private long kingID;
+    @Column(columnDefinition = "bigint default 0")
+    private int kingRun;
     
     // daily remind stuff
     private HashSet<Long> dailyRemindIDs;

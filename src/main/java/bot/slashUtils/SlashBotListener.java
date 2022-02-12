@@ -99,6 +99,7 @@ public class SlashBotListener extends ListenerAdapter {
 				.addOption(OptionType.STRING, "specific-day", "Pick a day to show formatted as: mm:dd:yyyy:k. K being the day shlongshot is on", false));
 		guild.addCommands(new CommandData("achievements", "Posts the players achievements in chat")
 				.addOption(OptionType.USER, "player", "Player's achievements to see", false));
+		guild.addCommands(new CommandData("pray", "Pray to Shlongbot"));
 		
 		// Role bot king
 		guild.addCommands(new CommandData("distribute-wealth", "Gives some of your wealth to a caste system")
@@ -112,9 +113,8 @@ public class SlashBotListener extends ListenerAdapter {
 		guild.addCommands(new CommandData("honorable-promotion", "Forces two citizens to switch roles. Used once per day")
 				.addOption(OptionType.USER, "citizen-one", "One of the two citizens to switch roles", true)
 				.addOption(OptionType.USER, "citizen-two", "One of the two citizens to switch roles", true));
-		
-		guild.addCommands(new CommandData("pray", "Pray to Shlongbot"));
-		
+		guild.addCommands(new CommandData("pass-law", "Create a law for the kingdom to follow from now on!")
+				.addOption(OptionType.STRING, "law", "Law to be added", true));
 		
 		try {
 			guild.submit();
@@ -169,6 +169,9 @@ public class SlashBotListener extends ListenerAdapter {
 			break;
 		case "leaderboard":
 			RBL.leaderBoard(event);
+			break;
+		case "pass-law":
+			RBL.passLaw(event);
 			break;
 		case "distribute-wealth":
 			RBL.distributeWealth(event);

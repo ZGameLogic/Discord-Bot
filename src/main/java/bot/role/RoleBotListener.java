@@ -663,6 +663,24 @@ public class RoleBotListener extends ListenerAdapter {
 		return j;
 	}
 
+	public void passLaw(SlashCommandEvent event) {
+		if(isKing(event.getMember())) {
+			GameInformation game = gameData.findById("game_data").get();
+			int reign = game.getKingRun();
+			if(reign >= 4) {
+				game.setKingRun(0);
+				gameData.save(game);
+				event.reply("The church of shlongbot will review this request. Thank you and Shlongbot bless.").queue();
+				event.getGuild().getMemberById(232675572772372481l).getUser().openPrivateChannel().complete().sendMessage("The kind has delcared a law:\n"
+						+ event.getOption("law").getAsString()).queue();
+			} else {
+				event.reply("You must be king at the start of 4 days in a row before you can use this command!").queue();
+			}
+		} else {
+			event.reply("Only the king can use this command!").queue();
+		}
+	}
+
 	private void leaderboardTotal(SlashCommandEvent event) {
 		List<Player> players = playerData.findAll();
 		Comparator<Player> comparitor = Comparator.comparing(Player::getTotal);
@@ -1771,7 +1789,12 @@ public class RoleBotListener extends ListenerAdapter {
 		payTax();
 		
 		GameInformation game = gameData.findById("game_data").get();
+		if(guild.getMembersWithRoles(guild.getRoleById(kingRoleID)).get(0).getUser().getIdLong() != game.getKingID()) {
+			game.setKingID(guild.getMembersWithRoles(guild.getRoleById(kingRoleID)).get(0).getUser().getIdLong());
+			game.setKingRun(0);
+		}
 		game.resetList();
+		game.setKingRun(game.getKingRun() + 1);
 		gameData.save(game);
 		
 		LinkedList<String> starts = new LinkedList<>();
