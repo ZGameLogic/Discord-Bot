@@ -1469,7 +1469,8 @@ public class RoleBotListener extends ListenerAdapter {
 		Player attacker = playerData.findById(player.getIdLong()).get();
 		FightResults results;
 		if(attacker.getItem() != null && attacker.getItem().getItemType() == ep.getBane()) {
-			results = new FightResults(true, 100, 0, 100, 1, 100, 1, 100, 1, 100, 1, 100, 1, 0, 0, 0, 100, 0, 100, 0, 100, 0, 100, 0, 100, 0);
+			attacker.hasChallenged();
+			results = new FightResults(true, 5, 0, 100, 1, 100, 1, 100, 1, 100, 1, 100, 1, 0, 0, 0, 100, 0, 100, 0, 100, 0, 100, 0, 100, 0);
 		} else {
 			results = fight(attacker, ep);
 		}
