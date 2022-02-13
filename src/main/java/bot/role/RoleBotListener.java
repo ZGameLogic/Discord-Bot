@@ -972,7 +972,7 @@ public class RoleBotListener extends ListenerAdapter {
 		return fight(attacker, defender, 0, 0, false);
 	}
 	
-	private FightResults fight(Player attacker, Player defender, int defenderPadding, int boosterPadding, boolean isKingDefending) {
+	private FightResults fight(Player attacker, Player defender, int defenderPadding, int boosterPaddingPercentage, boolean isKingDefending) {
 		
 		attacker.hasChallenged();
 		if(!isKingDefending) {
@@ -984,6 +984,9 @@ public class RoleBotListener extends ListenerAdapter {
 		int attackerMagic = attacker.getMagic();
 		int attackerAgility = attacker.getAgility();
 		int attackerKnowledge = attacker.getKnowledge();
+		
+		int paddingMultiplier = (int)((attacker.getTotal() + defender.getTotal()) * (this.paddingMultiplier / 100.0));
+		int boosterPadding = (int)((attacker.getTotal() + defender.getTotal()) * (boosterPaddingPercentage / 100.0));
 		
 		int defenderStamina = defender.getStamina() + defenderPadding * paddingMultiplier + boosterPadding;
 		int defenderStrength = defender.getStrength() + defenderPadding * paddingMultiplier + boosterPadding;
@@ -1413,6 +1416,7 @@ public class RoleBotListener extends ListenerAdapter {
 								event.getPrivateChannel().sendMessage("valid stats are strength, knowledge, stamina, agility, magic and gold").queue();
 								break;
 							}
+							playerData.save(player);
 						} else {
 							event.getPrivateChannel().sendMessage("Player with that ID does not exist in this guild").queue();
 						}
