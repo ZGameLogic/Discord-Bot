@@ -920,7 +920,7 @@ public class RoleBotListener extends ListenerAdapter {
 		int magic = (int)(Math.random() * 15);
 		int stamina = (int)(Math.random() * 15);
 		int gold = (int)(Math.random() * 30);
-		Player p = new Player(member.getIdLong(), strength, agility, knowledge, magic, stamina, gold, 0, 0, 0, 0, 0, null, 0, null);
+		Player p = new Player(member.getIdLong(), strength, agility, knowledge, magic, stamina, gold, 0, 0, 0, 0, 0, null, 0, new Achievements());
 		playerData.save(p);
 		logger.info("Creating statis for " + member.getEffectiveName() + ": "
 				+ strength + " " + agility + " " + knowledge + " " + magic + " " + stamina);
@@ -1800,39 +1800,8 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 		game.resetList();
 		game.setKingRun(game.getKingRun() + 1);
-		gameData.save(game);
-		
-		LinkedList<String> starts = new LinkedList<>();
-		starts.add("The sun rises on our wonderful kingdom once again.");
-		starts.add("The light shines through the stained glass portrait of myself, the king/queen.");
-		starts.add("Like honey slowly drooping, light bathes the kingdom in its golden glow.");
-		starts.add("The bees buzz with content as a night of rest comes to an end.");
-		starts.add("New day, new prospects.");
-		starts.add("Like an angry hive, the denizens buzz excitedly for the start of a new day.");
-		starts.add("Good morning my children!");
-		starts.add("The glint from my crown awakens me.");
-		starts.add("Light begins to pour into the streets below.");
-		starts.add("Chiming sounds throughout the castle halls as the sun rises above the horizon.");
-		starts.add("A rooster bores its noise into the ears of all who were in the village, abruptly seizing as a morning�s hunger sets in.");
-
-		LinkedList<String> endings = new LinkedList<>();
-		endings.add(" I can already hear swords being drawn");
-		endings.add(" I wonder what threats we shall see today");
-		endings.add(" I can hear the birds chirping, the cows mooing, and my children already beating the crap out of each other");
-		endings.add(" Is the red color in the streets new?");
-		endings.add(" Another day, another bloodbath");
-		endings.add(" *Screams of agony* .....Wonderful");
-		endings.add(" Squire, does any of this really matter? Like really *really* matter?");
-		endings.add(" Is shlongbot opposed to all the violence or does it like to watch it like some festivities?");
-		endings.add(" The church of shlongbot should be crowded today. A lot of questionable things happened yesterday...");
-		endings.add(" Will the monarchy be overthrown today? Or perhaps the communist revolution? I can hardly wait to find out");
-		endings.add(" Nothing like the scent of fresh stats in the morning");
-		endings.add(" Do keep it down today children, we do not want to upset the bees");
-		endings.add(" Revealed are hordes of undefeated monsters. Perhaps you should get on that?");
-		
-		String message = starts.get((int)(Math.random() * starts.size())) + endings.get((int)(Math.random() * endings.size()));
-		
-		generalChannel.sendMessageEmbeds(EmbedMessageMaker.goodMorningMessage(message).build()).queue();
+		gameData.save(game);		
+		generalChannel.sendMessageEmbeds(EmbedMessageMaker.goodMorningMessage().build()).queue();
 	}
 	
 	private boolean isKing(String playerID) {
