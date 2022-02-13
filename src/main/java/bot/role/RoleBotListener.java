@@ -1339,7 +1339,11 @@ public class RoleBotListener extends ListenerAdapter {
 			case "reroll":
 				Member memberToReRoll = guild.getMemberById(message.split(" ")[1]);
 				if(memberToReRoll != null) {
+					try {
 					playerData.deleteById(memberToReRoll.getIdLong());
+					} catch (Exception e) {
+						
+					}
 					assignStats(memberToReRoll);
 					event.getPrivateChannel().sendMessage("Player stats have been reset").queue();
 				} else {
