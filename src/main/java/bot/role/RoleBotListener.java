@@ -985,8 +985,8 @@ public class RoleBotListener extends ListenerAdapter {
 		int attackerAgility = attacker.getAgility();
 		int attackerKnowledge = attacker.getKnowledge();
 		
-		int paddingMultiplier = (int)((attacker.getTotal() + defender.getTotal()) * (this.paddingMultiplier / 100.0));
-		int boosterPadding = (int)((attacker.getTotal() + defender.getTotal()) * (boosterPaddingPercentage / 100.0));
+		int paddingMultiplier = (int)((attacker.getTotal()) * (this.paddingMultiplier / 100.0));
+		int boosterPadding = (int)((attacker.getTotal()) * (boosterPaddingPercentage / 100.0));
 		
 		int defenderStamina = defender.getStamina() + defenderPadding * paddingMultiplier + boosterPadding;
 		int defenderStrength = defender.getStrength() + defenderPadding * paddingMultiplier + boosterPadding;
