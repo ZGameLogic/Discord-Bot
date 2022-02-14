@@ -1,6 +1,7 @@
 package data.database.arena.achievements;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -112,15 +113,30 @@ public class Achievements {
 	}
 	
 	public void progressRunningTheGauntlet(long id) {
-		runningTheGauntletProgress.add(id);
+		HashSet<Long> intermediate = new HashSet<>(runningTheGauntletProgress);
+		int initialSize = intermediate.size();
+		intermediate.add(id);
+		if(initialSize != intermediate.size()) {
+			runningTheGauntletProgress.add(id);
+		}
 	}
 	
 	public void progressCompletingTheRounds(long id) {
-		completingTheRoundsProgress.add(id);
+		HashSet<Long> intermediate = new HashSet<>(completingTheRoundsProgress);
+		int initialSize = intermediate.size();
+		intermediate.add(id);
+		if(initialSize != intermediate.size()) {
+			completingTheRoundsProgress.add(id);
+		}
 	}
 	
 	public void progressPunchingBad(long id) {
-		punchingBagProgress.add(id);
+		HashSet<Long> intermediate = new HashSet<>(punchingBagProgress);
+		int initialSize = intermediate.size();
+		intermediate.add(id);
+		if(initialSize != intermediate.size()) {
+			punchingBagProgress.add(id);
+		}
 	}
 	
 	public void setGoldenTouch(boolean goldenTouch) {
