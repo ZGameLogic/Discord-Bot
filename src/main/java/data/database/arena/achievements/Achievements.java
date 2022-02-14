@@ -1,9 +1,11 @@
 package data.database.arena.achievements;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Embeddable;
 
 import lombok.Getter;
@@ -39,9 +41,15 @@ public class Achievements {
 	// Win a fight against Anthony
 	private boolean oneBirdWithOneStone;
 	
-	private HashSet<Long> runningTheGauntletProgress;
-	private HashSet<Long> completingTheRoundsProgress;
-	private HashSet<Long> punchingBagProgress;
+	@Column
+	@ElementCollection
+	private List<Long> runningTheGauntletProgress;
+	@Column
+	@ElementCollection
+	private List<Long> completingTheRoundsProgress;
+	@Column
+	@ElementCollection
+	private List<Long> punchingBagProgress;
 	
 	private HashMap<String, String> announce;
 	
@@ -58,9 +66,9 @@ public class Achievements {
 		oneBirdWithOneStone = false;
 		goldenTouch = false;
 		
-		runningTheGauntletProgress = new HashSet<>();
-		completingTheRoundsProgress = new HashSet<>();
-		punchingBagProgress = new HashSet<>();
+		runningTheGauntletProgress = new LinkedList<>();
+		completingTheRoundsProgress = new LinkedList<>();
+		punchingBagProgress = new LinkedList<>();
 		announce = new HashMap<>();
 	}
 
