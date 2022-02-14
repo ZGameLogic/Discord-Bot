@@ -1262,9 +1262,13 @@ public class RoleBotListener extends ListenerAdapter {
 	private void announcePlayerAchievments(Player p) {
 		Member member = guild.getMemberById(p.getId());
 		HashMap<String, String> as = p.getAchievements().getAnnounce();
-		for(String key : as.keySet()) {
-			generalChannel.sendMessage("<@" + p.getId() + ">").queue();
-			generalChannel.sendMessageEmbeds(EmbedMessageMaker.achievement(member.getEffectiveName(),key, as.get(key)).build()).queue();
+		try {
+			for(String key : as.keySet()) {
+				generalChannel.sendMessage("<@" + p.getId() + ">").queue();
+				generalChannel.sendMessageEmbeds(EmbedMessageMaker.achievement(member.getEffectiveName(),key, as.get(key)).build()).queue();
+			}
+		} catch(NullPointerException e) {
+			
 		}
 		p.getAchievements().clearAnnounce();
 	}
