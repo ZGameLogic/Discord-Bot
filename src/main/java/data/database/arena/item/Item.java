@@ -219,13 +219,13 @@ public class Item {
 			int choice = new Random().nextInt(100);
 			if(choice <= 50) {
 				return COMMON;
-			} else if (choice <= 75) {
+			} else if (choice <= 50) {
 				return UNCOMMON;
-			} else if (choice <= 88) {
+			} else if (choice <= 71) {
 				return RARE;
-			} else if (choice <= 94) {
+			} else if (choice <= 85) {
 				return EPIC;
-			} else if (choice <= 98) {
+			} else if (choice <= 94) {
 				return LEGENDARY;
 			} else {
 				return MYTHIC;
