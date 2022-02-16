@@ -1368,6 +1368,10 @@ public class RoleBotListener extends ListenerAdapter {
 				break;
 			case "fight-summary":
 				break;
+			case "roll-mythic-item":
+					rollMythicItem();
+					event.getPrivateChannel().sendMessage("A Mythic item has been rolled").queue();
+				break;
 			case "roll-encounter":
 				for(int i = 0; i < getNumber(message); i++) {
 					rollEncounter();
@@ -1615,8 +1619,41 @@ public class RoleBotListener extends ListenerAdapter {
 			} else {
 				message.addReaction(itemsChannel.getGuild().getEmoteById(fightEmojiID)).queue();
 			}
-		});;
+		});
+	}
+	
+	private void rollMythicItem() {
+		Rarity rarity = Rarity.MYTHIC;
+		StatType stat;
+		int change;
+		if(rarity == Rarity.MYTHIC) {
+			stat = StatType.getRandomMythic();
+			change = 1;
+		} else {
+			stat = StatType.getRandomStatic();
+			change = rarity.getMultiplier() * 5 + new Random().nextInt(5);
+		}
 		
+		HashMap<String, String> names = StatType.randomName(stat);
+		String itemName = new LinkedList<String>(names.keySet()).get(new Random().nextInt(names.size()));
+		String itemDesc = names.get(itemName);
+		
+		int cost = rarity == Rarity.MYTHIC ? 0 : rarity.getMultiplier() * 20 + new Random().nextInt(20);
+		Item item = new Item(rarity, stat, itemName, itemDesc, change);
+		Clock c = Clock.systemUTC();
+		c = Clock.offset(c, Duration.ofDays(shopDuration / 2));
+		ShopItem sItem = new ShopItem(0l, item, cost, 0l, OffsetDateTime.now(c));
+		itemsChannel.sendMessageEmbeds(EmbedMessageMaker.shopItem(sItem, c).build()).queue(message -> {
+			sItem.setId(message.getIdLong());
+			shopItemData.save(sItem);
+			if(sItem.getItem().getRarity() == Rarity.MYTHIC) {
+				message.addReaction(itemsChannel.getGuild().getEmoteById(fiveGoldID)).queue();
+				message.addReaction(itemsChannel.getGuild().getEmoteById(tenGoldID)).queue();
+				message.addReaction(itemsChannel.getGuild().getEmoteById(fiftyGoldID)).queue();
+			} else {
+				message.addReaction(itemsChannel.getGuild().getEmoteById(fightEmojiID)).queue();
+			}
+		});
 	}
 
 	private void rollEncounter() {
