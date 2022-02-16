@@ -27,7 +27,13 @@ import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 
 public abstract class EmbedMessageMaker {
 	
-	private static Color ITEM_COLOR = new Color(68, 145, 143);
+	private static Color ITEM_COLOR_COMMON = new Color(68, 145, 143);
+	private static Color ITEM_COLOR_UNCOMMON = new Color(40, 184, 180);
+	private static Color ITEM_COLOR_RARE = new Color(0, 250, 243);
+	private static Color ITEM_COLOR_EPIC = new Color(250, 237, 0);
+	private static Color ITEM_COLOR_LEGENDARY = new Color(250, 171, 0);
+	private static Color ITEM_COLOR_MYTHIC = new Color(250, 29, 0);
+	
 	private static Color LEADERBOARD_COLOR = new Color(102, 107, 14);
 	private static Color REMIND_COLOR = new Color(64, 141, 148);
 	private static Color ACTIVITY_COLOR = new Color(176, 103, 44);
@@ -77,7 +83,27 @@ public abstract class EmbedMessageMaker {
 	
 	public static EmbedBuilder shopItem(ShopItem item, Clock retireTime) {
 		EmbedBuilder eb = new EmbedBuilder();
-		eb.setColor(ITEM_COLOR);
+		switch(item.getItem().getRarity()) {
+		case COMMON:
+			eb.setColor(ITEM_COLOR_COMMON);
+			break;
+		case EPIC:
+			eb.setColor(ITEM_COLOR_EPIC);
+			break;
+		case LEGENDARY:
+			eb.setColor(ITEM_COLOR_LEGENDARY);
+			break;
+		case MYTHIC:
+			eb.setColor(ITEM_COLOR_MYTHIC);
+			break;
+		case RARE:
+			eb.setColor(ITEM_COLOR_RARE);
+			break;
+		case UNCOMMON:
+			eb.setColor(ITEM_COLOR_UNCOMMON);
+			break;
+		
+		}
 		eb.setTitle(item.getItem().getItemName() + " is in stock today!");
 		eb.setDescription(item.getItem().getItemDescription());
 		eb.setAuthor(item.getItem().getRarity().rarityName());
