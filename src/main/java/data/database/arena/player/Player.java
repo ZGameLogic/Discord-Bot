@@ -153,22 +153,47 @@ public class Player  {
 	}
 	
 	public void increaseStrength(int num) {
+		if(item != null) {
+			if(item.getItemType() == StatType.ACTIVE_STRENGTH) {
+				strength += item.getStatIncrease();
+			}
+		}
 		strength += num;
 	}
 	
 	public void increaseStamina(int num) {
+		if(item != null) {
+			if(item.getItemType() == StatType.ACTIVE_STAMINA) {
+				stamina += item.getStatIncrease();
+			}
+		}
 		stamina += num;
 	}
 	
 	public void increaseAgility(int num) {
+		if(item != null) {
+			if(item.getItemType() == StatType.ACTIVE_AGILITY) {
+				agility += item.getStatIncrease();
+			}
+		}
 		agility += num;
 	}
 	
 	public void increaseMagic(int num) {
+		if(item != null) {
+			if(item.getItemType() == StatType.ACTIVE_MAGIC) {
+				magic += item.getStatIncrease();
+			}
+		}
 		magic += num;
 	}
 
 	public void increaseKnowledge(int num) {
+		if(item != null) {
+			if(item.getItemType() == StatType.ACTIVE_KNOWLEDGE) {
+				knowledge += item.getStatIncrease();
+			}
+		}
 		knowledge += num;
 	}
 
