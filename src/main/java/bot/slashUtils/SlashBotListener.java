@@ -17,10 +17,10 @@ import data.ConfigLoader;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.ReadyEvent;
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
-import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 
@@ -50,31 +50,31 @@ public class SlashBotListener extends ListenerAdapter {
 		CommandListUpdateAction global = event.getJDA().updateCommands();
 		
 		// Team commands
-		global.addCommands(new CommandData("teams-help", "PMs the user a message for helping them generate a team"));
-		global.addCommands(new CommandData("teams-generate-again", "Runs the last team generation command again"));
-		global.addCommands(new CommandData("teams-generate", "Generates teams based off an inputted command")
+		global.addCommands(Commands.slash("teams-help", "PMs the user a message for helping them generate a team"));
+		global.addCommands(Commands.slash("teams-generate-again", "Runs the last team generation command again"));
+		global.addCommands(Commands.slash("teams-generate", "Generates teams based off an inputted command")
 				.addOption(OptionType.STRING, "command", "Command to generate teams", true));
 		// Dice
-		global.addCommands(new CommandData("roll-dice", "Rolls a dice")
+		global.addCommands(Commands.slash("roll-dice", "Rolls a dice")
 				.addOption(OptionType.INTEGER, "count", "Number of dice to be rolled", true)
 				.addOption(OptionType.INTEGER, "faces", "Number of faces on each die", true));
 		
 		// Party bot commands
-		guild.addCommands(new CommandData("create-text", "Creates a text chatroom that only people in the voice channel can see"));
-		guild.addCommands(new CommandData("rename-chatroom", "Renames chatroom to a new name")
+		guild.addCommands(Commands.slash("create-text", "Creates a text chatroom that only people in the voice channel can see"));
+		guild.addCommands(Commands.slash("rename-chatroom", "Renames chatroom to a new name")
 				.addOption(OptionType.STRING, "name", "Chatroom name", true));
-		guild.addCommands(new CommandData("limit", "Limits the amount of people who can enter a chatroom")
+		guild.addCommands(Commands.slash("limit", "Limits the amount of people who can enter a chatroom")
 				.addOption(OptionType.INTEGER, "count", "Number of people allowed in the chatroom", true));
 		
 		// Role bot listener
-		guild.addCommands(new CommandData("stats", "Posts the players stats in chat")
+		guild.addCommands(Commands.slash("stats", "Posts the players stats in chat")
 				.addOption(OptionType.USER, "player", "Player's stats to see", false));
-		guild.addCommands(new CommandData("challenge", "Challenges a player for their role. A win switches the roles!")
+		guild.addCommands(Commands.slash("challenge", "Challenges a player for their role. A win switches the roles!")
 				.addOption(OptionType.USER, "player", "The player you wish to challenge", true));
-		guild.addCommands(new CommandData("role-stats", "Lists everyone in the caste level and their stats if they can still defend for the day")
+		guild.addCommands(Commands.slash("role-stats", "Lists everyone in the caste level and their stats if they can still defend for the day")
 				.addOption(OptionType.ROLE, "role", "Role to see the stats of", true)
 				.addOption(OptionType.BOOLEAN, "include-all", "Whether or not to include the people who have already defended today", false));
-		guild.addCommands(new CommandData("leaderboard", "Get the top 10 players in a specific category")
+		guild.addCommands(Commands.slash("leaderboard", "Get the top 10 players in a specific category")
 				.addSubcommands(new SubcommandData("strength", "Shows the strength statistic")
 						.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
 				.addSubcommands(new SubcommandData("knowledge", "Shows the knowledge statistic")
@@ -92,28 +92,28 @@ public class SlashBotListener extends ListenerAdapter {
 				.addSubcommands(new SubcommandData("factions", "Shows the population of each faction"))
 				.addSubcommands(new SubcommandData("activities", "Shows a list of active members who still have not taken their activities for today"))
 				);
-		guild.addCommands(new CommandData("pay-citizen", "Gives your gold to a citizen of your choice")
+		guild.addCommands(Commands.slash("pay-citizen", "Gives your gold to a citizen of your choice")
 				.addOption(OptionType.USER, "citizen", "The citizen to recieve your gold", true)
 				.addOption(OptionType.INTEGER, "gold", "The amount of gold to give", true));
-		guild.addCommands(new CommandData("day-history", "Shows the event history for the day")
+		guild.addCommands(Commands.slash("day-history", "Shows the event history for the day")
 				.addOption(OptionType.STRING, "specific-day", "Pick a day to show formatted as: mm:dd:yyyy:k. K being the day shlongshot is on", false));
-		guild.addCommands(new CommandData("achievements", "Posts the players achievements in chat")
+		guild.addCommands(Commands.slash("achievements", "Posts the players achievements in chat")
 				.addOption(OptionType.USER, "player", "Player's achievements to see", false));
-		guild.addCommands(new CommandData("pray", "Pray to Shlongbot"));
+		guild.addCommands(Commands.slash("pray", "Pray to Shlongbot"));
 		
 		// Role bot king
-		guild.addCommands(new CommandData("distribute-wealth", "Gives some of your wealth to a caste system")
+		guild.addCommands(Commands.slash("distribute-wealth", "Gives some of your wealth to a caste system")
 				.addOption(OptionType.ROLE, "role", "The caste level of where you want your gold to go", true)
 				.addOption(OptionType.INTEGER, "gold", "The amount of gold to distribute", true));
 		
-		guild.addCommands(new CommandData("propose-tax", "Forces a caste to pay a tax at the start of the next day")
+		guild.addCommands(Commands.slash("propose-tax", "Forces a caste to pay a tax at the start of the next day")
 				.addOption(OptionType.ROLE, "role", "The caste level to tax", true)
 				.addOption(OptionType.INTEGER, "gold", "The amount of gold to tax", true));
 		
-		guild.addCommands(new CommandData("honorable-promotion", "Forces two citizens to switch roles. Used once per day")
+		guild.addCommands(Commands.slash("honorable-promotion", "Forces two citizens to switch roles. Used once per day")
 				.addOption(OptionType.USER, "citizen-one", "One of the two citizens to switch roles", true)
 				.addOption(OptionType.USER, "citizen-two", "One of the two citizens to switch roles", true));
-		guild.addCommands(new CommandData("pass-law", "Create a law for the kingdom to follow from now on!")
+		guild.addCommands(Commands.slash("pass-law", "Create a law for the kingdom to follow from now on!")
 				.addOption(OptionType.STRING, "law", "Law to be added", true));
 		
 		try {
@@ -132,7 +132,7 @@ public class SlashBotListener extends ListenerAdapter {
 	}
 	
 	@Override
-	public void onSlashCommand(SlashCommandEvent event) {
+	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
 		logger.info("Slash command recieved for " + event.getName() + " by " + event.getMember().getEffectiveName());
 		switch(event.getName()) {
 		case "pray":
@@ -194,7 +194,7 @@ public class SlashBotListener extends ListenerAdapter {
 		}
 	}
 	
-	private void rollDice(SlashCommandEvent event) {
+	private void rollDice(SlashCommandInteractionEvent event) {
 		long count = event.getOption("count").getAsLong();
 		long faces = event.getOption("faces").getAsLong();
 		
@@ -211,7 +211,7 @@ public class SlashBotListener extends ListenerAdapter {
 		event.reply("Rolled " + count + "d" + faces + ": **" + DiceRollingSimulator.rollDice(count, faces) + "**").queue();;
 	}
 	
-	private void generateTeam(SlashCommandEvent event, String command) {
+	private void generateTeam(SlashCommandInteractionEvent event, String command) {
 		LinkedList<Team> teams;
 		try {
 			teams = TeamGenerator.generateTeams(command);
@@ -235,7 +235,7 @@ public class SlashBotListener extends ListenerAdapter {
 		}
 	}
 	
-	private void sendTeamHelp(SlashCommandEvent event) {
+	private void sendTeamHelp(SlashCommandInteractionEvent event) {
 		event.reply("Help message sent to your inbox").complete();
 		
 		EmbedBuilder eb = new EmbedBuilder();
