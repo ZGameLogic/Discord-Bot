@@ -1,5 +1,7 @@
 package data.database.arena.player;
 
+import java.util.Random;
+
 import javax.persistence.Column;
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
@@ -238,6 +240,9 @@ public class Player  {
 	}
 	
 	public void increaseGold(long amount) {
+		if(item != null && item.getItemType() == StatType.ACTIVE_GOLD) {
+			gold += new Random().nextInt(9) + 1;
+		}
 		gold += amount;
 		if(gold >= 1000000) {
 			achievements.setMillionare(true);
