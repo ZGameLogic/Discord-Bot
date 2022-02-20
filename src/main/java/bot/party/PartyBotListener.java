@@ -20,8 +20,8 @@ import net.dv8tion.jda.api.events.ResumedEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction;
 
 public class PartyBotListener extends ListenerAdapter {
 
@@ -112,7 +112,7 @@ public class PartyBotListener extends ListenerAdapter {
 	 * 
 	 * @param event
 	 */
-	public void createTextChannel(SlashCommandEvent event) {
+	public void createTextChannel(SlashCommandInteraction event) {
 		// get voice channel the user is is
 		try {
 			// if the member is in a chatroom
@@ -156,7 +156,7 @@ public class PartyBotListener extends ListenerAdapter {
 	 * 
 	 * @param event
 	 */
-	public void renameChannel(SlashCommandEvent event) {
+	public void renameChannel(SlashCommandInteraction event) {
 		try {
 			// get voice channel the user is is
 			AudioChannel voice = event.getMember().getVoiceState().getChannel();
@@ -181,7 +181,7 @@ public class PartyBotListener extends ListenerAdapter {
 		}
 	}
 	
-	public void limit(SlashCommandEvent event) {
+	public void limit(SlashCommandInteraction event) {
 		try {
 			// get voice channel the user is is
 			AudioChannel voice = event.getMember().getVoiceState().getChannel();

@@ -60,11 +60,11 @@ import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 
 public class RoleBotListener extends ListenerAdapter {
 	
@@ -227,7 +227,7 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 
-	public void challenge(SlashCommandEvent event) {
+	public void challenge(SlashCommandInteractionEvent event) {
 		
 		if(event.getChannel().getIdLong() != generalID) {
 			event.reply("You can only challenge in <#" + generalID + ">").queue();
@@ -282,7 +282,7 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 
-	public void sendRoleStats(SlashCommandEvent event) {
+	public void sendRoleStats(SlashCommandInteractionEvent event) {
 		Role role = event.getOption("role").getAsRole();
 		if(roleIDs.contains(role.getIdLong()) || role.getIdLong() == kingRoleID) {
 			event.replyEmbeds(EmbedMessageMaker.roleStats(event, playerData).build()).queue();
@@ -291,7 +291,7 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 
-	public void sendStats(SlashCommandEvent event) {
+	public void sendStats(SlashCommandInteractionEvent event) {
 		Member member;
 		
 		if(event.getOption("player") == null) {
@@ -308,7 +308,7 @@ public class RoleBotListener extends ListenerAdapter {
 		event.replyEmbeds(EmbedMessageMaker.playerStats(member, player, iconIDs[getCasteRoleIndex(member)]).build()).queue();
 	}
 
-	public void leaderBoard(SlashCommandEvent event) {
+	public void leaderBoard(SlashCommandInteractionEvent event) {
 		String column = "";
 		boolean showAll = false;
 		Function<Player, Integer> function;
@@ -409,7 +409,7 @@ public class RoleBotListener extends ListenerAdapter {
 		event.replyEmbeds(eb.build()).queue();
 	}
 
-	public void distributeWealth(SlashCommandEvent event) {
+	public void distributeWealth(SlashCommandInteractionEvent event) {
 		if(isKing(event.getMember())) {
 			if(event.getChannel().getIdLong() != generalID) {
 				event.reply("You can only distribute wealth in <#" + generalID + ">").queue();
@@ -466,7 +466,7 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 	
-	public void submitTax(SlashCommandEvent event) {
+	public void submitTax(SlashCommandInteractionEvent event) {
 		if(isKing(event.getMember())) {
 			
 			if(event.getChannel().getIdLong() != generalID) {
@@ -511,7 +511,7 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 	
-	public void honorablePromotion(SlashCommandEvent event) {
+	public void honorablePromotion(SlashCommandInteractionEvent event) {
 		if(isKing(event.getMember())) {
 			
 			if(event.getChannel().getIdLong() != generalID) {
@@ -561,7 +561,7 @@ public class RoleBotListener extends ListenerAdapter {
 		}	
 	}
 	
-	public void payCitizen(SlashCommandEvent event) {
+	public void payCitizen(SlashCommandInteractionEvent event) {
 		if(event.getChannel().getIdLong() != generalID) {
 			event.reply("You can only pay citizens in <#" + generalID + ">").queue();
 			return;
@@ -594,7 +594,7 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 	
-	public void getDayHistory(SlashCommandEvent event) {
+	public void getDayHistory(SlashCommandInteractionEvent event) {
 		File file;
 		if(event.getOption("specific-day") != null) {
 			file = DailyLogger.getFile(event.getOption("specific-day").getAsString());
@@ -610,7 +610,7 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 
-	public void sendAchievements(SlashCommandEvent event) {
+	public void sendAchievements(SlashCommandInteractionEvent event) {
 		Member member;
 		if(event.getOption("player") != null) {
 			member = event.getOption("player").getAsMember();
@@ -663,7 +663,7 @@ public class RoleBotListener extends ListenerAdapter {
 		return j;
 	}
 
-	public void passLaw(SlashCommandEvent event) {
+	public void passLaw(SlashCommandInteractionEvent event) {
 		if(isKing(event.getMember())) {
 			GameInformation game = gameData.findById("game_data").get();
 			int reign = game.getKingRun();
@@ -681,7 +681,7 @@ public class RoleBotListener extends ListenerAdapter {
 		}
 	}
 
-	private void leaderboardTotal(SlashCommandEvent event) {
+	private void leaderboardTotal(SlashCommandInteractionEvent event) {
 		List<Player> players = playerData.findAll();
 		Comparator<Player> comparitor = Comparator.comparing(Player::getTotal);
 		comparitor = Collections.reverseOrder(comparitor);
@@ -775,7 +775,7 @@ public class RoleBotListener extends ListenerAdapter {
 		
 	}
 
-	private void leaderboardActivities(SlashCommandEvent event) {
+	private void leaderboardActivities(SlashCommandInteractionEvent event) {
 		event.replyEmbeds(EmbedMessageMaker.activityLeaderboard(playerData.findAll(), event.getGuild()).build()).queue();
 	}
 
@@ -882,7 +882,7 @@ public class RoleBotListener extends ListenerAdapter {
 		});
 	}
 
-	private void leaderboardFaction(SlashCommandEvent event) {
+	private void leaderboardFaction(SlashCommandInteractionEvent event) {
 		HashMap<String, Integer> rolePop = new HashMap<>();
 		for(long id: roleIDs) {
 			Role r = guild.getRoleById(id);
@@ -1029,7 +1029,7 @@ public class RoleBotListener extends ListenerAdapter {
 	 * @param challenger
 	 * @param defender
 	 */
-	private void fight(Member attackerMember, Member defenderMember, int defenderPadding, SlashCommandEvent event) {
+	private void fight(Member attackerMember, Member defenderMember, int defenderPadding, SlashCommandInteractionEvent event) {
 		Player attacker = playerData.findById(attackerMember.getIdLong()).get();
 		Player defender = playerData.findById(defenderMember.getIdLong()).get();
 		

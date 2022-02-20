@@ -23,7 +23,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.events.interaction.SlashCommandEvent;
+import net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction;
 
 public abstract class EmbedMessageMaker {
 	
@@ -339,7 +339,7 @@ public abstract class EmbedMessageMaker {
 		return eb;
 	}
 	
-	public static EmbedBuilder roleStats(SlashCommandEvent event, PlayerRepository playerData) {
+	public static EmbedBuilder roleStats(SlashCommandInteraction event, PlayerRepository playerData) {
 		Role role = event.getOption("role").getAsRole();
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setTitle("Fighter stats for " + role.getName() + "s");
