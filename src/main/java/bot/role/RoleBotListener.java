@@ -576,7 +576,6 @@ public class RoleBotListener extends ListenerAdapter {
 						Player taker = playerData.findById(citizen.getIdLong()).get();
 						giver.decreaseGold(gold);
 						taker.setGold(taker.getGold() + gold);
-						taker.increaseGold(gold);
 						playerData.save(giver);
 						playerData.save(taker);
 						DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has paid " + getNameWithCaste(citizen) + " " + gold + " gold");
