@@ -1,9 +1,10 @@
 package data.database.arena.misc;
 
-import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -30,19 +31,25 @@ public class GameInformation {
     private int taxAmount;
 	
     // king stuff
-    private LinkedList<Long> playersFoughtKing;
+    @Column
+	@ElementCollection
+    private List<Long> playersFoughtKing;
     @Column(columnDefinition = "bigint default 0")
     private long kingID;
     @Column(columnDefinition = "bigint default 0")
     private int kingRun;
     
     // daily remind stuff
-    private HashSet<Long> dailyRemindIDs;
+    @Column
+	@ElementCollection
+    private List<Long> dailyRemindIDs;
     
     /* Daily remind stuff */
     
 	public void addDailyID(long id) {
-		dailyRemindIDs.add(id);
+		if(!dailyRemindIDs.contains(id)) {
+			dailyRemindIDs.add(id);
+		}
 	}
 	
 	public void removeID(long id) {
