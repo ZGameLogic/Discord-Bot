@@ -138,15 +138,15 @@ public class PartyBotListener extends ListenerAdapter {
 					link.addLink(voice.getIdLong(), newChannel.getIdLong());
 					links.saveSerialized(link);
 
-					event.reply("Text channel created").queue();
+					event.reply("Text channel created").setEphemeral(true).queue();
 				} else {
-					event.reply("Voice channel already has a text channel").queue();
+					event.reply("Voice channel already has a text channel").setEphemeral(true).queue();
 				}
 			} else {
-				event.reply("You are not in a voice channel that supports this command").queue();
+				event.reply("You are not in a voice channel that supports this command").setEphemeral(true).queue();
 			}
 		} catch (NullPointerException e) {
-			event.reply("You are not in a voice channel that supports this command").queue();
+			event.reply("You are not in a voice channel that supports this command").setEphemeral(true).queue();
 		}
 
 	}
@@ -168,16 +168,16 @@ public class PartyBotListener extends ListenerAdapter {
 					if (connections.hasLink(voice.getIdLong())) {
 						event.getGuild().getTextChannelById(connections.getLink(voice.getIdLong())).getManager().setName(event.getOption("name").getAsString()).queue();
 					}
-					event.reply("Channel name updated").queue();
+					event.reply("Channel name updated").setEphemeral(true).queue();
 					logger.info("Renamed chatroom");
 				} catch (IllegalArgumentException e1) {
-					event.reply("Channel name not updated").queue();
+					event.reply("Channel name not updated").setEphemeral(true).queue();
 				}
 			} else {
-				event.reply("You are not in a voice channel that supports this command").queue();
+				event.reply("You are not in a voice channel that supports this command").setEphemeral(true).queue();
 			}
 		} catch (NullPointerException e) {
-			event.reply("You are not in a voice channel that supports this command").queue();
+			event.reply("You are not in a voice channel that supports this command").setEphemeral(true).queue();
 		}
 	}
 	
@@ -189,16 +189,16 @@ public class PartyBotListener extends ListenerAdapter {
 				try {
 					int limit = Integer.parseInt(event.getOption("count").getAsString());
 					event.getGuild().getVoiceChannelById(voice.getIdLong()).getManager().setUserLimit(limit).queue();
-					event.reply("Channel limit updated").queue();
+					event.reply("Channel limit updated").setEphemeral(true).queue();
 					logger.info("Limitted chatroom");
 				} catch (IllegalArgumentException e1) {
-					event.reply("Channel limit not updated").queue();
+					event.reply("Channel limit not updated").setEphemeral(true).queue();
 				}
 			} else {
-				event.reply("You are not in a voice channel that supports this command").queue();
+				event.reply("You are not in a voice channel that supports this command").setEphemeral(true).queue();
 			}
 		} catch (NullPointerException e) {
-			event.reply("You are not in a voice channel that supports this command").queue();
+			event.reply("You are not in a voice channel that supports this command").setEphemeral(true).queue();
 		}
 	}
 
