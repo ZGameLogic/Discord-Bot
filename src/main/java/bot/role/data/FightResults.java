@@ -1,8 +1,5 @@
 package bot.role.data;
 
-import java.util.Collections;
-import java.util.LinkedList;
-
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
@@ -60,36 +57,56 @@ public class FightResults {
 				+ "\tTotal: " + magicTotal + "\tRolled: " + magicRolled;
 	}
 	
-	private double attackerStatWinPercentage() {
-		LinkedList<Double> winPercentages = new LinkedList<>();
-		winPercentages.add(attackerStrength / (double) strengthTotal);
-		winPercentages.add(attackerMagic / (double) magicTotal);
-		winPercentages.add(attackerKnowledge / (double) knowledgeTotal);
-		winPercentages.add(attackerStamina / (double) staminaTotal);
-		winPercentages.add(attackerAgility / (double) agilityTotal);
-		Collections.sort(winPercentages, Collections.reverseOrder());
-		return winPercentages.remove() * winPercentages.remove() * winPercentages.remove();
-	}
-	
-	
-	private double defenderStatWinPercentage() {
-		LinkedList<Double> winPercentages = new LinkedList<>();
-		winPercentages.add(defenderStrength / (double) strengthTotal);
-		winPercentages.add(defenderMagic / (double) magicTotal);
-		winPercentages.add(defenderKnowledge / (double) knowledgeTotal);
-		winPercentages.add(defenderStamina / (double) staminaTotal);
-		winPercentages.add(defenderAgility / (double) agilityTotal);
-		Collections.sort(winPercentages, Collections.reverseOrder());
-		return winPercentages.remove() * winPercentages.remove() * winPercentages.remove();
-	}
-	
-	public double attackerWinPercentage() {
-		double aswp = attackerStatWinPercentage();
-		double dswp = defenderStatWinPercentage();
-		double total = aswp + dswp;
-		return aswp/total*100;
-	}
-	
+    private double attackerWinPercentage() {
+        
+        final boolean[][] outcomes = {
+                {true, true, true, true, true},
+                {true, true, true, true, false},
+                {true, true, true, false, true},
+                {true, true, false, true, true},
+                {true, false, true, true, true},
+                {false, true, true, true, true},
+                {true, true, true, false, false},
+                {true, true, false, true, false},
+                {true, false, true, true, false},
+                {false, true, true, true, false},
+                {true, true, false, false, true},
+                {true, false, true, false, true},
+                {false, true, true, false, true},
+                {true, false, false, true, true},
+                {false, true, false, true, true},
+                {false, false, true, true, true}
+                };
+        
+        double s1w = (double) attackerMagic / (attackerMagic + defenderMagic);
+        double s1l = 1 - s1w;
+        
+        double s2w = (double) attackerStrength / (attackerStrength + defenderStrength);
+        double s2l = 1 - s2w;
+        
+        double s3w = (double) attackerAgility / (attackerAgility + defenderAgility);
+        double s3l = 1 - s3w;
+        
+        double s4w = (double) attackerKnowledge / (attackerKnowledge + defenderKnowledge);
+        double s4l = 1 - s4w;
+        
+        double s5w = (double) attackerStamina / (attackerStamina + defenderStamina);
+        double s5l = 1 - s5w;
+        
+        double totalProbability = 0.0;
+        
+        for(boolean[] line : outcomes) {
+            totalProbability +=
+                    (line[0] ? s1w : s1l) * 
+                    (line[1] ? s2w : s2l) * 
+                    (line[2] ? s3w : s3l) * 
+                    (line[3] ? s4w : s4l) * 
+                    (line[4] ? s5w : s5l);
+        }
+        
+        return totalProbability * 100;
+    }
+    
 	public String toString() {
 		return "Attacker win: " + attackerWon +"\n"
 				+ "Score: " + attackerPoints + " " + defenderPoints + "\n"
