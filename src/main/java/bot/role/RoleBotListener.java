@@ -54,6 +54,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.ChannelType;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed.Field;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.TextChannel;
@@ -64,7 +65,9 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 
 public class RoleBotListener extends ListenerAdapter {
 	
@@ -186,6 +189,14 @@ public class RoleBotListener extends ListenerAdapter {
 				String message = event.getMessage().getContentRaw();
 				processCommand(message, event);
 			}
+		}
+	}
+	
+	@Override
+	public void onButtonInteraction(ButtonInteractionEvent event) {
+		if (event.getComponentId().equals("fight_encounter")) {
+			event.reply("View the results in <#" + generalID + ">").setEphemeral(true).queue();
+			encounterReact(event);
 		}
 	}
 
@@ -870,7 +881,7 @@ public class RoleBotListener extends ListenerAdapter {
 			if(ep.canFightPlayer(event.getMember().getIdLong())) {
 				Player p = playerData.findById(event.getUserIdLong()).get();
 				if(p.canChallenge()) {
-					fightEncounter(event.getMember(), ep, event);
+					fightEncounter(event.getMember(), ep);
 					ep.addPlayerFought(event.getUserIdLong());
 					encounterData.save(ep);
 				} else {
@@ -882,6 +893,26 @@ public class RoleBotListener extends ListenerAdapter {
 		});
 	}
 
+	/**
+	 * @param event
+	 */
+	private void encounterReact(ButtonInteractionEvent event) {
+		Message message = event.getMessage();
+			Encounter ep = encounterData.findById(message.getIdLong()).get();
+			if(ep.canFightPlayer(event.getMember().getIdLong())) {
+				Player p = playerData.findById(event.getMember().getIdLong()).get();
+				if(p.canChallenge()) {
+					fightEncounter(event.getMember(), ep);
+					ep.addPlayerFought(event.getMember().getIdLong());
+					encounterData.save(ep);
+				} else {
+					generalChannel.sendMessage("<@" + event.getMember().getIdLong() + ">, you are too tired to fight again today").mention(event.getUser()).queue();
+				}
+			} else {
+				generalChannel.sendMessage("<@" + event.getMember().getIdLong() + ">, you have already fought this encounter.").mention(event.getUser()).queue();
+			}
+	}
+	
 	private void leaderboardFaction(SlashCommandInteractionEvent event) {
 		HashMap<String, Integer> rolePop = new HashMap<>();
 		for(long id: roleIDs) {
@@ -1493,7 +1524,7 @@ public class RoleBotListener extends ListenerAdapter {
 		return 1;
 	}
 	
-	private void fightEncounter(Member player, Encounter ep, MessageReactionAddEvent event) {
+	private void fightEncounter(Member player, Encounter ep) {
 		Player attacker = playerData.findById(player.getIdLong()).get();
 		FightResults results;
 		if(attacker.getItem() != null && attacker.getItem().getItemType() == ep.getBane()) {
@@ -1539,7 +1570,7 @@ public class RoleBotListener extends ListenerAdapter {
 				break;
 			}
 			
-			DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has done an encounter\n"
+			DailyLogger.writeToFile(getNameWithCaste(player) + " has done an encounter\n"
 					+ "\tResult: won\n"
 					+ "\tGold: " + goldWon + "\n"
 					+ "\t" + skillName + ": " + skillInc + "\n"
@@ -1558,7 +1589,7 @@ public class RoleBotListener extends ListenerAdapter {
 			attacker.decreaseGold(goldLost);
 			eb.setColor(new Color(84, 25, 25));
 			eb.setDescription("You have lost the fight against a " + ep.getName() + ". Gold lost: " + goldLost);
-			DailyLogger.writeToFile(getNameWithCaste(event.getMember()) + " has done an encounter\n"
+			DailyLogger.writeToFile(getNameWithCaste(player) + " has done an encounter\n"
 					+ "\tResult: lost\n"
 					+ "\tGold lost: " + goldLost + "\n"
 					+ "\tAttacker points: " + results.getAttackerPoints() + "\tDefender points: " + results.getDefenderPoints());
@@ -1566,7 +1597,7 @@ public class RoleBotListener extends ListenerAdapter {
 		
 		eb.addField("Fight statistics", "Attacker points: " + results.getAttackerPoints() + "\nDefender points: " + results.getDefenderPoints(),true);
 		eb.setTimestamp(Instant.now());
-		generalChannel.sendMessage("<@" + event.getUserId() + ">").queue();
+		generalChannel.sendMessage("<@" + player.getId() + ">").queue();
 		generalChannel.sendMessageEmbeds(eb.build()).queue();
 		checkForAchievements(attacker);
 		playerData.save(attacker);
@@ -1723,11 +1754,9 @@ public class RoleBotListener extends ListenerAdapter {
 		eb.setColor(new Color(56, 79, 115));
 		eb.setFooter("Departs ");
 		eb.setTimestamp(baddy.getTimeDepart());
-
-		encountersChannel.sendMessageEmbeds(eb.build()).queue(message -> {
+		encountersChannel.sendMessageEmbeds(eb.build()).setActionRow(Button.primary("fight_encounter", "Fight enemy")).queue(message -> {
 			baddy.setId(message.getIdLong());
 			encounterData.save(baddy);
-			message.addReaction(encountersChannel.getGuild().getEmoteById(fightEmojiID)).queue();
 		});
 		
 		logger.info("Adding encounter");
