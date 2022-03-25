@@ -52,6 +52,7 @@ import data.database.arena.shopItem.ShopItem;
 import data.database.arena.shopItem.ShopItemRepository;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.ChannelType;
+import net.dv8tion.jda.api.entities.Emoji;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
@@ -1754,7 +1755,7 @@ public class RoleBotListener extends ListenerAdapter {
 		eb.setColor(new Color(56, 79, 115));
 		eb.setFooter("Departs ");
 		eb.setTimestamp(baddy.getTimeDepart());
-		encountersChannel.sendMessageEmbeds(eb.build()).setActionRow(Button.primary("fight_encounter", "Fight enemy")).queue(message -> {
+		encountersChannel.sendMessageEmbeds(eb.build()).setActionRow(Button.primary("fight_encounter", "Fight enemy").withEmoji(Emoji.fromEmote(guild.getEmoteById(fightEmojiID)))).queue(message -> {
 			baddy.setId(message.getIdLong());
 			encounterData.save(baddy);
 		});
