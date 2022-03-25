@@ -1354,6 +1354,18 @@ public class RoleBotListener extends ListenerAdapter {
 					event.getPrivateChannel().sendMessage("Player with that ID does not exist in this guild").queue();
 				}
 				break;
+			case "reroll-all":
+				for(Player p : playerData.findAll()) {
+					Random r = new Random();
+					p.setKnowledge(r.nextInt(11));
+					p.setAgility(r.nextInt(11));
+					p.setStrength(r.nextInt(11));
+					p.setMagic(r.nextInt(11));
+					p.setStamina(r.nextInt(11));
+					playerData.save(p);
+				}
+				event.getPrivateChannel().sendMessage("All stats have been rerolled").queue();
+				break;
 			case "audit":
 				Member member1 = guild.getMemberById(message.split(" ")[1]);
 				if(member1 != null) {
