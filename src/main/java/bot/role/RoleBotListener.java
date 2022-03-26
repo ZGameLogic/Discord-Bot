@@ -1755,7 +1755,7 @@ public class RoleBotListener extends ListenerAdapter {
 		eb.setColor(new Color(56, 79, 115));
 		eb.setFooter("Departs ");
 		eb.setTimestamp(baddy.getTimeDepart());
-		encountersChannel.sendMessageEmbeds(eb.build()).setActionRow(Button.primary("fight_encounter", "Fight enemy").withEmoji(Emoji.fromEmote(guild.getEmoteById(fightEmojiID)))).queue(message -> {
+		encountersChannel.sendMessageEmbeds(eb.build()).setActionRow(Button.secondary("fight_encounter", "Fight enemy").withEmoji(Emoji.fromEmote(guild.getEmoteById(fightEmojiID)))).queue(message -> {
 			baddy.setId(message.getIdLong());
 			encounterData.save(baddy);
 		});
