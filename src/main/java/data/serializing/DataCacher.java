@@ -1,19 +1,16 @@
 package data.serializing;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.LinkedList;
 
 public class DataCacher <T extends SaveableData> {
-	
+
 	private final String filePath;
-	
+
 	public DataCacher(String filePath) {
 		File f = new File(filePath);
 		if(!f.exists()) {
@@ -21,88 +18,85 @@ public class DataCacher <T extends SaveableData> {
 		}
 		this.filePath = filePath;
 	}
-	
+
 	public boolean exists(String file) {
-		File f = new File(filePath + "//" + file);
+		file = file.replace(".json", "");
+		File f = new File(filePath + "//" + file + ".json");
 		return f.exists();
 	}
-	
+
 	public void saveSerialized(T yourObject) {
 		saveSerialized(yourObject, yourObject.getId());
 	}
-	
+
 	/**
-	 * Saves the object into the file path that has been given 
-	 * @param yourObject Object to be serialized 
+	 * Saves the object into the file path that has been given
+	 * @param yourObject Object to be serialized
 	 * @param file File path to save object too
 	 */
 	public void saveSerialized(T yourObject, String file) {
-		
-		ObjectOutputStream outputStream = null;
+		ObjectMapper om = new ObjectMapper();
 		try {
-			outputStream = new ObjectOutputStream(new FileOutputStream(filePath + "//" + file));
-			outputStream.writeObject(yourObject);	
+			file = file.replace(".json", "");
+			om.writerWithDefaultPrettyPrinter().writeValue(new File(filePath + "//" + file + ".json"), yourObject);
 		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			if(outputStream != null) {
-				try {
-					outputStream.flush();
-					outputStream.close();
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-				
-			}
-		}		
+			throw new RuntimeException(e);
+		}
 	}
-	
+
 	/**
-	 * Loads the object from file path that has been given 
-	 * @param file File path to load object from
+	 * loads the first datafile in the directory
+	 * @return The first data file in the directory
+	 */
+	public T loadSerialized() {
+		return loadSerialized(getFiles()[0].getName());
+	}
+
+	/**
+	 * Loads the object from file path that has been given
+	 * @param id id of the file you want loaded
 	 * @return
 	 */
 	@SuppressWarnings("unchecked")
-	public T loadSerialized(String file) {
-		
-		T data1 = null;
-		
+	public T loadSerialized(String id) {
+		T data1;
+		ObjectMapper om = new ObjectMapper();
 		try {
-			FileInputStream fileIn = new FileInputStream(filePath + "//" + file);
-			ObjectInputStream in = new ObjectInputStream(fileIn);
-			try {
-				data1 = (T) in.readObject();
-			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
-			}
-			
-			in.close();
-			
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+			id = id.replace(".json", "");
+			data1 = (T) om.readValue(new File(filePath + "//" + id + ".json"), SaveableData.class);
 		} catch (IOException e) {
-			e.printStackTrace();
+			throw new RuntimeException(e);
 		}
-		
 		return data1;
 	}
-	
+
+	/**
+	 * Loads the object from file path that has been given
+	 * @param id id of the file you want loaded
+	 * @return
+	 */
+	@SuppressWarnings("unchecked")
+	public T loadSerialized(long id) {
+		return loadSerialized(id + "");
+	}
+
 	public void delete(String file) {
-		File fileToDelete = new File(filePath + "//" + file);
+		file = file.replace(".json", "");
+		File fileToDelete = new File(filePath + "//" + file + ".json");
 		fileToDelete.delete();
 	}
-	
+
 	public File[] getFiles() {
 		File f = new File(filePath);
 		return f.listFiles();
 	}
-	
+
 	public void saveSerialized(LinkedList<T> list) {
 		for(T object : list) {
 			saveSerialized(object);
 		}
 	}
-	
+
 	public LinkedList<T> getData(){
 		LinkedList<T> list = new LinkedList<>();
 		for(File f : getFiles()) {
@@ -110,7 +104,7 @@ public class DataCacher <T extends SaveableData> {
 		}
 		return list;
 	}
-	
+
 	/**
 	 * Gets a map of the data with the key being the ID of the object
 	 * @return Map of data with the IDs as the keys

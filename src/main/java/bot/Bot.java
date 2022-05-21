@@ -22,11 +22,6 @@ import bot.role.RoleBotListener;
 import bot.slashUtils.SlashBotListener;
 import bot.steam.SteamListener;
 import data.ConfigLoader;
-import data.database.arena.activity.ActivityRepository;
-import data.database.arena.encounter.EncounterRepository;
-import data.database.arena.misc.GameInformationRepository;
-import data.database.arena.player.PlayerRepository;
-import data.database.arena.shopItem.ShopItemRepository;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
@@ -40,17 +35,6 @@ import webhook.listeners.WebHookReactionListener;
 
 @RestController
 public class Bot {
-	
-	@Autowired
-	PlayerRepository playerData;
-	@Autowired
-	GameInformationRepository gameData;
-	@Autowired
-	ShopItemRepository shopItemData;
-	@Autowired
-	EncounterRepository encounterData;
-	@Autowired
-	ActivityRepository activityData;
 	
 	private RoleBotListener RBL;
 	
@@ -80,7 +64,7 @@ public class Bot {
 		// Add listeners
 		PartyBotListener PBL = new PartyBotListener(config);
 		WebHookReactionListener WHRL = new WebHookReactionListener(config);
-		RBL = new RoleBotListener(config, playerData, gameData, shopItemData, encounterData, activityData);
+		//RBL = new RoleBotListener(config, playerData, gameData, shopItemData, encounterData, activityData);
 		
 		bot.addEventListeners(PBL);
 		bot.addEventListeners(WHRL);
@@ -111,20 +95,21 @@ public class Bot {
 	
 	@GetMapping("/king")
 	public String getKing() {
-		return RoleBotListener.getKing();
+		return null/*RoleBotListener.getKing()*/;
 	}
 	
 	@GetMapping("/auditPlayer")
 	public String auditPlayer(@RequestBody String valueOne) throws JSONException {
 		JSONObject JSONInformation = new JSONObject(valueOne);
 		JSONObject json = new JSONObject();
-		json.put("result", RBL.audit(JSONInformation.getLong("player_id")));
+		//json.put("result", RBL.audit(JSONInformation.getLong("player_id")));
 		return json.toString();
 	}
 	
 	@GetMapping("/listMembers")
 	public String listMembers() throws JSONException {
-		return RBL.getPlayerList().toString();
+		//return RBL.getPlayerList().toString();
+		return "";
 	}
 	
 	private void handleBamboo(JSONObject message) throws JSONException {
