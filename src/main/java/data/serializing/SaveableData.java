@@ -19,7 +19,8 @@ import lombok.Setter;
 @JsonSubTypes({
 		@JsonSubTypes.Type(Strings.class),
 		@JsonSubTypes.Type(Player.class),
-		@JsonSubTypes.Type(GameConfigValues.class)
+		@JsonSubTypes.Type(GameConfigValues.class),
+		@JsonSubTypes.Type(KingData.class)
 //		@JsonSubTypes.Type(Encounter.class),
 //		@JsonSubTypes.Type(Activity.class),
 //		@JsonSubTypes.Type(Tournament.class),

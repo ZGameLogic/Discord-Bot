@@ -25,8 +25,14 @@ public class DataCacher <T extends SaveableData> {
 		return f.exists();
 	}
 
-	public void saveSerialized(T yourObject) {
-		saveSerialized(yourObject, yourObject.getId());
+	public boolean exists(long id) {
+		return exists(id + "");
+	}
+
+	public void saveSerialized(T...yourObject) {
+		for(T t : yourObject){
+			saveSerialized(t, t.getId());
+		}
 	}
 
 	/**
