@@ -16,8 +16,8 @@ public class Item {
         LEGENDARY,
         EPIC,
         RARE,
-        COMMON,
-        UNCOMMON
+        UNCOMMON,
+        COMMON
     }
 
     private List<Modifier> modifiers;

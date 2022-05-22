@@ -58,7 +58,7 @@ public class Player extends SaveableData {
      */
     public int activitiesLeftToday(){
         int activitiesPerDay = new DataCacher<GameConfigValues>("game_config").loadSerialized().getActivitiesPerDay();
-        int itemBoostActivities = getStatTotalFromItems(Modifier.Stat.ACTIVITY);
+        int itemBoostActivities = getStatTotalFromItems(Modifier.Stat.ACTIVITY, Modifier.Type.STATIC);
         return activitiesPerDay + itemBoostActivities - activitiesDone;
     }
 
@@ -82,11 +82,59 @@ public class Player extends SaveableData {
     }
 
     /**
+     * Increases the strength stat by an amount + whatever active item modifiers the player has
+     * @param amount how much to increase the stat by
+     */
+    public void increaseStrength(int amount){
+        strength += amount + getStatTotalFromItems(Modifier.Stat.STRENGTH, Modifier.Type.ACTIVE);
+    }
+
+    /**
+     * Increases the stamina stat by an amount + whatever active item modifiers the player has
+     * @param amount how much to increase the stat by
+     */
+    public void increaseStamina(int amount){
+        stamina += amount + getStatTotalFromItems(Modifier.Stat.STAMINA, Modifier.Type.ACTIVE);
+    }
+
+    /**
+     * Increases the agility stat by an amount + whatever active item modifiers the player has
+     * @param amount how much to increase the stat by
+     */
+    public void increaseAgility(int amount){
+        agility += amount + getStatTotalFromItems(Modifier.Stat.AGILITY, Modifier.Type.ACTIVE);
+    }
+
+    /**
+     * Increases the knowledge stat by an amount + whatever active item modifiers the player has
+     * @param amount how much to increase the stat by
+     */
+    public void increaseKnowledge(int amount){
+        knowledge += amount + getStatTotalFromItems(Modifier.Stat.KNOWLEDGE, Modifier.Type.ACTIVE);
+    }
+
+    /**
+     * Increases the magic stat by an amount + whatever active item modifiers the player has
+     * @param amount how much to increase the stat by
+     */
+    public void increaseMagic(int amount){
+        magic += amount + getStatTotalFromItems(Modifier.Stat.MAGIC, Modifier.Type.ACTIVE);
+    }
+
+    /**
+     * Increases the gold stat by an amount + whatever active item modifiers the player has
+     * @param amount how much to increase the stat by
+     */
+    public void increaseGold(int amount){
+        gold += amount + getStatTotalFromItems(Modifier.Stat.GOLD, Modifier.Type.ACTIVE);
+    }
+
+    /**
      * @return Strength stat with item modifiers
      */
     @JsonIgnore
     public int getStrengthStat(){
-        return strength + getStatTotalFromItems(Modifier.Stat.STRENGTH);
+        return strength + getStatTotalFromItems(Modifier.Stat.STRENGTH, Modifier.Type.STATIC);
     }
 
     /**
@@ -94,7 +142,7 @@ public class Player extends SaveableData {
      */
     @JsonIgnore
     public int getMagicStat(){
-        return magic + getStatTotalFromItems(Modifier.Stat.MAGIC);
+        return magic + getStatTotalFromItems(Modifier.Stat.MAGIC, Modifier.Type.STATIC);
     }
 
     /**
@@ -102,7 +150,7 @@ public class Player extends SaveableData {
      */
     @JsonIgnore
     public int getKnowledgeStat(){
-        return knowledge + getStatTotalFromItems(Modifier.Stat.KNOWLEDGE);
+        return knowledge + getStatTotalFromItems(Modifier.Stat.KNOWLEDGE, Modifier.Type.STATIC);
     }
 
     /**
@@ -110,7 +158,7 @@ public class Player extends SaveableData {
      */
     @JsonIgnore
     public int getStaminaStat(){
-        return stamina + getStatTotalFromItems(Modifier.Stat.STAMINA);
+        return stamina + getStatTotalFromItems(Modifier.Stat.STAMINA, Modifier.Type.STATIC);
     }
 
     /**
@@ -118,7 +166,7 @@ public class Player extends SaveableData {
      */
     @JsonIgnore
     public int getAgilityStat(){
-        return agility + getStatTotalFromItems(Modifier.Stat.AGILITY);
+        return agility + getStatTotalFromItems(Modifier.Stat.AGILITY, Modifier.Type.STATIC);
     }
 
     /**
@@ -166,11 +214,11 @@ public class Player extends SaveableData {
      * @param stat Stat to check items for
      * @return total modifier for that stat
      */
-    private int getStatTotalFromItems(Modifier.Stat stat){
+    private int getStatTotalFromItems(Modifier.Stat stat, Modifier.Type type){
         int total = 0;
         for(Item item : inventory){
             for(Modifier modifier : item.getModifiers()){
-                if(modifier.getStat() == stat){
+                if(modifier.getStat() == stat && modifier.getType() == type){
                     total += modifier.getAmount();
                 }
             }
