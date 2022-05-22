@@ -2,9 +2,11 @@ package bot.role.data.jsonConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import data.serializing.SaveableData;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 @Getter
+@AllArgsConstructor
 public class GameConfigValues extends SaveableData {
 
     @JsonProperty("server booster padding")
@@ -19,7 +21,5 @@ public class GameConfigValues extends SaveableData {
     @JsonProperty("activities per day")
     private int activitiesPerDay;
 
-    public GameConfigValues(){
-        super("config");
-    }
+    public GameConfigValues(){}
 }

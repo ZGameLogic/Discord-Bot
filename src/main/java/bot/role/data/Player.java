@@ -6,8 +6,10 @@ import bot.role.data.jsonConfig.GameConfigValues;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import data.serializing.DataCacher;
 import data.serializing.SaveableData;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -15,6 +17,8 @@ import java.util.Random;
 
 @Getter
 @NoArgsConstructor
+@EqualsAndHashCode
+@ToString
 public class Player extends SaveableData {
 
     private int strength, agility, knowledge, magic, stamina;
@@ -50,6 +54,19 @@ public class Player extends SaveableData {
         activitiesDone = 0;
         inventory = new LinkedList<>();
         daysSinceLastActive = 0;
+    }
+
+    /**
+     * Adds an item to the players inventory.
+     * If there are more than 5 items, removes the last item in the back of the list.
+     * Adds new item to the back of the list.
+     * @param item Item to be added to the inventory
+     */
+    public void addItem(Item item){
+        if(inventory.size() >= 5){
+            inventory.remove(4);
+        }
+        inventory.add(item);
     }
 
     /**
@@ -216,7 +233,8 @@ public class Player extends SaveableData {
      */
     private int getStatTotalFromItems(Modifier.Stat stat, Modifier.Type type){
         int total = 0;
-        for(Item item : inventory){
+        for(int i = 0; i < 3 && i < inventory.size(); i++){
+            Item item = inventory.get(i);
             for(Modifier modifier : item.getModifiers()){
                 if(modifier.getStat() == stat && modifier.getType() == type){
                     total += modifier.getAmount();

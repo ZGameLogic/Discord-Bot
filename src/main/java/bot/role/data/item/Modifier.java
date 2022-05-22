@@ -1,12 +1,12 @@
 package bot.role.data.item;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
+@ToString
 public class Modifier {
     private Stat stat;
     private Type type;

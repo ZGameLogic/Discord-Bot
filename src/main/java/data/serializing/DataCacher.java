@@ -86,6 +86,11 @@ public class DataCacher <T extends SaveableData> {
 		fileToDelete.delete();
 	}
 
+	public void deleteDir(){
+		File file = new File(filePath);
+		deleteDirectory(file);
+	}
+
 	public File[] getFiles() {
 		File f = new File(filePath);
 		return f.listFiles();
@@ -115,5 +120,15 @@ public class DataCacher <T extends SaveableData> {
 			map.put(f.getName(), loadSerialized(f.getName()));
 		}
 		return map;
+	}
+
+	private boolean deleteDirectory(File directoryToBeDeleted) {
+		File[] allContents = directoryToBeDeleted.listFiles();
+		if (allContents != null) {
+			for (File file : allContents) {
+				deleteDirectory(file);
+			}
+		}
+		return directoryToBeDeleted.delete();
 	}
 }

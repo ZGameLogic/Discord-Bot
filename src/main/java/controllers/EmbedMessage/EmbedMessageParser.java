@@ -43,74 +43,74 @@ public abstract class EmbedMessageParser {
     }
 
     private static String getValue(String value, Player player){
-        switch(value.replace("%", "")){
-            case "SR":
-                return player.getStrength() + "";
-            case "sr":
-                return player.getRawStrength() + "";
-            case "Sr":
-                if(player.getItem().getItemType() == Item.StatType.STATIC_STRENGTH){
-                    return player.getRawStrength() + " (+" + player.getItem().getStatIncrease() + ")";
-                } else {
-                    return player.getRawStrength() + "";
-                }
-            case "KN":
-                return player.getKnowledge() + "";
-            case "kn":
-                return player.getRawKnowledge() + "";
-            case "Kn":
-                if(player.getItem().getItemType() == Item.StatType.STATIC_KNOWLEDGE){
-                    return player.getRawKnowledge() + " (+" + player.getItem().getStatIncrease() + ")";
-                } else {
-                    return player.getRawKnowledge() + "";
-                }
-            case "MA":
-                return player.getMagic() + "";
-            case "ma":
-                return player.getRawMagic() + "";
-            case "Ma":
-                if(player.getItem().getItemType() == Item.StatType.STATIC_MAGIC){
-                    return player.getRawMagic() + " (+" + player.getItem().getStatIncrease() + ")";
-                } else {
-                    return player.getRawMagic() + "";
-                }
-            case "AG":
-                return player.getAgility() + "";
-            case "ag":
-                return player.getRawAgility() + "";
-            case "Ag":
-                if(player.getItem().getItemType() == Item.StatType.STATIC_AGILITY){
-                    return player.getRawAgility() + " (+" + player.getItem().getStatIncrease() + ")";
-                } else {
-                    return player.getRawAgility() + "";
-                }
-            case "SA":
-                return player.getStamina() + "";
-            case "sa":
-                return player.getRawStamina() + "";
-            case "Sa":
-                if(player.getItem().getItemType() == Item.StatType.STATIC_AGILITY){
-                    return player.getRawStamina() + " (+" + player.getItem().getStatIncrease() + ")";
-                } else {
-                    return player.getRawStamina() + "";
-                }
-            case "Wi":
-                return player.getWins() + "";
-            case "Df":
-                return player.getLosses() + "";
-            case "Go":
-                return player.getGold() + "";
-            case "Tv":
-                return player.getTournamentWins() + "";
-            case "Al":
-                return player.getActivitiesLeft() + "";
-            case "Df":
-                return "";
-
-
-            default:
-                return "";
-        }
+//        switch(value.replace("%", "")){
+//            case "SR":
+//                return player.getStrength() + "";
+//            case "sr":
+//                return player.getRawStrengthStat() + "";
+//            case "Sr":
+//                if(player.getItem().getItemType() == Item.StatType.STATIC_STRENGTH){
+//                    return player.getRawStrength() + " (+" + player.getItem().getStatIncrease() + ")";
+//                } else {
+//                    return player.getRawStrength() + "";
+//                }
+//            case "KN":
+//                return player.getKnowledge() + "";
+//            case "kn":
+//                return player.getRawKnowledge() + "";
+//            case "Kn":
+//                if(player.getItem().getItemType() == Item.StatType.STATIC_KNOWLEDGE){
+//                    return player.getRawKnowledge() + " (+" + player.getItem().getStatIncrease() + ")";
+//                } else {
+//                    return player.getRawKnowledge() + "";
+//                }
+//            case "MA":
+//                return player.getMagic() + "";
+//            case "ma":
+//                return player.getRawMagic() + "";
+//            case "Ma":
+//                if(player.getItem().getItemType() == Item.StatType.STATIC_MAGIC){
+//                    return player.getRawMagic() + " (+" + player.getItem().getStatIncrease() + ")";
+//                } else {
+//                    return player.getRawMagic() + "";
+//                }
+//            case "AG":
+//                return player.getAgility() + "";
+//            case "ag":
+//                return player.getRawAgility() + "";
+//            case "Ag":
+//                if(player.getItem().getItemType() == Item.StatType.STATIC_AGILITY){
+//                    return player.getRawAgility() + " (+" + player.getItem().getStatIncrease() + ")";
+//                } else {
+//                    return player.getRawAgility() + "";
+//                }
+//            case "SA":
+//                return player.getStamina() + "";
+//            case "sa":
+//                return player.getRawStamina() + "";
+//            case "Sa":
+//                if(player.getItem().getItemType() == Item.StatType.STATIC_AGILITY){
+//                    return player.getRawStamina() + " (+" + player.getItem().getStatIncrease() + ")";
+//                } else {
+//                    return player.getRawStamina() + "";
+//                }
+//            case "Wi":
+//                return player.getWins() + "";
+//            case "Df":
+//                return player.getLosses() + "";
+//            case "Go":
+//                return player.getGold() + "";
+//            case "Tv":
+//                return player.getTournamentWins() + "";
+//            case "Al":
+//                return player.getActivitiesLeft() + "";
+//            case "Df":
+//                return "";
+//
+//
+//            default:
+//                return "";
+//        }
         /**
          *      *      Df : defeats
          *      *      Go : gold
@@ -122,6 +122,7 @@ public abstract class EmbedMessageParser {
          *      *      In : item name
          *      *      Id : item description
          */
+        return "";
     }
 
 }
