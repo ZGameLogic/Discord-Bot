@@ -2,7 +2,7 @@ package data.serializing;
 
 import bot.role.data.*;
 import bot.role.data.jsonConfig.Strings;
-import bot.role.data.results.ActivityFightResults;
+import bot.role.data.results.ActivityResults;
 import bot.role.data.results.ChallengeFightResults;
 import bot.role.data.results.TournamentFightResults;
 import bot.role.data.results.TournamentResults;
@@ -24,7 +24,7 @@ import lombok.Setter;
 		@JsonSubTypes.Type(Tournament.class),
 		@JsonSubTypes.Type(Guild.class),
 		@JsonSubTypes.Type(ChallengeFightResults.class),
-		@JsonSubTypes.Type(ActivityFightResults.class),
+		@JsonSubTypes.Type(ActivityResults.class),
 		@JsonSubTypes.Type(TournamentFightResults.class),
 		@JsonSubTypes.Type(TournamentResults.class)
 	}
