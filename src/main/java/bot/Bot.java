@@ -64,13 +64,13 @@ public class Bot {
 		// Add listeners
 		PartyBotListener PBL = new PartyBotListener(config);
 		WebHookReactionListener WHRL = new WebHookReactionListener(config);
-		//RBL = new RoleBotListener(config, playerData, gameData, shopItemData, encounterData, activityData);
+		RBL = new RoleBotListener(config);
 		
 		bot.addEventListeners(PBL);
 		bot.addEventListeners(WHRL);
 		bot.addEventListeners(RBL);
 		bot.addEventListeners(new SteamListener());
-		bot.addEventListeners(new SlashBotListener(PBL, config, RBL));
+		bot.addEventListeners(new SlashBotListener(PBL, config));
 		
 		// Login
 		try {

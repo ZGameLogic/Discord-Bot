@@ -1,25 +1,53 @@
 package bot.role.data.jsonConfig;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import data.serializing.SaveableData;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+import java.util.LinkedList;
+import java.util.List;
+
 @Getter
 @AllArgsConstructor
+@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class GameConfigValues extends SaveableData {
+    private List<Long> roleIds;
+    private long kingRoleId;
+    private long guildId;
+    private long encountersChannelId;
+    private long generalChannelId;
+    private long activitiesChannelId;
+    private long itemShopChannelId;
+    private List<Long> iconIds;
+    private long remindMessageId;
+    private long swordEmojiId;
+    private long fiveGoldEmojiId;
+    private long tenGoldEmojiId;
+    private long fiftyGoldEmojiId;
 
-    @JsonProperty("server booster padding")
-    private int serverBoosterPadding;
+    private double activitySpawnChance;
+    private int activityLife;
 
-    @JsonProperty("start stat max")
+    private double shopItemSpawnChance;
+    private int shopItemLife;
+
     private int startStatMax;
-
-    @JsonProperty("start gold max")
     private int startGoldMax;
 
-    @JsonProperty("activities per day")
+    private int serverBoosterPadding;
+    private int paddingMultiplier;
     private int activitiesPerDay;
+    private int challengeDefendPerDay;
 
-    public GameConfigValues(){}
+    private int smallDungeonRoomCount;
+    private int mediumDungeonRoomCount;
+    private int largeDungeonRoomCount;
+
+    public GameConfigValues(){
+        iconIds = new LinkedList<>();
+        roleIds = new LinkedList<>();
+    }
 }

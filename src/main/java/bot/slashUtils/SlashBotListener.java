@@ -31,12 +31,10 @@ public class SlashBotListener extends ListenerAdapter {
 	
 	private PartyBotListener PBL;
 	private ConfigLoader CL;
-	private RoleBotListener RBL;
 	
-	public SlashBotListener(PartyBotListener PBL, ConfigLoader CL, RoleBotListener RBL) {
+	public SlashBotListener(PartyBotListener PBL, ConfigLoader CL) {
 		this.PBL = PBL;
 		this.CL = CL;
-		this.RBL = RBL;
 	}
 	
 	/**
@@ -158,39 +156,6 @@ public class SlashBotListener extends ListenerAdapter {
 		case "roll-dice":
 			rollDice(event);
 			break;
-//		case "stats":
-//			RBL.sendStats(event);
-//			break;
-//		case "challenge":
-//			RBL.challenge(event);
-//			break;
-//		case "role-stats":
-//			RBL.sendRoleStats(event);
-//			break;
-//		case "leaderboard":
-//			RBL.leaderBoard(event);
-//			break;
-//		case "pass-law":
-//			RBL.passLaw(event);
-//			break;
-//		case "distribute-wealth":
-//			RBL.distributeWealth(event);
-//			break;
-//		case "propose-tax":
-//			RBL.submitTax(event);
-//			break;
-//		case "honorable-promotion":
-//			RBL.honorablePromotion(event);
-//			break;
-//		case "pay-citizen":
-//			RBL.payCitizen(event);
-//			break;
-//		case "day-history":
-//			RBL.getDayHistory(event);
-//			break;
-//		case "achievements":
-//			RBL.sendAchievements(event);
-//			break;
 		}
 	}
 	

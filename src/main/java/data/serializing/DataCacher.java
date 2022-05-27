@@ -1,11 +1,13 @@
 package data.serializing;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Random;
 
 public class DataCacher <T extends SaveableData> {
 
@@ -126,6 +128,20 @@ public class DataCacher <T extends SaveableData> {
 			map.put(f.getName(), loadSerialized(f.getName()));
 		}
 		return map;
+	}
+
+	/**
+	 * Generates an id that has not been taken yet in the data directory
+	 * @return unique long id
+	 */
+	public long generateID(){
+		File dir = new File(filePath);
+		Random random = new Random();
+		long id = random.nextLong();
+		while(id < 0 || new File(filePath + "\\" + id).exists()){
+			id = random.nextLong();
+		}
+		return id;
 	}
 
 	private boolean deleteDirectory(File directoryToBeDeleted) {

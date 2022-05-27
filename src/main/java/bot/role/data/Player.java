@@ -28,8 +28,10 @@ public class Player extends SaveableData {
     private int tournamentVictories;
     private int wins, losses;
     private int activitiesDone;
+    private int challengesDefendedToday;
     private List<Item> inventory;
     private int daysSinceLastActive;
+    private boolean active;
 
     /**
      * Creates a new player. This player gets a random stat start, and a random amount of gold
@@ -54,6 +56,8 @@ public class Player extends SaveableData {
         activitiesDone = 0;
         inventory = new LinkedList<>();
         daysSinceLastActive = 0;
+        challengesDefendedToday = 0;
+        active = false;
     }
 
     /**
@@ -229,19 +233,49 @@ public class Player extends SaveableData {
     /**
      *
      * @param stat Stat to check items for
+     * @param type Type for the item
      * @return total modifier for that stat
      */
     private int getStatTotalFromItems(Modifier.Stat stat, Modifier.Type type){
         int total = 0;
         for(int i = 0; i < 3 && i < inventory.size(); i++){
             Item item = inventory.get(i);
-            for(Modifier modifier : item.getModifiers()){
-                if(modifier.getStat() == stat && modifier.getType() == type){
-                    total += modifier.getAmount();
+            if(!item.broken()){
+                for(Modifier modifier : item.getModifiers()){
+                    if(modifier.getStat() == stat && modifier.getType() == type){
+                        total += modifier.getAmount();
+                    }
                 }
             }
         }
         return total;
     }
+
+    /**
+     * Sets the user to active for the day
+     */
+    public void setActive(){
+        active = true;
+    }
+
+    /**
+     * Does a new day for the user
+     */
+    public void newDay(){
+        // stuff involving activeness
+        if (active) {
+            active = false;
+            daysSinceLastActive = 0;
+        } else {
+            daysSinceLastActive++;
+        }
+
+        // stuff involving items
+        for(int i = 0; i < 3 && i < inventory.size(); i++){
+            Item item = inventory.get(i);
+            item.useItem();
+        }
+    }
+
 
 }
