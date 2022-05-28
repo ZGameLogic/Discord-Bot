@@ -1,10 +1,5 @@
 package bot.role.dungeon.graph;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
@@ -21,6 +16,19 @@ public class Graph {
         vertexes = roomCenters;
         this.map = map;
         bowyerWatsonAlgorithm(width, height);
+    }
+
+    private void primsAlgorithm(){
+        Queue<Node> toAdd = new PriorityQueue<>();
+        for(Vertex v : vertexes){
+            toAdd.add(new Node(v, Double.POSITIVE_INFINITY));
+        }
+        List<Node> mst = new LinkedList<>();
+        while(toAdd.size() > 0) {
+            Node currentNode = toAdd.remove();
+            mst.add(currentNode);
+        }
+
     }
 
     private void bowyerWatsonAlgorithm(int width , int height){
@@ -76,14 +84,31 @@ public class Graph {
         this.edges = new LinkedList<>(edges);
     }
 
-    private void primsAlgorithm(){
-        // TODO create a minimum spanning tree (Prim's Algorithm)
-    }
-
     private void randomHallways(){
         // TODO Randomly choose remaining edges for hallways
     }
 
+    private List<Node> getConnectedNodes(Node node){
+        List<Node> nodes = new LinkedList<>();
+        for(Edge e : getConnectedEdges(node.getVertex())){
+            for(Vertex v : e.getVertexes()){
+                if(!node.equalsVertex(v)){
+                    nodes.add(new Node(v, e.length()));
+                }
+            }
+        }
+        return nodes;
+    }
+
+    private List<Edge> getConnectedEdges(Vertex vertex){
+        List<Edge> edges = new LinkedList<>();
+        for(Edge e : this.edges){
+            if(e.connects(vertex)){
+                edges.add(e);
+            }
+        }
+        return edges;
+    }
 
     public List<int[]> getHallways(){
         List<int[]> hallways = new LinkedList<>();
