@@ -1,6 +1,7 @@
-package bot.role.dungeon;
+package bot.role.generators;
 
 import bot.role.data.jsonConfig.GameConfigValues;
+import bot.role.dungeon.Room;
 import bot.role.dungeon.astar.Node;
 import bot.role.dungeon.graph.Edge;
 import bot.role.dungeon.graph.Graph;
