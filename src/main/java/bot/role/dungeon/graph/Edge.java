@@ -2,6 +2,7 @@ package bot.role.dungeon.graph;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.Arrays;
@@ -11,7 +12,7 @@ import java.util.Objects;
 
 @AllArgsConstructor
 @Getter
-public class Edge {
+public class Edge implements Comparable<Edge> {
 
     private Vertex startVertex;
     private Vertex endVertex;
@@ -59,5 +60,10 @@ public class Edge {
     @Override
     public int hashCode() {
         return Objects.hash(startVertex, endVertex);
+    }
+
+    @Override
+    public int compareTo(@NotNull Edge o) {
+        return Double.compare(length(), o.length());
     }
 }

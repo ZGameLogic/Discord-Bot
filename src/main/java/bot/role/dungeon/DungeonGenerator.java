@@ -2,12 +2,10 @@ package bot.role.dungeon;
 
 import bot.role.data.jsonConfig.GameConfigValues;
 import bot.role.dungeon.astar.Node;
-import bot.role.dungeon.graph.Circumcircle;
 import bot.role.dungeon.graph.Edge;
 import bot.role.dungeon.graph.Graph;
 import bot.role.dungeon.graph.Vertex;
 import data.serializing.DataCacher;
-import lombok.Getter;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -17,20 +15,17 @@ import java.io.IOException;
 import java.util.*;
 import java.util.List;
 
-public class DungeonGenerator {
+public abstract class DungeonGenerator {
 
     public enum Size {
         SMALL, MEDIUM, LARGE
     }
 
-    // 0 is empty tile, 1 is room tile, 2 is door tile, 3 is room wall, 4 is a hallway
-    private int map[][];
-    @Getter
-    private List<Room> rooms;
-    private List<Vertex> roomCenters;
-    private List<Edge> edges;
+    public static int[][] GenerateDungeon(Size size){
+        int map[][];
+        List<Room> rooms;
+        List<Vertex> roomCenters;
 
-    public DungeonGenerator(Size size){
         rooms = new LinkedList<>();
         GameConfigValues gcv = new DataCacher<GameConfigValues>("game_config").loadSerialized();
         int dungeonRoomCount;
@@ -52,7 +47,7 @@ public class DungeonGenerator {
         map = new int[dungeonRoomCount * 2][dungeonRoomCount * 2];
 
         for(int i = 0; i < 100; i++){
-            generateRoom();
+            generateRoom(rooms, map);
         }
 
         roomCenters = new LinkedList<>();
@@ -60,59 +55,63 @@ public class DungeonGenerator {
             roomCenters.add(new Vertex(room.getCenter()));
         }
 
-        Graph graph = new Graph(roomCenters,dungeonRoomCount * 2, dungeonRoomCount * 2, map);
+        Graph graph = new Graph(roomCenters,dungeonRoomCount * 2, dungeonRoomCount * 2);
 
-        edges = new LinkedList<>();
-        edges.addAll(graph.getEdges());
+        List<Edge> edges = graph.getMinimumSpanningTree();
         for(int[] path : graph.getHallways()){
-            pathFind(path);
+            for(int[] foundPath : pathFind(path, map)){
+                if(map[foundPath[0]][foundPath[1]] == 0) {
+                    map[foundPath[0]][foundPath[1]] = 4;
+                }
+            }
         }
 
-        cleanUpDoors();
+        cleanUpDoors(rooms, map);
         try {
-            saveDungeon();
+            saveDungeon(map);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        return map;
     }
 
-    private void cleanUpDoors() {
+    private static void cleanUpDoors(List<Room> rooms, int[][] map) {
         for(Room room : rooms){
             for(int[] door : room.getDoorsAbsolute()){
                 int doorX =  door[0];
                 int doorY = door[1];
-                if(getUpTile(doorX, doorY) != 4 &&
-                    getRightTile(doorX, doorY) != 4 &&
-                    getDownTile(doorX, doorY) != 4 &&
-                    getLeftTile(doorX, doorY) != 4){
+                if(getUpTile(doorX, doorY, map) != 4 &&
+                    getRightTile(doorX, doorY, map) != 4 &&
+                    getDownTile(doorX, doorY, map) != 4 &&
+                    getLeftTile(doorX, doorY, map) != 4){
                     map[doorX][doorY] = 3;
                 }
             }
         }
     }
 
-    private int getUpTile(int x, int y){
+    private static int getUpTile(int x, int y, int[][] map){
         if(y > 0){
             return map[x][y - 1];
         }
         return -1;
     }
 
-    private int getRightTile(int x, int y){
+    private static int getRightTile(int x, int y, int[][] map){
         if(x < map.length - 1){
             return map[x + 1][y];
         }
         return -1;
     }
 
-    private int getDownTile(int x, int y){
+    private static int getDownTile(int x, int y, int[][] map){
         if(y < map[x].length - 1){
             return map[x][y + 1];
         }
         return -1;
     }
 
-    private int getLeftTile(int x, int y){
+    private static int getLeftTile(int x, int y, int[][] map){
         if(x > 0){
             return map[x - 1][y];
         }
@@ -122,7 +121,7 @@ public class DungeonGenerator {
     /**
      * Places a random room on the grid
      */
-    private void generateRoom() {
+    private static void generateRoom(List<Room> rooms, int[][] map) {
         Random random = new Random();
         boolean placed = false;
         int totalRetries = 0;
@@ -135,9 +134,9 @@ public class DungeonGenerator {
             int triesWithCurrentSize = 0;
             while(!placed && triesWithCurrentSize < 20){
                 // Check for valid placement
-                if(checkForValidPlacement(room)){
+                if(checkForValidPlacement(room, map)){
                     addDoorsToRoom(room, random.nextInt(2) + 1);
-                    placeRoom(room);
+                    placeRoom(room, rooms, map);
                     placed = true;
                 }
                 triesWithCurrentSize++;
@@ -146,7 +145,7 @@ public class DungeonGenerator {
         }
     }
 
-    private boolean checkForValidPlacement(Room room){
+    private static boolean checkForValidPlacement(Room room, int[][] map){
         int startX = room.getX() > 1 ? room.getX() - 1 : 0;
         int startY = room.getY() > 1 ? room.getY() - 1 : 0;
         for(int i = startX; i < map.length && i < room.getX() + room.getWidth() + 1; i++){
@@ -159,7 +158,7 @@ public class DungeonGenerator {
         return true;
     }
 
-    private void placeRoom(Room room){
+    private static void placeRoom(Room room, List<Room> rooms, int[][] map){
         rooms.add(room);
         for(int i = room.getX(); i < map.length && i < room.getX() + room.getWidth(); i++){
             for(int j = room.getY(); j < map[i].length && j < room.getY() + room.getHeight(); j++){
@@ -177,7 +176,7 @@ public class DungeonGenerator {
         }
     }
 
-    public void saveDungeon() throws IOException {
+    public static void saveDungeon(int[][] map) throws IOException {
         int width = map.length * 20 + 40;
         int height = map[0].length * 20 + 40;
 
@@ -206,10 +205,12 @@ public class DungeonGenerator {
                 boolean leftWall = x > 0 && map[x - 1][y] == 3;
 
                 int tileSetOffset = -1;
+                int tileSetBackground = -1;
                 switch (map[x][y]){
                     case 0: // open tile
                         break;
                     case 1: // room tile
+                        tileSetBackground = 2;
                        break;
                     case 2: // door
                         if(!topWall && !bottomWall && rightWall || leftWall){
@@ -217,52 +218,56 @@ public class DungeonGenerator {
                         } else if(topWall || bottomWall && !rightWall && !leftWall){
                             tileSetOffset = 12;
                         }
+                        tileSetBackground = 2;
                         break;
                     case 3: // wall
                         if(!topWall && !bottomWall && rightWall && leftWall){
                             tileSetOffset = 0;
+                            tileSetBackground = 0;
                         } else if(topWall && bottomWall && !rightWall && !leftWall){
                             tileSetOffset = 1;
+                            tileSetBackground = 0;
                         } else if (!topWall && !bottomWall && rightWall && !leftWall){
                             tileSetOffset = 2;
+                            tileSetBackground = 0;
                         } else if (!topWall && bottomWall && !rightWall && !leftWall){
                             tileSetOffset = 3;
+                            tileSetBackground = 0;
                         } else if (!topWall && !bottomWall && !rightWall && leftWall){
                             tileSetOffset = 4;
+                            tileSetBackground = 0;
                         } else if (topWall && !bottomWall && !rightWall && !leftWall){
                             tileSetOffset = 5;
+                            tileSetBackground = 0;
                         } else if (!topWall && bottomWall && rightWall && !leftWall){
                             tileSetOffset = 6;
+                            tileSetBackground = 0;
                         } else if (!topWall && bottomWall && !rightWall && leftWall){
                             tileSetOffset = 7;
+                            tileSetBackground = 0;
                         } else if (topWall && !bottomWall && !rightWall && leftWall){
                             tileSetOffset = 8;
+                            tileSetBackground = 0;
                         } else if (topWall && !bottomWall && rightWall && !leftWall){
                             tileSetOffset = 9;
+                            tileSetBackground = 0;
                         } else if (!topWall && !bottomWall && !rightWall && !leftWall){
                             tileSetOffset = 10;
+                            tileSetBackground = 0;
                         }
                         break;
                     case 4: // hallway
-                        pane.setColor(new Color(117, 82, 61));
-                        pane.fillRect(photoX, photoY, 20, 20);
-                        pane.setColor(Color.black);
+                        tileSetBackground = 1;
                         break;
                 }
-                if(tileSetOffset != -1)
+                if(tileSetBackground != -1){
+                    pane.drawImage(tileSet.getSubimage(0 * 20, (tileSetBackground + 1) * 20, 20, 20), photoX, photoY, null);
+                }
+                if(tileSetOffset != -1) {
                     pane.drawImage(tileSet.getSubimage(tileSetOffset * 20, 0, 20, 20), photoX, photoY, null);
+                }
             }
         }
-
-        for(Vertex vertex : roomCenters){
-            vertex.paintVertex(pane, 0);
-        }
-
-        for(Edge edge : edges){
-            edge.paintEdge(pane);
-        }
-
-
         // Disposes of this graphics context and releases any system resources that it is using.
         pane.dispose();
 
@@ -272,7 +277,7 @@ public class DungeonGenerator {
 
     }
 
-    private void addDoorsToRoom(Room room, int count){
+    private static void addDoorsToRoom(Room room, int count){
         Random random = new Random();
         for(int i = 0; i < count; i++) {
             switch (random.nextInt(4)) {
@@ -292,7 +297,7 @@ public class DungeonGenerator {
         }
     }
 
-    private List<int[]> pathFind(int[] pathArray){
+    private static List<int[]> pathFind(int[] pathArray, int[][] map){
         Node.endNode = new Node(pathArray[2], pathArray[3]);
         Node startNode = new Node(pathArray[0], pathArray[1]);
 
@@ -351,13 +356,13 @@ public class DungeonGenerator {
      * @param tileType
      * @return
      */
-    private int getCost(int tileType){
+    private static int getCost(int tileType){
         switch (tileType){
             case 1: // room floor tile
             case 2: // door tile
-                return 3;
-            case 0: // empty tile
                 return 1;
+            case 0: // empty tile
+                return 5;
             case 4: // existing hallway
                 return 1;
             default:

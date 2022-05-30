@@ -8,30 +8,47 @@ public class Graph {
     private List<Vertex> vertexes;
     private List<Edge> edges;
     private List<Edge> minimumSpanningTree;
-    private int[][] map;
+    private int width, height;
 
-    public Graph(List<Vertex> roomCenters, int width , int height, int[][] map) {
+    public Graph(List<Vertex> roomCenters, int width , int height) {
         edges = new LinkedList<>();
         minimumSpanningTree = new LinkedList<>();
         vertexes = roomCenters;
-        this.map = map;
-        bowyerWatsonAlgorithm(width, height);
+        this.width = width;
+        this.height = height;
+        bowyerWatsonAlgorithm();
+        primsAlgorithm();
     }
 
     private void primsAlgorithm(){
-        Queue<Node> toAdd = new PriorityQueue<>();
-        for(Vertex v : vertexes){
-            toAdd.add(new Node(v, Double.POSITIVE_INFINITY));
+        List<Edge> mst = new LinkedList<>(); // minimal spanning tree
+        Queue<Edge> choices = new PriorityQueue<>(); // list of edges we get to pick from
+        Set<Vertex> nodes = new HashSet<>(); // nodes that have been added to the tree
+        nodes.add(getBottomLeftVertex());
+        while(mst.size() < vertexes.size() - 1){
+            choices = new PriorityQueue<>();
+            for(Vertex node : nodes){ // add all options to pick from
+                List<Edge> toAdd = getConnectedEdges(node);
+                List<Edge> notToAdd = new LinkedList<>();
+                for(Edge e : toAdd){ // remove options that would take us backward
+                    List<Vertex> points = new LinkedList<>(e.getVertexes());
+                    points.remove(node);
+                    if(nodes.contains(points.get(0))){
+                        notToAdd.add(e);
+                    }
+                }
+                toAdd.removeAll(notToAdd);
+                choices.addAll(toAdd);
+            }
+            choices.removeAll(mst); // remove all existing edges
+            Edge nextSmallestEdge = choices.remove(); // next edge to add to tree
+            nodes.addAll(nextSmallestEdge.getVertexes()); // add the nodes in
+            mst.add(nextSmallestEdge); // add the edge in to mst
         }
-        List<Node> mst = new LinkedList<>();
-        while(toAdd.size() > 0) {
-            Node currentNode = toAdd.remove();
-            mst.add(currentNode);
-        }
-
+        minimumSpanningTree = mst;
     }
 
-    private void bowyerWatsonAlgorithm(int width , int height){
+    private void bowyerWatsonAlgorithm(){
         Triangle superTriangle = new Triangle(0, -height, width * 2, height, 0, height); // must be large enough to completely contain all the points in pointList
         Set<Triangle> triangles = new HashSet<>();
         triangles.add(superTriangle);
@@ -88,16 +105,14 @@ public class Graph {
         // TODO Randomly choose remaining edges for hallways
     }
 
-    private List<Node> getConnectedNodes(Node node){
-        List<Node> nodes = new LinkedList<>();
-        for(Edge e : getConnectedEdges(node.getVertex())){
-            for(Vertex v : e.getVertexes()){
-                if(!node.equalsVertex(v)){
-                    nodes.add(new Node(v, e.length()));
-                }
+    private List<Edge> getConnectedEdges(Edge edge){
+        Set<Edge> edges = new HashSet<>();
+        for(Edge e : this.edges){
+            if(e.connects(edge)){
+                edges.add(e);
             }
         }
-        return nodes;
+        return new LinkedList<>(edges);
     }
 
     private List<Edge> getConnectedEdges(Vertex vertex){
@@ -116,6 +131,17 @@ public class Graph {
             hallways.add(e.toArray());
         }
         return hallways;
+    }
+
+    public Vertex getBottomLeftVertex(){
+        Vertex topRight = new Vertex(width, 0);
+        Vertex furthest = vertexes.get(0);
+        for(Vertex v : vertexes){
+            if(v.getDistance(topRight) > furthest.getDistance(topRight)){
+                furthest = v;
+            }
+        }
+        return furthest;
     }
 
     public List<Edge> getEdges(){
