@@ -7,6 +7,7 @@ import bot.role.data.results.ActivityResults;
 import bot.role.data.results.ChallengeFightResults;
 import bot.role.data.results.TournamentFightResults;
 import bot.role.data.results.TournamentResults;
+import bot.role.dungeon.saveable.Dungeon;
 import com.fasterxml.jackson.annotation.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,15 +21,8 @@ import lombok.Setter;
 		@JsonSubTypes.Type(Strings.class),
 		@JsonSubTypes.Type(Player.class),
 		@JsonSubTypes.Type(GameConfigValues.class),
-		@JsonSubTypes.Type(KingData.class)
-//		@JsonSubTypes.Type(Encounter.class),
-//		@JsonSubTypes.Type(Activity.class),
-//		@JsonSubTypes.Type(Tournament.class),
-//		@JsonSubTypes.Type(Guild.class),
-//		@JsonSubTypes.Type(ChallengeFightResults.class),
-//		@JsonSubTypes.Type(ActivityResults.class),
-//		@JsonSubTypes.Type(TournamentFightResults.class),
-//		@JsonSubTypes.Type(TournamentResults.class)
+		@JsonSubTypes.Type(KingData.class),
+		@JsonSubTypes.Type(Dungeon.class)
 	}
 )
 public abstract class SaveableData {

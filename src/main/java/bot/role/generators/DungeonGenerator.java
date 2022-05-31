@@ -1,11 +1,14 @@
 package bot.role.generators;
 
+import bot.role.data.item.Item;
 import bot.role.data.jsonConfig.GameConfigValues;
 import bot.role.dungeon.Room;
 import bot.role.dungeon.astar.Node;
 import bot.role.dungeon.graph.Edge;
 import bot.role.dungeon.graph.Graph;
 import bot.role.dungeon.graph.Vertex;
+import bot.role.dungeon.saveable.Dungeon;
+import bot.role.dungeon.saveable.Encounter;
 import data.serializing.DataCacher;
 
 import javax.imageio.ImageIO;
@@ -22,7 +25,7 @@ public abstract class DungeonGenerator {
         SMALL, MEDIUM, LARGE
     }
 
-    public static int[][] GenerateDungeon(Size size){
+    public static Dungeon GenerateDungeon(Size size, long id){
         int map[][];
         List<Room> rooms;
         List<Vertex> roomCenters;
@@ -68,12 +71,36 @@ public abstract class DungeonGenerator {
         }
 
         cleanUpDoors(rooms, map);
-        try {
-            saveDungeon(map);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+
+        List<bot.role.dungeon.saveable.Room> sRooms = new LinkedList<>();
+        for(Room r : rooms){
+            Random random = new Random();
+            List<Encounter> encounters = new LinkedList<>();
+            HashMap<Item.Material, Integer> materials = new HashMap<Item.Material, Integer>();
+
+            // encounters
+            while((random.nextInt(100) + 1) < 50){
+                encounters.add(EncounterGenerator.generate(100, 15));
+            }
+            // materials
+            while((random.nextInt(100) + 1) < 50){
+                Item.Material mat = Item.Material.values()[random.nextInt(Item.Material.values().length)];
+                int number = random.nextInt(10);
+                if(materials.containsKey(mat)){
+                    materials.put(mat, materials.get(mat) + number);
+                } else {
+                    materials.put(mat, number);
+                }
+            }
+            //gold
+            int gold = random.nextInt(100) + 1;
+            sRooms.add(new bot.role.dungeon.saveable.Room(r, encounters, materials, gold));
         }
-        return map;
+
+
+
+        Dungeon dungeon = new Dungeon(id, map, sRooms);
+        return dungeon;
     }
 
     private static void cleanUpDoors(List<Room> rooms, int[][] map) {
@@ -92,7 +119,7 @@ public abstract class DungeonGenerator {
     }
 
     private static int getUpTile(int x, int y, int[][] map){
-        if(y > 0){
+        if(y > 0 && x < map.length){
             return map[x][y - 1];
         }
         return -1;
@@ -177,7 +204,8 @@ public abstract class DungeonGenerator {
         }
     }
 
-    public static void saveDungeon(int[][] map) throws IOException {
+    public static void saveDungeon(Dungeon dungeon) throws IOException {
+        int[][] map = dungeon.getMap();
         int width = map.length * 20 + 40;
         int height = map[0].length * 20 + 40;
 
@@ -194,19 +222,33 @@ public abstract class DungeonGenerator {
         // switch back to black
         pane.setColor(Color.black);
 
-        BufferedImage tileSet = ImageIO.read(new File("tileset.png"));
+        BufferedImage tileSet = ImageIO.read(DungeonGenerator.class.getClassLoader().getResourceAsStream("tileset.png"));
 
         for(int x = 0; x < map.length; x++){
             int photoX = x * 20 + 20;
             for(int y = 0; y < map[0].length; y++){
                 int photoY = y * 20 + 20;
+
                 boolean topWall = y > 0 && map[x][y - 1] == 3;
                 boolean rightWall = x < map.length - 1 && map[x + 1][y] == 3;
                 boolean bottomWall = y < map[x].length - 1 && map[x][y + 1] == 3;
                 boolean leftWall = x > 0 && map[x - 1][y] == 3;
 
+                boolean topDoor = getUpTile(x, y, map) == 2;
+                boolean rightDoor = getRightTile(x, y, map) == 2;
+                boolean bottomDoor = getDownTile(x, y, map) == 2;
+                boolean leftDoor = getLeftTile(x, y, map) == 2;
+
+                boolean topPath = getUpTile(x, y, map) == 4 || topDoor;
+                boolean rightPath = getRightTile(x, y, map) == 4 || rightDoor;
+                boolean bottomPath = getDownTile(x, y, map) == 4 || bottomDoor;
+                boolean leftPath = getLeftTile(x, y, map) == 4 || leftDoor;
+
+
                 int tileSetOffset = -1;
                 int tileSetBackground = -1;
+                int tileSetForeground = -1;
+
                 switch (map[x][y]){
                     case 0: // open tile
                         break;
@@ -259,14 +301,61 @@ public abstract class DungeonGenerator {
                         break;
                     case 4: // hallway
                         tileSetBackground = 1;
+
+                        if(topPath && rightPath && bottomPath && leftPath){ // all path
+                            tileSetOffset = 17;
+                        } else if(topPath && rightPath && bottomPath && !leftPath) { // no path left
+                            tileSetOffset = 18;
+                        } else if(topPath && !rightPath && bottomPath && leftPath) { // no path right
+                            tileSetOffset = 20;
+                        } else if(!topPath && rightPath && bottomPath && leftPath) { // no path top
+                            tileSetOffset = 19;
+                        } else if(topPath && rightPath && !bottomPath && leftPath) { // no path bottom
+                            tileSetOffset = 21;
+                        } else if(topPath && !rightPath && bottomPath && !leftPath) { // no path left or right
+                            tileSetOffset = 1;
+                        } else if(!topPath && rightPath && !bottomPath && leftPath) { // no path bottom or top
+                            tileSetOffset = 0;
+                        } else if(topPath && rightPath && !bottomPath && !leftPath) { // no path bottom or left
+                            tileSetOffset = 9;
+                        } else if(topPath && !rightPath && !bottomPath && leftPath) { // no path bottom or right
+                            tileSetOffset = 8;
+                        } else if(!topPath && rightPath && bottomPath && !leftPath) { // no path top or left
+                            tileSetOffset = 6;
+                        } else if(!topPath && !rightPath && bottomPath && leftPath) { // no path top or right
+                            tileSetOffset = 7;
+                        }
+                        if(topDoor && bottomDoor){
+                            tileSetForeground = 5;
+                        } else if(leftDoor && rightDoor) {
+                            tileSetForeground = 4;
+                        } else if(topDoor){
+                            tileSetForeground = 0;
+                        } else if (rightDoor){
+                            tileSetForeground = 1;
+                        } else if (bottomDoor){
+                            tileSetForeground = 2;
+                        } else if (leftDoor){
+                            tileSetForeground = 3;
+                        }
                         break;
                 }
                 if(tileSetBackground != -1){
-                    pane.drawImage(tileSet.getSubimage(0 * 20, (tileSetBackground + 1) * 20, 20, 20), photoX, photoY, null);
+                    Random random = new Random();
+                    if(random.nextInt(100) < 5) {
+                        int tileVariations = 2;
+                        pane.drawImage(tileSet.getSubimage((random.nextInt(tileVariations) + 1) * 20, (tileSetBackground + 1) * 20, 20, 20), photoX, photoY, null);
+                    } else {
+                        pane.drawImage(tileSet.getSubimage(0, (tileSetBackground + 1) * 20, 20, 20), photoX, photoY, null);
+                    }
+                }
+                if(tileSetForeground != -1){
+                    pane.drawImage(tileSet.getSubimage(22 * 20 + tileSetForeground * 20, 0, 20, 20), photoX, photoY, null);
                 }
                 if(tileSetOffset != -1) {
                     pane.drawImage(tileSet.getSubimage(tileSetOffset * 20, 0, 20, 20), photoX, photoY, null);
                 }
+
             }
         }
         // Disposes of this graphics context and releases any system resources that it is using.
@@ -363,7 +452,7 @@ public abstract class DungeonGenerator {
             case 2: // door tile
                 return 1;
             case 0: // empty tile
-                return 5;
+                return 10;
             case 4: // existing hallway
                 return 1;
             default:
