@@ -25,5 +25,11 @@ public class Data {
         kingData = new DataCacher<>(DIR + "\\king");
         shopItems = new DataCacher<>(DIR + "\\shop items");
         gameConfig = new DataCacher<>(DIR + "\\game config data");
+
+        if(gameConfig.getFiles().length == 0){
+            GameConfigValues gcv = new GameConfigValues();
+            gcv.setId("Game config");
+            gameConfig.saveSerialized(gcv);
+        }
     }
 }

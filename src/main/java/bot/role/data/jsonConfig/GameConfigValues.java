@@ -21,7 +21,7 @@ public class GameConfigValues extends SaveableData {
     private long generalChannelId;
     private long activitiesChannelId;
     private long itemShopChannelId;
-    private List<Long> iconIds;
+    private List<Long> roleIconIds;
     private long remindMessageId;
     private long swordEmojiId;
     private long fiveGoldEmojiId;
@@ -47,7 +47,7 @@ public class GameConfigValues extends SaveableData {
     private int largeDungeonRoomCount;
 
     public GameConfigValues(){
-        iconIds = new LinkedList<>();
+        roleIconIds = new LinkedList<>();
         roleIds = new LinkedList<>();
     }
 }

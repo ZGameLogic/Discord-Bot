@@ -38,9 +38,8 @@ public class Player extends SaveableData {
      * @param id Discord ID of player
      * @param name Discord name of player
      */
-    public Player(long id, String name) {
+    public Player(long id, String name, GameConfigValues gcv) {
         super(id);
-        GameConfigValues gcv = new DataCacher<GameConfigValues>("game_config").loadSerialized();
         Random random = new Random();
         this.name = name;
         rank = "";
