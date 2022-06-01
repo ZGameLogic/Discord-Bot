@@ -2,6 +2,8 @@ package bot.role.data.jsonConfig;
 
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import data.serializing.SaveableData;
 import lombok.Getter;
 
@@ -10,6 +12,7 @@ import java.util.List;
 import java.util.Random;
 
 @Getter
+@JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class Strings extends SaveableData {
 
     private List<String[]> activeGold, activeAgility, activeKnowledge, activeMagic,

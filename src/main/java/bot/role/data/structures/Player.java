@@ -1,4 +1,4 @@
-package bot.role.data;
+package bot.role.data.structures;
 
 import bot.role.data.item.Item;
 import bot.role.data.item.Modifier;
@@ -23,7 +23,6 @@ public class Player extends SaveableData {
 
     private int strength, agility, knowledge, magic, stamina;
     private String name;
-    private String rank;
     private long gold;
     private int tournamentVictories;
     private int wins, losses;
@@ -42,7 +41,6 @@ public class Player extends SaveableData {
         super(id);
         Random random = new Random();
         this.name = name;
-        rank = "";
         strength = random.nextInt(gcv.getStartStatMax() + 1);
         agility = random.nextInt(gcv.getStartStatMax() + 1);
         knowledge = random.nextInt(gcv.getStartStatMax() + 1);
@@ -274,6 +272,20 @@ public class Player extends SaveableData {
             Item item = inventory.get(i);
             item.useItem();
         }
+    }
+
+    /**
+     * @return Stat block with modified stats due to items
+     */
+    public StatBlock getStatBlockWithItems(){
+        return new StatBlock(getMagicStat(), getKnowledgeStat(), getStaminaStat(), getStrengthStat(), getAgilityStat());
+    }
+
+    /**
+     * @return Stat block with raw stats
+     */
+    public StatBlock getStatBlock(){
+        return new StatBlock(magic, knowledge, stamina, strength, agility);
     }
 
 

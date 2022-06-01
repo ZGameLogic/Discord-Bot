@@ -1,4 +1,4 @@
-package bot.role.data;
+package bot.role.data.structures;
 
 import data.serializing.SaveableData;
 import lombok.EqualsAndHashCode;

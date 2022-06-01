@@ -1,15 +1,12 @@
 package data.serializing;
 
-import bot.role.data.*;
 import bot.role.data.jsonConfig.GameConfigValues;
 import bot.role.data.jsonConfig.Strings;
 import bot.role.data.results.ActivityResults;
-import bot.role.data.results.ChallengeFightResults;
-import bot.role.data.results.TournamentFightResults;
-import bot.role.data.results.TournamentResults;
+import bot.role.data.structures.KingData;
+import bot.role.data.structures.Player;
 import bot.role.dungeon.saveable.Dungeon;
 import com.fasterxml.jackson.annotation.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -22,7 +19,8 @@ import lombok.Setter;
 		@JsonSubTypes.Type(Player.class),
 		@JsonSubTypes.Type(GameConfigValues.class),
 		@JsonSubTypes.Type(KingData.class),
-		@JsonSubTypes.Type(Dungeon.class)
+		@JsonSubTypes.Type(Dungeon.class),
+		@JsonSubTypes.Type(ActivityResults.class)
 	}
 )
 public abstract class SaveableData {

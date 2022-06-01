@@ -27,6 +27,7 @@ public class GameConfigValues extends SaveableData {
     private long fiveGoldEmojiId;
     private long tenGoldEmojiId;
     private long fiftyGoldEmojiId;
+    private long guildCategoryId;
 
     private double activitySpawnChance;
     private int activityLife;

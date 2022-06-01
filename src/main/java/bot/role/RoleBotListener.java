@@ -1,8 +1,10 @@
 package bot.role;
 
 import bot.role.data.Data;
-import bot.role.data.Player;
+import bot.role.data.structures.Player;
+import bot.role.data.jsonConfig.Strings;
 import data.ConfigLoader;
+import data.serializing.DataCacher;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
@@ -29,6 +31,10 @@ public class RoleBotListener extends ListenerAdapter {
     private Guild guild;
 
     public RoleBotListener(ConfigLoader config){
+        DataCacher<Strings> strings = new DataCacher<Strings>("arena\\strings");
+        if(!strings.exists("strings")){
+            strings.saveSerialized(new Strings());
+        }
         this.config = config;
         data = new Data();
     }
