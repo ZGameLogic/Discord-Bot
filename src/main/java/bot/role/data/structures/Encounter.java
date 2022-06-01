@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 public class Encounter extends SaveableData {
     private int magic, knowledge, strength, stamina, agility;
     private int goldReward;
+    private String name;
 
     /**
      *
@@ -19,8 +20,9 @@ public class Encounter extends SaveableData {
      * @param stamina
      * @param agility
      * @param goldReward
+     * @param name
      */
-    public Encounter(long id, int magic, int knowledge, int strength, int stamina, int agility, int goldReward) {
+    public Encounter(long id, int magic, int knowledge, int strength, int stamina, int agility, int goldReward, String name) {
         super(id);
         this.magic = magic;
         this.knowledge = knowledge;
@@ -28,6 +30,7 @@ public class Encounter extends SaveableData {
         this.stamina = stamina;
         this.agility = agility;
         this.goldReward = goldReward;
+        this.name = name;
     }
 
     public Encounter(int magic, int knowledge, int strength, int stamina, int agility, int goldReward) {

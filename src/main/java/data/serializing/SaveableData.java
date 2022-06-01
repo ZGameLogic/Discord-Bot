@@ -3,6 +3,7 @@ package data.serializing;
 import bot.role.data.jsonConfig.GameConfigValues;
 import bot.role.data.jsonConfig.Strings;
 import bot.role.data.results.ActivityResults;
+import bot.role.data.results.EncounterFightResults;
 import bot.role.data.structures.KingData;
 import bot.role.data.structures.Player;
 import bot.role.dungeon.saveable.Dungeon;
@@ -20,7 +21,8 @@ import lombok.Setter;
 		@JsonSubTypes.Type(GameConfigValues.class),
 		@JsonSubTypes.Type(KingData.class),
 		@JsonSubTypes.Type(Dungeon.class),
-		@JsonSubTypes.Type(ActivityResults.class)
+		@JsonSubTypes.Type(ActivityResults.class),
+		@JsonSubTypes.Type(EncounterFightResults.class)
 	}
 )
 public abstract class SaveableData {

@@ -1,5 +1,6 @@
 package bot.role.data.item;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import data.serializing.SaveableData;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,6 +12,7 @@ import java.util.Date;
 public class ShopItem extends SaveableData {
 
     private Item item;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date dateToDelete;
 
     public ShopItem(long id, Item item, Date dateToDelete){
