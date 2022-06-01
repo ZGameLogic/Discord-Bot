@@ -22,12 +22,13 @@ public class ChallengeFightResults extends SaveableData {
     private StatBlock rolled;
     private StatBlock total;
     private StatBlock resultStatChange;
+    private String defenderRole;
     private int gold;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date time;
 
-    public ChallengeFightResults(long id, Player attacker, Player defender, int attackerPoints, StatBlock rolled, StatBlock total, StatBlock resultStatChange, int gold) {
+    public ChallengeFightResults(long id, Player attacker, Player defender, int attackerPoints, StatBlock rolled, StatBlock total, StatBlock resultStatChange, String defenderRole, int gold) {
         super(id);
         this.attacker = attacker;
         this.defender = defender;
@@ -36,6 +37,7 @@ public class ChallengeFightResults extends SaveableData {
         this.total = total;
         this.resultStatChange = resultStatChange;
         this.gold = gold;
+        this.defenderRole = defenderRole;
         time = new Date();
     }
 

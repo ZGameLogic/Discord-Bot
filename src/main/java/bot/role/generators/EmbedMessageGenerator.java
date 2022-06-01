@@ -4,6 +4,7 @@ import bot.role.data.item.ShopItem;
 import bot.role.data.jsonConfig.Strings;
 import bot.role.data.results.*;
 import bot.role.data.structures.Encounter;
+import bot.role.data.structures.Player;
 import data.serializing.DataCacher;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Activity;
@@ -19,7 +20,7 @@ public abstract class EmbedMessageGenerator {
     private static Color NEW_DAY_COLOR = new Color(118, 21, 161);
     private static Color CHALLENGE_WIN_COLOR = new Color(25, 83, 44);
     private static Color CHALLENGE_LOSE_COLOR = new Color(83, 25, 26);
-    private static Color KING_MESSAGE = new Color(250, 208, 4);
+    private static Color KING_MESSAGE_COLOR = new Color(250, 208, 4);
     private static Color STATS_COLOR = new Color(112, 93, 115);
     private static Color LEADERBOARD_COLOR = new Color(101, 106, 15);
 
@@ -69,14 +70,18 @@ public abstract class EmbedMessageGenerator {
     private static MessageEmbed generateSimpleFightResult(ChallengeFightResults results){
         EmbedBuilder b = new EmbedBuilder();
         String description = "";
+        String attackerName = results.getAttacker().getName();
+        String defenderName = results.getDefender().getName();
+        description += attackerName + " vs " + defenderName + "\n";
         if(results.isAttackerWin()){
             b.setColor(CHALLENGE_WIN_COLOR);
             b.setTitle("Fight results: " + results.getAttacker().getName() + " won!");
-            // TODO add description
+            description += attackerName + " is now a rank of " + results.getResultStatChange() + "." +
+                    " Gold obtained: " + results.getGold();
         } else {
             b.setColor(CHALLENGE_LOSE_COLOR);
+            description += "Better luck next time. " + results.getResultStatChange() + "\nGold lost: " + results.getGold() + ".";
             b.setTitle("Fight results: " + results.getAttacker().getName() + " lost");
-            // TODO add description
         }
         b.setDescription(description);
         b.addField("Fight statistics", "Attacker points: " + results.getAttackerPoints() + "\n" +
@@ -156,6 +161,13 @@ public abstract class EmbedMessageGenerator {
     }
     public static MessageEmbed generate(Encounter encounter){
         EmbedBuilder b = new EmbedBuilder();
+        return b.build();
+    }
+    public static MessageEmbed generateRollSwap(Player player1, Player player2){
+        EmbedBuilder b = new EmbedBuilder();
+        b.setColor(KING_MESSAGE_COLOR);
+        b.setTitle("The ruler of shlongshot has decreed a role change!");
+        b.setDescription("By the command of our king/queen: " + player1.getName() + " and " + player2.getName() + " have had their roles swapped!");
         return b.build();
     }
 }
