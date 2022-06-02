@@ -11,6 +11,10 @@ import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 
 import java.awt.*;
+import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.TemporalAccessor;
+import java.util.Calendar;
 
 public abstract class EmbedMessageGenerator {
 
@@ -41,11 +45,12 @@ public abstract class EmbedMessageGenerator {
     /**
      * @return A new day message
      */
-    public static MessageEmbed generateNewDay(){
+    public static MessageEmbed generateNewDay(int dayCount){
         EmbedBuilder b = new EmbedBuilder();
         b.setColor(NEW_DAY_COLOR);
         b.setTitle("A message from teh current ruler of Shlongshot");
         b.setDescription(strings.loadSerialized().getDayMessageStart() + " " + strings.loadSerialized().getDayMessageEnd());
+        b.setFooter("Day count: " + dayCount);
         return b.build();
     }
 
@@ -54,6 +59,7 @@ public abstract class EmbedMessageGenerator {
         b.setColor(ACTIVITY_COLOR);
         b.setTitle("Activity results for " + results.getPlayerName());
         b.addField(results.getReward(), results.getRewardAmount() + "", true);
+        b.setTimestamp(results.getTime().toInstant());
         return b.build();
     }
 
@@ -86,6 +92,7 @@ public abstract class EmbedMessageGenerator {
         b.setDescription(description);
         b.addField("Fight statistics", "Attacker points: " + results.getAttackerPoints() + "\n" +
                 "Defender points: " + (5 - results.getAttackerPoints()), true);
+        b.setTimestamp(results.getTime().toInstant());
         b.setFooter(results.getId());
         return b.build();
     }
@@ -112,12 +119,15 @@ public abstract class EmbedMessageGenerator {
         String description = "";
         if(results.isAttackerWon()){
             b.setColor(CHALLENGE_WIN_COLOR);
-            // TODO add description
+            description += "You have won the fight against a " + results.getEncounterName() + "\n" +
+                    "Gold gained: " + results.getGold() + " " + results.getResultStatChange();
         } else {
             b.setColor(CHALLENGE_LOSE_COLOR);
-            // TODO add description
+            description += "You have lost the fight against a " + results.getEncounterName() + "\n" +
+                    "Gold lost: " + results.getGold();
         }
         b.setDescription(description);
+        b.setTimestamp(results.getTime().toInstant());
         b.setFooter(results.getId());
         return b.build();
     }

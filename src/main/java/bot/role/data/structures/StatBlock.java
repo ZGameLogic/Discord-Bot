@@ -15,10 +15,10 @@ public class StatBlock {
     public String toString(){
         String returnThis = "";
         returnThis += magic > 0 ? "Magic increased by " + magic + ", " : "";
-        returnThis += knowledge > 0 ? "Magic increased by " + knowledge + ", " : "";
-        returnThis += stamina > 0 ? "Magic increased by " + stamina + ", " : "";
-        returnThis += strength > 0 ? "Magic increased by " + strength + ", " : "";
-        returnThis += agility > 0 ? "Magic increased by " + agility + ", " : "";
+        returnThis += knowledge > 0 ? "Knowledge increased by " + knowledge + ", " : "";
+        returnThis += stamina > 0 ? "Stamina increased by " + stamina + ", " : "";
+        returnThis += strength > 0 ? "Strength increased by " + strength + ", " : "";
+        returnThis += agility > 0 ? "Agility increased by " + agility + ", " : "";
         return returnThis.substring(0, returnThis.length() - 2);
     }
 }

@@ -1,5 +1,6 @@
 package bot.role.data.results;
 
+import bot.role.data.item.Modifier;
 import bot.role.data.structures.Encounter;
 import bot.role.data.structures.Player;
 import bot.role.data.structures.StatBlock;
@@ -15,7 +16,8 @@ import java.util.Date;
 @Getter
 public class EncounterFightResults extends SaveableData {
     public final static String resultData = "Encounter";
-    private Encounter encounter;
+    private String encounterName;
+    private StatBlock encounterStats;
     private Player player;
     private int attackerPoints;
     private StatBlock rolled;
@@ -26,9 +28,10 @@ public class EncounterFightResults extends SaveableData {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date time;
 
-    public EncounterFightResults(long id, Encounter encounter, Player player, int attackerPoints, StatBlock rolled, StatBlock total, StatBlock resultStatChange, int gold) {
+    public EncounterFightResults(long id, String encounterName, StatBlock encounterStats, Player player, int attackerPoints, StatBlock rolled, StatBlock total, StatBlock resultStatChange, int gold) {
         super(id);
-        this.encounter = encounter;
+        this.encounterName = encounterName;
+        this.encounterStats = encounterStats;
         this.player = player;
         this.attackerPoints = attackerPoints;
         this.rolled = rolled;
