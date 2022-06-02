@@ -18,6 +18,10 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -29,6 +33,7 @@ public class RoleBotListener extends ListenerAdapter {
     private Data data;
     private ConfigLoader config;
     private Guild guild;
+    private TextChannel warChannel;
 
     public RoleBotListener(ConfigLoader config){
         DataCacher<Strings> strings = new DataCacher<Strings>("arena\\strings");
@@ -42,6 +47,7 @@ public class RoleBotListener extends ListenerAdapter {
     @Override
     public void onReady(ReadyEvent event){
         guild = event.getJDA().getGuildById(data.getGameConfig().loadSerialized().getGuildId());
+        guild.getTextChannelById(data.getGameConfig().loadSerialized().getGeneralChannelId());
         List<Member> members = guild.getMembers();
         for(Member m : members){
             // Check if any members don't have player data
