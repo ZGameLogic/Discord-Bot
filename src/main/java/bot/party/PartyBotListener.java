@@ -35,19 +35,12 @@ public class PartyBotListener extends ListenerAdapter {
 	private final long guildID;
 	private final long AFKID;
 
-	private DataCacher<Connections> links; 
-
 	public PartyBotListener(ConfigLoader config) {
 
 		chatroomCatID = config.getChatroomCatID();
 		createChatID = config.getCreateChatID();
 		guildID = config.getGuildID();
 		AFKID = config.getAFKID();
-
-		links = new DataCacher<>("party\\links");
-		if(!links.exists("Channel Links")) {
-			links.saveSerialized(new Connections());
-		}
 
 		chatroomNames = new LinkedList<>();
 		chatroomNames.add("Chatroom");
@@ -106,50 +99,6 @@ public class PartyBotListener extends ListenerAdapter {
 		playerLeft(event.getChannelLeft(), event.getMember(), event.getGuild());
 	}
 
-	/**
-	 * Creates a text channel based off the slash event Also creates a link between
-	 * the text and audio channel the member is in
-	 * 
-	 * @param event
-	 */
-	public void createTextChannel(SlashCommandInteraction event) {
-		// get voice channel the user is is
-		try {
-			// if the member is in a chatroom
-			AudioChannel voice = event.getMember().getVoiceState().getChannel();
-			// if the chatroom is in the chatroom category ID
-			if (event.getGuild().getVoiceChannelById(voice.getIdLong()).getParentCategoryIdLong() == chatroomCatID &&
-					voice.getIdLong() != createChatID && voice.getIdLong() != AFKID) {
-				// if the chatroom doesnt already have a text channel
-				if (!links.loadSerialized("Channel Links").hasLink(voice.getIdLong())) {
-					// create text channel
-					TextChannel newChannel = event.getGuild().createTextChannel(voice.getName())
-							.setParent(event.getGuild().getCategoryById(chatroomCatID)).complete();
-
-					// Hide the channel from everyone
-					newChannel.createPermissionOverride(event.getGuild().getPublicRole())
-							.setDeny(Permission.VIEW_CHANNEL).queue();
-
-					// Add anyone in the text channel to be able to see the text channel
-					for (Member m : voice.getMembers()) {
-						newChannel.createPermissionOverride(m).setAllow(Permission.VIEW_CHANNEL).queue();
-					}
-					Connections link = links.loadSerialized("Channel Links");
-					link.addLink(voice.getIdLong(), newChannel.getIdLong());
-					links.saveSerialized(link);
-
-					event.reply("Text channel created").setEphemeral(true).queue();
-				} else {
-					event.reply("Voice channel already has a text channel").setEphemeral(true).queue();
-				}
-			} else {
-				event.reply("You are not in a voice channel that supports this command").setEphemeral(true).queue();
-			}
-		} catch (NullPointerException e) {
-			event.reply("You are not in a voice channel that supports this command").setEphemeral(true).queue();
-		}
-
-	}
 
 	/**
 	 * Renames the voice channel Also renames any connected text channels
@@ -164,10 +113,6 @@ public class PartyBotListener extends ListenerAdapter {
 				try {
 					// rename the channel and set valid command to true
 					voice.getManager().setName(event.getOption("name").getAsString()).queue();
-					Connections connections = links.loadSerialized("Channel Links");
-					if (connections.hasLink(voice.getIdLong())) {
-						event.getGuild().getTextChannelById(connections.getLink(voice.getIdLong())).getManager().setName(event.getOption("name").getAsString()).queue();
-					}
 					event.reply("Channel name updated").setEphemeral(true).queue();
 					logger.info("Renamed chatroom");
 				} catch (IllegalArgumentException e1) {
@@ -214,21 +159,9 @@ public class PartyBotListener extends ListenerAdapter {
 		VoiceChannel channel = guild.getVoiceChannelById(channelLeft.getIdLong());
 		if (channel.getParentCategoryIdLong() == chatroomCatID) {
 			if (channel.getIdLong() != createChatID && channel.getIdLong() != AFKID) {
-				Connections link = links.loadSerialized("Channel Links");
 				// We get here if the channel left in is the chatroom categories
 				if (channel.getMembers().size() == 0) {
-					if (link.hasLink(channelLeft.getIdLong())) {
-						guild.getTextChannelById(link.getLink(channelLeft.getIdLong())).delete().queue();
-						link.removeLink(channelLeft.getIdLong());
-						links.saveSerialized(link);
-						logger.info("Deleted chatroom");
-					}
 					channel.delete().queue();
-				} else {
-					if (link.hasLink(channelLeft.getIdLong())) {
-						guild.getTextChannelById(link.getLink(channelLeft.getIdLong())).putPermissionOverride(member).setDeny(Permission.VIEW_CHANNEL)
-								.queue();
-					}
 				}
 			}
 		}
@@ -246,12 +179,6 @@ public class PartyBotListener extends ListenerAdapter {
 		if (channel.getParentCategoryIdLong() == chatroomCatID) {
 			if (channel.getIdLong() == createChatID) {
 				checkCreateChatroom(channel, guild);
-			} else {
-				Connections link = links.loadSerialized("Channel Links");
-				if (link.hasLink(channelJoined.getIdLong())) {
-					guild.getTextChannelById(link.getLink(channelJoined.getIdLong())).putPermissionOverride(member).setAllow(Permission.VIEW_CHANNEL)
-							.queue();
-				}
 			}
 		}
 	}

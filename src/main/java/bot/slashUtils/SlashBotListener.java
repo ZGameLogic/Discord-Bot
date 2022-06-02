@@ -58,7 +58,6 @@ public class SlashBotListener extends ListenerAdapter {
 				.addOption(OptionType.INTEGER, "faces", "Number of faces on each die", true));
 		
 		// Party bot commands
-		guild.addCommands(Commands.slash("create-text", "Creates a text chatroom that only people in the voice channel can see"));
 		guild.addCommands(Commands.slash("rename-chatroom", "Renames chatroom to a new name")
 				.addOption(OptionType.STRING, "name", "Chatroom name", true));
 		guild.addCommands(Commands.slash("limit", "Limits the amount of people who can enter a chatroom")
@@ -144,9 +143,6 @@ public class SlashBotListener extends ListenerAdapter {
 			break;
 		case "teams-help":
 			sendTeamHelp(event);
-			break;
-		case "create-text":
-			PBL.createTextChannel(event);
 			break;
 		case "rename-chatroom":
 			PBL.renameChannel(event);
