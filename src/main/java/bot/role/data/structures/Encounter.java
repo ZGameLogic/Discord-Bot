@@ -1,14 +1,20 @@
 package bot.role.data.structures;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import data.serializing.SaveableData;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.Date;
 
 @NoArgsConstructor
 @Getter
 public class Encounter extends SaveableData {
     private int magic, knowledge, strength, stamina, agility;
     private int goldReward;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date departs;
     private String name;
 
     /**
@@ -22,7 +28,7 @@ public class Encounter extends SaveableData {
      * @param goldReward
      * @param name
      */
-    public Encounter(long id, int magic, int knowledge, int strength, int stamina, int agility, int goldReward, String name) {
+    public Encounter(long id, int magic, int knowledge, int strength, int stamina, int agility, int goldReward, String name, Date departs) {
         super(id);
         this.magic = magic;
         this.knowledge = knowledge;
@@ -31,6 +37,7 @@ public class Encounter extends SaveableData {
         this.agility = agility;
         this.goldReward = goldReward;
         this.name = name;
+        this.departs = departs;
     }
 
     public Encounter(int magic, int knowledge, int strength, int stamina, int agility, int goldReward) {
@@ -40,5 +47,10 @@ public class Encounter extends SaveableData {
         this.stamina = stamina;
         this.agility = agility;
         this.goldReward = goldReward;
+    }
+
+    @JsonIgnore
+    public StatBlock getStatBlock(){
+        return new StatBlock(magic, knowledge, stamina, strength, agility);
     }
 }

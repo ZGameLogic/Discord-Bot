@@ -13,12 +13,19 @@ import java.util.List;
 public class Item {
 
     public enum Rarity {
-        MYTHIC,
-        LEGENDARY,
-        EPIC,
-        RARE,
-        UNCOMMON,
-        COMMON
+        MYTHIC("Mythic"),
+        LEGENDARY("Legendary"),
+        EPIC("Epic"),
+        RARE("Rare"),
+        UNCOMMON("Uncommon"),
+        COMMON("Common");
+
+        @Getter
+        private String string;
+
+        Rarity(String string){
+            this.string = string;
+        }
     }
 
     public enum Material {

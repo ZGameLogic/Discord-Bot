@@ -5,12 +5,24 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.util.HashMap;
+
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @ToString
 public class StatBlock {
     private int magic, knowledge, stamina, strength, agility;
+
+    public HashMap<String, Integer> getAllStats(){
+        HashMap<String, Integer> stats = new HashMap<>();
+        stats.put("Magic", magic);
+        stats.put("Knowledge", knowledge);
+        stats.put("Stamina", stamina);
+        stats.put("Strength", strength);
+        stats.put("Agility", agility);
+        return stats;
+    }
 
     public String toString(){
         String returnThis = "";

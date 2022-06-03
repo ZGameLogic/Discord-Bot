@@ -1,39 +1,38 @@
 package bot.role.generators;
 
+import bot.role.data.item.Item;
+import bot.role.data.item.Modifier;
 import bot.role.data.item.ShopItem;
 import bot.role.data.jsonConfig.Strings;
 import bot.role.data.results.*;
+import bot.role.data.structures.Activity;
 import bot.role.data.structures.Encounter;
 import bot.role.data.structures.Player;
 import data.serializing.DataCacher;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 
 import java.awt.*;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.temporal.TemporalAccessor;
-import java.util.Calendar;
 
 public abstract class EmbedMessageGenerator {
 
     private static DataCacher<Strings> strings = new DataCacher<Strings>("arena\\strings");
 
-    private static Color ACTIVITY_COLOR = new Color(175, 102, 45);
-    private static Color NEW_DAY_COLOR = new Color(118, 21, 161);
-    private static Color CHALLENGE_WIN_COLOR = new Color(25, 83, 44);
-    private static Color CHALLENGE_LOSE_COLOR = new Color(83, 25, 26);
-    private static Color KING_MESSAGE_COLOR = new Color(250, 208, 4);
-    private static Color STATS_COLOR = new Color(112, 93, 115);
-    private static Color LEADERBOARD_COLOR = new Color(101, 106, 15);
+    private final static Color ACTIVITY_COLOR = new Color(175, 102, 45);
+    private final static Color NEW_DAY_COLOR = new Color(118, 21, 161);
+    private final static Color CHALLENGE_WIN_COLOR = new Color(25, 83, 44);
+    private final static Color CHALLENGE_LOSE_COLOR = new Color(83, 25, 26);
+    private final static Color KING_MESSAGE_COLOR = new Color(250, 208, 4);
+    private final static Color STATS_COLOR = new Color(112, 93, 115);
+    private final static Color LEADERBOARD_COLOR = new Color(101, 106, 15);
+    private final static Color ENCOUNTER_COLOR = new Color(56, 78, 115);
 
-    private static Color MYTHIC_ITEM_COLOR = new Color(248, 29, 1);
-    private static Color LEGENDARY_ITEM_COLOR = new Color(248, 170, 1);
-    private static Color EPIC_ITEM_COLOR = new Color(248, 235, 1);
-    private static Color RARE_ITEM_COLOR = new Color(0, 248, 241);
-    private static Color UNCOMMON_ITEM_COLOR = new Color(40, 184, 180);
-    private static Color COMMON_ITEM_COLOR = new Color(67, 144, 143);
+    private final static Color MYTHIC_ITEM_COLOR = new Color(248, 29, 1);
+    private final static Color LEGENDARY_ITEM_COLOR = new Color(248, 170, 1);
+    private final static Color EPIC_ITEM_COLOR = new Color(248, 235, 1);
+    private final static Color RARE_ITEM_COLOR = new Color(0, 248, 241);
+    private final static Color UNCOMMON_ITEM_COLOR = new Color(40, 184, 180);
+    private final static Color COMMON_ITEM_COLOR = new Color(67, 144, 143);
 
 
 
@@ -161,16 +160,52 @@ public abstract class EmbedMessageGenerator {
         EmbedBuilder b = new EmbedBuilder();
         return b.build();
     }
-    public static MessageEmbed generate(ShopItem item){
+    public static MessageEmbed generate(ShopItem shopItem){
         EmbedBuilder b = new EmbedBuilder();
+        Item item = shopItem.getItem();
+        b.setAuthor(item.getRarity().getString());
+        b.setTitle(item.getName() + " is in stock today!");
+        b.setDescription(item.getDescription());
+        int effectCount = 1;
+        for(Modifier m : item.getModifiers()){
+            String desc = m.getType() == Modifier.Type.BANE ? "Bane " + m.getStat().getString() :
+                    m.getType().getString() + " " + m.getStat().getString() + " increase by: " + m.getAmount();
+            b.addField("Effect " + effectCount++, desc, true);
+        }
+        b.addField("Cost", shopItem.getGoldCost() + " gold", false);
+        b.setFooter("Expires");
+        b.setTimestamp(shopItem.getDateToDelete().toInstant());
         return b.build();
     }
     public static MessageEmbed generate(Activity activity){
         EmbedBuilder b = new EmbedBuilder();
+        b.setColor(ACTIVITY_COLOR);
+        switch(activity.getType()){
+            case JOB:
+                b.setTitle("A job had been posted on the city board: " + activity.getActivityName());
+                b.addField("Activity cost", activity.getActivityCost() + "", true);
+                b.addField("Reward", activity.getGold() + " gold", true);
+                break;
+            case TRAINING:
+                b.setTitle(activity.getActivityName() + " has posted on the city board: " + activity.getStatType() + " training!");
+                b.addField("Activity cost", activity.getActivityCost() + "", true);
+                b.addField("Gold cost", activity.getGold() + " gold", true);
+                b.addField("Reward", activity.getStatAmount() + " " + activity.getStatAmount(), true);
+                break;
+        }
+        b.setDescription("Departs");
+        b.setTimestamp(activity.getDeparts().toInstant());
         return b.build();
     }
     public static MessageEmbed generate(Encounter encounter){
         EmbedBuilder b = new EmbedBuilder();
+        b.setColor(ENCOUNTER_COLOR);
+        b.setTitle("A " + encounter.getName() + " challenges the kingdom!");
+        encounter.getStatBlock().getAllStats().forEach((key, value) -> {
+            b.addField(key, value + "", true);
+        });
+        b.setFooter("departs");
+        b.setTimestamp(encounter.getDeparts().toInstant());
         return b.build();
     }
     public static MessageEmbed generateRollSwap(Player player1, Player player2){

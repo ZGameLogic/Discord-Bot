@@ -13,11 +13,22 @@ public class Modifier {
     private int amount;
 
     public enum Stat {
-        STRENGTH, MAGIC, KNOWLEDGE, AGILITY, STAMINA, ACTIVITY, GOLD,
-        BLOB, WIZARD, WOLF, BANDIT, GIANT, TROLL, GHOUL, SKELETON
+        STRENGTH("Strength"), MAGIC("Magic"), KNOWLEDGE("Knowledge"), AGILITY("Agility"), STAMINA("Stamina"), ACTIVITY("Activity"), GOLD("Gold"),
+        BLOB("Blob"), WIZARD("Wizard"), WOLF("Wolf"), BANDIT("Bandit"), GIANT("Giant"), TROLL("Troll"), GHOUL("Ghoul"), SKELETON("Skeleton");
+
+        @Getter
+        private String string;
+        private Stat(String string){
+            this.string = string;
+        }
     }
 
     public enum Type {
-        STATIC, ACTIVE, BANE
+        STATIC("Static"), ACTIVE("Active"), BANE("Bane");
+        @Getter
+        private String string;
+        private Type(String string){
+            this.string = string;
+        }
     }
 }
