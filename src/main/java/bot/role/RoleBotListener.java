@@ -1,8 +1,12 @@
 package bot.role;
 
 import bot.role.data.Data;
+import bot.role.data.ResultsData;
+import bot.role.data.results.ChallengeFightResults;
 import bot.role.data.structures.Player;
 import bot.role.data.jsonConfig.Strings;
+import bot.role.data.structures.StatBlock;
+import bot.role.generators.EmbedMessageGenerator;
 import data.ConfigLoader;
 import data.serializing.DataCacher;
 import net.dv8tion.jda.api.entities.Guild;
@@ -31,6 +35,7 @@ import java.util.Random;
 public class RoleBotListener extends ListenerAdapter {
 
     private Data data;
+    private ResultsData resultsData;
     private ConfigLoader config;
     private Guild guild;
     private TextChannel warChannel;
@@ -42,6 +47,7 @@ public class RoleBotListener extends ListenerAdapter {
         }
         this.config = config;
         data = new Data();
+        resultsData = new ResultsData();
     }
 
     @Override
@@ -77,7 +83,27 @@ public class RoleBotListener extends ListenerAdapter {
     }
 
     @Override
-    public void onMessageReceived(MessageReceivedEvent event) {}
+    public void onMessageReceived(MessageReceivedEvent event) {
+        if(!event.getAuthor().isBot()) {
+            Player attacker = data.getPlayers().loadSerialized(369303799581507585l);
+            Player defender = data.getPlayers().loadSerialized(232675572772372481l);
+            ChallengeFightResults cfr =
+                    new ChallengeFightResults(63l,
+                            attacker,
+                            defender,
+                            3,
+                            new StatBlock(1, 1, 1, attacker.getStrengthStat() + defender.getStrengthStat(), attacker.getAgilityStat() + defender.getAgilityStat()),
+                            new StatBlock(0, 0, 0, 0, 0),
+                            getCasteRoleOfPlayer(attacker),
+                            getCasteRoleOfPlayer(defender),
+                            0,
+                            10,
+                            1,
+                            5);
+            resultsData.getChallenges().saveSerialized(cfr);
+            event.getChannel().sendMessageEmbeds(EmbedMessageGenerator.generate(cfr, EmbedMessageGenerator.Detail.COMPLEX)).queue();
+        }
+    }
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {}
@@ -91,7 +117,9 @@ public class RoleBotListener extends ListenerAdapter {
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         switch (event.getName()) {
-
+            case "fight-stats":
+                postComplexFightResults(event);
+                break;
         }
     }
 
@@ -145,6 +173,20 @@ public class RoleBotListener extends ListenerAdapter {
         return roles;
     }
 
+    private String getCasteRoleOfPlayer(Player player){
+        return getCasteROleOfPlayer(guild.getMemberById(player.getId()));
+    }
+
+    private String getCasteROleOfPlayer(Member member){
+        List<Role> roles = getCasteRoles();
+        for(Role role : member.getRoles()){
+            if(roles.contains(role)){
+                return role.getName();
+            }
+        }
+        return "";
+    }
+
     /**
      * @return The king caste role as a role object
      */
@@ -157,5 +199,15 @@ public class RoleBotListener extends ListenerAdapter {
      */
     private TextChannel getWarTextChannel(){
         return guild.getTextChannelById(data.getGameConfig().loadSerialized().getGeneralChannelId());
+    }
+
+    private void postComplexFightResults(SlashCommandInteractionEvent event){
+        String fightId = event.getOption("id").getAsString();
+        if(resultsData.getChallenges().exists(fightId)) {
+            ChallengeFightResults cfr = resultsData.getChallenges().loadSerialized(fightId);
+            event.replyEmbeds(EmbedMessageGenerator.generate(cfr, EmbedMessageGenerator.Detail.COMPLEX)).queue();
+        } else {
+            event.reply("No fight exists with that id.").queue();
+        }
     }
 }

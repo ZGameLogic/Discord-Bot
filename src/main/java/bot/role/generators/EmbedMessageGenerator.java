@@ -13,6 +13,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 
 import java.awt.*;
+import java.text.SimpleDateFormat;
 
 public abstract class EmbedMessageGenerator {
 
@@ -98,7 +99,35 @@ public abstract class EmbedMessageGenerator {
 
     private static MessageEmbed generateComplexFightResult(ChallengeFightResults results){
         EmbedBuilder b = new EmbedBuilder();
-        // TODO this
+        String attackerName = results.getAttacker().getName();
+        String defenderName = results.getDefender().getName();
+        String description = "";
+        if(results.isAttackerWin()){
+            b.setColor(CHALLENGE_WIN_COLOR);
+        } else {
+            b.setColor(CHALLENGE_LOSE_COLOR);
+        }
+        SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
+        description += "Fight time: " + sdf.format(results.getTime()) +"\n" +
+                "Fight between " + attackerName + " (" + results.getAttackerRole() + ") and " + defenderName + " (" + results.getDefenderRole() + ")\n" +
+                "Attacker win: " + results.isAttackerWin() + "\n" +
+                "Score: " + results.getAttackerPoints() + " " + (5 - results.getAttackerPoints()) + "\n" +
+                "Server booster padding: " + results.getServerBoosterPadding() + "\n" +
+                "Padding Multiplier: x" + results.getPaddingMultiplier() + "\n" +
+                "Defender padding level: " + results.getDefenderPaddingLevel() + "\n" +
+                "Attacker win percentage: " + String.format("%.2f%%", results.attackerWinPercentage()) + "\n\n";
+        for(String stat : results.getAttacker().getStatBlockWithItems().getAllStats().keySet()){
+            int attackerStat = results.getAttacker().getStatBlockWithItems().getAllStats().get(stat);
+            int defenderStat = results.getDefender().getStatBlockWithItems().getAllStats().get(stat);
+            int rolled = results.getRolled().getAllStats().get(stat);
+            int total = attackerStat + defenderStat;
+            double winPercentage = total / (double) attackerStat;
+            b.addField(stat, String.format("%.2f", winPercentage) + "%: " + (rolled <= attackerStat ? "won" : "lost") + "\n" +
+                    "\tA: " + attackerStat + "\tD: " + defenderStat + "\n" +
+                    "\tTotal: " + total + "\tRolled: " + rolled, true);
+        }
+        b.setDescription(description);
+        b.setFooter(results.getId());
         return b.build();
     }
 

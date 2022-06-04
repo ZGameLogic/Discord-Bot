@@ -277,6 +277,7 @@ public class Player extends SaveableData {
     /**
      * @return Stat block with modified stats due to items
      */
+    @JsonIgnore
     public StatBlock getStatBlockWithItems(){
         return new StatBlock(getMagicStat(), getKnowledgeStat(), getStaminaStat(), getStrengthStat(), getAgilityStat());
     }
@@ -284,6 +285,7 @@ public class Player extends SaveableData {
     /**
      * @return Stat block with raw stats
      */
+    @JsonIgnore
     public StatBlock getStatBlock(){
         return new StatBlock(magic, knowledge, stamina, strength, agility);
     }

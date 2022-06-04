@@ -67,7 +67,7 @@ public class DataCacher <T extends SaveableData> {
 	 */
 	@SuppressWarnings("unchecked")
 	public T loadSerialized(String id) {
-		T data1;
+		T data1 = null;
 		ObjectMapper om = new ObjectMapper();
 		try {
 			id = id.replace(".json", "");

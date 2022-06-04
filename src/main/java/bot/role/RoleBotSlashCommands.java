@@ -45,6 +45,8 @@ public abstract class RoleBotSlashCommands {
         commands.add(Commands.slash("achievements", "Posts the players achievements in chat")
                 .addOption(OptionType.USER, "player", "Player's achievements to see", false));
         commands.add(Commands.slash("pray", "Pray to Shlongbot"));
+        commands.add(Commands.slash("fight-stats", "View a more detailed breakdown of a fight between players")
+                .addOption(OptionType.STRING, "id", "id of the fight to get more details on"));
 
         // Role bot king
         commands.add(Commands.slash("distribute-wealth", "Gives some of your wealth to a caste system")

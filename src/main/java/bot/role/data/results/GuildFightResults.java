@@ -1,4 +1,6 @@
 package bot.role.data.results;
 
-public class GuildFightResults {
+import data.serializing.SaveableData;
+
+public class GuildFightResults extends SaveableData {
 }

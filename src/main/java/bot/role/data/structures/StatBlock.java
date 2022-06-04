@@ -1,5 +1,6 @@
 package bot.role.data.structures;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,6 +15,7 @@ import java.util.HashMap;
 public class StatBlock {
     private int magic, knowledge, stamina, strength, agility;
 
+    @JsonIgnore
     public HashMap<String, Integer> getAllStats(){
         HashMap<String, Integer> stats = new HashMap<>();
         stats.put("Magic", magic);
