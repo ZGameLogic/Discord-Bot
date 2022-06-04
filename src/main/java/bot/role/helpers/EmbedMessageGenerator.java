@@ -1,4 +1,4 @@
-package bot.role.generators;
+package bot.role.helpers;
 
 import bot.role.data.item.Item;
 import bot.role.data.item.Modifier;

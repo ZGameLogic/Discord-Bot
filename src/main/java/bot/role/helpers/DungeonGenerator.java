@@ -1,4 +1,4 @@
-package bot.role.generators;
+package bot.role.helpers;
 
 import bot.role.data.item.Item;
 import bot.role.data.jsonConfig.GameConfigValues;
@@ -80,7 +80,7 @@ public abstract class DungeonGenerator {
 
             // encounters
             while((random.nextInt(100) + 1) < 50){
-                encounters.add(EncounterGenerator.generate(100, 15));
+                encounters.add(Generators.generateEncounter(100, 15));
             }
             // materials
             while((random.nextInt(100) + 1) < 50){

@@ -6,7 +6,7 @@ import bot.role.data.results.ChallengeFightResults;
 import bot.role.data.structures.Player;
 import bot.role.data.jsonConfig.Strings;
 import bot.role.data.structures.StatBlock;
-import bot.role.generators.EmbedMessageGenerator;
+import bot.role.helpers.EmbedMessageGenerator;
 import data.ConfigLoader;
 import data.serializing.DataCacher;
 import net.dv8tion.jda.api.entities.Guild;
@@ -22,10 +22,6 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.commands.OptionType;
-import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
-import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -94,8 +90,8 @@ public class RoleBotListener extends ListenerAdapter {
                             3,
                             new StatBlock(1, 1, 1, attacker.getStrengthStat() + defender.getStrengthStat(), attacker.getAgilityStat() + defender.getAgilityStat()),
                             new StatBlock(0, 0, 0, 0, 0),
-                            getCasteRoleOfPlayer(attacker),
-                            getCasteRoleOfPlayer(defender),
+                            getCasteRoleNameOfPlayer(attacker),
+                            getCasteRoleNameOfPlayer(defender),
                             0,
                             10,
                             1,
@@ -149,6 +145,32 @@ public class RoleBotListener extends ListenerAdapter {
     }
 
     /**
+     * Swaps the caste roles between two player of the server
+     * @param player1
+     * @param player2
+     */
+    private void swapCasteRoles(Player player1, Player player2){
+        Member am = guild.getMemberById(player1.getId());
+        Member ad = guild.getMemberById(player2.getId());
+        swapCasteRoles(am, ad);
+    }
+
+
+    /**
+     * Swaps the caste roles between two members of the server
+     * @param member1 Member 1 to swap roles with
+     * @param member2 Member 2 to swap roles with
+     */
+    private void swapCasteRoles(Member member1, Member member2){
+        Role attackerRole = getCasteRoleOfPlayer(member1);
+        Role defenderRole = getCasteRoleOfPlayer(member2);
+        List<Role> attackerRoles = new LinkedList<>(Arrays.asList(new Role[]{attackerRole}));
+        List<Role> defenderRoles = new LinkedList<>(Arrays.asList(new Role[]{defenderRole}));
+        guild.modifyMemberRoles(member1, defenderRoles, attackerRoles).queue();
+        guild.modifyMemberRoles(member2, attackerRoles, defenderRoles).queue();
+    }
+
+    /**
      * Assigns a random caste role that isn't the king to a player
      * @param member Member to assign the role too
      */
@@ -173,18 +195,49 @@ public class RoleBotListener extends ListenerAdapter {
         return roles;
     }
 
-    private String getCasteRoleOfPlayer(Player player){
-        return getCasteROleOfPlayer(guild.getMemberById(player.getId()));
+    /**
+     * @param player Player to be checking for the caste roles for
+     * @return The caste role they are assigned
+     */
+    private Role getCasteRoleOfPlayer(Player player){
+        return getCasteRoleOfPlayer(guild.getMemberById(player.getId()));
     }
 
-    private String getCasteROleOfPlayer(Member member){
+    /**
+     * @param member Member to be checking for the caste roles for
+     * @return The role they are assigned
+     */
+    private Role getCasteRoleOfPlayer(Member member){
         List<Role> roles = getCasteRoles();
+        long kingRoleId = getKingRole().getIdLong();
         for(Role role : member.getRoles()){
-            if(roles.contains(role)){
-                return role.getName();
+            if(roles.contains(role) || kingRoleId == role.getIdLong()){
+                return role;
             }
         }
-        return "";
+        return null;
+    }
+
+
+    /**
+     * @param player Player to be checking for the caste roles for
+     * @return The name of the role
+     */
+    private String getCasteRoleNameOfPlayer(Player player){
+        return getCasteRoleNameOfPlayer(guild.getMemberById(player.getId()));
+    }
+
+    /**
+     * @param member Member to be checking for the caste roles for
+     * @return The name of the role
+     */
+    private String getCasteRoleNameOfPlayer(Member member){
+        Role role = getCasteRoleOfPlayer(member);
+        if(role != null){
+            return role.getName();
+        } else {
+            return "";
+        }
     }
 
     /**
