@@ -4,6 +4,13 @@ import java.awt.Color;
 import java.util.LinkedList;
 
 import bot.role.RoleBotSlashCommands;
+import controllers.atlassian.JiraInterfacer;
+import data.serializing.DataCacher;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.Modal;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,10 +39,12 @@ public class SlashBotListener extends ListenerAdapter {
 	
 	private PartyBotListener PBL;
 	private ConfigLoader CL;
+	private DataCacher<BugReport> bugReportsData;
 	
 	public SlashBotListener(PartyBotListener PBL, ConfigLoader CL) {
 		this.PBL = PBL;
 		this.CL = CL;
+		bugReportsData = new DataCacher<>("bug reports");
 	}
 	
 	/**
@@ -66,6 +75,9 @@ public class SlashBotListener extends ListenerAdapter {
 		
 		// Role bot listener
 		guild.addCommands(RoleBotSlashCommands.getCommands());
+
+		// bug report
+		guild.addCommands(Commands.slash("bug-report", "Submit a bug report"));
 		
 		try {
 			guild.submit();
@@ -106,7 +118,45 @@ public class SlashBotListener extends ListenerAdapter {
 		case "roll-dice":
 			rollDice(event);
 			break;
+		case "bug-report":
+			submitBugReport(event);
+			break;
 		}
+	}
+
+	@Override
+	public void onModalInteraction(ModalInteractionEvent event) {
+		switch(event.getModalId()){
+			case "support":
+				String title = event.getValue("title").getAsString();
+				String body = event.getValue("body").getAsString();
+				String username = event.getMember().getEffectiveName();
+				long userId = event.getMember().getIdLong();
+				MessageEmbed message = JiraInterfacer.submitBug(title, body, username, userId);
+				event.replyEmbeds(message).setEphemeral(true).queue();
+				String issueNumber = message.getFooter().getText().replace("Issue: ", "");
+				BugReport bug = new BugReport(bugReportsData.generateID(), issueNumber, userId);
+				bugReportsData.saveSerialized(bug);
+				break;
+		}
+	}
+
+	private void submitBugReport(SlashCommandInteractionEvent event) {
+		TextInput title = TextInput.create("title", "Title", TextInputStyle.SHORT)
+				.setPlaceholder("Title for the bug report")
+				.setRequired(true)
+				.build();
+		TextInput body = TextInput.create("body", "Body", TextInputStyle.PARAGRAPH)
+				.setPlaceholder("Description of bug")
+				.setMaxLength(1000)
+				.setRequired(true)
+				.build();
+
+		Modal modal = Modal.create("support", "Support")
+				.addActionRows(ActionRow.of(title), ActionRow.of(body))
+				.build();
+
+		event.replyModal(modal).queue();
 	}
 	
 	private void rollDice(SlashCommandInteractionEvent event) {

@@ -7,6 +7,7 @@ import bot.role.data.structures.Player;
 import bot.role.data.jsonConfig.Strings;
 import bot.role.data.structures.StatBlock;
 import bot.role.helpers.EmbedMessageGenerator;
+import controllers.atlassian.JiraInterfacer;
 import data.ConfigLoader;
 import data.serializing.DataCacher;
 import net.dv8tion.jda.api.entities.Guild;
@@ -16,12 +17,20 @@ import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.ActionComponent;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.Modal;
+import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -79,27 +88,7 @@ public class RoleBotListener extends ListenerAdapter {
     }
 
     @Override
-    public void onMessageReceived(MessageReceivedEvent event) {
-        if(!event.getAuthor().isBot()) {
-            Player attacker = data.getPlayers().loadSerialized(369303799581507585l);
-            Player defender = data.getPlayers().loadSerialized(232675572772372481l);
-            ChallengeFightResults cfr =
-                    new ChallengeFightResults(63l,
-                            attacker,
-                            defender,
-                            3,
-                            new StatBlock(1, 1, 1, attacker.getStrengthStat() + defender.getStrengthStat(), attacker.getAgilityStat() + defender.getAgilityStat()),
-                            new StatBlock(0, 0, 0, 0, 0),
-                            getCasteRoleNameOfPlayer(attacker),
-                            getCasteRoleNameOfPlayer(defender),
-                            0,
-                            10,
-                            1,
-                            5);
-            resultsData.getChallenges().saveSerialized(cfr);
-            event.getChannel().sendMessageEmbeds(EmbedMessageGenerator.generate(cfr, EmbedMessageGenerator.Detail.COMPLEX)).queue();
-        }
-    }
+    public void onMessageReceived(MessageReceivedEvent event) {}
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {}

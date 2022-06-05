@@ -42,4 +42,7 @@ public class ConfigLoader {
 	
 	@Value("${admin.password}")
 	private String adminPassword;
+
+	@Value("${jira.pat}")
+	private String jiraPat;
 }

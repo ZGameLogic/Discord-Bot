@@ -1,10 +1,14 @@
 package bot;
 
 import java.awt.Color;
+import java.time.Instant;
 
 import javax.annotation.PostConstruct;
 import javax.security.auth.login.LoginException;
 
+import bot.slashUtils.BugReport;
+import data.serializing.DataCacher;
+import net.dv8tion.jda.api.entities.*;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -25,9 +29,6 @@ import data.ConfigLoader;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
@@ -37,13 +38,14 @@ import webhook.listeners.WebHookReactionListener;
 public class Bot {
 	
 	private RoleBotListener RBL;
-	
+	private JDA jdaBot;
+
 	private static String TITLE = "\r\n" + 
 			"   ____  ___  _                   _   ___      _  ______  \r\n" + 
 			"  / /\\ \\|   \\(_)___ __ ___ _ _ __| | | _ ) ___| |_\\ \\ \\ \\ \r\n" + 
 			" < <  > > |) | (_-</ _/ _ \\ '_/ _` | | _ \\/ _ \\  _|> > > >\r\n" + 
 			"  \\_\\/_/|___/|_/__/\\__\\___/_| \\__,_| |___/\\___/\\__/_/_/_/ \r\n" + 
-			"  v2.0.0\tBen Shabowski\tJacob Marszalek\r\n" + 
+			"  v3.0.0\tBen Shabowski\r\n" +
 			"";
 	
 	private Logger logger = LoggerFactory.getLogger(Bot.class);
@@ -74,7 +76,7 @@ public class Bot {
 		
 		// Login
 		try {
-			JDA jdaBot = bot.build().awaitReady();
+			jdaBot = bot.build().awaitReady();
 			bitBucket = jdaBot.getGuildById(config.getGuildID()).getTextChannelById(config.getBitbucketID());
 		} catch (LoginException | InterruptedException e) {
 			logger.error("Unable to launch bot");
@@ -86,7 +88,13 @@ public class Bot {
 		JSONObject JSONInformation = new JSONObject(valueOne);
 		handleBitbucket(JSONInformation);
 	}
-	
+
+	@PostMapping("/webhook/jira")
+	public void jiraWebhook(@RequestBody String valueOne) throws JSONException {
+		JSONObject JSONInformation = new JSONObject(valueOne);
+		handleJira(JSONInformation);
+	}
+
 	@PostMapping("/webhook/bamboo")
 	public void bambooWebhook(@RequestBody String valueOne) throws JSONException {
 		JSONObject JSONInformation = new JSONObject(valueOne);
@@ -170,4 +178,46 @@ public class Bot {
 		String result = restTemplate.getForObject(link, String.class);
 		return result;
 	}
+
+	private void handleJira(JSONObject jsonInformation) throws JSONException {
+		String event = jsonInformation.getString("issue_event_type_name");
+		String issueKey = jsonInformation.getJSONObject("issue").getString("key");
+		EmbedBuilder eb = new EmbedBuilder();
+		eb.setColor(new Color(7, 70, 166));
+		boolean process = false;
+		if(event.equals("issue_generic")){
+			// moved to a different developement
+			String movedTo = jsonInformation.getJSONObject("changelog").getJSONArray("items").getJSONObject(0).getString("toString");
+			String movedFrom = jsonInformation.getJSONObject("changelog").getJSONArray("items").getJSONObject(0).getString("fromString");
+			String transition = "Issue was moved from " + movedFrom + " to " + movedTo;
+			eb.setTitle("Bug: " + issueKey + " has been moved to " + movedTo);
+			eb.setDescription("A bug that you submitted has changed developement status from  " + movedFrom + " to " + movedTo);
+			eb.setTimestamp(Instant.now());
+			process = true;
+		} else if(event.equals("issue_commented")){
+			// issue was commented on
+			String author = jsonInformation.getJSONObject("comment").getJSONObject("author").getString("displayName");
+			String comment = jsonInformation.getJSONObject("comment").getString("body");
+			eb.setTitle("Bug: " + issueKey + " had a commented added to the ticket");
+			eb.setDescription(author + " commented on a bug that you submitted.\n Comment: " + comment);
+			eb.setTimestamp(Instant.now());
+			process = true;
+		} else if(event.equals("issue_created")){
+			// issue what created
+			eb.setTitle("Bug has been created in the workflow.");
+			eb.setDescription("Thank you for your bug report. I will get to it as soon as I can.");
+			eb.setFooter("Issue key: " + issueKey);
+			process = true;
+		}
+
+		if(process){
+			DataCacher<BugReport> bugs = new DataCacher<>("bug reports");
+			for(BugReport br : bugs.getData()){
+				if(br.getIssueNumber().equals(issueKey)){
+					jdaBot.getGuildById(App.config.getGuildID()).getMemberById(br.getReporterId()).getUser().openPrivateChannel().complete().sendMessageEmbeds(eb.build()).queue();
+				}
+			}
+		}
+	}
+
 }
