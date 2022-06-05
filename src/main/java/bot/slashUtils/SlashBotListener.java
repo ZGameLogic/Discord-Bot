@@ -130,9 +130,10 @@ public class SlashBotListener extends ListenerAdapter {
 			case "support":
 				String title = event.getValue("title").getAsString();
 				String body = event.getValue("body").getAsString();
+				String strc = event.getValue("strc").getAsString();
 				String username = event.getMember().getEffectiveName();
 				long userId = event.getMember().getIdLong();
-				MessageEmbed message = JiraInterfacer.submitBug(title, body, username, userId);
+				MessageEmbed message = JiraInterfacer.submitBug(title, body, strc, username, userId);
 				event.replyEmbeds(message).setEphemeral(true).queue();
 				String issueNumber = message.getFooter().getText().replace("Issue: ", "");
 				BugReport bug = new BugReport(bugReportsData.generateID(), issueNumber, userId);
@@ -151,9 +152,14 @@ public class SlashBotListener extends ListenerAdapter {
 				.setMaxLength(1000)
 				.setRequired(true)
 				.build();
+		TextInput strc = TextInput.create("strc", "Steps to recreate", TextInputStyle.PARAGRAPH)
+				.setPlaceholder("Description of what you were doing when you found the bug")
+				.setMaxLength(1000)
+				.setRequired(true)
+				.build();
 
 		Modal modal = Modal.create("support", "Support")
-				.addActionRows(ActionRow.of(title), ActionRow.of(body))
+				.addActionRows(ActionRow.of(title), ActionRow.of(body), ActionRow.of(strc))
 				.build();
 
 		event.replyModal(modal).queue();

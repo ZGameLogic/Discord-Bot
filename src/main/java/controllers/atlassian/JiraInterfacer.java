@@ -14,7 +14,7 @@ import java.awt.*;
 
 public abstract class JiraInterfacer {
 
-    public static MessageEmbed submitBug(String title, String description, String username, long userId){
+    public static MessageEmbed submitBug(String title, String description, String strc, String username, long userId){
 
         String link = "https://zgamelogic.com:8080/rest/api/2/issue";
         RestTemplate restTemplate = new RestTemplate();
@@ -27,6 +27,7 @@ public abstract class JiraInterfacer {
             fields.put("project", new JSONObject("{\"key\": \"DB\"}"));
             fields.put("summary", title);
             fields.put("description", description + "\n" +
+                    "Steps to recreate: " + strc + "\n" +
                     "Discord username: " + username + "\n" +
                     "Discord user ID: " + userId);
             fields.put("issuetype", new JSONObject("{\"name\": \"Bug\"}"));
