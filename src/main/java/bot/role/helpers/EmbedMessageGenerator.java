@@ -37,6 +37,7 @@ public abstract class EmbedMessageGenerator {
     private final static Color UNCOMMON_ITEM_COLOR = new Color(40, 184, 180);
     private final static Color COMMON_ITEM_COLOR = new Color(67, 144, 143);
 
+
     public enum Detail {
         SIMPLE,
         COMPLEX
