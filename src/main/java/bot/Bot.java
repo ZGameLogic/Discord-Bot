@@ -8,7 +8,6 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.security.auth.login.LoginException;
 
-import bot.slashUtils.BugReport;
 import data.serializing.DataCacher;
 import net.dv8tion.jda.api.entities.*;
 import org.json.JSONException;
