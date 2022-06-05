@@ -1,12 +1,12 @@
 package data.serializing;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 
 public class DataCacher <T extends SaveableData> {
@@ -153,4 +153,10 @@ public class DataCacher <T extends SaveableData> {
 		}
 		return directoryToBeDeleted.delete();
 	}
+
+    public void deleteAll(List<Long> idsToDelete) {
+		for(Long id : idsToDelete){
+			delete(id + "");
+		}
+    }
 }

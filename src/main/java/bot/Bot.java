@@ -2,6 +2,8 @@ package bot;
 
 import java.awt.Color;
 import java.time.Instant;
+import java.util.LinkedList;
+import java.util.List;
 
 import javax.annotation.PostConstruct;
 import javax.security.auth.login.LoginException;
@@ -50,6 +52,7 @@ public class Bot {
 	
 	private Logger logger = LoggerFactory.getLogger(Bot.class);
 	private TextChannel bitBucket;
+	private NewsChannel announcments;
 
 	@PostConstruct
 	public void start() {
@@ -78,6 +81,7 @@ public class Bot {
 		try {
 			jdaBot = bot.build().awaitReady();
 			bitBucket = jdaBot.getGuildById(config.getGuildID()).getTextChannelById(config.getBitbucketID());
+			announcments = jdaBot.getGuildById(config.getGuildID()).getNewsChannels().get(0);
 		} catch (LoginException | InterruptedException e) {
 			logger.error("Unable to launch bot");
 		}
@@ -95,6 +99,12 @@ public class Bot {
 		handleJira(JSONInformation);
 	}
 
+	@PostMapping("/webhook/jira/release")
+	public void jiraWebhookRelease(@RequestBody String valueOne) throws JSONException {
+		JSONObject JSONInformation = new JSONObject(valueOne);
+		handleJiraRelease(JSONInformation);
+	}
+
 	@PostMapping("/webhook/bamboo")
 	public void bambooWebhook(@RequestBody String valueOne) throws JSONException {
 		JSONObject JSONInformation = new JSONObject(valueOne);
@@ -104,20 +114,6 @@ public class Bot {
 	@GetMapping("/king")
 	public String getKing() {
 		return null/*RoleBotListener.getKing()*/;
-	}
-	
-	@GetMapping("/auditPlayer")
-	public String auditPlayer(@RequestBody String valueOne) throws JSONException {
-		JSONObject JSONInformation = new JSONObject(valueOne);
-		JSONObject json = new JSONObject();
-		//json.put("result", RBL.audit(JSONInformation.getLong("player_id")));
-		return json.toString();
-	}
-	
-	@GetMapping("/listMembers")
-	public String listMembers() throws JSONException {
-		//return RBL.getPlayerList().toString();
-		return "";
 	}
 	
 	private void handleBamboo(JSONObject message) throws JSONException {
@@ -179,19 +175,40 @@ public class Bot {
 		return result;
 	}
 
+	private void handleJiraRelease(JSONObject jsonInformation) throws JSONException {
+		String event = jsonInformation.getString("webhookEvent");
+		if(event.equals("jira:version_released")) {
+			String versionName = jsonInformation.getJSONObject("version").getString("name");
+			String versionDescription = jsonInformation.getJSONObject("version").getString("description");
+			EmbedBuilder eb = new EmbedBuilder();
+			eb.setColor(new Color(7, 70, 166));
+			eb.setTitle(versionName + " update has been released!");
+			eb.setDescription(versionDescription);
+			eb.setTimestamp(Instant.now());
+			announcments.sendMessageEmbeds(eb.build()).queue();
+		}
+	}
+
 	private void handleJira(JSONObject jsonInformation) throws JSONException {
 		String event = jsonInformation.getString("issue_event_type_name");
 		String issueKey = jsonInformation.getJSONObject("issue").getString("key");
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setColor(new Color(7, 70, 166));
 		boolean process = false;
+		boolean delete = false;
 		if(event.equals("issue_generic")){
 			// moved to a different developement
 			String movedTo = jsonInformation.getJSONObject("changelog").getJSONArray("items").getJSONObject(0).getString("toString");
 			String movedFrom = jsonInformation.getJSONObject("changelog").getJSONArray("items").getJSONObject(0).getString("fromString");
 			String transition = "Issue was moved from " + movedFrom + " to " + movedTo;
-			eb.setTitle("Bug: " + issueKey + " has been moved to " + movedTo);
-			eb.setDescription("A bug that you submitted has changed developement status from  " + movedFrom + " to " + movedTo);
+			if(movedTo.equals("Done")){
+				eb.setTitle("Bug: " + issueKey + " has been resovled");
+				eb.setDescription("Thank you so much for bringing this bug to my attention and the fix will be out in the next release.");
+				delete = true;
+			} else {
+				eb.setTitle("Bug: " + issueKey + " has been moved to " + movedTo);
+				eb.setDescription("A bug that you submitted has changed developement status from  " + movedFrom + " to " + movedTo);
+			}
 			eb.setTimestamp(Instant.now());
 			process = true;
 		} else if(event.equals("issue_commented")){
@@ -210,13 +227,20 @@ public class Bot {
 			process = true;
 		}
 
+		List<Long> idsToDelete = new LinkedList<>();
+		DataCacher<BugReport> bugs = new DataCacher<>("bug reports");
 		if(process){
-			DataCacher<BugReport> bugs = new DataCacher<>("bug reports");
 			for(BugReport br : bugs.getData()){
 				if(br.getIssueNumber().equals(issueKey)){
 					jdaBot.getGuildById(App.config.getGuildID()).getMemberById(br.getReporterId()).getUser().openPrivateChannel().complete().sendMessageEmbeds(eb.build()).queue();
+					if(delete){
+						idsToDelete.add(br.getIdLong());
+					}
 				}
 			}
+		}
+		if(delete){
+			bugs.deleteAll(idsToDelete);
 		}
 	}
 
