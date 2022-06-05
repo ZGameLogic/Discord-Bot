@@ -195,7 +195,6 @@ public class Bot {
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setColor(new Color(7, 70, 166));
 		boolean process = false;
-		boolean delete = false;
 		if(event.equals("issue_generic")){
 			// moved to a different developement
 			String movedTo = jsonInformation.getJSONObject("changelog").getJSONArray("items").getJSONObject(0).getString("toString");
@@ -204,7 +203,6 @@ public class Bot {
 			if(movedTo.equals("Done")){
 				eb.setTitle("Bug: " + issueKey + " has been resovled");
 				eb.setDescription("Thank you so much for bringing this bug to my attention and the fix will be out in the next release.");
-				delete = true;
 			} else {
 				eb.setTitle("Bug: " + issueKey + " has been moved to " + movedTo);
 				eb.setDescription("A bug that you submitted has changed developement status from  " + movedFrom + " to " + movedTo);
@@ -227,21 +225,14 @@ public class Bot {
 			process = true;
 		}
 
-		List<Long> idsToDelete = new LinkedList<>();
-		DataCacher<BugReport> bugs = new DataCacher<>("bug reports");
 		if(process){
-			for(BugReport br : bugs.getData()){
-				if(br.getIssueNumber().equals(issueKey)){
-					jdaBot.getGuildById(App.config.getGuildID()).getMemberById(br.getReporterId()).getUser().openPrivateChannel().complete().sendMessageEmbeds(eb.build()).queue();
-					if(delete){
-						idsToDelete.add(br.getIdLong());
-					}
-				}
+			String userId = jsonInformation.getJSONObject("issue").getJSONObject("fields").getString("description").split("Discord user ID: ")[1];
+			User user = jdaBot.getUserById(userId);
+			if(user != null){
+				user.openPrivateChannel().complete().sendMessageEmbeds(eb.build()).queue();
+			} else {
+				System.out.println("Cant find user: " + userId);
 			}
 		}
-		if(delete){
-			bugs.deleteAll(idsToDelete);
-		}
 	}
-
 }
