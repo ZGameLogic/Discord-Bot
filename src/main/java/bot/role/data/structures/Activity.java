@@ -1,7 +1,7 @@
 package bot.role.data.structures;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import data.serializing.SaveableData;
+import data.serializing.SavableData;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -9,7 +9,7 @@ import java.util.Date;
 
 @NoArgsConstructor
 @Getter
-public class Activity extends SaveableData {
+public class Activity extends SavableData {
 
     public enum Type {
         JOB, TRAINING

@@ -39,12 +39,10 @@ public class SlashBotListener extends ListenerAdapter {
 	
 	private PartyBotListener PBL;
 	private ConfigLoader CL;
-	private DataCacher<BugReport> bugReportsData;
 	
 	public SlashBotListener(PartyBotListener PBL, ConfigLoader CL) {
 		this.PBL = PBL;
 		this.CL = CL;
-		bugReportsData = new DataCacher<>("bug reports");
 	}
 	
 	/**
@@ -136,8 +134,6 @@ public class SlashBotListener extends ListenerAdapter {
 				MessageEmbed message = JiraInterfacer.submitBug(title, body, strc, username, userId);
 				event.replyEmbeds(message).setEphemeral(true).queue();
 				String issueNumber = message.getFooter().getText().replace("Issue: ", "");
-				BugReport bug = new BugReport(bugReportsData.generateID(), issueNumber, userId);
-				bugReportsData.saveSerialized(bug);
 				break;
 		}
 	}

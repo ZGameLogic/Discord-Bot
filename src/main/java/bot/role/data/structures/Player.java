@@ -5,7 +5,7 @@ import bot.role.data.item.Modifier;
 import bot.role.data.jsonConfig.GameConfigValues;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import data.serializing.DataCacher;
-import data.serializing.SaveableData;
+import data.serializing.SavableData;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,7 +19,7 @@ import java.util.Random;
 @NoArgsConstructor
 @EqualsAndHashCode
 @ToString
-public class Player extends SaveableData {
+public class Player extends SavableData {
 
     private int strength, agility, knowledge, magic, stamina;
     private String name;

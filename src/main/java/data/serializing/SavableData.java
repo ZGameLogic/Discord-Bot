@@ -7,7 +7,6 @@ import bot.role.data.results.EncounterFightResults;
 import bot.role.data.structures.KingData;
 import bot.role.data.structures.Player;
 import bot.role.dungeon.saveable.Dungeon;
-import bot.slashUtils.BugReport;
 import com.fasterxml.jackson.annotation.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -23,22 +22,21 @@ import lombok.Setter;
 		@JsonSubTypes.Type(KingData.class),
 		@JsonSubTypes.Type(Dungeon.class),
 		@JsonSubTypes.Type(ActivityResults.class),
-		@JsonSubTypes.Type(EncounterFightResults.class),
-		@JsonSubTypes.Type(BugReport.class)
+		@JsonSubTypes.Type(EncounterFightResults.class)
 	}
 )
-public abstract class SaveableData {
+public abstract class SavableData {
 
 	private String id;
 
-	public SaveableData() {}
+	public SavableData() {}
 
 	@JsonCreator
-	public SaveableData(@JsonProperty("id") String id) {
+	public SavableData(@JsonProperty("id") String id) {
 		this.id = id;
 	}
 
-	public SaveableData(long id) {
+	public SavableData(long id) {
 		this(id + "");
 	}
 

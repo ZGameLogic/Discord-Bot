@@ -1,7 +1,7 @@
 package bot.role.data.structures;
 
 import bot.role.data.item.Item;
-import data.serializing.SaveableData;
+import data.serializing.SavableData;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -10,7 +10,7 @@ import java.util.Map;
 
 @Getter
 @NoArgsConstructor
-public class Guild extends SaveableData {
+public class Guild extends SavableData {
 
     private int guildReputationLevel;
     private Map<Item.Material, Integer> craftingMaterials;

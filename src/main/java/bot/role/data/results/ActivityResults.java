@@ -1,7 +1,7 @@
 package bot.role.data.results;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import data.serializing.SaveableData;
+import data.serializing.SavableData;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -11,7 +11,7 @@ import java.util.Date;
 @NoArgsConstructor
 @Getter
 @ToString
-public class ActivityResults extends SaveableData {
+public class ActivityResults extends SavableData {
 
     public final static String resultData = "Activity";
 

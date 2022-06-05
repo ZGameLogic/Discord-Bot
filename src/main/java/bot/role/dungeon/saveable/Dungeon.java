@@ -1,7 +1,7 @@
 package bot.role.dungeon.saveable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import data.serializing.SaveableData;
+import data.serializing.SavableData;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -11,7 +11,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @ToString
-public class Dungeon extends SaveableData {
+public class Dungeon extends SavableData {
 
     private int[][] map;
     private List<Room> rooms;

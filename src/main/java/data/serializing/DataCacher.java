@@ -9,7 +9,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
 
-public class DataCacher <T extends SaveableData> {
+public class DataCacher <T extends SavableData> {
 
 	private final String filePath;
 
@@ -71,7 +71,7 @@ public class DataCacher <T extends SaveableData> {
 		ObjectMapper om = new ObjectMapper();
 		try {
 			id = id.replace(".json", "");
-			data1 = (T) om.readValue(new File(filePath + "//" + id + ".json"), SaveableData.class);
+			data1 = (T) om.readValue(new File(filePath + "//" + id + ".json"), SavableData.class);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}

@@ -1,6 +1,6 @@
 package bot.role.data.results;
 
-import data.serializing.SaveableData;
+import data.serializing.SavableData;
 
-public class ItemCraftingResults extends SaveableData {
+public class ItemCraftingResults extends SavableData {
 }

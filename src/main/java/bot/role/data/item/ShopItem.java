@@ -1,7 +1,7 @@
 package bot.role.data.item;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import data.serializing.SaveableData;
+import data.serializing.SavableData;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -9,7 +9,7 @@ import java.util.Date;
 
 @Getter
 @NoArgsConstructor
-public class ShopItem extends SaveableData {
+public class ShopItem extends SavableData {
 
     private Item item;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

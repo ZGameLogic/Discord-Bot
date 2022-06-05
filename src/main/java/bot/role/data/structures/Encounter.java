@@ -2,7 +2,7 @@ package bot.role.data.structures;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import data.serializing.SaveableData;
+import data.serializing.SavableData;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -10,7 +10,7 @@ import java.util.Date;
 
 @NoArgsConstructor
 @Getter
-public class Encounter extends SaveableData {
+public class Encounter extends SavableData {
     private int magic, knowledge, strength, stamina, agility;
     private int goldReward;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")

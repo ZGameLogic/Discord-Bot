@@ -1,6 +1,6 @@
 package bot.role.data.structures;
 
-import data.serializing.SaveableData;
+import data.serializing.SavableData;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
@@ -9,7 +9,7 @@ import java.util.List;
 
 @EqualsAndHashCode
 @Getter
-public class KingData extends SaveableData {
+public class KingData extends SavableData {
 
     private long taxRoleID;
     private int taxAmount;

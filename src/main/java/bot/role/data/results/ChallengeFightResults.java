@@ -4,7 +4,7 @@ import bot.role.data.structures.Player;
 import bot.role.data.structures.StatBlock;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import data.serializing.SaveableData;
+import data.serializing.SavableData;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -14,7 +14,7 @@ import java.util.Date;
 @NoArgsConstructor
 @Getter
 @ToString
-public class ChallengeFightResults extends SaveableData {
+public class ChallengeFightResults extends SavableData {
     public final static String resultData = "Challenge";
     private Player attacker;
     private Player defender;
