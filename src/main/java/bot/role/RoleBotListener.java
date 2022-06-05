@@ -5,9 +5,8 @@ import bot.role.data.ResultsData;
 import bot.role.data.results.ChallengeFightResults;
 import bot.role.data.structures.Player;
 import bot.role.data.jsonConfig.Strings;
-import bot.role.data.structures.StatBlock;
+import bot.role.data.structures.annotations.SlashCommand;
 import bot.role.helpers.EmbedMessageGenerator;
-import controllers.atlassian.JiraInterfacer;
 import data.ConfigLoader;
 import data.serializing.DataCacher;
 import net.dv8tion.jda.api.entities.Guild;
@@ -17,24 +16,14 @@ import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
-import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.components.ActionComponent;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.Modal;
-import net.dv8tion.jda.api.interactions.components.selections.SelectMenu;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -48,6 +37,8 @@ public class RoleBotListener extends ListenerAdapter {
     private Guild guild;
     private TextChannel warChannel;
 
+    private List<String> roleBotCommandNames;
+
     public RoleBotListener(ConfigLoader config){
         DataCacher<Strings> strings = new DataCacher<Strings>("arena\\strings");
         if(!strings.exists("strings")){
@@ -56,6 +47,7 @@ public class RoleBotListener extends ListenerAdapter {
         this.config = config;
         data = new Data();
         resultsData = new ResultsData();
+        roleBotCommandNames = RoleBotSlashCommands.getCommandNames();
     }
 
     @Override
@@ -104,21 +96,24 @@ public class RoleBotListener extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        if(RoleBotSlashCommands.commandNames().contains(event.getName())){
-            String name = event.getName();
-            for(int i = 0; i < name.length(); i++){ // kebab case to lower camel case
-                if(name.charAt(i) == '-'){
-                    name = name.substring(0, i) + name.substring(i + 1, i + 2).toUpperCase() + name.substring( i + 2);
+        try {
+            if(roleBotCommandNames.contains(event.getName())) {
+                String name = event.getName();
+                for (Method m : getClass().getDeclaredMethods()) {
+                    if (m.isAnnotationPresent(SlashCommand.class)) {
+                        SlashCommand sc = m.getAnnotation(SlashCommand.class);
+                        if (sc.CommandName().equals(name)) {
+                            m.invoke(this, event);
+                        }
+                    }
                 }
             }
-            try {
-                getClass().getDeclaredMethod(name, SlashCommandInteractionEvent.class).invoke(this, event);
-            } catch (Exception e) {
-                e.printStackTrace();
-                event.reply("Unable to complete the command. If this continues to happen submit a bug report with the /bug-report command").setEphemeral(true).queue();
-            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            event.reply("Unable to complete the command. If this continues to happen submit a bug report with the /bug-report command").setEphemeral(true).queue();
         }
     }
+
 
     /**
      * Creates a new player with a random caste role.
@@ -245,6 +240,17 @@ public class RoleBotListener extends ListenerAdapter {
         }
     }
 
+    private Member getAsMember(Player player) {
+        return guild.getMemberById(player.getId());
+    }
+
+    private boolean isKing(Player player) {
+        return isKing(getAsMember(player));
+    }
+
+    private boolean isKing(Member member) {
+        return member.getRoles().contains(getKingRole());
+    }
     /**
      * @return The king caste role as a role object
      */
@@ -259,7 +265,43 @@ public class RoleBotListener extends ListenerAdapter {
         return guild.getTextChannelById(data.getGameConfig().loadSerialized().getGeneralChannelId());
     }
 
-    private void fightStats(SlashCommandInteractionEvent event){
+    @SlashCommand(CommandName = "distribute-wealth")
+    private void distributeWealthSlashCommand(SlashCommandInteractionEvent event){
+        if(!isKing(event.getMember())) { // is king
+            event.reply("Only the king can use this command").setEphemeral(true).queue();
+            return;
+        }
+        if(event.getChannel().getIdLong() != warChannel.getIdLong()){ // is in war
+            event.reply("You can only do this in <#" + warChannel.getIdLong() + ">").setEphemeral(true).queue();
+            return;
+        }
+        Role role = event.getOption("role").getAsRole();
+        if(!getCasteRoles().contains(role)){ // is a caste role
+            event.reply("You can give to caste roles").setEphemeral(true).queue();
+            return;
+        }
+        int gold = event.getOption("gold").getAsInt();
+        Player king = getAsPlayer(event.getMember());
+        if(king.getGold() < gold){ // has enough gold
+            event.reply("You do not have enough gold!").setEphemeral(true).queue();
+            return;
+        }
+        List<Player> players = new LinkedList<>();
+        for(Member m : guild.getMembersWithRoles(role)){
+            players.add(getAsPlayer(m));
+        }
+        Random random = new Random();
+        while(gold > 0){
+            players.get(random.nextInt(players.size())).increaseRawGold(1);
+            king.increaseRawGold(-1);
+            gold--;
+        }
+        players.add(king);
+        data.getPlayers().saveSerialized(players);
+    }
+
+    @SlashCommand(CommandName = "fight-stats")
+    private void fightStatsSlashCommand(SlashCommandInteractionEvent event){
         String fightId = event.getOption("id").getAsString();
         if(resultsData.getChallenges().exists(fightId)) {
             ChallengeFightResults cfr = resultsData.getChallenges().loadSerialized(fightId);
@@ -269,29 +311,28 @@ public class RoleBotListener extends ListenerAdapter {
         }
     }
 
-    private void payCitizen(SlashCommandInteractionEvent event) {
+    @SlashCommand(CommandName = "pay-citizen")
+    private void payCitizenSlashCommand(SlashCommandInteractionEvent event) {
         Member takerMember = event.getOption("citizen").getAsMember();
         Member giverMember = event.getMember();
         if(event.getChannel().getIdLong() != warChannel.getIdLong()){
-            event.reply("You can only do this in <#" + warChannel.getIdLong() + ">").queue();
+            event.reply("You can only do this in <#" + warChannel.getIdLong() + ">").setEphemeral(true).queue();
             return;
         }
         if(takerMember.getUser().isBot()){
-           event.reply("You cannot give a bot gold.").queue();
+           event.reply("You cannot give a bot gold.").setEphemeral(true).queue();
            return;
         }
         int gold = event.getOption("gold").getAsInt();
         Player giverPlayer = getAsPlayer(giverMember);
-        if(giverPlayer.getGold() >= gold){
-            // player has enough gold to give
-            Player takerPlayer = getAsPlayer(takerMember);
-            takerPlayer.increaseRawGold(gold);
-            giverPlayer.increaseRawGold(-gold);
-            event.replyEmbeds(EmbedMessageGenerator.generatePayCitizen(giverPlayer, takerPlayer, gold)).queue();
-            data.getPlayers().saveSerialized(giverPlayer, takerPlayer);
-        } else {
+        if(giverPlayer.getGold() < gold){
             // player does not have enough gold to give
-            event.reply("You do not have " + gold + " gold to give!").queue();
+            event.reply("You do not have " + gold + " gold to give!").setEphemeral(true).queue();
         }
+        Player takerPlayer = getAsPlayer(takerMember);
+        takerPlayer.increaseRawGold(gold);
+        giverPlayer.increaseRawGold(-gold);
+        event.replyEmbeds(EmbedMessageGenerator.generatePayCitizen(giverPlayer, takerPlayer, gold)).queue();
+        data.getPlayers().saveSerialized(giverPlayer, takerPlayer);
     }
 }

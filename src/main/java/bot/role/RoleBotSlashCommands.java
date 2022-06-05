@@ -1,6 +1,5 @@
 package bot.role;
 
-import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
@@ -63,7 +62,7 @@ public abstract class RoleBotSlashCommands {
         return commands;
     }
 
-    public static List<String> commandNames(){
+    public static List<String> getCommandNames(){
         List<String> names = new LinkedList<>();
         for(SlashCommandData c : getCommands()){
             names.add(c.getName());

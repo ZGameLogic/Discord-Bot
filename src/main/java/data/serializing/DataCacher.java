@@ -159,4 +159,10 @@ public class DataCacher <T extends SavableData> {
 			delete(id + "");
 		}
     }
+
+    public void saveSerialized(List<T> collection) {
+		for(T t : collection){
+			saveSerialized(t);
+		}
+    }
 }

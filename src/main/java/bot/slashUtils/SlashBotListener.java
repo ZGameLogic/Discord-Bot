@@ -139,11 +139,11 @@ public class SlashBotListener extends ListenerAdapter {
 	}
 
 	private void submitBugReport(SlashCommandInteractionEvent event) {
-		TextInput title = TextInput.create("title", "Title", TextInputStyle.SHORT)
+		TextInput title = TextInput.create("title", "Title of report", TextInputStyle.SHORT)
 				.setPlaceholder("Title for the bug report")
 				.setRequired(true)
 				.build();
-		TextInput body = TextInput.create("body", "Body", TextInputStyle.PARAGRAPH)
+		TextInput body = TextInput.create("body", "Description", TextInputStyle.PARAGRAPH)
 				.setPlaceholder("Description of bug")
 				.setMaxLength(1000)
 				.setRequired(true)
