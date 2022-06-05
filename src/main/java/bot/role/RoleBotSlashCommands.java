@@ -1,5 +1,6 @@
 package bot.role;
 
+import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
@@ -34,16 +35,12 @@ public abstract class RoleBotSlashCommands {
                 .addSubcommands(new SubcommandData("total", "Shows the citizens with the most stats"))
                 .addSubcommands(new SubcommandData("wins", "Shows the citizens with the most wins"))
                 .addSubcommands(new SubcommandData("losses", "Shows the citizens with the most losses"))
-                .addSubcommands(new SubcommandData("factions", "Shows the population of each faction"))
+                .addSubcommands(new SubcommandData("castes", "Shows the population of each castes"))
                 .addSubcommands(new SubcommandData("activities", "Shows a list of active members who still have not taken their activities for today"))
         );
         commands.add(Commands.slash("pay-citizen", "Gives your gold to a citizen of your choice")
                 .addOption(OptionType.USER, "citizen", "The citizen to recieve your gold", true)
                 .addOption(OptionType.INTEGER, "gold", "The amount of gold to give", true));
-        commands.add(Commands.slash("day-history", "Shows the event history for the day")
-                .addOption(OptionType.STRING, "specific-day", "Pick a day to show formatted as: mm:dd:yyyy:k. K being the day shlongshot is on", false));
-        commands.add(Commands.slash("achievements", "Posts the players achievements in chat")
-                .addOption(OptionType.USER, "player", "Player's achievements to see", false));
         commands.add(Commands.slash("pray", "Pray to Shlongbot"));
         commands.add(Commands.slash("fight-stats", "View a more detailed breakdown of a fight between players")
                 .addOption(OptionType.STRING, "id", "id of the fight to get more details on"));
@@ -64,5 +61,13 @@ public abstract class RoleBotSlashCommands {
                 .addOption(OptionType.STRING, "law", "Law to be added", true));
 
         return commands;
+    }
+
+    public static List<String> commandNames(){
+        List<String> names = new LinkedList<>();
+        for(SlashCommandData c : getCommands()){
+            names.add(c.getName());
+        }
+        return names;
     }
 }

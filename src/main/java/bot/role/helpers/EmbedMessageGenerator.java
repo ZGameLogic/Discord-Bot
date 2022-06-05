@@ -14,6 +14,7 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 
 import java.awt.*;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 
 public abstract class EmbedMessageGenerator {
 
@@ -27,6 +28,7 @@ public abstract class EmbedMessageGenerator {
     private final static Color STATS_COLOR = new Color(112, 93, 115);
     private final static Color LEADERBOARD_COLOR = new Color(101, 106, 15);
     private final static Color ENCOUNTER_COLOR = new Color(56, 78, 115);
+    private final static Color PAY_CITIZEN_COLOR = new Color(150, 58, 58);
 
     private final static Color MYTHIC_ITEM_COLOR = new Color(248, 29, 1);
     private final static Color LEGENDARY_ITEM_COLOR = new Color(248, 170, 1);
@@ -42,13 +44,21 @@ public abstract class EmbedMessageGenerator {
         COMPLEX
     }
 
+    public static MessageEmbed generatePayCitizen(Player giver, Player taker, int gold){
+        EmbedBuilder b = new EmbedBuilder();
+        b.setColor(PAY_CITIZEN_COLOR);
+        b.setTitle(giver.getName() + " has given " + gold + " gold to " + taker.getName());
+        b.setTimestamp(Instant.now());
+        return b.build();
+    }
+
     /**
      * @return A new day message
      */
     public static MessageEmbed generateNewDay(int dayCount){
         EmbedBuilder b = new EmbedBuilder();
         b.setColor(NEW_DAY_COLOR);
-        b.setTitle("A message from teh current ruler of Shlongshot");
+        b.setTitle("A message from the current ruler of Shlongshot");
         b.setDescription(strings.loadSerialized().getDayMessageStart() + " " + strings.loadSerialized().getDayMessageEnd());
         b.setFooter("Day count: " + dayCount);
         return b.build();

@@ -96,7 +96,7 @@ public class SlashBotListener extends ListenerAdapter {
 	
 	@Override
 	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-		logger.info("Slash command recieved for " + event.getName() + " by " + event.getMember().getEffectiveName());
+		logger.info("Slash command received for " + event.getName() + " by " + event.getMember().getEffectiveName());
 		switch(event.getName()) {
 		case "pray":
 			event.reply("Thank you, my child.").queue();

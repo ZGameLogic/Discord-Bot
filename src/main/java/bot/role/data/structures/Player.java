@@ -148,6 +148,14 @@ public class Player extends SaveableData {
     }
 
     /**
+     * Increase gold without adding in item modifiers
+     * @param amount how much to crease stat by
+     */
+    public void increaseRawGold(int amount){
+        gold += amount;
+    }
+
+    /**
      * @return Strength stat with item modifiers
      */
     @JsonIgnore

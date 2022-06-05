@@ -32,6 +32,9 @@ import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -58,7 +61,7 @@ public class RoleBotListener extends ListenerAdapter {
     @Override
     public void onReady(ReadyEvent event){
         guild = event.getJDA().getGuildById(data.getGameConfig().loadSerialized().getGuildId());
-        guild.getTextChannelById(data.getGameConfig().loadSerialized().getGeneralChannelId());
+        warChannel = guild.getTextChannelById(data.getGameConfig().loadSerialized().getGeneralChannelId());
         List<Member> members = guild.getMembers();
         for(Member m : members){
             // Check if any members don't have player data
@@ -101,10 +104,19 @@ public class RoleBotListener extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        switch (event.getName()) {
-            case "fight-stats":
-                postComplexFightResults(event);
-                break;
+        if(RoleBotSlashCommands.commandNames().contains(event.getName())){
+            String name = event.getName();
+            for(int i = 0; i < name.length(); i++){ // kebab case to lower camel case
+                if(name.charAt(i) == '-'){
+                    name = name.substring(0, i) + name.substring(i + 1, i + 2).toUpperCase() + name.substring( i + 2);
+                }
+            }
+            try {
+                getClass().getDeclaredMethod(name, SlashCommandInteractionEvent.class).invoke(this, event);
+            } catch (Exception e) {
+                e.printStackTrace();
+                event.reply("Unable to complete the command. If this continues to happen submit a bug report with the /bug-report command").setEphemeral(true).queue();
+            }
         }
     }
 
@@ -207,6 +219,10 @@ public class RoleBotListener extends ListenerAdapter {
         return null;
     }
 
+    private Player getAsPlayer(Member member){
+        return data.getPlayers().loadSerialized(member.getIdLong());
+    }
+
 
     /**
      * @param player Player to be checking for the caste roles for
@@ -243,13 +259,39 @@ public class RoleBotListener extends ListenerAdapter {
         return guild.getTextChannelById(data.getGameConfig().loadSerialized().getGeneralChannelId());
     }
 
-    private void postComplexFightResults(SlashCommandInteractionEvent event){
+    private void fightStats(SlashCommandInteractionEvent event){
         String fightId = event.getOption("id").getAsString();
         if(resultsData.getChallenges().exists(fightId)) {
             ChallengeFightResults cfr = resultsData.getChallenges().loadSerialized(fightId);
             event.replyEmbeds(EmbedMessageGenerator.generate(cfr, EmbedMessageGenerator.Detail.COMPLEX)).queue();
         } else {
             event.reply("No fight exists with that id.").queue();
+        }
+    }
+
+    private void payCitizen(SlashCommandInteractionEvent event) {
+        Member takerMember = event.getOption("citizen").getAsMember();
+        Member giverMember = event.getMember();
+        if(event.getChannel().getIdLong() != warChannel.getIdLong()){
+            event.reply("You can only do this in <#" + warChannel.getIdLong() + ">").queue();
+            return;
+        }
+        if(takerMember.getUser().isBot()){
+           event.reply("You cannot give a bot gold.").queue();
+           return;
+        }
+        int gold = event.getOption("gold").getAsInt();
+        Player giverPlayer = getAsPlayer(giverMember);
+        if(giverPlayer.getGold() >= gold){
+            // player has enough gold to give
+            Player takerPlayer = getAsPlayer(takerMember);
+            takerPlayer.increaseRawGold(gold);
+            giverPlayer.increaseRawGold(-gold);
+            event.replyEmbeds(EmbedMessageGenerator.generatePayCitizen(giverPlayer, takerPlayer, gold)).queue();
+            data.getPlayers().saveSerialized(giverPlayer, takerPlayer);
+        } else {
+            // player does not have enough gold to give
+            event.reply("You do not have " + gold + " gold to give!").queue();
         }
     }
 }
