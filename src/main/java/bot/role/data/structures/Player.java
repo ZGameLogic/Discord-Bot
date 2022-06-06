@@ -75,7 +75,7 @@ public class Player extends SavableData {
      * @return number of activities the player has left for the day
      */
     public int activitiesLeftToday(){
-        int activitiesPerDay = new DataCacher<GameConfigValues>("game_config").loadSerialized().getActivitiesPerDay();
+        int activitiesPerDay = new DataCacher<GameConfigValues>("arena\\game config data").loadSerialized().getActivitiesPerDay();
         int itemBoostActivities = getStatTotalFromItems(Modifier.Stat.ACTIVITY, Modifier.Type.STATIC);
         return activitiesPerDay + itemBoostActivities - activitiesDone;
     }

@@ -4,7 +4,11 @@ import bot.role.data.item.ShopItem;
 import bot.role.data.jsonConfig.GameConfigValues;
 import bot.role.data.structures.*;
 import data.serializing.DataCacher;
+import data.serializing.SavableData;
 import lombok.Getter;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
 
 @Getter
 public class Data {
@@ -31,6 +35,27 @@ public class Data {
             GameConfigValues gcv = new GameConfigValues();
             gcv.setId("Game config");
             gameConfig.saveSerialized(gcv);
+        }
+    }
+
+    /**
+     * Saves a type of data
+     * @param data
+     */
+    public void saveData(SavableData...data){
+        for(Field f : Data.class.getDeclaredFields()){
+            if(f.getType() != String.class) {
+                ParameterizedType dataListType = (ParameterizedType) f.getGenericType();
+                Class<?> fieldType = (Class<?>) dataListType.getActualTypeArguments()[0];
+                if (data[0].getClass() == fieldType) {
+                    try {
+                        DataCacher dataCacher = (DataCacher) f.get(this);
+                        dataCacher.saveSerialized(data);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
         }
     }
 }

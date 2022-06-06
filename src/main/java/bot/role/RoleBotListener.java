@@ -47,7 +47,11 @@ public class RoleBotListener extends ListenerAdapter {
         this.config = config;
         data = new Data();
         resultsData = new ResultsData();
-        roleBotCommandNames = RoleBotSlashCommands.getCommandNames();
+        roleBotCommandNames = new LinkedList<>();
+        for(Method m : getClass().getDeclaredMethods()){
+            if (m.isAnnotationPresent(SlashCommand.class))
+                roleBotCommandNames.add(m.getAnnotation(SlashCommand.class).CommandName());
+        }
     }
 
     @Override
@@ -263,6 +267,39 @@ public class RoleBotListener extends ListenerAdapter {
      */
     private TextChannel getWarTextChannel(){
         return guild.getTextChannelById(data.getGameConfig().loadSerialized().getGeneralChannelId());
+    }
+
+    @SlashCommand(CommandName = "honorable-promotion")
+    private void honorablePromotionSlashCommand(SlashCommandInteractionEvent event){
+        if(!isKing(event.getMember())) { // is king
+            event.reply("Only the king can use this command").setEphemeral(true).queue();
+            return;
+        }
+        if(event.getChannel().getIdLong() != warChannel.getIdLong()){ // is in war
+            event.reply("You can only do this in <#" + warChannel.getIdLong() + ">").setEphemeral(true).queue();
+            return;
+        }
+        Player king = getAsPlayer(event.getMember());
+        if(king.activitiesLeftToday() == 0){ // if the player has enough activities
+            event.reply("You do not have enough activities left").setEphemeral(true).queue();
+            return;
+        }
+        Member member1 = event.getOption("citizen-one").getAsMember();
+        Member member2 = event.getOption("citizen-two").getAsMember();
+        if(member1.getUser().isBot() || member2.getUser().isBot()){ // making sure members arent bots
+            event.reply("Both citizens cannot be bots").setEphemeral(true).queue();
+            return;
+        }
+        Role role1 = getCasteRoleOfPlayer(member1);
+        Role role2 = getCasteRoleOfPlayer(member2);
+        if(role1 == null || role2 == null){ // both of them are in a caste
+            event.reply("Both citizens must be in a caste!").setEphemeral(true).queue();
+            return;
+        }
+        swapCasteRoles(member1, member2);
+        event.replyEmbeds(EmbedMessageGenerator.generateRollSwap(getAsPlayer(member1), getAsPlayer(member2))).queue();
+        king.activityCompleted();
+        data.saveData(king);
     }
 
     @SlashCommand(CommandName = "distribute-wealth")

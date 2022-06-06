@@ -61,12 +61,4 @@ public abstract class RoleBotSlashCommands {
 
         return commands;
     }
-
-    public static List<String> getCommandNames(){
-        List<String> names = new LinkedList<>();
-        for(SlashCommandData c : getCommands()){
-            names.add(c.getName());
-        }
-        return names;
-    }
 }
