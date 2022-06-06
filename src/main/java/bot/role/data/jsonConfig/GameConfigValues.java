@@ -28,6 +28,8 @@ public class GameConfigValues extends SavableData {
     private long fiftyGoldEmojiId;
     private long guildCategoryId;
 
+    private int goldTaxMax;
+
     private double activitySpawnChance;
     private int activityLife;
 

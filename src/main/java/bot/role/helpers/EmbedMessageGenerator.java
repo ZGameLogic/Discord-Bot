@@ -10,7 +10,9 @@ import bot.role.data.structures.Encounter;
 import bot.role.data.structures.Player;
 import data.serializing.DataCacher;
 import net.dv8tion.jda.api.EmbedBuilder;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.Role;
 
 import java.awt.*;
 import java.text.SimpleDateFormat;
@@ -40,6 +42,23 @@ public abstract class EmbedMessageGenerator {
     public enum Detail {
         SIMPLE,
         COMPLEX
+    }
+
+    public static MessageEmbed generateProposeTaxMessage(Player player, Role role, int gold){
+        EmbedBuilder b = new EmbedBuilder();
+        b.setColor(KING_MESSAGE_COLOR);
+        b.setTitle(player.getName() + " has proposed a tax on the " + role.getName() + "!");
+        b.setDescription("Gold amount: " + gold);
+        b.setTimestamp(Instant.now());
+        return b.build();
+    }
+
+    public static MessageEmbed generateDistributeWealth(Player giver, int gold, Role role){
+        EmbedBuilder b = new EmbedBuilder();
+        b.setColor(KING_MESSAGE_COLOR);
+        b.setTitle(giver.getName() + ", our glorious ruler, has given " + gold + " gold to the " + role.getName() + " caste!");
+        b.setTimestamp(Instant.now());
+        return b.build();
     }
 
     public static MessageEmbed generatePayCitizen(Player giver, Player taker, int gold){

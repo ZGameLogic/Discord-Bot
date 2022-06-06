@@ -3,6 +3,7 @@ package bot.role;
 import bot.role.data.Data;
 import bot.role.data.ResultsData;
 import bot.role.data.results.ChallengeFightResults;
+import bot.role.data.structures.KingData;
 import bot.role.data.structures.Player;
 import bot.role.data.jsonConfig.Strings;
 import bot.role.data.structures.annotations.SlashCommand;
@@ -107,7 +108,9 @@ public class RoleBotListener extends ListenerAdapter {
                     if (m.isAnnotationPresent(SlashCommand.class)) {
                         SlashCommand sc = m.getAnnotation(SlashCommand.class);
                         if (sc.CommandName().equals(name)) {
-                            m.invoke(this, event);
+                            if(processSlashCommandAnnotations(sc, event)) {
+                                m.invoke(this, event);
+                            }
                         }
                     }
                 }
@@ -118,6 +121,9 @@ public class RoleBotListener extends ListenerAdapter {
         }
     }
 
+    public void newDay(){
+
+    }
 
     /**
      * Creates a new player with a random caste role.
@@ -269,21 +275,39 @@ public class RoleBotListener extends ListenerAdapter {
         return guild.getTextChannelById(data.getGameConfig().loadSerialized().getGeneralChannelId());
     }
 
-    @SlashCommand(CommandName = "honorable-promotion")
-    private void honorablePromotionSlashCommand(SlashCommandInteractionEvent event){
-        if(!isKing(event.getMember())) { // is king
-            event.reply("Only the king can use this command").setEphemeral(true).queue();
-            return;
+
+
+    private boolean processSlashCommandAnnotations(SlashCommand sc, SlashCommandInteractionEvent event){
+        if(sc.KingOnly()){
+            if(!isKing(event.getMember())) { // is king
+                event.reply("Only the king can use this command").setEphemeral(true).queue();
+                return false;
+            }
         }
-        if(event.getChannel().getIdLong() != warChannel.getIdLong()){ // is in war
-            event.reply("You can only do this in <#" + warChannel.getIdLong() + ">").setEphemeral(true).queue();
-            return;
+        if(sc.positiveGold()){
+            int gold = event.getOption("gold").getAsInt();
+            if(gold <= 0){
+                event.reply("Gold must be a posative amount").setEphemeral(true).queue();
+                return false;
+            }
         }
-        Player king = getAsPlayer(event.getMember());
-        if(king.activitiesLeftToday() == 0){ // if the player has enough activities
+        if(sc.warChannelOnly()){
+            if(event.getChannel().getIdLong() != warChannel.getIdLong()){ // is in war
+                event.reply("You can only do this in <#" + warChannel.getIdLong() + ">").setEphemeral(true).queue();
+                return false;
+            }
+        }
+        Player player = getAsPlayer(event.getMember());
+        if(player.activitiesLeftToday() < sc.activityCheck()){
             event.reply("You do not have enough activities left").setEphemeral(true).queue();
-            return;
+            return false;
         }
+        return true;
+    }
+
+    @SlashCommand(CommandName = "honorable-promotion", KingOnly = true, warChannelOnly = true, activityCheck = 1)
+    private void honorablePromotionSlashCommand(SlashCommandInteractionEvent event){
+        Player king = getAsPlayer(event.getMember());
         Member member1 = event.getOption("citizen-one").getAsMember();
         Member member2 = event.getOption("citizen-two").getAsMember();
         if(member1.getUser().isBot() || member2.getUser().isBot()){ // making sure members arent bots
@@ -302,30 +326,40 @@ public class RoleBotListener extends ListenerAdapter {
         data.saveData(king);
     }
 
-    @SlashCommand(CommandName = "distribute-wealth")
-    private void distributeWealthSlashCommand(SlashCommandInteractionEvent event){
-        if(!isKing(event.getMember())) { // is king
-            event.reply("Only the king can use this command").setEphemeral(true).queue();
-            return;
-        }
-        if(event.getChannel().getIdLong() != warChannel.getIdLong()){ // is in war
-            event.reply("You can only do this in <#" + warChannel.getIdLong() + ">").setEphemeral(true).queue();
-            return;
-        }
+    @SlashCommand(CommandName = "propose-tax", KingOnly = true, activityCheck = 1, warChannelOnly = true, positiveGold = true)
+    private void proposeTaxSlashCommand(SlashCommandInteractionEvent event){
+        Player king = getAsPlayer(event.getMember());
         Role role = event.getOption("role").getAsRole();
         if(!getCasteRoles().contains(role)){ // is a caste role
-            event.reply("You can give to caste roles").setEphemeral(true).queue();
+            event.reply("You can only tax caste roles").setEphemeral(true).queue();
             return;
         }
         int gold = event.getOption("gold").getAsInt();
-        Player king = getAsPlayer(event.getMember());
-        if(king.getGold() < gold){ // has enough gold
-            event.reply("You do not have enough gold!").setEphemeral(true).queue();
+        int max = data.getGameConfig().loadSerialized().getGoldTaxMax();
+        if(gold > max){ // if they tax more then they are allowed too
+            event.reply("You can only tax less than " + max + " gold!").setEphemeral(true).queue();
             return;
         }
+        KingData kingData = data.getKingData().loadSerialized();
+        kingData.setTax(role.getIdLong(), gold);
+        event.replyEmbeds(EmbedMessageGenerator.generateProposeTaxMessage(king, role, gold)).queue();
+    }
+
+    @SlashCommand(CommandName = "distribute-wealth", KingOnly = true, positiveGold = true, warChannelOnly = true)
+    private void distributeWealthSlashCommand(SlashCommandInteractionEvent event){
+        Role role = event.getOption("role").getAsRole();
+        if(!getCasteRoles().contains(role)){ // is a caste role
+            event.reply("You can only give to caste roles").setEphemeral(true).queue();
+            return;
+        }
+        int gold = event.getOption("gold").getAsInt();
+        int total = gold;
+        Player king = getAsPlayer(event.getMember());
         List<Player> players = new LinkedList<>();
         for(Member m : guild.getMembersWithRoles(role)){
-            players.add(getAsPlayer(m));
+            if(!m.getUser().isBot()) {
+                players.add(getAsPlayer(m));
+            }
         }
         Random random = new Random();
         while(gold > 0){
@@ -335,6 +369,7 @@ public class RoleBotListener extends ListenerAdapter {
         }
         players.add(king);
         data.getPlayers().saveSerialized(players);
+        event.replyEmbeds(EmbedMessageGenerator.generateDistributeWealth(king, total, role)).queue();
     }
 
     @SlashCommand(CommandName = "fight-stats")
@@ -348,14 +383,10 @@ public class RoleBotListener extends ListenerAdapter {
         }
     }
 
-    @SlashCommand(CommandName = "pay-citizen")
+    @SlashCommand(CommandName = "pay-citizen", positiveGold = true, warChannelOnly = true)
     private void payCitizenSlashCommand(SlashCommandInteractionEvent event) {
         Member takerMember = event.getOption("citizen").getAsMember();
         Member giverMember = event.getMember();
-        if(event.getChannel().getIdLong() != warChannel.getIdLong()){
-            event.reply("You can only do this in <#" + warChannel.getIdLong() + ">").setEphemeral(true).queue();
-            return;
-        }
         if(takerMember.getUser().isBot()){
            event.reply("You cannot give a bot gold.").setEphemeral(true).queue();
            return;

@@ -9,4 +9,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)
 public @interface SlashCommand {
     String CommandName();
+    boolean KingOnly() default false;
+    boolean positiveGold() default false;
+    boolean warChannelOnly() default false;
+    int activityCheck() default 0;
 }
