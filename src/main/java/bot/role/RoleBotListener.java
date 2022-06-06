@@ -136,9 +136,11 @@ public class RoleBotListener extends ListenerAdapter {
                 king.increaseRawGold(p.taxGold(goldAmount));
                 data.saveData(p);
             }
-            kd.setTax(0, 0);
-            data.saveData(kd);
+            kd.resetTax();
         }
+        kd.addDayToRun();
+        kd.resetList();
+        data.saveData(kd);
 
         // players
         for(Player p : data.getPlayers().getData()){
@@ -304,8 +306,12 @@ public class RoleBotListener extends ListenerAdapter {
         return guild.getTextChannelById(data.getGameConfig().loadSerialized().getGeneralChannelId());
     }
 
-
-
+    /**
+     * Process slash command annotation options
+     * @param sc Slash command annotation
+     * @param event slash command event
+     * @return false if the processing fails, true if it succeeds
+     */
     private boolean processSlashCommandAnnotations(SlashCommand sc, SlashCommandInteractionEvent event){
         if(sc.KingOnly()){
             if(!isKing(event.getMember())) { // is king
@@ -332,6 +338,22 @@ public class RoleBotListener extends ListenerAdapter {
             return false;
         }
         return true;
+    }
+
+    @SlashCommand(CommandName = "pass-law", KingOnly = true, warChannelOnly = true)
+    private void passLawSlashCommand(SlashCommandInteractionEvent event){
+        KingData kd = data.getKingData().loadSerialized();
+        if(kd.getKingDayRun() < 8){
+            event.reply("You have to be king for 8 or more days to pass a law").setEphemeral(true).queue();
+            return;
+        }
+        String law = event.getOption("law").getAsString();
+        event.reply("Your law has been submitted to the church of shlongbot. It shall be reviewed. Shlongbot bless.").queue();
+        guild.getMemberById(232675572772372481l).getUser().openPrivateChannel().queue(channel -> {
+            channel.sendMessage("A new law was proposed by " + event.getMember().getEffectiveName() + "\n" + law).queue();
+        });
+        kd.resetRun();
+        data.saveData(kd);
     }
 
     @SlashCommand(CommandName = "honorable-promotion", KingOnly = true, warChannelOnly = true, activityCheck = 1)

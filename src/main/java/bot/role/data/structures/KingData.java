@@ -19,6 +19,7 @@ public class KingData extends SavableData {
     public KingData() {
         super("king");
         playersFoughtKing = new LinkedList<>();
+        kingDayRun = 0;
     }
 
     /* King stuff */
@@ -43,7 +44,14 @@ public class KingData extends SavableData {
     }
 
     public void resetTax() {
-        taxRoleID = 0;
-        taxAmount = 0;
+        setTax(0, 0);
+    }
+
+    public void resetRun(){
+        kingDayRun = 0;
+    }
+
+    public void addDayToRun(){
+        kingDayRun++;
     }
 }
