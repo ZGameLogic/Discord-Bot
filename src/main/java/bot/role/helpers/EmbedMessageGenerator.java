@@ -17,6 +17,7 @@ import net.dv8tion.jda.api.entities.Role;
 import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
+import java.util.Collection;
 
 public abstract class EmbedMessageGenerator {
 
@@ -38,6 +39,14 @@ public abstract class EmbedMessageGenerator {
     private final static Color RARE_ITEM_COLOR = new Color(0, 248, 241);
     private final static Color UNCOMMON_ITEM_COLOR = new Color(40, 184, 180);
     private final static Color COMMON_ITEM_COLOR = new Color(67, 144, 143);
+
+    public static MessageEmbed generateNewKing(Member king) {
+        EmbedBuilder b = new EmbedBuilder();
+        b.setColor(KING_MESSAGE_COLOR);
+        b.setTitle("Hail to the new ruler: " + king.getEffectiveName() + "!");
+        b.setTimestamp(Instant.now());
+        return b.build();
+    }
 
     public enum Detail {
         SIMPLE,

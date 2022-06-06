@@ -183,8 +183,7 @@ public class RoleBotListener extends ListenerAdapter {
      * @param king Player to become the new king
      */
     private void assignNewKing(Member king){
-        // TODO send message
-
+        warChannel.sendMessageEmbeds(EmbedMessageGenerator.generateNewKing(king)).queue();
         // remove old caste role if any
         // add king role
         guild.modifyMemberRoles(king, new LinkedList<Role>(Arrays.asList(new Role[]{getKingRole()})), getCasteRoles()).queue();
@@ -504,6 +503,7 @@ public class RoleBotListener extends ListenerAdapter {
         Player player = getAsPlayer(event.getMember());
         player.swapSlots(slotOne, slotTwo);
         data.saveData(player);
+        event.reply("Inventory slots " + slotOne + " and " + slotTwo + " have been swapped.").queue();
     }
 
     @SlashCommand(CommandName = "challenge", warChannelOnly = true, activityCheck = 1)
