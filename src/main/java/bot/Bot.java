@@ -208,10 +208,10 @@ public class Bot {
 			String movedFrom = jsonInformation.getJSONObject("changelog").getJSONArray("items").getJSONObject(0).getString("fromString");
 			String transition = "Issue was moved from " + movedFrom + " to " + movedTo;
 			if(movedTo.equals("Done")){
-				eb.setTitle("Bug: " + issueKey + " has been resovled");
+				eb.setTitle("Bug: " + issueKey + " has been resovled", "https://zgamelogic.com:8080/projects/DB/issues/" + issueKey);
 				eb.setDescription("Thank you so much for bringing this bug to my attention and the fix will be out in the next release.");
 			} else {
-				eb.setTitle("Bug: " + issueKey + " has been moved to " + movedTo);
+				eb.setTitle("Bug: " + issueKey + " has been moved to " + movedTo, "https://zgamelogic.com:8080/projects/DB/issues/" + issueKey);
 				eb.setDescription("A bug that you submitted has changed developement status from  " + movedFrom + " to " + movedTo);
 			}
 			eb.setTimestamp(Instant.now());
@@ -220,13 +220,13 @@ public class Bot {
 			// issue was commented on
 			String author = jsonInformation.getJSONObject("comment").getJSONObject("author").getString("displayName");
 			String comment = jsonInformation.getJSONObject("comment").getString("body");
-			eb.setTitle("Bug: " + issueKey + " had a commented added to the ticket");
+			eb.setTitle("Bug: " + issueKey + " had a commented added to the ticket", "https://zgamelogic.com:8080/projects/DB/issues/" + issueKey);
 			eb.setDescription(author + " commented on a bug that you submitted.\n Comment: " + comment);
 			eb.setTimestamp(Instant.now());
 			process = true;
 		} else if(event.equals("issue_created")){
 			// issue what created
-			eb.setTitle("Bug has been created in the workflow.");
+			eb.setTitle("Bug has been created in the workflow.", "https://zgamelogic.com:8080/projects/DB/issues/" + issueKey);
 			eb.setDescription("Thank you for your bug report. I will get to it as soon as I can.");
 			eb.setFooter("Issue key: " + issueKey);
 			process = true;
