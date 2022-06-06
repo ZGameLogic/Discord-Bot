@@ -80,6 +80,11 @@ public class Player extends SavableData {
         return activitiesPerDay + itemBoostActivities - activitiesDone;
     }
 
+    public int defendsLeftToday(){
+        int defendsPerDay = new DataCacher<GameConfigValues>("arena\\game config data").loadSerialized().getChallengeDefendPerDay();
+        return defendsPerDay - challengesDefendedToday;
+    }
+
     /**
      * Completes an amount of activities for the player
      * @param amount number of activities done
@@ -234,6 +239,37 @@ public class Player extends SavableData {
     public int getRawAgilityStat(){
         return agility;
     }
+
+    @JsonIgnore
+    public String getStrengthToStringWithItem(){
+        int itemMod = getStatTotalFromItems(Modifier.Stat.STRENGTH, Modifier.Type.STATIC);
+        return strength + (itemMod > 0 ? " (+" + itemMod + ")" : "");
+    }
+
+    @JsonIgnore
+    public String getStaminaToStringWithItem(){
+        int itemMod = getStatTotalFromItems(Modifier.Stat.STAMINA, Modifier.Type.STATIC);
+        return stamina + (itemMod > 0 ? " (+" + itemMod + ")" : "");
+    }
+
+    @JsonIgnore
+    public String getKnowledgeToStringWithItem(){
+        int itemMod = getStatTotalFromItems(Modifier.Stat.KNOWLEDGE, Modifier.Type.STATIC);
+        return knowledge + (itemMod > 0 ? " (+" + itemMod + ")" : "");
+    }
+
+    @JsonIgnore
+    public String getMagicToStringWithItem(){
+        int itemMod = getStatTotalFromItems(Modifier.Stat.MAGIC, Modifier.Type.STATIC);
+        return magic + (itemMod > 0 ? " (+" + itemMod + ")" : "");
+    }
+
+    @JsonIgnore
+    public String getAgilityToStringWithItem(){
+        int itemMod = getStatTotalFromItems(Modifier.Stat.AGILITY, Modifier.Type.STATIC);
+        return agility + (itemMod > 0 ? " (+" + itemMod + ")" : "");
+    }
+
 
     /**
      *

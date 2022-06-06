@@ -10,7 +10,7 @@ import bot.role.data.structures.Encounter;
 import bot.role.data.structures.Player;
 import data.serializing.DataCacher;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
 
@@ -42,6 +42,41 @@ public abstract class EmbedMessageGenerator {
     public enum Detail {
         SIMPLE,
         COMPLEX
+    }
+
+    public static MessageEmbed generateStatsMessage(Player player, Member member){
+        EmbedBuilder b = new EmbedBuilder();
+        b.setColor(STATS_COLOR);
+        b.setTitle("Fighter stats for " + member.getEffectiveName());
+        b.setThumbnail(member.getAvatarUrl());
+        b.setDescription("Gold: " + player.getGold() + "\n" +
+                "Victories: " + player.getWins() + "\n" +
+                        "Defeats: " + player.getLosses() + "\n" +
+                "Tournament victories: " + player.getTournamentVictories());
+
+        b.addField("Strength", player.getStrengthToStringWithItem(), true);
+        b.addField("Knowledge", player.getKnowledgeToStringWithItem(), true);
+        b.addField("Magic", player.getMagicToStringWithItem(), true);
+        b.addField("Agility", player.getAgilityToStringWithItem(), true);
+        b.addField("Stamina", player.getStaminaToStringWithItem(), true);
+
+        b.addBlankField(false);
+
+        for(Item item : player.getInventory()){
+            String desc = item.getDescription() +  "\n";
+            for(Modifier mod : item.getModifiers()){
+                if(mod.getType() == Modifier.Type.BANE){
+                    desc += "\t" + mod.getType().getString() + " " + mod.getStat().getString() + "\n";
+                } else {
+                    desc += "\t" + mod.getType().getString() + " " + mod.getStat().getString() + ": " + mod.getAmount() + "\n";
+                }
+            }
+            b.addField(item.getName(), desc, true);
+        }
+
+        b.setFooter("Can do " + player.activitiesLeftToday() + " more activities today\n" +
+                "Can defend " + player.defendsLeftToday() + " more times today");
+        return b.build();
     }
 
     public static MessageEmbed generateProposeTaxMessage(Player player, Role role, int gold){

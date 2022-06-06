@@ -59,7 +59,7 @@ public class Item {
         this.description = description;
         this.rarity = rarity;
         this.maxDurability = maxDurability;
-        durability = 0;
+        durability = maxDurability;
     }
 
     public void useItem(){
@@ -70,6 +70,9 @@ public class Item {
         durability = maxDurability;
     }
 
+    /**
+     * @return true if the item has 0 durability
+     */
     public boolean broken(){
         return durability <= 0;
     }

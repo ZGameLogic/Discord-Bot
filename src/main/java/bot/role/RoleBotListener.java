@@ -340,6 +340,16 @@ public class RoleBotListener extends ListenerAdapter {
         return true;
     }
 
+    @SlashCommand(CommandName = "stats")
+    private void statsSlashCommand(SlashCommandInteractionEvent event){
+        Member member = event.getOption("player") != null ? member = event.getOption("player").getAsMember() : event.getMember();
+        if(member.getUser().isBot()){
+            event.reply("Bots don't have stats...yet").setEphemeral(true).queue();
+            return;
+        }
+        event.replyEmbeds(EmbedMessageGenerator.generateStatsMessage(getAsPlayer(member), member)).queue();
+    }
+
     @SlashCommand(CommandName = "pass-law", KingOnly = true, warChannelOnly = true)
     private void passLawSlashCommand(SlashCommandInteractionEvent event){
         KingData kd = data.getKingData().loadSerialized();
