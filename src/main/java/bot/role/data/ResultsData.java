@@ -2,7 +2,11 @@ package bot.role.data;
 
 import bot.role.data.results.*;
 import data.serializing.DataCacher;
+import data.serializing.SavableData;
 import lombok.Getter;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.ParameterizedType;
 
 @Getter
 public class ResultsData {
@@ -28,6 +32,27 @@ public class ResultsData {
         itemPurchases = new DataCacher<>(DIR + "\\item\\purchases");
         tournamentFights  = new DataCacher<>(DIR + "\\tournament\\fights");
         tournaments = new DataCacher<>(DIR + "\\tournament\\tournament");
+    }
+
+    /**
+     * Saves a type of data
+     * @param data
+     */
+    public void saveData(SavableData...data){
+        for(Field f : ResultsData.class.getDeclaredFields()){
+            if(f.getType() != String.class) {
+                ParameterizedType dataListType = (ParameterizedType) f.getGenericType();
+                Class<?> fieldType = (Class<?>) dataListType.getActualTypeArguments()[0];
+                if (data[0].getClass() == fieldType) {
+                    try {
+                        DataCacher dataCacher = (DataCacher) f.get(this);
+                        dataCacher.saveSerialized(data);
+                    } catch (IllegalAccessException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }
     }
 
 }

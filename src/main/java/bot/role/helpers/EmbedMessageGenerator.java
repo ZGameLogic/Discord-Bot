@@ -144,7 +144,7 @@ public abstract class EmbedMessageGenerator {
         if(results.isAttackerWin()){
             b.setColor(CHALLENGE_WIN_COLOR);
             b.setTitle("Fight results: " + results.getAttacker().getName() + " won!");
-            description += attackerName + " is now a rank of " + results.getResultStatChange() + "." +
+            description += attackerName + " is now a rank of " + results.getDefenderRole() + "." +
                     " Gold obtained: " + results.getGold();
         } else {
             b.setColor(CHALLENGE_LOSE_COLOR);
@@ -174,7 +174,6 @@ public abstract class EmbedMessageGenerator {
                 "Fight between " + attackerName + " (" + results.getAttackerRole() + ") and " + defenderName + " (" + results.getDefenderRole() + ")\n" +
                 "Attacker win: " + results.isAttackerWin() + "\n" +
                 "Score: " + results.getAttackerPoints() + " " + (5 - results.getAttackerPoints()) + "\n" +
-                "Server booster padding: " + results.getServerBoosterPadding() + "\n" +
                 "Padding Multiplier: x" + results.getPaddingMultiplier() + "\n" +
                 "Defender padding level: " + results.getDefenderPaddingLevel() + "\n" +
                 "Attacker win percentage: " + String.format("%.2f%%", results.attackerWinPercentage()) + "\n\n";
@@ -183,7 +182,7 @@ public abstract class EmbedMessageGenerator {
             int defenderStat = results.getDefender().getStatBlockWithItems().getAllStats().get(stat);
             int rolled = results.getRolled().getAllStats().get(stat);
             int total = attackerStat + defenderStat;
-            double winPercentage = total / (double) attackerStat;
+            double winPercentage = (double) attackerStat / total;
             b.addField(stat, String.format("%.2f", winPercentage) + "%: " + (rolled <= attackerStat ? "won" : "lost") + "\n" +
                     "\tA: " + attackerStat + "\tD: " + defenderStat + "\n" +
                     "\tTotal: " + total + "\tRolled: " + rolled, true);
@@ -224,7 +223,6 @@ public abstract class EmbedMessageGenerator {
 
     private static MessageEmbed generateComplexEncounterResults(EncounterFightResults results){
         EmbedBuilder b = new EmbedBuilder();
-        // TODO this
         return b.build();
     }
     public static MessageEmbed generate(GuildFightResults results){

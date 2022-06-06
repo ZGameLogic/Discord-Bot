@@ -21,6 +21,7 @@ public class Data {
     private DataCacher<Guild> guilds;
     private DataCacher<KingData> kingData;
     private DataCacher<GameConfigValues> gameConfig;
+    private DataCacher<General> general;
 
     public Data(){
         players = new DataCacher<>(DIR + "\\players");
@@ -30,6 +31,12 @@ public class Data {
         kingData = new DataCacher<>(DIR + "\\king");
         shopItems = new DataCacher<>(DIR + "\\shop items");
         gameConfig = new DataCacher<>(DIR + "\\game config data");
+        general = new DataCacher<>(DIR + "\\general");
+
+        if(general.getFiles().length == 0){
+            General g = new General();
+            general.saveSerialized(g);
+        }
 
         if(gameConfig.getFiles().length == 0){
             GameConfigValues gcv = new GameConfigValues();

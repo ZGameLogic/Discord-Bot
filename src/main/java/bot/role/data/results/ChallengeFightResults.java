@@ -23,10 +23,10 @@ public class ChallengeFightResults extends SavableData {
     private StatBlock resultStatChange;
     private String attackerRole;
     private String defenderRole;
-    private int serverBoosterPadding;
     private int paddingMultiplier;
     private int defenderPaddingLevel;
     private int gold;
+    private boolean attackingUp;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date time;
@@ -41,12 +41,11 @@ public class ChallengeFightResults extends SavableData {
      * @param resultStatChange
      * @param attackerRole
      * @param defenderRole
-     * @param serverBoosterPadding
      * @param paddingMultiplier
      * @param defenderPaddingLevel
      * @param gold
      */
-    public ChallengeFightResults(long id, Player attacker, Player defender, int attackerPoints, StatBlock rolled, StatBlock resultStatChange, String attackerRole, String defenderRole, int serverBoosterPadding, int paddingMultiplier, int defenderPaddingLevel, int gold) {
+    public ChallengeFightResults(long id, Player attacker, Player defender, int attackerPoints, StatBlock rolled, StatBlock resultStatChange, String attackerRole, String defenderRole, int paddingMultiplier, int defenderPaddingLevel, int gold, boolean attackingUp) {
         super(id);
         this.attacker = attacker;
         this.defender = defender;
@@ -56,9 +55,9 @@ public class ChallengeFightResults extends SavableData {
         this.gold = gold;
         this.defenderRole = defenderRole;
         this.attackerRole = attackerRole;
-        this.serverBoosterPadding = serverBoosterPadding;
         this.paddingMultiplier = paddingMultiplier;
         this.defenderPaddingLevel = defenderPaddingLevel;
+        this.attackingUp = attackingUp;
         time = new Date();
     }
 
@@ -114,6 +113,6 @@ public class ChallengeFightResults extends SavableData {
 
     @JsonIgnore
     public int getTotalDefenderStatPadding(){
-        return serverBoosterPadding + defenderPaddingLevel * paddingMultiplier;
+        return defenderPaddingLevel * paddingMultiplier;
     }
 }

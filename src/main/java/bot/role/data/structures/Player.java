@@ -85,6 +85,15 @@ public class Player extends SavableData {
         return defendsPerDay - challengesDefendedToday;
     }
 
+    public boolean canDefend(){
+        return defendsLeftToday() > 0;
+    }
+
+    public void hasDefended(){
+        challengesDefendedToday++;
+    }
+
+
     /**
      * Completes an amount of activities for the player
      * @param amount number of activities done
@@ -303,6 +312,8 @@ public class Player extends SavableData {
      * Does a new day for the user
      */
     public void newDay(){
+        activitiesDone = 0;
+        challengesDefendedToday = 0;
         // stuff involving activeness
         if (active) {
             active = false;
@@ -333,13 +344,12 @@ public class Player extends SavableData {
     public StatBlock getStatBlock(){
         return new StatBlock(magic, knowledge, stamina, strength, agility);
     }
-
     /**
-     * Taxes the player an amount of gold. Only returns the amount of gold the player is able to pay
-     * @param amount Amount of gold to tax the player
-     * @return Amount of gold the player could pay
+     * Forces the player to pay an amount of gold. Only returns the amount of gold the player is able to pay
+     * @param amount Amount of gold the player pays
+     * @return Amount of gold the player can pay
      */
-    public int taxGold(int amount){
+    public int payGold(int amount){
         if(gold >= amount){ // has the amount of gold
             gold -= amount;
             return amount;
@@ -349,4 +359,18 @@ public class Player extends SavableData {
         return total;
     }
 
+    public void increaseWins(){
+        wins++;
+    }
+    public void increaseLosses(){
+        losses++;
+    }
+
+    public void increaseByStatBlock(StatBlock resultChange) {
+        increaseAgility(resultChange.getAgility());
+        increaseKnowledge(resultChange.getKnowledge());
+        increaseMagic(resultChange.getMagic());
+        increaseStrength(resultChange.getStrength());
+        increaseStamina(resultChange.getStamina());
+    }
 }

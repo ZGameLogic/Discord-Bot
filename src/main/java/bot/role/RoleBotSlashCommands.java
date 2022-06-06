@@ -42,7 +42,7 @@ public abstract class RoleBotSlashCommands {
                 .addOption(OptionType.INTEGER, "gold", "The amount of gold to give", true));
         commands.add(Commands.slash("pray", "Pray to Shlongbot"));
         commands.add(Commands.slash("fight-stats", "View a more detailed breakdown of a fight between players")
-                .addOption(OptionType.STRING, "id", "id of the fight to get more details on"));
+                .addOption(OptionType.STRING, "id", "id of the fight to get more details on", true));
 
         // Role bot king
         commands.add(Commands.slash("distribute-wealth", "Gives some of your wealth to a caste system")

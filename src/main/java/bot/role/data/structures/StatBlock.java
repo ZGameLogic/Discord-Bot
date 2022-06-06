@@ -35,4 +35,56 @@ public class StatBlock {
         returnThis += agility > 0 ? "Agility increased by " + agility + ", " : "";
         return returnThis.substring(0, returnThis.length() - 2);
     }
+
+    public void addToAll(int amount){
+        strength += amount;
+        stamina += amount;
+        magic += amount;
+        agility += amount;
+        knowledge += amount;
+    }
+
+    public static StatBlock add(StatBlock sb1, StatBlock sb2){
+        return new StatBlock(sb1.getMagic() + sb2.getMagic(),
+                sb1.getKnowledge() + sb2.getKnowledge(),
+                sb1.getStamina() + sb2.getStamina(),
+                sb1.getStrength() + sb2.getStrength(),
+                sb1.getAgility() + sb2.getAgility());
+    }
+
+    public static String getBiggestDifference(StatBlock sb1, StatBlock sb2){
+        String stat = (String)sb1.getAllStats().keySet().toArray()[0];
+        int largestDif = 0;
+        for(String keyStat : sb1.getAllStats().keySet()){
+            int dif = sb2.getAllStats().get(keyStat) - sb1.getAllStats().get(keyStat);
+            if (dif > largestDif) {
+                largestDif = dif;
+                stat = keyStat;
+            }
+        }
+        return stat;
+    }
+
+    public static StatBlock generateByStat(String stat, int amount){
+        StatBlock sb = new StatBlock();
+        switch (stat){
+            case "Magic":
+                sb = new StatBlock(amount, 0,0,0,0);
+                break;
+            case "Knowledge":
+                sb = new StatBlock(0, amount,0 ,0 ,0);
+                break;
+            case "Stamina":
+                sb = new StatBlock(0, 0, amount, 0, 0);
+                break;
+            case "Strength":
+                sb = new StatBlock(0, 0, 0, amount, 0);
+                break;
+            case "Agility":
+                sb = new StatBlock(0, 0, 0, 0, amount);
+                break;
+        }
+        return sb;
+    }
+
 }

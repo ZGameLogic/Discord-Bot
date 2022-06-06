@@ -3,9 +3,11 @@ package bot.role;
 import bot.role.data.Data;
 import bot.role.data.ResultsData;
 import bot.role.data.results.ChallengeFightResults;
+import bot.role.data.structures.General;
 import bot.role.data.structures.KingData;
 import bot.role.data.structures.Player;
 import bot.role.data.jsonConfig.Strings;
+import bot.role.data.structures.StatBlock;
 import bot.role.data.structures.annotations.SlashCommand;
 import bot.role.helpers.EmbedMessageGenerator;
 import data.ConfigLoader;
@@ -25,10 +27,7 @@ import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
 public class RoleBotListener extends ListenerAdapter {
 
@@ -88,7 +87,14 @@ public class RoleBotListener extends ListenerAdapter {
     }
 
     @Override
-    public void onMessageReceived(MessageReceivedEvent event) {}
+    public void onMessageReceived(MessageReceivedEvent event) {
+        if(event.getMember().getIdLong() == 232675572772372481l){
+            if(event.getMessage().getContentRaw().equals("!new-day")) {
+                newDay();
+                event.getChannel().sendMessage("A new day has passed!").queue();
+            }
+        }
+    }
 
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {}
@@ -133,7 +139,7 @@ public class RoleBotListener extends ListenerAdapter {
             int goldAmount = kd.getTaxAmount();
             for(Member m : guild.getMembersWithRoles(guild.getRoleById(kd.getTaxRoleID()))){
                 Player p = getAsPlayer(m);
-                king.increaseRawGold(p.taxGold(goldAmount));
+                king.increaseRawGold(p.payGold(goldAmount));
                 data.saveData(p);
             }
             kd.resetTax();
@@ -147,6 +153,9 @@ public class RoleBotListener extends ListenerAdapter {
             p.newDay();
             data.saveData(p);
         }
+        General g = data.getGeneral().loadSerialized();
+        data.saveData(g.increaseDayCount());
+        warChannel.sendMessageEmbeds(EmbedMessageGenerator.generateNewDay(g.getDayCount()));
     }
 
     /**
@@ -229,7 +238,23 @@ public class RoleBotListener extends ListenerAdapter {
                 roles.add(role);
             }
         }
+        Comparator<Role> roleComparator = Comparator.comparing(Role::getPosition);
+        Collections.sort(roles, roleComparator);
         return roles;
+    }
+
+    private int getCasteRoleLevel(Member member){
+        Role role = getCasteRoleOfPlayer(member);
+        List<Long> ids = data.getGameConfig().loadSerialized().getRoleIds();
+        if(role.getIdLong() == data.getGameConfig().loadSerialized().getKingRoleId()){
+            return ids.size() + 1;
+        } else {
+            return ids.size() - ids.indexOf(role.getIdLong());
+        }
+    }
+
+    private int getCasteRoleLevel(Player player){
+        return getCasteRoleLevel(getAsMember(player));
     }
 
     /**
@@ -254,11 +279,6 @@ public class RoleBotListener extends ListenerAdapter {
         }
         return null;
     }
-
-    private Player getAsPlayer(Member member){
-        return data.getPlayers().loadSerialized(member.getIdLong());
-    }
-
 
     /**
      * @param player Player to be checking for the caste roles for
@@ -285,6 +305,10 @@ public class RoleBotListener extends ListenerAdapter {
         return guild.getMemberById(player.getId());
     }
 
+    private Player getAsPlayer(Member member){
+        return data.getPlayers().loadSerialized(member.getIdLong());
+    }
+
     private boolean isKing(Player player) {
         return isKing(getAsMember(player));
     }
@@ -292,6 +316,7 @@ public class RoleBotListener extends ListenerAdapter {
     private boolean isKing(Member member) {
         return member.getRoles().contains(getKingRole());
     }
+
     /**
      * @return The king caste role as a role object
      */
@@ -463,5 +488,119 @@ public class RoleBotListener extends ListenerAdapter {
         giverPlayer.increaseRawGold(-gold);
         event.replyEmbeds(EmbedMessageGenerator.generatePayCitizen(giverPlayer, takerPlayer, gold)).queue();
         data.getPlayers().saveSerialized(giverPlayer, takerPlayer);
+    }
+
+    @SlashCommand(CommandName = "challenge", warChannelOnly = true, activityCheck = 1)
+    private void challengeSlashCommand(SlashCommandInteractionEvent event){
+        /* Pre challenge check */
+        Member attackerMember = event.getMember();
+        Member defenderMember = event.getOption("player").getAsMember();
+        if(defenderMember.getUser().isBot()){   // if the defender is a bot
+            event.reply("You cannot challenge a bot...yet").setEphemeral(true).queue();
+            return;
+        }
+        Player attacker = getAsPlayer(attackerMember);
+        Player defender = getAsPlayer(defenderMember);
+        if(isKing(defenderMember)){
+            KingData kd = data.getKingData().loadSerialized();
+            if(!kd.canFightKing(attacker.getIdLong())){
+                event.reply("You have already fought the king today!").setEphemeral(true).queue();
+                return;
+            }
+            kd.addPlayerKingFought(attacker.getIdLong());
+            data.saveData(kd);
+        } else {
+            if(!defender.canDefend()){
+                event.reply("That player has already defended too many challenges today.").setEphemeral(true).queue();
+                return;
+            }
+        }
+
+        /* end pre challenge check */
+
+        int attackerCasteLevel = getCasteRoleLevel(attackerMember);
+        int defenderCasteLevel = getCasteRoleLevel(defenderMember);
+        boolean attackingUp = attackerCasteLevel < defenderCasteLevel;
+        int defenderPaddingLevel = attackingUp ? defenderCasteLevel - attackerCasteLevel : 0;
+        if(defenderMember.isBoosting()) defenderPaddingLevel++;
+        if(isKing(defenderMember)) defenderPaddingLevel++;
+        int paddingMultiplier = data.getGameConfig().loadSerialized().getPaddingMultiplier();
+        int padding = paddingMultiplier * defenderPaddingLevel;
+        StatBlock totals = StatBlock.add(attacker.getStatBlockWithItems(), defender.getStatBlockWithItems());
+        totals.addToAll(padding);
+        Random r = new Random();
+        StatBlock rolled = new StatBlock(
+                r.nextInt(totals.getMagic()),
+                r.nextInt(totals.getKnowledge()),
+                r.nextInt(totals.getStamina()),
+                r.nextInt(totals.getStrength()),
+                r.nextInt(totals.getAgility())
+        );
+
+        int attackerPoints = 0;
+
+        for(String stat : rolled.getAllStats().keySet()){
+            int valRolled = rolled.getAllStats().get(stat);
+            if(valRolled <= attacker.getStatBlockWithItems().getAllStats().get(stat)){
+                attackerPoints++;
+            }
+        }
+        int goldAmount = 0;
+        StatBlock resultChange = null;
+        if(attackerPoints >= 3){
+            // attacker won
+            attacker.increaseWins();
+            defender.increaseLosses();
+            if(attackingUp){
+                // attacking up
+                goldAmount = r.nextInt(20);
+                attacker.increaseGold(defender.payGold(goldAmount));
+                swapCasteRoles(attackerMember, defenderMember);
+            } else {
+                // attacking down
+                goldAmount = r.nextInt(20);
+                attacker.increaseGold(defender.payGold(goldAmount));
+            }
+        } else {
+            // attacker lost
+            attacker.increaseLosses();
+            defender.increaseWins();
+            if(attackingUp){
+                // attacking up
+                String stat = StatBlock.getBiggestDifference(attacker.getStatBlockWithItems(), defender.getStatBlockWithItems());
+                int statChangeAmount = r.nextInt(3) + 1;
+                resultChange = StatBlock.generateByStat(stat, statChangeAmount);
+                attacker.increaseByStatBlock(resultChange);
+                goldAmount = r.nextInt(20);
+                defender.increaseGold(attacker.payGold(goldAmount));
+            } else {
+                // attacking down
+                goldAmount = r.nextInt(20);
+                defender.increaseGold(attacker.payGold(goldAmount));
+                swapCasteRoles(attackerMember, defenderMember);
+            }
+        }
+
+        ChallengeFightResults cfr = new ChallengeFightResults(
+                resultsData.getChallenges().generateID(),
+                attacker,
+                defender,
+                attackerPoints,
+                rolled,
+                resultChange,
+                getCasteRoleNameOfPlayer(attacker),
+                getCasteRoleNameOfPlayer(defender),
+                paddingMultiplier,
+                defenderPaddingLevel,
+                goldAmount,
+                attackingUp
+        );
+
+        attacker.activityCompleted();
+        defender.hasDefended();
+        data.saveData(attacker, defender);
+        resultsData.saveData(cfr);
+        data.saveData(data.getGeneral().loadSerialized().increaseChallengesFought());
+        event.replyEmbeds(EmbedMessageGenerator.generate(cfr, EmbedMessageGenerator.Detail.SIMPLE)).queue();
     }
 }
