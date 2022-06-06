@@ -298,5 +298,19 @@ public class Player extends SavableData {
         return new StatBlock(magic, knowledge, stamina, strength, agility);
     }
 
+    /**
+     * Taxes the player an amount of gold. Only returns the amount of gold the player is able to pay
+     * @param amount Amount of gold to tax the player
+     * @return Amount of gold the player could pay
+     */
+    public int taxGold(int amount){
+        if(gold >= amount){ // has the amount of gold
+            gold -= amount;
+            return amount;
+        }
+        int total = (int)gold; // does not have the amount of gold
+        gold -= gold;
+        return total;
+    }
 
 }

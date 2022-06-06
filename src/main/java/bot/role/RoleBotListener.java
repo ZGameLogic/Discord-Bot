@@ -121,8 +121,37 @@ public class RoleBotListener extends ListenerAdapter {
         }
     }
 
+    /**
+     * This is the method that does new day things
+     * this automatically gets called at noon and midnight
+     */
     public void newDay(){
+        // tax
+        KingData kd = data.getKingData().loadSerialized();
+        if(kd.getTaxRoleID() != 0){
+            Player king = getKingPlayer();
+            int goldAmount = kd.getTaxAmount();
+            for(Member m : guild.getMembersWithRoles(guild.getRoleById(kd.getTaxRoleID()))){
+                Player p = getAsPlayer(m);
+                king.increaseRawGold(p.taxGold(goldAmount));
+                data.saveData(p);
+            }
+            kd.setTax(0, 0);
+            data.saveData(kd);
+        }
 
+        // players
+        for(Player p : data.getPlayers().getData()){
+            p.newDay();
+            data.saveData(p);
+        }
+    }
+
+    /**
+     * @return King player
+     */
+    private Player getKingPlayer(){
+        return getAsPlayer(guild.getMembersWithRoles(getKingRole()).get(0));
     }
 
     /**

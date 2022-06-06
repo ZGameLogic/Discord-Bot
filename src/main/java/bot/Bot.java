@@ -15,6 +15,8 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -36,6 +38,7 @@ import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import webhook.listeners.WebHookReactionListener;
 
 @RestController
+@EnableScheduling
 public class Bot {
 	
 	private RoleBotListener RBL;
@@ -113,6 +116,11 @@ public class Bot {
 	@GetMapping("/king")
 	public String getKing() {
 		return null/*RoleBotListener.getKing()*/;
+	}
+
+	@Scheduled(cron = "0 0 0,12 * * *")
+	private void newDay(){
+		RBL.newDay();
 	}
 	
 	private void handleBamboo(JSONObject message) throws JSONException {
