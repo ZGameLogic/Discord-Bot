@@ -1,4 +1,4 @@
-package bot.role.dungeon.graph;
+package bot.role.data.dungeon.graph;
 
 import java.util.*;
 import java.util.List;

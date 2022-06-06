@@ -1,4 +1,4 @@
-package bot.role.dungeon.saveable;
+package bot.role.data.dungeon.saveable;
 
 import bot.role.data.item.Item;
 import lombok.AllArgsConstructor;
@@ -20,7 +20,7 @@ public class Room {
     private int gold;
     private boolean cleared;
 
-    public Room(bot.role.dungeon.Room room, List<Encounter> encounters, Map<Item.Material, Integer> materials, int gold){
+    public Room(bot.role.data.dungeon.Room room, List<Encounter> encounters, Map<Item.Material, Integer> materials, int gold){
         x = room.getX();
         y = room.getY();
         this.encounters = encounters;

@@ -1,4 +1,4 @@
-package bot.role.dungeon.astar;
+package bot.role.data.dungeon.astar;
 
 import lombok.Getter;
 import lombok.Setter;

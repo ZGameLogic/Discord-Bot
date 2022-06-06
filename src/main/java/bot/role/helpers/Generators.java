@@ -2,7 +2,7 @@ package bot.role.helpers;
 
 import bot.role.data.item.Item;
 import bot.role.data.structures.Activity;
-import bot.role.dungeon.saveable.Encounter;
+import bot.role.data.dungeon.saveable.Encounter;
 
 import java.util.Random;
 

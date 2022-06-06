@@ -1,4 +1,4 @@
-package bot.role.dungeon.saveable;
+package bot.role.data.dungeon.saveable;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import data.serializing.SavableData;

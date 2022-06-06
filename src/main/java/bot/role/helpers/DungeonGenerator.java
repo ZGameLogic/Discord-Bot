@@ -1,14 +1,14 @@
 package bot.role.helpers;
 
+import bot.role.data.dungeon.saveable.Room;
 import bot.role.data.item.Item;
 import bot.role.data.jsonConfig.GameConfigValues;
-import bot.role.dungeon.Room;
-import bot.role.dungeon.astar.Node;
-import bot.role.dungeon.graph.Edge;
-import bot.role.dungeon.graph.Graph;
-import bot.role.dungeon.graph.Vertex;
-import bot.role.dungeon.saveable.Dungeon;
-import bot.role.dungeon.saveable.Encounter;
+import bot.role.data.dungeon.astar.Node;
+import bot.role.data.dungeon.graph.Edge;
+import bot.role.data.dungeon.graph.Graph;
+import bot.role.data.dungeon.graph.Vertex;
+import bot.role.data.dungeon.saveable.Dungeon;
+import bot.role.data.dungeon.saveable.Encounter;
 import data.serializing.DataCacher;
 
 import javax.imageio.ImageIO;
@@ -27,7 +27,7 @@ public abstract class DungeonGenerator {
 
     public static Dungeon GenerateDungeon(Size size, long id){
         int map[][];
-        List<Room> rooms;
+        List<bot.role.data.dungeon.Room> rooms;
         List<Vertex> roomCenters;
 
         rooms = new LinkedList<>();
@@ -55,7 +55,7 @@ public abstract class DungeonGenerator {
         }
 
         roomCenters = new LinkedList<>();
-        for(Room room : rooms){
+        for(bot.role.data.dungeon.Room room : rooms){
             roomCenters.add(new Vertex(room.getCenter()));
         }
 
@@ -72,8 +72,8 @@ public abstract class DungeonGenerator {
 
         cleanUpDoors(rooms, map);
 
-        List<bot.role.dungeon.saveable.Room> sRooms = new LinkedList<>();
-        for(Room r : rooms){
+        List<Room> sRooms = new LinkedList<>();
+        for(bot.role.data.dungeon.Room r : rooms){
             Random random = new Random();
             List<Encounter> encounters = new LinkedList<>();
             HashMap<Item.Material, Integer> materials = new HashMap<Item.Material, Integer>();
@@ -94,7 +94,7 @@ public abstract class DungeonGenerator {
             }
             //gold
             int gold = random.nextInt(100) + 1;
-            sRooms.add(new bot.role.dungeon.saveable.Room(r, encounters, materials, gold));
+            sRooms.add(new Room(r, encounters, materials, gold));
         }
 
 
@@ -103,8 +103,8 @@ public abstract class DungeonGenerator {
         return dungeon;
     }
 
-    private static void cleanUpDoors(List<Room> rooms, int[][] map) {
-        for(Room room : rooms){
+    private static void cleanUpDoors(List<bot.role.data.dungeon.Room> rooms, int[][] map) {
+        for(bot.role.data.dungeon.Room room : rooms){
             for(int[] door : room.getDoorsAbsolute()){
                 int doorX =  door[0];
                 int doorY = door[1];
@@ -149,7 +149,7 @@ public abstract class DungeonGenerator {
     /**
      * Places a random room on the grid
      */
-    private static void generateRoom(List<Room> rooms, int[][] map) {
+    private static void generateRoom(List<bot.role.data.dungeon.Room> rooms, int[][] map) {
         Random random = new Random();
         boolean placed = false;
         int totalRetries = 0;
@@ -158,7 +158,7 @@ public abstract class DungeonGenerator {
             int height = random.nextInt(7) + 4; // random int between 4 and 10
             int x = random.nextInt(map.length - width - 1) + 1;
             int y = random.nextInt(map[0].length - height - 1) + 1;
-            Room room = new Room(x, y, width, height);
+            bot.role.data.dungeon.Room room = new bot.role.data.dungeon.Room(x, y, width, height);
             int triesWithCurrentSize = 0;
             while(!placed && triesWithCurrentSize < 20){
                 // Check for valid placement
@@ -173,7 +173,7 @@ public abstract class DungeonGenerator {
         }
     }
 
-    private static boolean checkForValidPlacement(Room room, int[][] map){
+    private static boolean checkForValidPlacement(bot.role.data.dungeon.Room room, int[][] map){
         int startX = room.getX() > 1 ? room.getX() - 1 : 0;
         int startY = room.getY() > 1 ? room.getY() - 1 : 0;
         for(int i = startX; i < map.length && i < room.getX() + room.getWidth() + 1; i++){
@@ -186,7 +186,7 @@ public abstract class DungeonGenerator {
         return true;
     }
 
-    private static void placeRoom(Room room, List<Room> rooms, int[][] map){
+    private static void placeRoom(bot.role.data.dungeon.Room room, List<bot.role.data.dungeon.Room> rooms, int[][] map){
         rooms.add(room);
         for(int i = room.getX(); i < map.length && i < room.getX() + room.getWidth(); i++){
             for(int j = room.getY(); j < map[i].length && j < room.getY() + room.getHeight(); j++){
@@ -367,7 +367,7 @@ public abstract class DungeonGenerator {
 
     }
 
-    private static void addDoorsToRoom(Room room, int count){
+    private static void addDoorsToRoom(bot.role.data.dungeon.Room room, int count){
         Random random = new Random();
         for(int i = 0; i < count; i++) {
             switch (random.nextInt(4)) {

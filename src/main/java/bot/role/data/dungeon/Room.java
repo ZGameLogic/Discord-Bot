@@ -1,4 +1,4 @@
-package bot.role.dungeon;
+package bot.role.data.dungeon;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
