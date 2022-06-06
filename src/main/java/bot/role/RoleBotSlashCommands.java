@@ -37,8 +37,11 @@ public abstract class RoleBotSlashCommands {
                 .addSubcommands(new SubcommandData("castes", "Shows the population of each castes"))
                 .addSubcommands(new SubcommandData("activities", "Shows a list of active members who still have not taken their activities for today"))
         );
+        commands.add(Commands.slash("manage-inventory", "Change what slot an item is in")
+                .addOption(OptionType.INTEGER, "slot-one", "The first slot to swap", true)
+                .addOption(OptionType.INTEGER, "slot-two", "The second slot to swap", true));
         commands.add(Commands.slash("pay-citizen", "Gives your gold to a citizen of your choice")
-                .addOption(OptionType.USER, "citizen", "The citizen to recieve your gold", true)
+                .addOption(OptionType.USER, "citizen", "The citizen to receive your gold", true)
                 .addOption(OptionType.INTEGER, "gold", "The amount of gold to give", true));
         commands.add(Commands.slash("pray", "Pray to Shlongbot"));
         commands.add(Commands.slash("fight-stats", "View a more detailed breakdown of a fight between players")

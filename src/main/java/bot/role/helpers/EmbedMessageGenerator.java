@@ -62,16 +62,21 @@ public abstract class EmbedMessageGenerator {
 
         b.addBlankField(false);
 
-        for(Item item : player.getInventory()){
-            String desc = item.getDescription() +  "\n";
-            for(Modifier mod : item.getModifiers()){
-                if(mod.getType() == Modifier.Type.BANE){
-                    desc += "\t" + mod.getType().getString() + " " + mod.getStat().getString() + "\n";
-                } else {
-                    desc += "\t" + mod.getType().getString() + " " + mod.getStat().getString() + ": " + mod.getAmount() + "\n";
+        int slot = 1;
+        for(Item item : player.getInventory()) {
+            if (item != null) {
+                String desc = item.getDescription() + "\n";
+                for (Modifier mod : item.getModifiers()) {
+                    if (mod.getType() == Modifier.Type.BANE) {
+                        desc += "\t" + mod.getType().getString() + " " + mod.getStat().getString() + "\n";
+                    } else {
+                        desc += "\t" + mod.getType().getString() + " " + mod.getStat().getString() + ": " + mod.getAmount() + "\n";
+                    }
                 }
+                desc += "Slot: " + slot + "\n";
+                b.addField(item.getName(), desc, true);
             }
-            b.addField(item.getName(), desc, true);
+            slot++;
         }
 
         b.setFooter("Can do " + player.activitiesLeftToday() + " more activities today\n" +

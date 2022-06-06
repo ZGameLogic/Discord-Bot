@@ -11,6 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Random;
@@ -52,6 +53,7 @@ public class Player extends SavableData {
         losses = 0;
         activitiesDone = 0;
         inventory = new LinkedList<>();
+        inventory.add(null); inventory.add(null); inventory.add(null); inventory.add(null); inventory.add(null);
         daysSinceLastActive = 0;
         challengesDefendedToday = 0;
         active = false;
@@ -290,7 +292,7 @@ public class Player extends SavableData {
         int total = 0;
         for(int i = 0; i < 3 && i < inventory.size(); i++){
             Item item = inventory.get(i);
-            if(!item.broken()){
+            if(item != null && !item.broken()){
                 for(Modifier modifier : item.getModifiers()){
                     if(modifier.getStat() == stat && modifier.getType() == type){
                         total += modifier.getAmount();
@@ -325,7 +327,9 @@ public class Player extends SavableData {
         // stuff involving items
         for(int i = 0; i < 3 && i < inventory.size(); i++){
             Item item = inventory.get(i);
-            item.useItem();
+            if(item != null) {
+                item.useItem();
+            }
         }
     }
 
@@ -372,5 +376,9 @@ public class Player extends SavableData {
         increaseMagic(resultChange.getMagic());
         increaseStrength(resultChange.getStrength());
         increaseStamina(resultChange.getStamina());
+    }
+
+    public void swapSlots(int slot1, int slot2){
+        Collections.swap(inventory, slot1-1, slot2-1);
     }
 }

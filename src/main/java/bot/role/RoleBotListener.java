@@ -493,6 +493,19 @@ public class RoleBotListener extends ListenerAdapter {
         data.getPlayers().saveSerialized(giverPlayer, takerPlayer);
     }
 
+    @SlashCommand(CommandName = "manage-inventory")
+    private void manageInventorySlashCommand(SlashCommandInteractionEvent event){
+        int slotOne = event.getOption("slot-one").getAsInt();
+        int slotTwo = event.getOption("slot-two").getAsInt();
+        if(slotOne > 5 || slotOne < 1 || slotTwo > 5 || slotTwo < 1){
+            event.reply("Both slots must be between 1 and 5").setEphemeral(true).queue();
+            return;
+        }
+        Player player = getAsPlayer(event.getMember());
+        player.swapSlots(slotOne, slotTwo);
+        data.saveData(player);
+    }
+
     @SlashCommand(CommandName = "challenge", warChannelOnly = true, activityCheck = 1)
     private void challengeSlashCommand(SlashCommandInteractionEvent event){
         /* Pre challenge check */
