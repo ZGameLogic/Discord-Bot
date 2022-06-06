@@ -78,6 +78,14 @@ public class DataCacher <T extends SavableData> {
 		return data1;
 	}
 
+	public List<T> loadSerialized(List<Long> ids){
+		List<T> list = new LinkedList<>();
+		for(Long id : ids){
+			list.add(loadSerialized(id));
+		}
+		return list;
+	}
+
 	/**
 	 * Loads the object from file path that has been given
 	 * @param id id of the file you want loaded

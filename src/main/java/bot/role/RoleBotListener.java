@@ -238,6 +238,7 @@ public class RoleBotListener extends ListenerAdapter {
                 roles.add(role);
             }
         }
+        roles.add(getKingRole());
         Comparator<Role> roleComparator = Comparator.comparing(Role::getPosition);
         Collections.sort(roles, roleComparator);
         return roles;
@@ -271,9 +272,8 @@ public class RoleBotListener extends ListenerAdapter {
      */
     private Role getCasteRoleOfPlayer(Member member){
         List<Role> roles = getCasteRoles();
-        long kingRoleId = getKingRole().getIdLong();
         for(Role role : member.getRoles()){
-            if(roles.contains(role) || kingRoleId == role.getIdLong()){
+            if(roles.contains(role)){
                 return role;
             }
         }
@@ -357,12 +357,23 @@ public class RoleBotListener extends ListenerAdapter {
                 return false;
             }
         }
+        if(sc.validCasteRole()){
+            if(!getCasteRoles().contains(event.getOption("role").getAsRole())){
+                event.reply("The role you have selected is not a caste role").setEphemeral(true).queue();
+                return false;
+            }
+        }
         Player player = getAsPlayer(event.getMember());
         if(player.activitiesLeftToday() < sc.activityCheck()){
             event.reply("You do not have enough activities left").setEphemeral(true).queue();
             return false;
         }
         return true;
+    }
+
+    @SlashCommand(CommandName = "role-stats", validCasteRole = true)
+    private void roleStatsSlashCommand(SlashCommandInteractionEvent event){
+
     }
 
     @SlashCommand(CommandName = "stats")
@@ -412,14 +423,10 @@ public class RoleBotListener extends ListenerAdapter {
         data.saveData(king);
     }
 
-    @SlashCommand(CommandName = "propose-tax", KingOnly = true, activityCheck = 1, warChannelOnly = true, positiveGold = true)
+    @SlashCommand(CommandName = "propose-tax", KingOnly = true, activityCheck = 1, warChannelOnly = true, positiveGold = true, validCasteRole = true)
     private void proposeTaxSlashCommand(SlashCommandInteractionEvent event){
         Player king = getAsPlayer(event.getMember());
         Role role = event.getOption("role").getAsRole();
-        if(!getCasteRoles().contains(role)){ // is a caste role
-            event.reply("You can only tax caste roles").setEphemeral(true).queue();
-            return;
-        }
         int gold = event.getOption("gold").getAsInt();
         int max = data.getGameConfig().loadSerialized().getGoldTaxMax();
         if(gold > max){ // if they tax more then they are allowed too
@@ -431,13 +438,9 @@ public class RoleBotListener extends ListenerAdapter {
         event.replyEmbeds(EmbedMessageGenerator.generateProposeTaxMessage(king, role, gold)).queue();
     }
 
-    @SlashCommand(CommandName = "distribute-wealth", KingOnly = true, positiveGold = true, warChannelOnly = true)
+    @SlashCommand(CommandName = "distribute-wealth", KingOnly = true, positiveGold = true, warChannelOnly = true, validCasteRole = true)
     private void distributeWealthSlashCommand(SlashCommandInteractionEvent event){
         Role role = event.getOption("role").getAsRole();
-        if(!getCasteRoles().contains(role)){ // is a caste role
-            event.reply("You can only give to caste roles").setEphemeral(true).queue();
-            return;
-        }
         int gold = event.getOption("gold").getAsInt();
         int total = gold;
         Player king = getAsPlayer(event.getMember());

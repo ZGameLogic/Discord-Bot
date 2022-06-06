@@ -13,4 +13,5 @@ public @interface SlashCommand {
     boolean positiveGold() default false;
     boolean warChannelOnly() default false;
     int activityCheck() default 0;
+    boolean validCasteRole() default false;
 }
