@@ -29,6 +29,8 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import java.lang.reflect.Method;
 import java.util.*;
 
+import static bot.role.RoleBotReady.checkGuild;
+
 public class RoleBotListener extends ListenerAdapter {
 
     private Data data;
@@ -57,21 +59,22 @@ public class RoleBotListener extends ListenerAdapter {
     @Override
     public void onReady(ReadyEvent event){
         guild = event.getJDA().getGuildById(data.getGameConfig().loadSerialized().getGuildId());
-        warChannel = guild.getTextChannelById(data.getGameConfig().loadSerialized().getGeneralChannelId());
-        List<Member> members = guild.getMembers();
-        for(Member m : members){
-            // Check if any members don't have player data
-            if(!m.getUser().isBot() && !data.getPlayers().exists(m.getIdLong())){
-                createNewPlayer(m);
-            }
-        }
-        Role kingRole = getKingRole();
-        // assign king if there is no king
-        if(guild.getMembersWithRoles(kingRole).size() == 0){
-            Random random = new Random();
-            Member newKing = members.get(random.nextInt(members.size()));
-            assignNewKing(newKing);
-        }
+        checkGuild(guild);
+//        warChannel = guild.getTextChannelById(data.getGameConfig().loadSerialized().getWarChannelId());
+//        List<Member> members = guild.getMembers();
+//        for(Member m : members){
+//            // Check if any members don't have player data
+//            if(!m.getUser().isBot() && !data.getPlayers().exists(m.getIdLong())){
+//                createNewPlayer(m);
+//            }
+//        }
+//        Role kingRole = getKingRole();
+//        // assign king if there is no king
+//        if(guild.getMembersWithRoles(kingRole).size() == 0){
+//            Random random = new Random();
+//            Member newKing = members.get(random.nextInt(members.size()));
+//            assignNewKing(newKing);
+//        }
     }
 
     @Override
@@ -221,7 +224,7 @@ public class RoleBotListener extends ListenerAdapter {
      */
     private void assignRandomCasteRole(Member member){
         Random random = new Random();
-        List<Long> roleIds = data.getGameConfig().loadSerialized().getRoleIds();
+        List<Long> roleIds = new LinkedList<>(data.getGameConfig().loadSerialized().getRoleIds().values());
         Role randomRole = guild.getRoleById(roleIds.get(random.nextInt(roleIds.size())));
         guild.addRoleToMember(member, randomRole).queue();
     }
@@ -233,7 +236,7 @@ public class RoleBotListener extends ListenerAdapter {
     private List<Role> getCasteRoles(){
         List<Role> roles = new LinkedList<>();
         for(Role role : guild.getRoles()){
-            if(data.getGameConfig().loadSerialized().getRoleIds().contains(role.getIdLong())){
+            if(data.getGameConfig().loadSerialized().getRoleIds().values().contains(role.getIdLong())){
                 roles.add(role);
             }
         }
@@ -245,8 +248,8 @@ public class RoleBotListener extends ListenerAdapter {
 
     private int getCasteRoleLevel(Member member){
         Role role = getCasteRoleOfPlayer(member);
-        List<Long> ids = data.getGameConfig().loadSerialized().getRoleIds();
-        if(role.getIdLong() == data.getGameConfig().loadSerialized().getKingRoleId()){
+        List<Long> ids = new LinkedList<>(data.getGameConfig().loadSerialized().getRoleIds().values());
+        if(role.getIdLong() == data.getGameConfig().loadSerialized().getRoleIds().get("King")){
             return ids.size() + 1;
         } else {
             return ids.size() - ids.indexOf(role.getIdLong());
@@ -320,14 +323,14 @@ public class RoleBotListener extends ListenerAdapter {
      * @return The king caste role as a role object
      */
     private Role getKingRole(){
-        return guild.getRoleById(data.getGameConfig().loadSerialized().getKingRoleId());
+        return guild.getRoleById(data.getGameConfig().loadSerialized().getRoleIds().get("King"));
     }
 
     /**
      * @return war text channel object
      */
     private TextChannel getWarTextChannel(){
-        return guild.getTextChannelById(data.getGameConfig().loadSerialized().getGeneralChannelId());
+        return guild.getTextChannelById(data.getGameConfig().loadSerialized().getChannelIds().get("war"));
     }
 
     /**

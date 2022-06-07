@@ -222,7 +222,7 @@ public abstract class DungeonGenerator {
         // switch back to black
         pane.setColor(Color.black);
 
-        BufferedImage tileSet = ImageIO.read(DungeonGenerator.class.getClassLoader().getResourceAsStream("tileset.png"));
+        BufferedImage tileSet = ImageIO.read(DungeonGenerator.class.getClassLoader().getResourceAsStream("Role bot/Dungeons/tileset.png"));
 
         for(int x = 0; x < map.length; x++){
             int photoX = x * 20 + 20;

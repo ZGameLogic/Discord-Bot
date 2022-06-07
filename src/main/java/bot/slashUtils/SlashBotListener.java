@@ -3,9 +3,8 @@ package bot.slashUtils;
 import java.awt.Color;
 import java.util.LinkedList;
 
-import bot.role.RoleBotSlashCommands;
+import bot.role.RoleBotReady;
 import controllers.atlassian.JiraInterfacer;
-import data.serializing.DataCacher;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.Modal;
@@ -15,7 +14,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import bot.party.PartyBotListener;
-import bot.role.RoleBotListener;
 import controllers.dice.DiceRollingSimulator;
 import controllers.team.Team;
 import controllers.team.TeamGenerator;
@@ -29,7 +27,6 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 
 public class SlashBotListener extends ListenerAdapter {
@@ -72,7 +69,7 @@ public class SlashBotListener extends ListenerAdapter {
 				.addOption(OptionType.INTEGER, "count", "Number of people allowed in the chatroom", true));
 		
 		// Role bot listener
-		guild.addCommands(RoleBotSlashCommands.getCommands());
+		guild.addCommands(RoleBotReady.getCommands());
 
 		// bug report
 		guild.addCommands(Commands.slash("bug-report", "Submit a bug report"));

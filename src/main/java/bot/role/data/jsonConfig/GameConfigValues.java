@@ -1,32 +1,26 @@
 package bot.role.data.jsonConfig;
 
+import application.App;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
 import data.serializing.SavableData;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.Setter;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 @Getter
-@AllArgsConstructor
+@Setter
 @JsonNaming(PropertyNamingStrategy.SnakeCaseStrategy.class)
 public class GameConfigValues extends SavableData {
-    private List<Long> roleIds;
-    private long kingRoleId;
-    private long guildId;
-    private long encountersChannelId;
-    private long generalChannelId;
-    private long activitiesChannelId;
-    private long itemShopChannelId;
-    private List<Long> roleIconIds;
+    private Map<String, Long> roleIds;
+    private Map<String, Long> iconIds;
+    private Map<String, Long> channelIds;
     private long remindMessageId;
-    private long swordEmojiId;
-    private long fiveGoldEmojiId;
-    private long tenGoldEmojiId;
-    private long fiftyGoldEmojiId;
-    private long guildCategoryId;
+    private long warCategoryId;
+    private long guildId;
 
     private int goldTaxMax;
 
@@ -49,7 +43,23 @@ public class GameConfigValues extends SavableData {
     private int largeDungeonRoomCount;
 
     public GameConfigValues(){
-        roleIconIds = new LinkedList<>();
-        roleIds = new LinkedList<>();
+        super("Game config");
+        iconIds = new HashMap<>();
+        roleIds = new HashMap<>();
+        channelIds = new HashMap<>();
+        goldTaxMax = 7;
+        activitySpawnChance = .1;
+        activityLife = 4;
+        shopItemSpawnChance = .2;
+        shopItemLife = 4;
+        startGoldMax = 30;
+        startStatMax = 15;
+        paddingMultiplier = .25;
+        activitiesPerDay = 3;
+        challengeDefendPerDay = 3;
+        smallDungeonRoomCount = 20;
+        mediumDungeonRoomCount = 25;
+        largeDungeonRoomCount = 30;
+        guildId = App.config.getGuildID();
     }
 }

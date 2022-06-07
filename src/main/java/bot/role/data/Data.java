@@ -40,7 +40,6 @@ public class Data {
 
         if(gameConfig.getFiles().length == 0){
             GameConfigValues gcv = new GameConfigValues();
-            gcv.setId("Game config");
             gameConfig.saveSerialized(gcv);
         }
     }
