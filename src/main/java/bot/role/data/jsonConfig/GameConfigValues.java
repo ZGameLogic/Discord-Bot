@@ -40,7 +40,7 @@ public class GameConfigValues extends SavableData {
     private int startGoldMax;
 
     private int serverBoosterPadding;
-    private int paddingMultiplier;
+    private double paddingMultiplier;
     private int activitiesPerDay;
     private int challengeDefendPerDay;
 

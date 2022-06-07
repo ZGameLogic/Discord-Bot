@@ -36,6 +36,10 @@ public class StatBlock {
         return returnThis.substring(0, returnThis.length() - 2);
     }
 
+    public int total(){
+        return stamina + strength + magic + agility + knowledge;
+    }
+
     public void addToAll(int amount){
         strength += amount;
         stamina += amount;

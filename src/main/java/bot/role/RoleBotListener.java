@@ -540,7 +540,7 @@ public class RoleBotListener extends ListenerAdapter {
         int defenderPaddingLevel = attackingUp ? defenderCasteLevel - attackerCasteLevel : 0;
         if(defenderMember.isBoosting()) defenderPaddingLevel++;
         if(isKing(defenderMember)) defenderPaddingLevel++;
-        int paddingMultiplier = data.getGameConfig().loadSerialized().getPaddingMultiplier();
+        int paddingMultiplier = (int)(attacker.getStatBlockWithItems().total() * data.getGameConfig().loadSerialized().getPaddingMultiplier());
         int padding = paddingMultiplier * defenderPaddingLevel;
         StatBlock totals = StatBlock.add(attacker.getStatBlockWithItems(), defender.getStatBlockWithItems());
         totals.addToAll(padding);
