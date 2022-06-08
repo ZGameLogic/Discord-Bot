@@ -22,7 +22,7 @@ public class Graph {
 
     private void primsAlgorithm(){
         List<Edge> mst = new LinkedList<>(); // minimal spanning tree
-        Queue<Edge> choices = new PriorityQueue<>(); // list of edges we get to pick from
+        Queue<Edge> choices; // list of edges we get to pick from
         Set<Vertex> nodes = new HashSet<>(); // nodes that have been added to the tree
         nodes.add(getBottomLeftVertex());
         while(mst.size() < vertexes.size() - 1){
@@ -101,20 +101,6 @@ public class Graph {
         this.edges = new LinkedList<>(edges);
     }
 
-    private void randomHallways(){
-        // TODO Randomly choose remaining edges for hallways
-    }
-
-    private List<Edge> getConnectedEdges(Edge edge){
-        Set<Edge> edges = new HashSet<>();
-        for(Edge e : this.edges){
-            if(e.connects(edge)){
-                edges.add(e);
-            }
-        }
-        return new LinkedList<>(edges);
-    }
-
     private List<Edge> getConnectedEdges(Vertex vertex){
         List<Edge> edges = new LinkedList<>();
         for(Edge e : this.edges){
@@ -142,10 +128,6 @@ public class Graph {
             }
         }
         return furthest;
-    }
-
-    public List<Edge> getEdges(){
-        return edges;
     }
 
     public List<Edge> getMinimumSpanningTree(){

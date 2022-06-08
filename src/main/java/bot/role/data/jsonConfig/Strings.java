@@ -168,6 +168,12 @@ public class Strings extends SavableData {
         activeStrength.add(toStringArray("Powder of Whey", "This magic powder increases the strength of your muscles."));
         activeStrength.add(toStringArray("Pig Skin Sack", "For punching"));
 
+        activeGold.add(toStringArray("Coin Purse", "You always seem to find more gold you forgot about in here."));
+        activeGold.add(toStringArray("Rabbit's Foot", "Lucky rabbits foot lets you find more gold."));
+        activeGold.add(toStringArray("Ring of Gold", "A ring enchanted to let you find more gold."));
+        activeGold.add(toStringArray("Ticket of Fortune", "A parchment infused with magic and luck."));
+        activeGold.add(toStringArray("Token of Wealth", "A lucky coin that gives you more gold."));
+
         staticActivity.add(toStringArray("Jason's cup of Joe", "Nothing like a good cup of coffee to help your daily productivity."));
         staticActivity.add(toStringArray("Time Turner", "Time in the palm of your hands."));
         staticActivity.add(toStringArray("Time in a Bottle", "Opening this bottle brings you back in time, allowing you to do more in the day."));
