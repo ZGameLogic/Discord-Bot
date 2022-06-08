@@ -120,7 +120,7 @@ public class Bot {
 
 	@Scheduled(cron = "0 0 0,12 * * *")
 	private void newDay(){
-		RBL.newDay();
+		RBL.newDay(); // new day
 	}
 	
 	private void handleBamboo(JSONObject message) throws JSONException {
