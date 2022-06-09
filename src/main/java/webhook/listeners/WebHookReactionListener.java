@@ -2,6 +2,7 @@ package webhook.listeners;
 
 import java.awt.Color;
 
+import application.App;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -203,7 +204,7 @@ private static Logger logger = LoggerFactory.getLogger(WebHookReactionListener.c
 	 * @return
 	 */
 	private String encodedAuthorization() {
-		String plainCreds = "BShabowski:NjcwMjk5MDUxOTM3OnLnbm6v5WzJnj8LU2Q4sYn7Nvym";
+		String plainCreds = "DBot:" + App.config.getBitbucketPat();
 	    byte[] plainCredsBytes = plainCreds.getBytes();
 	    byte[] base64CredsBytes = Base64.encodeBase64(plainCredsBytes);
 	    String base64Creds = new String(base64CredsBytes);

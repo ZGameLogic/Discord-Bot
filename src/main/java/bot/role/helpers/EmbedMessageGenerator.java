@@ -32,6 +32,7 @@ public abstract class EmbedMessageGenerator {
     private final static Color LEADERBOARD_COLOR = new Color(101, 106, 15);
     private final static Color ENCOUNTER_COLOR = new Color(56, 78, 115);
     private final static Color PAY_CITIZEN_COLOR = new Color(150, 58, 58);
+    private final static Color REMIND_MESSAGE_COLOR = new Color(64, 140, 147);
 
     private final static Color MYTHIC_ITEM_COLOR = new Color(248, 29, 1);
     private final static Color LEGENDARY_ITEM_COLOR = new Color(248, 170, 1);
@@ -39,6 +40,16 @@ public abstract class EmbedMessageGenerator {
     private final static Color RARE_ITEM_COLOR = new Color(0, 248, 241);
     private final static Color UNCOMMON_ITEM_COLOR = new Color(40, 184, 180);
     private final static Color COMMON_ITEM_COLOR = new Color(67, 144, 143);
+
+    public static MessageEmbed generateRemindMessage(){
+        EmbedBuilder b = new EmbedBuilder();
+        b.setColor(REMIND_MESSAGE_COLOR);
+        b.setTitle("A message to all those who like to forget");
+        b.setDescription("Do not forget to do your activities for the day!");
+        b.setFooter("From your lord and savior, Shlongbot");
+        b.setTimestamp(Instant.now());
+        return b.build();
+    }
 
     public static MessageEmbed generateNewKing(Member king) {
         EmbedBuilder b = new EmbedBuilder();

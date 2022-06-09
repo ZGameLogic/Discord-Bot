@@ -122,6 +122,11 @@ public class Bot {
 	private void newDay(){
 		RBL.newDay(); // new day
 	}
+
+	@Scheduled(cron = "0 0 23,11 * * *")
+	private void hourBeforeNewDay(){
+		RBL.hourBeforeNewDay(); // new day
+	}
 	
 	private void handleBamboo(JSONObject message) throws JSONException {
 		String status = message.getJSONObject("build").getString("status");

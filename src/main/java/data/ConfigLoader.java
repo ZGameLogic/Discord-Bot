@@ -45,4 +45,7 @@ public class ConfigLoader {
 
 	@Value("${jira.pat}")
 	private String jiraPat;
+
+	@Value("${bitbucket.pat}")
+	private String bitbucketPat;
 }

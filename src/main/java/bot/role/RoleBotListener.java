@@ -492,6 +492,19 @@ public class RoleBotListener extends ListenerAdapter {
         data.getPlayers().saveSerialized(giverPlayer, takerPlayer);
     }
 
+    @SlashCommand(CommandName = "result")
+    private void remindSlashCommand(SlashCommandInteractionEvent event){
+        boolean remind = event.getOption("should-remind").getAsBoolean();
+        Player player = getAsPlayer(event.getMember());
+        player.setRemind(remind);
+        if(remind){
+            event.reply("You have opted into recieving reminders.").setEphemeral(true).queue();
+        } else {
+            event.reply("You have opted out of recieving reminders.").setEphemeral(true).queue();
+        }
+        data.saveData(player);
+    }
+
     @SlashCommand(CommandName = "manage-inventory")
     private void manageInventorySlashCommand(SlashCommandInteractionEvent event){
         int slotOne = event.getOption("slot-one").getAsInt();
@@ -618,5 +631,16 @@ public class RoleBotListener extends ListenerAdapter {
         resultsData.saveData(cfr);
         data.saveData(data.getGeneral().loadSerialized().increaseChallengesFought());
         event.replyEmbeds(EmbedMessageGenerator.generate(cfr, EmbedMessageGenerator.Detail.SIMPLE)).queue();
+    }
+
+    public void hourBeforeNewDay() {
+        for(Player p : data.getPlayers().getData()){
+            if(p.isRemind()){
+                Member m = getAsMember(p);
+                m.getUser().openPrivateChannel().queue(channel -> {
+                    channel.sendMessageEmbeds(EmbedMessageGenerator.generateRemindMessage()).queue();
+                });
+            }
+        }
     }
 }

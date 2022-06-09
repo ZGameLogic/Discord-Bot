@@ -30,6 +30,7 @@ public abstract class JiraInterfacer {
                     "Steps to recreate: " + strc + "\n" +
                     "Discord username: " + username + "\n" +
                     "Discord user ID: " + userId);
+            fields.put("assignee", new JSONObject("{\"name\":\"BShabowski\"}"));
             fields.put("issuetype", new JSONObject("{\"name\": \"Bug\"}"));
             body.put("fields", fields);
         } catch (JSONException e) {

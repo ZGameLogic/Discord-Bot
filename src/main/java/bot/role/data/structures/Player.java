@@ -6,10 +6,7 @@ import bot.role.data.jsonConfig.GameConfigValues;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import data.serializing.DataCacher;
 import data.serializing.SavableData;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 import java.util.Collections;
 import java.util.LinkedList;
@@ -32,6 +29,8 @@ public class Player extends SavableData {
     private List<Item> inventory;
     private int daysSinceLastActive;
     private boolean active;
+    @Setter
+    private boolean remind;
 
     /**
      * Creates a new player. This player gets a random stat start, and a random amount of gold
@@ -57,6 +56,7 @@ public class Player extends SavableData {
         daysSinceLastActive = 0;
         challengesDefendedToday = 0;
         active = false;
+        remind = false;
     }
 
     /**
@@ -377,6 +377,14 @@ public class Player extends SavableData {
         increaseStrength(resultChange.getStrength());
         increaseStamina(resultChange.getStamina());
     }
+
+    public boolean isRemind(){
+        if(remind){
+            return activitiesLeftToday() != 0;
+        }
+        return false;
+    }
+
 
     public void swapSlots(int slot1, int slot2){
         Collections.swap(inventory, slot1-1, slot2-1);

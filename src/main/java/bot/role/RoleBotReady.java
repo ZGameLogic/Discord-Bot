@@ -51,6 +51,8 @@ public abstract class RoleBotReady {
                 .addSubcommands(new SubcommandData("castes", "Shows the population of each castes"))
                 .addSubcommands(new SubcommandData("activities", "Shows a list of active members who still have not taken their activities for today"))
         );
+        commands.add(Commands.slash("remind", "Have shlongbot message you an hour before a day is done")
+                .addOption(OptionType.BOOLEAN, "should-remind", "True if you want a reminder, false if you don't", false));
         commands.add(Commands.slash("manage-inventory", "Change what slot an item is in")
                 .addOption(OptionType.INTEGER, "slot-one", "The first slot to swap", true)
                 .addOption(OptionType.INTEGER, "slot-two", "The second slot to swap", true));
