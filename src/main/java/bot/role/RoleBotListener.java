@@ -100,9 +100,6 @@ public class RoleBotListener extends ListenerAdapter {
     }
 
     @Override
-    public void onButtonInteraction(ButtonInteractionEvent event) {}
-
-    @Override
     public void onMessageReactionAdd(MessageReactionAddEvent event) {}
 
     @Override
