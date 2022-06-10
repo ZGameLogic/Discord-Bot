@@ -285,6 +285,17 @@ public class Player extends SavableData {
         return agility + (itemMod > 0 ? " (+" + itemMod + ")" : "");
     }
 
+    @JsonIgnore
+    public String getCompactStatLine(){
+        return getAgilityToStringWithItem() + " | " +
+                        getStrengthToStringWithItem() + " | " +
+                        getStaminaToStringWithItem() + " | " +
+                        getKnowledgeToStringWithItem() + " | " +
+                        getMagicToStringWithItem() + "\n" +
+                        getGold() + " " +
+                        getWins() + "/" + getLosses();
+    }
+
 
     /**
      *

@@ -474,7 +474,13 @@ public class RoleBotListener extends ListenerAdapter {
 
     @SlashCommand(CommandName = "role-stats", validCasteRole = true)
     private void roleStatsSlashCommand(SlashCommandInteractionEvent event){
-
+        Role casteRole = event.getOption("role").getAsRole();
+        List<Player> players = new LinkedList<>();
+        for(Member m : guild.getMembersWithRoles(casteRole)){
+            players.add(getAsPlayer(m));
+        }
+        event.replyEmbeds(EmbedMessageGenerator.generateRoleStat(players, casteRole.getName(),
+                casteRole.getIcon() == null ? "" : casteRole.getIcon().getIconUrl())).queue();
     }
 
     @SlashCommand(CommandName = "stats")
@@ -594,9 +600,9 @@ public class RoleBotListener extends ListenerAdapter {
         data.getPlayers().saveSerialized(giverPlayer, takerPlayer);
     }
 
-    @SlashCommand(CommandName = "result")
+    @SlashCommand(CommandName = "remind")
     private void remindSlashCommand(SlashCommandInteractionEvent event){
-        boolean remind = event.getOption("should-remind").getAsBoolean();
+        boolean remind = event.getOption("should-remind") == null ? true : event.getOption("should-remind").getAsBoolean();
         Player player = getAsPlayer(event.getMember());
         player.setRemind(remind);
         if(remind){

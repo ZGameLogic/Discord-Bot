@@ -33,8 +33,7 @@ public abstract class RoleBotReady {
         commands.add(Commands.slash("challenge", "Challenges a player for their role. A win switches the roles!")
                 .addOption(OptionType.USER, "player", "The player you wish to challenge", true));
         commands.add(Commands.slash("role-stats", "Lists everyone in the caste level and their stats if they can still defend for the day")
-                .addOption(OptionType.ROLE, "role", "Role to see the stats of", true)
-                .addOption(OptionType.BOOLEAN, "include-all", "Whether or not to include the people who have already defended today", false));
+                .addOption(OptionType.ROLE, "role", "Role to see the stats of", true));
         commands.add(Commands.slash("leaderboard", "Get the top 10 players in a specific category")
                 .addSubcommands(new SubcommandData("strength", "Shows the strength statistic")
                         .addOption(OptionType.BOOLEAN, "include-items", "True to include item stat boosts, false to exclude them", false))

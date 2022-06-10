@@ -19,10 +19,8 @@ import net.dv8tion.jda.api.entities.Role;
 import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Function;
 
 public abstract class EmbedMessageGenerator {
@@ -46,6 +44,19 @@ public abstract class EmbedMessageGenerator {
     private final static Color RARE_ITEM_COLOR = new Color(0, 248, 241);
     private final static Color UNCOMMON_ITEM_COLOR = new Color(40, 184, 180);
     private final static Color COMMON_ITEM_COLOR = new Color(67, 144, 143);
+
+    public static MessageEmbed generateRoleStat(List<Player> players, String roleName, String icon){
+        EmbedBuilder b = new EmbedBuilder();
+        b.setColor(STATS_COLOR);
+        b.setTitle("Player stats for the " + roleName);
+        if(!icon.equals("")) b.setImage(icon);
+        b.setDescription("Stats are encoded as Agility | Strength | Stamina | Knowledge | Magic Gold Wins/Losses");
+        for(Player p : players){
+            b.addField(p.getName(), p.getCompactStatLine(), true);
+        }
+        return b.build();
+    }
+
 
     public static MessageEmbed generateRemindMessage(){
         EmbedBuilder b = new EmbedBuilder();
