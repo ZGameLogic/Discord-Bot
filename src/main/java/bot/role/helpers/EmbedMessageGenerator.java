@@ -1,5 +1,6 @@
 package bot.role.helpers;
 
+import bot.role.data.Data;
 import bot.role.data.item.Item;
 import bot.role.data.item.Modifier;
 import bot.role.data.item.ShopItem;
@@ -8,6 +9,7 @@ import bot.role.data.results.*;
 import bot.role.data.structures.Activity;
 import bot.role.data.structures.Encounter;
 import bot.role.data.structures.Player;
+import bot.role.helpers.roleData.RoleDataRepository;
 import data.serializing.DataCacher;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
@@ -17,7 +19,11 @@ import net.dv8tion.jda.api.entities.Role;
 import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 
 public abstract class EmbedMessageGenerator {
 
@@ -56,6 +62,23 @@ public abstract class EmbedMessageGenerator {
         b.setColor(KING_MESSAGE_COLOR);
         b.setTitle("Hail to the new ruler: " + king.getEffectiveName() + "!");
         b.setTimestamp(Instant.now());
+        return b.build();
+    }
+
+    public static MessageEmbed generateLeaderboard(Function<Player, Integer> function, String title, Data data) {
+        EmbedBuilder b = new EmbedBuilder();
+        b.setColor(LEADERBOARD_COLOR);
+        b.setTitle("Leaderboard for " + title);
+        List<Player> players = data.getPlayers().getData();
+        Collections.sort(players, Comparator.comparing(function).reversed());
+        Map<String, String> roles = RoleDataRepository.getRoleMap();
+        for(int i = 0; i < 10 && i < players.size(); i++){
+            Player p = players.get(i);
+            String iconStringId = roles.get(p.getCasteLevel());
+            long iconLongId = data.getGameConfig().loadSerialized().getIconIds().get(iconStringId);
+            String embeddedIcon = "<:" + iconStringId + ":" + iconLongId + ">";
+            b.addField(p.getName() + " " + embeddedIcon, function.apply(p) + "", true);
+        }
         return b.build();
     }
 
@@ -207,7 +230,7 @@ public abstract class EmbedMessageGenerator {
             int defenderStat = results.getDefender().getStatBlockWithItems().getAllStats().get(stat);
             int rolled = results.getRolled().getAllStats().get(stat);
             int total = attackerStat + defenderStat;
-            double winPercentage = (double) attackerStat / total;
+            double winPercentage = ((double) attackerStat / total) * 100;
             b.addField(stat, String.format("%.2f", winPercentage) + "%: " + (rolled <= attackerStat ? "won" : "lost") + "\n" +
                     "\tA: " + attackerStat + "\tD: " + defenderStat + "\n" +
                     "\tTotal: " + total + "\tRolled: " + rolled, true);

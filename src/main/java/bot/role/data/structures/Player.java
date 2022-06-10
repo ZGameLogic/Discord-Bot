@@ -20,8 +20,11 @@ import java.util.Random;
 public class Player extends SavableData {
 
     private int strength, agility, knowledge, magic, stamina;
+    @Setter
     private String name;
-    private long gold;
+    private int gold;
+    @Setter
+    private String casteLevel;
     private int tournamentVictories;
     private int wins, losses;
     private int activitiesDone;
@@ -41,6 +44,7 @@ public class Player extends SavableData {
         super(id);
         Random random = new Random();
         this.name = name;
+        casteLevel = "";
         strength = random.nextInt(gcv.getStartStatMax() + 1);
         agility = random.nextInt(gcv.getStartStatMax() + 1);
         knowledge = random.nextInt(gcv.getStartStatMax() + 1);
@@ -332,6 +336,17 @@ public class Player extends SavableData {
             }
         }
     }
+
+    @JsonIgnore
+    public int getTotalStatsWithItems(){
+        return getStatBlockWithItems().total();
+    }
+
+    @JsonIgnore
+    public int getTotalStats(){
+        return getStatBlock().total();
+    }
+
 
     /**
      * @return Stat block with modified stats due to items

@@ -1,20 +1,21 @@
 package data.serializing;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 
-public class DataCacher <T extends SavableData> {
+public class DataCacher <T extends SavableData> implements Iterable<T>{
 
 	private final String filePath;
 
+	private HashMap<String, T> loaded;
+
 	public DataCacher(String filePath) {
 		File f = new File(filePath);
+		loaded = new HashMap<>();
 		if(!f.exists()) {
 			f.mkdirs();
 		}
@@ -37,6 +38,12 @@ public class DataCacher <T extends SavableData> {
 		}
 	}
 
+	public void saveSerialized(List<T> collection) {
+		for(T t : collection){
+			saveSerialized(t);
+		}
+	}
+
 	/**
 	 * Saves the object into the file path that has been given
 	 * @param yourObject Object to be serialized
@@ -49,6 +56,9 @@ public class DataCacher <T extends SavableData> {
 			om.writerWithDefaultPrettyPrinter().writeValue(new File(filePath + "//" + file + ".json"), yourObject);
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		}
+		if(loaded.containsKey(file)){ // remove from cache
+			loaded.remove(file);
 		}
 	}
 
@@ -67,6 +77,9 @@ public class DataCacher <T extends SavableData> {
 	 */
 	@SuppressWarnings("unchecked")
 	public T loadSerialized(String id) {
+		if(loaded.containsKey(id)){
+			return loaded.get(id);
+		}
 		T data1 = null;
 		ObjectMapper om = new ObjectMapper();
 		try {
@@ -75,6 +88,7 @@ public class DataCacher <T extends SavableData> {
 		} catch (IOException e) {
 			throw new RuntimeException(e);
 		}
+		loaded.put(id, data1);
 		return data1;
 	}
 
@@ -162,15 +176,28 @@ public class DataCacher <T extends SavableData> {
 		return directoryToBeDeleted.delete();
 	}
 
-    public void deleteAll(List<Long> idsToDelete) {
-		for(Long id : idsToDelete){
-			delete(id + "");
-		}
-    }
+	@NotNull
+	@Override
+	public Iterator<T> iterator() {
+		Iterator<T> iterator = new Iterator<T>() {
+			private int index = 0;
+			private List<T> stuff = getData();
+			@Override
+			public boolean hasNext() {
+				return index < stuff.size();
+			}
 
-    public void saveSerialized(List<T> collection) {
-		for(T t : collection){
-			saveSerialized(t);
-		}
-    }
+			@Override
+			public T next() {
+				return (T)stuff.get(index++);
+			}
+
+			@Override
+			public void remove() {
+
+			}
+		};
+
+		return iterator;
+	}
 }

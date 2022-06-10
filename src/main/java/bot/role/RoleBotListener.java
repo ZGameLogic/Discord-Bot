@@ -19,15 +19,20 @@ import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent;
+import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
+import net.dv8tion.jda.api.events.user.update.UserUpdateNameEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.function.Function;
 
 import static bot.role.RoleBotReady.checkGuild;
 
@@ -59,22 +64,23 @@ public class RoleBotListener extends ListenerAdapter {
     @Override
     public void onReady(ReadyEvent event){
         guild = event.getJDA().getGuildById(data.getGameConfig().loadSerialized().getGuildId());
-        checkGuild(guild);
-//        warChannel = guild.getTextChannelById(data.getGameConfig().loadSerialized().getWarChannelId());
-//        List<Member> members = guild.getMembers();
-//        for(Member m : members){
-//            // Check if any members don't have player data
-//            if(!m.getUser().isBot() && !data.getPlayers().exists(m.getIdLong())){
-//                createNewPlayer(m);
-//            }
-//        }
-//        Role kingRole = getKingRole();
-//        // assign king if there is no king
-//        if(guild.getMembersWithRoles(kingRole).size() == 0){
-//            Random random = new Random();
-//            Member newKing = members.get(random.nextInt(members.size()));
-//            assignNewKing(newKing);
-//        }
+        checkGuild(guild, data);
+        warChannel = guild.getTextChannelById(data.getGameConfig().loadSerialized().getChannelIds().get("war"));
+
+        List<Member> members = guild.getMembers();
+        for(Member m : members){
+            // Check if any members don't have player data
+            if(!m.getUser().isBot() && !data.getPlayers().exists(m.getIdLong())){
+                createNewPlayer(m);
+            }
+        }
+        Role kingRole = getKingRole();
+        // assign king if there is no king
+        if(guild.getMembersWithRoles(kingRole).size() == 0){
+            Random random = new Random();
+            Member newKing = members.get(random.nextInt(members.size()));
+            assignNewKing(newKing);
+        }
     }
 
     @Override
@@ -95,6 +101,8 @@ public class RoleBotListener extends ListenerAdapter {
             if(event.getMessage().getContentRaw().equals("!new-day")) {
                 newDay();
                 event.getChannel().sendMessage("A new day has passed!").queue();
+            } else {
+                swapCasteRoles(guild.getMemberById(232675572772372481l), guild.getMemberById(369303799581507585l));
             }
         }
     }
@@ -125,6 +133,26 @@ public class RoleBotListener extends ListenerAdapter {
             e.printStackTrace();
             event.reply("Unable to complete the command. If this continues to happen submit a bug report with the /bug-report command").setEphemeral(true).queue();
         }
+    }
+
+    @Override
+    public void onGuildMemberRoleAdd(GuildMemberRoleAddEvent event) {
+        Player p = getAsPlayer(event.getMember());
+        List<Role> casteRole = getCasteRoles();
+        for(Role role : event.getRoles()){
+            if(casteRole.contains(role)){
+                p.setCasteLevel(role.getName());
+            }
+        }
+        data.saveData(p);
+    }
+
+    @Override
+    public void onGuildMemberUpdateNickname(GuildMemberUpdateNicknameEvent event) {
+        String newName = event.getMember().getEffectiveName();
+        Player p = getAsPlayer(event.getMember());
+        p.setName(newName);
+        data.saveData(p);
     }
 
     /**
@@ -173,7 +201,7 @@ public class RoleBotListener extends ListenerAdapter {
     private void createNewPlayer(Member member){
         Player newPlayer = new Player(member.getIdLong(), member.getEffectiveName(), data.getGameConfig().loadSerialized());
         guild.modifyMemberRoles(member, null, getCasteRoles()).queue();
-        assignRandomCasteRole(member);
+        newPlayer.setCasteLevel(assignRandomCasteRole(member));
         data.getPlayers().saveSerialized(newPlayer); // save new player
     }
 
@@ -186,7 +214,9 @@ public class RoleBotListener extends ListenerAdapter {
         warChannel.sendMessageEmbeds(EmbedMessageGenerator.generateNewKing(king)).queue();
         // remove old caste role if any
         // add king role
-        guild.modifyMemberRoles(king, new LinkedList<Role>(Arrays.asList(new Role[]{getKingRole()})), getCasteRoles()).queue();
+        List<Role> remove = getCasteRoles();
+        System.out.println(remove.size());
+        guild.modifyMemberRoles(king, new LinkedList<Role>(Arrays.asList(new Role[]{getKingRole()})), remove).queue();
     }
 
     /**
@@ -219,11 +249,28 @@ public class RoleBotListener extends ListenerAdapter {
      * Assigns a random caste role that isn't the king to a player
      * @param member Member to assign the role too
      */
-    private void assignRandomCasteRole(Member member){
+    private String assignRandomCasteRole(Member member){
         Random random = new Random();
         List<Long> roleIds = new LinkedList<>(data.getGameConfig().loadSerialized().getRoleIds().values());
         Role randomRole = guild.getRoleById(roleIds.get(random.nextInt(roleIds.size())));
         guild.addRoleToMember(member, randomRole).queue();
+        return randomRole.getName();
+    }
+
+    /**
+     * Gets a list of caste roles in role form
+     * @return a list of caste roles in role form
+     */
+    private List<Role> getCasteRolesWithKing(){
+        List<Role> roles = new LinkedList<>();
+        for(Role role : guild.getRoles()){
+            if(data.getGameConfig().loadSerialized().getRoleIds().values().contains(role.getIdLong())){
+                roles.add(role);
+            }
+        }
+        Comparator<Role> roleComparator = Comparator.comparing(Role::getPosition);
+        Collections.sort(roles, roleComparator);
+        return roles;
     }
 
     /**
@@ -232,12 +279,13 @@ public class RoleBotListener extends ListenerAdapter {
      */
     private List<Role> getCasteRoles(){
         List<Role> roles = new LinkedList<>();
+        List<Long> ids = new LinkedList<>(data.getGameConfig().loadSerialized().getRoleIds().values());
+        ids.remove(data.getGameConfig().loadSerialized().getRoleIds().get("King"));
         for(Role role : guild.getRoles()){
-            if(data.getGameConfig().loadSerialized().getRoleIds().values().contains(role.getIdLong())){
+            if(ids.contains(role.getIdLong())){
                 roles.add(role);
             }
         }
-        roles.add(getKingRole());
         Comparator<Role> roleComparator = Comparator.comparing(Role::getPosition);
         Collections.sort(roles, roleComparator);
         return roles;
@@ -330,6 +378,17 @@ public class RoleBotListener extends ListenerAdapter {
         return guild.getTextChannelById(data.getGameConfig().loadSerialized().getChannelIds().get("war"));
     }
 
+    public void hourBeforeNewDay() {
+        for(Player p : data.getPlayers().getData()){
+            if(p.isRemind()){
+                Member m = getAsMember(p);
+                m.getUser().openPrivateChannel().queue(channel -> {
+                    channel.sendMessageEmbeds(EmbedMessageGenerator.generateRemindMessage()).queue();
+                });
+            }
+        }
+    }
+
     /**
      * Process slash command annotation options
      * @param sc Slash command annotation
@@ -368,6 +427,49 @@ public class RoleBotListener extends ListenerAdapter {
             return false;
         }
         return true;
+    }
+
+    @SlashCommand(CommandName = "leaderboard")
+    private void leaderboardSlashCommand(SlashCommandInteractionEvent event){
+        boolean includeItems = event.getOption("include-items") != null ? event.getOption("include-items").getAsBoolean() : true;
+        Function<Player, Integer> function;
+        switch (event.getSubcommandName()){
+            case "activities":
+                function = Player::activitiesLeftToday;
+                break;
+            case "total":
+                function = includeItems ? Player::getTotalStatsWithItems : Player::getTotalStats;
+                break;
+            case "strength":
+                function = includeItems ? Player::getStrengthStat : Player::getRawStrengthStat;
+                break;
+            case "knowledge":
+                function = includeItems ? Player::getKnowledgeStat : Player::getRawKnowledgeStat;
+                break;
+            case "magic":
+                function = includeItems ? Player::getMagicStat : Player::getRawKnowledgeStat;
+                break;
+            case "agility":
+                function = includeItems ? Player::getAgilityStat : Player::getRawAgilityStat;
+                break;
+            case "stamina":
+                function = includeItems ? Player::getStaminaStat : Player::getRawStaminaStat;
+                break;
+            case "gold":
+                function = Player::getGold;
+                break;
+            case "wins":
+                function = Player::getWins;
+                break;
+            case "losses":
+                function = Player::getLosses;
+                break;
+            default:
+                event.reply("Invalid stat. Valid stats are Strength, Knowledge, Magic, Agility, Stamina, Gold, Wins, Losses and Total").setEphemeral(true).queue();
+                return;
+        }
+
+        event.replyEmbeds(EmbedMessageGenerator.generateLeaderboard(function, event.getSubcommandName(), data)).queue();
     }
 
     @SlashCommand(CommandName = "role-stats", validCasteRole = true)
@@ -633,14 +735,4 @@ public class RoleBotListener extends ListenerAdapter {
         event.replyEmbeds(EmbedMessageGenerator.generate(cfr, EmbedMessageGenerator.Detail.SIMPLE)).queue();
     }
 
-    public void hourBeforeNewDay() {
-        for(Player p : data.getPlayers().getData()){
-            if(p.isRemind()){
-                Member m = getAsMember(p);
-                m.getUser().openPrivateChannel().queue(channel -> {
-                    channel.sendMessageEmbeds(EmbedMessageGenerator.generateRemindMessage()).queue();
-                });
-            }
-        }
-    }
 }

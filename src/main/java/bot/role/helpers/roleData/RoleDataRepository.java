@@ -3,9 +3,7 @@ package bot.role.helpers.roleData;
 import lombok.Getter;
 
 import java.awt.Color;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 @Getter
 public abstract class RoleDataRepository {
@@ -26,4 +24,13 @@ public abstract class RoleDataRepository {
         }));
         return r;
     }
+
+    public static Map<String, String> getRoleMap(){
+        Map<String, String> map = new HashMap<>();
+        for(Role role : getRoles()){
+            map.put(role.getLongName(), role.getShortName());
+        }
+        return map;
+    }
+
 }

@@ -1,6 +1,8 @@
 package bot.role;
 
+import bot.role.data.Data;
 import bot.role.data.jsonConfig.GameConfigValues;
+import bot.role.data.structures.Player;
 import bot.role.helpers.roleData.Role;
 import bot.role.helpers.roleData.RoleDataRepository;
 import data.serializing.DataCacher;
@@ -35,20 +37,20 @@ public abstract class RoleBotReady {
                 .addOption(OptionType.BOOLEAN, "include-all", "Whether or not to include the people who have already defended today", false));
         commands.add(Commands.slash("leaderboard", "Get the top 10 players in a specific category")
                 .addSubcommands(new SubcommandData("strength", "Shows the strength statistic")
-                        .addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
+                        .addOption(OptionType.BOOLEAN, "include-items", "True to include item stat boosts, false to exclude them", false))
                 .addSubcommands(new SubcommandData("knowledge", "Shows the knowledge statistic")
-                        .addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
+                        .addOption(OptionType.BOOLEAN, "include-items", "True to include item stat boosts, false to exclude them", false))
                 .addSubcommands(new SubcommandData("magic", "Shows the magic statistic")
-                        .addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
+                        .addOption(OptionType.BOOLEAN, "include-items", "True to include item stat boosts, false to exclude them", false))
                 .addSubcommands(new SubcommandData("agility", "Shows the agility statistic")
-                        .addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
+                        .addOption(OptionType.BOOLEAN, "include-items", "True to include item stat boosts, false to exclude them", false))
                 .addSubcommands(new SubcommandData("stamina", "Shows the stamina statistic")
-                        .addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
+                        .addOption(OptionType.BOOLEAN, "include-items", "True to include item stat boosts, false to exclude them", false))
                 .addSubcommands(new SubcommandData("gold", "Shows the richest citizens"))
-                .addSubcommands(new SubcommandData("total", "Shows the citizens with the most stats"))
+                .addSubcommands(new SubcommandData("total", "Shows the citizens with the most total stats")
+                        .addOption(OptionType.BOOLEAN, "include-items", "True to include item stat boosts, false to exclude them", false))
                 .addSubcommands(new SubcommandData("wins", "Shows the citizens with the most wins"))
                 .addSubcommands(new SubcommandData("losses", "Shows the citizens with the most losses"))
-                .addSubcommands(new SubcommandData("castes", "Shows the population of each castes"))
                 .addSubcommands(new SubcommandData("activities", "Shows a list of active members who still have not taken their activities for today"))
         );
         commands.add(Commands.slash("remind", "Have shlongbot message you an hour before a day is done")
@@ -81,11 +83,12 @@ public abstract class RoleBotReady {
         return commands;
     }
 
-    public static void checkGuild(Guild guild){
+    public static void checkGuild(Guild guild, Data data){
         try {
             emojiChecking(guild);
             casteRoleChecking(guild);
             channelChecking(guild);
+            playerNameRoleChecking(guild, data);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -224,9 +227,22 @@ public abstract class RoleBotReady {
                 newVals.put(role.getShortName(), guildRole.getIdLong());
             }
         }
-        // TODO order roles
-        //guild.modifyRolePositions()
         gcv.setRoleIds(newVals);
         gameData.saveSerialized(gcv);
+    }
+
+    private static void playerNameRoleChecking(Guild guild, Data data){
+        DataCacher<Player> players = data.getPlayers();
+        Map<String, Long> roleIds = data.getGameConfig().loadSerialized().getRoleIds();
+        for(Player player : players){
+            player.setName(guild.getMemberById(player.getId()).getEffectiveName());
+            Member member = guild.getMemberById(player.getId());
+            for(net.dv8tion.jda.api.entities.Role role : member.getRoles()){
+                if(roleIds.containsValue(role.getIdLong())){
+                    player.setCasteLevel(role.getName());
+                }
+            }
+            players.saveSerialized(player);
+        }
     }
 }
