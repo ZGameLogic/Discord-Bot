@@ -203,12 +203,16 @@ public class Bot {
 		}
 
 		if(process){
-			String userId = jsonInformation.getJSONObject("issue").getJSONObject("fields").getString("description").split("Discord user ID: ")[1]; // get the userId
-			User user = jdaBot.getUserById(userId);
-			if(user != null){
-				user.openPrivateChannel().complete().sendMessageEmbeds(eb.build()).queue();
-			} else {
-				System.out.println("Cant find user: " + userId);
+			try {
+				String userId = jsonInformation.getJSONObject("issue").getJSONObject("fields").getString("description").split("Discord user ID: ")[1]; // get the userId
+				User user = jdaBot.getUserById(userId);
+				if (user != null) {
+					user.openPrivateChannel().complete().sendMessageEmbeds(eb.build()).queue();
+				} else {
+					System.out.println("Cant find user: " + userId);
+				}
+			} catch (ArrayIndexOutOfBoundsException e){
+
 			}
 		}
 	}
