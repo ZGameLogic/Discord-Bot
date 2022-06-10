@@ -14,7 +14,7 @@ import java.awt.*;
 
 public abstract class JiraInterfacer {
 
-    public static MessageEmbed submitBug(String title, String description, String strc, String username, long userId){
+    public static MessageEmbed submitBug(String title, String description, String strc, String username, long userId, String optIn){
 
         String link = "https://zgamelogic.com:8080/rest/api/2/issue";
         RestTemplate restTemplate = new RestTemplate();
@@ -29,7 +29,8 @@ public abstract class JiraInterfacer {
             fields.put("description", description + "\n" +
                     "Steps to recreate: " + strc + "\n" +
                     "Discord username: " + username + "\n" +
-                    "Discord user ID: " + userId);
+                    "Discord user ID: " + userId + "\n" +
+                    "Opt-in: " + optIn);
             fields.put("assignee", new JSONObject("{\"name\":\"BShabowski\"}"));
             fields.put("issuetype", new JSONObject("{\"name\": \"Bug\"}"));
             body.put("fields", fields);
@@ -45,7 +46,7 @@ public abstract class JiraInterfacer {
             EmbedBuilder eb = new EmbedBuilder();
             eb.setColor(new Color(122, 50, 168));
             eb.setTitle("Bug report submission results");
-            eb.setDescription("Thank you for submitting this bug report! You will get automatic updates regarding this issue. I hope to resolve it soon.");
+            eb.setDescription("Thank you for submitting this bug report! I hope to resolve it soon.");
             eb.setFooter("Issue: " +  result.getString("key"));
             return eb.build();
         } catch (JSONException e) {

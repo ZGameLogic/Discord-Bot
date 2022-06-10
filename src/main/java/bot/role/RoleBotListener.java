@@ -96,16 +96,7 @@ public class RoleBotListener extends ListenerAdapter {
     }
 
     @Override
-    public void onMessageReceived(MessageReceivedEvent event) {
-        if(event.getMember().getIdLong() == 232675572772372481l){
-            if(event.getMessage().getContentRaw().equals("!new-day")) {
-                newDay();
-                event.getChannel().sendMessage("A new day has passed!").queue();
-            } else {
-                swapCasteRoles(guild.getMemberById(232675572772372481l), guild.getMemberById(369303799581507585l));
-            }
-        }
-    }
+    public void onMessageReceived(MessageReceivedEvent event) {}
 
     @Override
     public void onMessageReactionAdd(MessageReactionAddEvent event) {}

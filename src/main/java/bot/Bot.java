@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Scanner;
 
 import javax.annotation.PostConstruct;
 import javax.security.auth.login.LoginException;
@@ -203,16 +204,26 @@ public class Bot {
 		}
 
 		if(process){
-			try {
-				String userId = jsonInformation.getJSONObject("issue").getJSONObject("fields").getString("description").split("Discord user ID: ")[1]; // get the userId
+			String userId = "";
+			String optIn = "";
+			Scanner input = new Scanner(jsonInformation.getJSONObject("issue").getJSONObject("fields").getString("description"));
+			while(input.hasNextLine()){
+				String line = input.nextLine();
+				if(line.contains("Discord user ID: ")){
+					userId = line.replace("Discord user ID: ", "");
+				} else if(line.contains("Opt-in: ")){
+					optIn = line.replace("Opt-in: ", "");
+				}
+			}
+			input.close();
+			if(optIn.equals("fasle")) return;
+			if(!userId.equals("")) {
 				User user = jdaBot.getUserById(userId);
 				if (user != null) {
 					user.openPrivateChannel().complete().sendMessageEmbeds(eb.build()).queue();
 				} else {
 					System.out.println("Cant find user: " + userId);
 				}
-			} catch (ArrayIndexOutOfBoundsException e){
-
 			}
 		}
 	}

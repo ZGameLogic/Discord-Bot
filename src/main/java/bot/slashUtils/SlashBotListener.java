@@ -126,9 +126,10 @@ public class SlashBotListener extends ListenerAdapter {
 				String title = event.getValue("title").getAsString();
 				String body = event.getValue("body").getAsString();
 				String strc = event.getValue("strc").getAsString();
+				String optIn = event.getValue("opt-in").getAsString();
 				String username = event.getMember().getEffectiveName();
-				long userId = event.getMember().getIdLong();
-				MessageEmbed message = JiraInterfacer.submitBug(title, body, strc, username, userId);
+				long userId = event.getMember().getUser().getIdLong();
+				MessageEmbed message = JiraInterfacer.submitBug(title, body, strc, username, userId, optIn);
 				event.replyEmbeds(message).setEphemeral(true).queue();
 				String issueNumber = message.getFooter().getText().replace("Issue: ", "");
 				break;
@@ -150,9 +151,14 @@ public class SlashBotListener extends ListenerAdapter {
 				.setMaxLength(1000)
 				.setRequired(true)
 				.build();
+		TextInput optIn = TextInput.create("opt-in", "Opt in or out of updates about the bug", TextInputStyle.SHORT)
+				.setPlaceholder("Anything other than 'false' will be considered you opting into updates")
+				.setMaxLength(5)
+				.setRequired(false)
+				.build();
 
 		Modal modal = Modal.create("support", "Support")
-				.addActionRows(ActionRow.of(title), ActionRow.of(body), ActionRow.of(strc))
+				.addActionRows(ActionRow.of(title), ActionRow.of(body), ActionRow.of(strc), ActionRow.of(optIn))
 				.build();
 
 		event.replyModal(modal).queue();
