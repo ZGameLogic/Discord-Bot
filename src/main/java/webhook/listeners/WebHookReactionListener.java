@@ -3,6 +3,7 @@ package webhook.listeners;
 import java.awt.Color;
 
 import application.App;
+import controllers.atlassian.BitbucketInterfacer;
 import org.apache.tomcat.util.codec.binary.Base64;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -54,41 +55,6 @@ private static Logger logger = LoggerFactory.getLogger(WebHookReactionListener.c
 		channel = bot.getGuildById(cl.getGuildID()).getTextChannelById(cl.getBitbucketID());
 	}
 	
-	/**
-	 * Get the channel list
-	 * @return
-	 * @throws JSONException
-	 */
-	public static JSONArray getChannelList() throws JSONException {
-		JSONArray channelNames = new JSONArray();
-		
-		for(TextChannel x : bot.getGuildById(330751526735970305l).getTextChannels()) {
-			JSONObject channel = new JSONObject();
-			channel.put("name", x.getName());
-			channel.put("id", x.getIdLong());
-			channelNames.put(channel);
-		}
-		
-		return channelNames;
-	}
-	
-	public static JSONArray getVoiceList() throws JSONException {
-		JSONArray channelNames = new JSONArray();
-		
-		for(VoiceChannel x : bot.getGuildById(330751526735970305l).getVoiceChannels()) {
-			JSONObject channel = new JSONObject();
-			channel.put("name", x.getName());
-			channel.put("id", x.getIdLong());
-			channelNames.put(channel);
-		}
-		
-		return channelNames;
-	}
-	
-	public static String getPassword() {
-		return password;
-	}
-	
 	@Override
 	public void onMessageReactionAdd(MessageReactionAddEvent event) {
 		if(!event.getUser().isBot() && event.getChannel().getIdLong() == channel.getIdLong()) {
@@ -105,9 +71,9 @@ private static Logger logger = LoggerFactory.getLogger(WebHookReactionListener.c
 				messageID.saveSerialized(mid, "id");
 				
 				try {
-					JSONObject resultPull = new JSONObject(createPullRequest(event.retrieveMember().complete().getEffectiveName()));
+					JSONObject resultPull = new JSONObject(BitbucketInterfacer.createPullRequest(event.retrieveMember().complete().getEffectiveName()));
 					String id = resultPull.getString("id");
-					mergePullRequest(id);
+					BitbucketInterfacer.mergePullRequest(id);
 				} catch (JSONException e) {
 					e.printStackTrace();
 				}
@@ -131,84 +97,4 @@ private static Logger logger = LoggerFactory.getLogger(WebHookReactionListener.c
 			channel.editMessageEmbedsById(message, eb.build()).queue();
 		}
 	}
-	
-	private String mergePullRequest(String pullRequestID) {
-		String link = "https://zgamelogic.com:7990/rest/api/1.0/projects/BSPR/repos/discord-bot/pull-requests/" + pullRequestID + "/merge?version=0";
-		RestTemplate restTemplate = new RestTemplate();
-		HttpHeaders headers = new HttpHeaders();
-	    headers.setContentType(MediaType.APPLICATION_JSON);
-	    
-	    String base64Creds = encodedAuthorization();
-
-	    headers.add("Authorization", "Basic " + base64Creds);
-		HttpEntity<String> request = new HttpEntity<String>("{}", headers);
-	    
-	    String result = restTemplate.postForObject(link, request, String.class);
-	    
-		return result;
-	}
-	
-	private String createPullRequest(String requester) {
-		String link = "https://zgamelogic.com:7990/rest/api/1.0/projects/BSPR/repos/discord-bot/pull-requests";
-		RestTemplate restTemplate = new RestTemplate();
-		HttpHeaders headers = new HttpHeaders();
-	    headers.setContentType(MediaType.APPLICATION_JSON);
-	    
-	    String base64Creds = encodedAuthorization();
-
-	    headers.add("Authorization", "Basic " + base64Creds);
-	    
-	    String pullRequestTitle = "Pull request made from discord";
-	    String pullRequestDescription = "This pull request is being created by " + requester + " from discord.";
-	    
-		HttpEntity<String> request = new HttpEntity<String>("{\r\n" + 
-				"  \"title\": \"" + pullRequestTitle + "\",\r\n" + 
-				"  \"description\": \"" + pullRequestDescription + "\",\r\n" + 
-				"  \"state\": \"OPEN\",\r\n" + 
-				"  \"open\": true,\r\n" + 
-				"  \"closed\": false,\r\n" + 
-				"  \"fromRef\": {\r\n" + 
-				"    \"id\": \"refs/heads/development\",\r\n" + 
-				"    \"repository\": {\r\n" + 
-				"      \"slug\": \"discord-bot\",\r\n" + 
-				"      \"name\": null,\r\n" + 
-				"      \"project\": {\r\n" + 
-				"        \"key\": \"BSPR\"\r\n" + 
-				"      }\r\n" + 
-				"    }\r\n" + 
-				"  },\r\n" + 
-				"  \"toRef\": {\r\n" + 
-				"    \"id\": \"refs/heads/master\",\r\n" + 
-				"    \"repository\": {\r\n" + 
-				"      \"slug\": \"discord-bot\",\r\n" + 
-				"      \"name\": null,\r\n" + 
-				"      \"project\": {\r\n" + 
-				"        \"key\": \"BSPR\"\r\n" + 
-				"      }\r\n" + 
-				"    }\r\n" + 
-				"  },\r\n" + 
-				"  \"locked\": false,\r\n" + 
-				"  \"reviewers\": [\r\n" + 
-				"    {\r\n" + 
-				"      \"user\": {\r\n" + 
-				"        \"name\": \"BShabowski\"\r\n" + 
-				"      }\r\n" + 
-				"    }\r\n" + 
-				"  ]\r\n" + 
-				"}", headers);
-		String result = restTemplate.postForObject(link, request, String.class);
-		return result;
-	}
-
-	/**
-	 * @return
-	 */
-	private String encodedAuthorization() {
-		String plainCreds = "DBot:" + App.config.getBitbucketPat();
-	    byte[] plainCredsBytes = plainCreds.getBytes();
-	    byte[] base64CredsBytes = Base64.encodeBase64(plainCredsBytes);
-	    String base64Creds = new String(base64CredsBytes);
-		return base64Creds;
-	}
-	
 }

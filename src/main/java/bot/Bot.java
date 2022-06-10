@@ -8,6 +8,7 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.security.auth.login.LoginException;
 
+import controllers.atlassian.BitbucketInterfacer;
 import data.serializing.DataCacher;
 import net.dv8tion.jda.api.entities.*;
 import org.json.JSONException;
@@ -144,47 +145,11 @@ public class Bot {
 			String commiter = message.getJSONObject("actor").getString("displayName");
 			String commiterLink = message.getJSONObject("actor").getJSONObject("links").getJSONArray("self").getJSONObject(0).getString("href");
 		
-			MessageEmbed discordMessage = buildBitbucketMessage(commiter, commiterLink, repoName, repoLink);
+			MessageEmbed discordMessage = BitbucketInterfacer.buildBitbucketMessage(commiter, commiterLink, repoName, repoLink);
 		
 			Message discordSentMessage = bitBucket.sendMessageEmbeds(discordMessage).complete();
 			discordSentMessage.addReaction("U+1F3D7").queue();
 		}
-	}
-	
-	private MessageEmbed buildBitbucketMessage(String commiter, String commiterLink, String repoName, String repoLink) {
-		EmbedBuilder eb = new EmbedBuilder();
-		
-		eb.setTitle("Bitbucket push to " + repoName, repoLink);
-		eb.setColor(Color.GRAY);
-		eb.setAuthor(commiter, commiterLink);
-		
-		try {
-			JSONObject commits = new JSONObject(getCommitList());
-			
-			if(commits.has("values")) {
-			
-				for(int i = 0; i < 5; i++) {
-					String displayID = commits.getJSONArray("values").getJSONObject(i).getString("displayId");
-					String message = commits.getJSONArray("values").getJSONObject(i).getString("message");
-				
-					eb.addField(displayID, message, false);
-				}
-			}else {
-				String displayID = commits.getString("displayId");
-				String message = commits.getString("message");
-				eb.addField(displayID, message, false);
-			}
-		} catch (JSONException e) {
-			e.printStackTrace();
-		}
-		return eb.build();
-	}
-	
-	private static String getCommitList() {
-		String link = "https://zgamelogic.com:7990/rest/api/1.0/projects/BSPR/repos/discord-bot/commits/development";
-		RestTemplate restTemplate = new RestTemplate();
-		String result = restTemplate.getForObject(link, String.class);
-		return result;
 	}
 
 	private void handleJiraRelease(JSONObject jsonInformation) throws JSONException {
