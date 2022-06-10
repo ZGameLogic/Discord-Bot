@@ -75,7 +75,6 @@ public class DataCacher <T extends SavableData> implements Iterable<T>{
 	 * @param id id of the file you want loaded
 	 * @return
 	 */
-	@SuppressWarnings("unchecked")
 	public T loadSerialized(String id) {
 		if(loaded.containsKey(id)){
 			return loaded.get(id);
@@ -89,6 +88,7 @@ public class DataCacher <T extends SavableData> implements Iterable<T>{
 			throw new RuntimeException(e);
 		}
 		loaded.put(id, data1);
+		new CacheClearer().start();
 		return data1;
 	}
 
@@ -199,5 +199,20 @@ public class DataCacher <T extends SavableData> implements Iterable<T>{
 		};
 
 		return iterator;
+	}
+
+	private class CacheClearer extends Thread {
+		public void run(){
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				throw new RuntimeException(e);
+			}
+			Iterator<T> it = ((HashMap<String, T>)loaded.clone()).values().iterator();
+			while(it.hasNext()){
+				T t = it.next();
+				saveSerialized(t);
+			}
+		}
 	}
 }
