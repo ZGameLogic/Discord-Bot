@@ -9,7 +9,7 @@ import bot.role.data.dungeon.graph.Graph;
 import bot.role.data.dungeon.graph.Vertex;
 import bot.role.data.dungeon.saveable.Dungeon;
 import bot.role.data.dungeon.saveable.Encounter;
-import data.serializing.DataCacher;
+import data.serializing.DataRepository;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -31,7 +31,7 @@ public abstract class DungeonGenerator {
         List<Vertex> roomCenters;
 
         rooms = new LinkedList<>();
-        GameConfigValues gcv = new DataCacher<GameConfigValues>("game_config").loadSerialized();
+        GameConfigValues gcv = new DataRepository<GameConfigValues>("game_config").loadSerialized();
         int dungeonRoomCount;
         switch(size){
             case LARGE:

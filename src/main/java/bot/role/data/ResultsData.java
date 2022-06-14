@@ -1,7 +1,7 @@
 package bot.role.data;
 
 import bot.role.data.results.*;
-import data.serializing.DataCacher;
+import data.serializing.DataRepository;
 import data.serializing.SavableData;
 import lombok.Getter;
 
@@ -12,26 +12,26 @@ import java.lang.reflect.ParameterizedType;
 public class ResultsData {
     private static final String DIR = "arena\\results";
 
-    private DataCacher<ActivityResults> activities;
-    private DataCacher<ChallengeFightResults> challenges;
-    private DataCacher<EncounterFightResults> encounters;
-    private DataCacher<GuildFightResults> guildFights;
-    private DataCacher<GuildRaidResults> guildRaids;
-    private DataCacher<ItemCraftingResults> itemCrafting;
-    private DataCacher<ItemPurchaseResults> itemPurchases;
-    private DataCacher<TournamentFightResults> tournamentFights;
-    private DataCacher<TournamentResults> tournaments;
+    private DataRepository<ActivityResults> activities;
+    private DataRepository<ChallengeFightResults> challenges;
+    private DataRepository<EncounterFightResults> encounters;
+    private DataRepository<GuildFightResults> guildFights;
+    private DataRepository<GuildRaidResults> guildRaids;
+    private DataRepository<ItemCraftingResults> itemCrafting;
+    private DataRepository<ItemPurchaseResults> itemPurchases;
+    private DataRepository<TournamentFightResults> tournamentFights;
+    private DataRepository<TournamentResults> tournaments;
 
     public ResultsData(){
-        activities = new DataCacher<>(DIR + "\\activities");
-        challenges = new DataCacher<>(DIR + "\\challenges");
-        encounters = new DataCacher<>(DIR + "\\encounters");
-        guildFights = new DataCacher<>(DIR + "\\guild\\fights");
-        guildRaids = new DataCacher<>(DIR + "\\guild\\raids");
-        itemCrafting = new DataCacher<>(DIR + "\\item\\crafting");
-        itemPurchases = new DataCacher<>(DIR + "\\item\\purchases");
-        tournamentFights  = new DataCacher<>(DIR + "\\tournament\\fights");
-        tournaments = new DataCacher<>(DIR + "\\tournament\\tournament");
+        activities = new DataRepository<>(DIR + "\\activities");
+        challenges = new DataRepository<>(DIR + "\\challenges");
+        encounters = new DataRepository<>(DIR + "\\encounters");
+        guildFights = new DataRepository<>(DIR + "\\guild\\fights");
+        guildRaids = new DataRepository<>(DIR + "\\guild\\raids");
+        itemCrafting = new DataRepository<>(DIR + "\\item\\crafting");
+        itemPurchases = new DataRepository<>(DIR + "\\item\\purchases");
+        tournamentFights  = new DataRepository<>(DIR + "\\tournament\\fights");
+        tournaments = new DataRepository<>(DIR + "\\tournament\\tournament");
     }
 
     /**
@@ -45,8 +45,8 @@ public class ResultsData {
                 Class<?> fieldType = (Class<?>) dataListType.getActualTypeArguments()[0];
                 if (data[0].getClass() == fieldType) {
                     try {
-                        DataCacher dataCacher = (DataCacher) f.get(this);
-                        dataCacher.saveSerialized(data);
+                        DataRepository dataRepository = (DataRepository) f.get(this);
+                        dataRepository.saveSerialized(data);
                     } catch (IllegalAccessException e) {
                         throw new RuntimeException(e);
                     }

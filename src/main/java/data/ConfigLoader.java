@@ -1,7 +1,5 @@
 package data;
 
-import java.util.LinkedList;
-
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
@@ -21,6 +19,9 @@ public class ConfigLoader {
 	
 	@Value("${keystore.location}")
 	private String keystoreLocation;
+
+	@Value("${use.ssl:true}")
+	private boolean useSSL;
 	
 	@Value("${Webhook.port}")
 	private int webHookPort;

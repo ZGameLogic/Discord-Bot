@@ -2,26 +2,18 @@ package webhook.listeners;
 
 import java.awt.Color;
 
-import application.App;
 import controllers.atlassian.BitbucketInterfacer;
-import org.apache.tomcat.util.codec.binary.Base64;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.web.client.RestTemplate;
 
 import data.ConfigLoader;
-import data.serializing.DataCacher;
+import data.serializing.DataRepository;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.TextChannel;
-import net.dv8tion.jda.api.entities.VoiceChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -34,14 +26,14 @@ private static Logger logger = LoggerFactory.getLogger(WebHookReactionListener.c
 	private static ConfigLoader cl;
 	private static JDA bot;
 	private static String password;
-	private static DataCacher<MessageID> messageID;
+	private static DataRepository<MessageID> messageID;
 	private static boolean botReady;
 	
 	public WebHookReactionListener(ConfigLoader cl) {
 		WebHookReactionListener.cl = cl;
 		botReady = false;
 		password = cl.getAdminPassword();
-		messageID = new DataCacher<>("bitbucket message");
+		messageID = new DataRepository<>("bitbucket message");
 	}
 	
 	/**

@@ -8,10 +8,11 @@ import bot.role.data.structures.KingData;
 import bot.role.data.structures.Player;
 import bot.role.data.jsonConfig.Strings;
 import bot.role.data.structures.StatBlock;
+import bot.role.data.structures.annotations.EmoteCommand;
 import bot.role.data.structures.annotations.SlashCommand;
 import bot.role.helpers.EmbedMessageGenerator;
 import data.ConfigLoader;
-import data.serializing.DataCacher;
+import data.serializing.DataRepository;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Role;
@@ -22,13 +23,9 @@ import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent;
 import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
-import net.dv8tion.jda.api.events.message.react.MessageReactionRemoveEvent;
-import net.dv8tion.jda.api.events.user.update.UserUpdateNameEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -47,7 +44,7 @@ public class RoleBotListener extends ListenerAdapter {
     private List<String> roleBotCommandNames;
 
     public RoleBotListener(ConfigLoader config){
-        DataCacher<Strings> strings = new DataCacher<Strings>("arena\\strings");
+        DataRepository<Strings> strings = new DataRepository<Strings>("arena\\strings");
         if(!strings.exists("strings")){
             strings.saveSerialized(new Strings());
         }
@@ -99,10 +96,30 @@ public class RoleBotListener extends ListenerAdapter {
     public void onMessageReceived(MessageReceivedEvent event) {}
 
     @Override
-    public void onMessageReactionAdd(MessageReactionAddEvent event) {}
-
-    @Override
-    public void onMessageReactionRemove(MessageReactionRemoveEvent event) {}
+    public void onMessageReactionAdd(MessageReactionAddEvent event) {
+        if(!event.getUser().isBot() && event.isFromGuild()) {
+            try {
+                String name = event.getChannel().getName();
+                for (Method m : getClass().getDeclaredMethods()) {
+                    if (m.isAnnotationPresent(EmoteCommand.class)) {
+                        EmoteCommand ec = m.getAnnotation(EmoteCommand.class);
+                        if(ec.channelFrom().equals("none")){
+                            if (event.getTextChannel().getParentCategory().getName().contains(ec.categoryFrom())) {
+                                m.invoke(this, event);
+                            }
+                        } else {
+                            if (ec.channelFrom().equals(name) && event.getTextChannel().getParentCategory().getName().contains(ec.categoryFrom())) {
+                                m.invoke(this, event);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                event.getReaction().removeReaction().queue();
+            }
+        }
+    }
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {

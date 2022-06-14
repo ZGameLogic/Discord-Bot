@@ -4,7 +4,7 @@ import bot.role.data.item.Item;
 import bot.role.data.item.Modifier;
 import bot.role.data.jsonConfig.GameConfigValues;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import data.serializing.DataCacher;
+import data.serializing.DataRepository;
 import data.serializing.SavableData;
 import lombok.*;
 
@@ -81,13 +81,13 @@ public class Player extends SavableData {
      * @return number of activities the player has left for the day
      */
     public int activitiesLeftToday(){
-        int activitiesPerDay = new DataCacher<GameConfigValues>("arena\\game config data").loadSerialized().getActivitiesPerDay();
+        int activitiesPerDay = new DataRepository<GameConfigValues>("arena\\game config data").loadSerialized().getActivitiesPerDay();
         int itemBoostActivities = getStatTotalFromItems(Modifier.Stat.ACTIVITY, Modifier.Type.STATIC);
         return activitiesPerDay + itemBoostActivities - activitiesDone;
     }
 
     public int defendsLeftToday(){
-        int defendsPerDay = new DataCacher<GameConfigValues>("arena\\game config data").loadSerialized().getChallengeDefendPerDay();
+        int defendsPerDay = new DataRepository<GameConfigValues>("arena\\game config data").loadSerialized().getChallengeDefendPerDay();
         return defendsPerDay - challengesDefendedToday;
     }
 

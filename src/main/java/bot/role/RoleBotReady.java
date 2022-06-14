@@ -5,7 +5,7 @@ import bot.role.data.jsonConfig.GameConfigValues;
 import bot.role.data.structures.Player;
 import bot.role.helpers.roleData.Role;
 import bot.role.helpers.roleData.RoleDataRepository;
-import data.serializing.DataCacher;
+import data.serializing.DataRepository;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -94,7 +94,7 @@ public abstract class RoleBotReady {
     }
 
     private static void channelChecking(Guild guild) {
-        DataCacher<GameConfigValues> gameData = new DataCacher<>("arena\\game config data");
+        DataRepository<GameConfigValues> gameData = new DataRepository<>("arena\\game config data");
         GameConfigValues gcv = gameData.loadSerialized();
         logger.info("Searching for categories...");
         Category war = null;
@@ -170,7 +170,7 @@ public abstract class RoleBotReady {
 
     private static void emojiChecking(Guild guild) throws IOException {
         logger.info("Searching for emotes...");
-        DataCacher<GameConfigValues> gameData = new DataCacher<>("arena\\game config data");
+        DataRepository<GameConfigValues> gameData = new DataRepository<>("arena\\game config data");
         GameConfigValues gcv = gameData.loadSerialized();
         File emoteDir = new ClassPathResource("Role bot\\Emotes").getFile();
 
@@ -199,7 +199,7 @@ public abstract class RoleBotReady {
 
     private static void casteRoleChecking(Guild guild) throws IOException {
         logger.info("Checking for caste roles...");
-        DataCacher<GameConfigValues> gameData = new DataCacher<>("arena\\game config data");
+        DataRepository<GameConfigValues> gameData = new DataRepository<>("arena\\game config data");
         GameConfigValues gcv = gameData.loadSerialized();
         Map<String, Icon> icons = new HashMap<>();
         for(File f :new ClassPathResource("Role bot\\Emotes").getFile().listFiles()){
@@ -231,7 +231,7 @@ public abstract class RoleBotReady {
     }
 
     private static void playerNameRoleChecking(Guild guild, Data data){
-        DataCacher<Player> players = data.getPlayers();
+        DataRepository<Player> players = data.getPlayers();
         Map<String, Long> roleIds = data.getGameConfig().loadSerialized().getRoleIds();
         for(Player player : players){
             player.setName(guild.getMemberById(player.getId()).getEffectiveName());

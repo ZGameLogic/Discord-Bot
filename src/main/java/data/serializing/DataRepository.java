@@ -7,13 +7,13 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public class DataCacher <T extends SavableData> implements Iterable<T>{
+public class DataRepository<T extends SavableData> implements Iterable<T>{
 
 	private final String filePath;
 
 	private HashMap<String, T> loaded;
 
-	public DataCacher(String filePath) {
+	public DataRepository(String filePath) {
 		File f = new File(filePath);
 		loaded = new HashMap<>();
 		if(!f.exists()) {

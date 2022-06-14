@@ -10,7 +10,7 @@ import bot.role.data.structures.Activity;
 import bot.role.data.structures.Encounter;
 import bot.role.data.structures.Player;
 import bot.role.helpers.roleData.RoleDataRepository;
-import data.serializing.DataCacher;
+import data.serializing.DataRepository;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -25,7 +25,7 @@ import java.util.function.Function;
 
 public abstract class EmbedMessageGenerator {
 
-    private static DataCacher<Strings> strings = new DataCacher<Strings>("arena\\strings");
+    private static DataRepository<Strings> strings = new DataRepository<Strings>("arena\\strings");
 
     private final static Color ACTIVITY_COLOR = new Color(175, 102, 45);
     private final static Color NEW_DAY_COLOR = new Color(118, 21, 161);
