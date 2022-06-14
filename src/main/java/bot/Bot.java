@@ -35,7 +35,6 @@ import net.dv8tion.jda.api.utils.cache.CacheFlag;
 import webhook.listeners.WebHookReactionListener;
 
 @RestController
-@EnableScheduling
 public class Bot {
 	
 	private RoleBotListener RBL;
@@ -122,7 +121,17 @@ public class Bot {
 
 	@Scheduled(cron = "0 0 23,11 * * *")
 	private void hourBeforeNewDay(){
-		RBL.hourBeforeNewDay(); // new day
+		RBL.hourBeforeNewDay(); // hour before new day
+	}
+
+	@Scheduled(cron = "* */1 * * * *")
+	private void minuteTask(){
+		RBL.minuteTasks(); // every minute
+	}
+
+	@Scheduled(cron = "0 0 0 25 12 ?")
+	private void christmasStuff(){
+		RBL.christmas(); // every christmas
 	}
 	
 	private void handleBamboo(JSONObject message) throws JSONException {

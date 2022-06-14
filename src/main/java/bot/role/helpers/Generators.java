@@ -3,6 +3,7 @@ package bot.role.helpers;
 import bot.role.data.item.Item;
 import bot.role.data.structures.Activity;
 import bot.role.data.dungeon.saveable.Encounter;
+import bot.role.data.structures.Tournament;
 
 import java.util.Random;
 
@@ -25,6 +26,10 @@ public abstract class Generators {
     }
 
     public static Activity generateActivity(){
+        return null;
+    }
+
+    public static Tournament generateTournament(){
         return null;
     }
 

@@ -5,10 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import data.ConfigLoader;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * 
@@ -16,7 +16,7 @@ import data.ConfigLoader;
  *
  */
 @SpringBootApplication(scanBasePackages = {"webhook", "bot"})
-@EntityScan({"data.database"})
+@EnableScheduling
 public class App {
 	public static ConfigLoader config;
 	private static Logger logger = LoggerFactory.getLogger(App.class);

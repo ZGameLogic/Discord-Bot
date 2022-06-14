@@ -1,5 +1,6 @@
 package bot.role;
 
+import bot.Bot;
 import bot.role.data.Data;
 import bot.role.data.ResultsData;
 import bot.role.data.results.ChallengeFightResults;
@@ -26,6 +27,8 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
 import java.util.*;
@@ -34,7 +37,7 @@ import java.util.function.Function;
 import static bot.role.RoleBotReady.checkGuild;
 
 public class RoleBotListener extends ListenerAdapter {
-
+    private Logger logger = LoggerFactory.getLogger(RoleBotListener.class);
     private Data data;
     private ResultsData resultsData;
     private ConfigLoader config;
@@ -192,6 +195,10 @@ public class RoleBotListener extends ListenerAdapter {
         General g = data.getGeneral().loadSerialized();
         data.saveData(g.increaseDayCount());
         warChannel.sendMessageEmbeds(EmbedMessageGenerator.generateNewDay(g.getDayCount()));
+    }
+
+    public void minuteTasks() {
+
     }
 
     /**
@@ -749,4 +756,7 @@ public class RoleBotListener extends ListenerAdapter {
         event.replyEmbeds(EmbedMessageGenerator.generate(cfr, EmbedMessageGenerator.Detail.SIMPLE)).queue();
     }
 
+
+    public void christmas() {
+    }
 }
