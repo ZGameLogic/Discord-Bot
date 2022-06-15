@@ -311,6 +311,26 @@ public abstract class EmbedMessageGenerator {
     public static MessageEmbed generate(ShopItem shopItem){
         EmbedBuilder b = new EmbedBuilder();
         Item item = shopItem.getItem();
+        switch(item.getRarity()){
+            case MYTHIC:
+                b.setColor(MYTHIC_ITEM_COLOR);
+                break;
+            case LEGENDARY:
+                b.setColor(LEGENDARY_ITEM_COLOR);
+                break;
+            case EPIC:
+                b.setColor(EPIC_ITEM_COLOR);
+                break;
+            case RARE:
+                b.setColor(RARE_ITEM_COLOR);
+                break;
+            case UNCOMMON:
+                b.setColor(UNCOMMON_ITEM_COLOR);
+                break;
+            case COMMON:
+                b.setColor(COMMON_ITEM_COLOR);
+                break;
+        }
         b.setAuthor(item.getRarity().getString());
         b.setTitle(item.getName() + " is in stock today!");
         b.setDescription(item.getDescription());

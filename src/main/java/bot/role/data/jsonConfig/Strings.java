@@ -1,6 +1,7 @@
 package bot.role.data.jsonConfig;
 
 
+import bot.role.data.item.Modifier;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;
@@ -247,6 +248,63 @@ public class Strings extends SavableData {
         return strings.clone();
     }
 
+    public String[] getItemName(Modifier mod){
+        switch (mod.getType()){
+            case STATIC:
+                switch (mod.getStat()){
+                    case STRENGTH:
+                        return getStaticStrengthItem();
+                    case MAGIC:
+                        return getStaticMagicItem();
+                    case KNOWLEDGE:
+                        return getStaticKnowledgeItem();
+                    case AGILITY:
+                        return getStaticAgilityItem();
+                    case STAMINA:
+                        return getStaticStaminaItem();
+                    case ACTIVITY:
+                        return getStaticActivityItem();
+                }
+                break;
+            case ACTIVE:
+                switch(mod.getStat()){
+                    case STRENGTH:
+                        return getActiveStrengthItem();
+                    case MAGIC:
+                        return getActiveMagicItem();
+                    case KNOWLEDGE:
+                        return getActiveKnowledgeItem();
+                    case AGILITY:
+                        return getActiveAgilityItem();
+                    case STAMINA:
+                        return getActiveStaminaItem();
+                    case GOLD:
+                        return getActiveGoldItem();
+                }
+                break;
+            case BANE:
+                switch (mod.getStat()){
+                    case BLOB:
+                        return getBaneBlobItem();
+                    case WIZARD:
+                        return getBaneWizardItem();
+                    case WOLF:
+                        return getBaneWolfItem();
+                    case BANDIT:
+                        return getBaneBanditItem();
+                    case GIANT:
+                        return getBaneGiantItem();
+                    case TROLL:
+                        return getBaneTrollItem();
+                    case GHOUL:
+                        return getBaneGoulItem();
+                    case SKELETON:
+                        return getBaneSkeletonItem();
+                }
+                break;
+        }
+        return null;
+    }
     /**
      * @return a random agility vendor name
      */

@@ -3,6 +3,7 @@ package bot.role;
 import bot.Bot;
 import bot.role.data.Data;
 import bot.role.data.ResultsData;
+import bot.role.data.item.ShopItem;
 import bot.role.data.results.ChallengeFightResults;
 import bot.role.data.structures.General;
 import bot.role.data.structures.KingData;
@@ -47,7 +48,7 @@ public class RoleBotListener extends ListenerAdapter {
     private List<String> roleBotCommandNames;
 
     public RoleBotListener(ConfigLoader config){
-        DataRepository<Strings> strings = new DataRepository<Strings>("arena\\strings");
+        DataRepository<Strings> strings = new DataRepository<>("arena\\strings");
         if(!strings.exists("strings")){
             strings.saveSerialized(new Strings());
         }
