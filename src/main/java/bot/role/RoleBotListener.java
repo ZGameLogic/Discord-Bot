@@ -15,10 +15,8 @@ import bot.role.data.structures.annotations.SlashCommand;
 import bot.role.helpers.EmbedMessageGenerator;
 import data.ConfigLoader;
 import data.serializing.DataRepository;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Role;
-import net.dv8tion.jda.api.entities.TextChannel;
+import net.dv8tion.jda.api.Permission;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
@@ -43,6 +41,7 @@ public class RoleBotListener extends ListenerAdapter {
     private ResultsData resultsData;
     private ConfigLoader config;
     private Guild guild;
+    private Category guildsCategory;
     private TextChannel warChannel;
 
     private List<String> roleBotCommandNames;
@@ -67,7 +66,7 @@ public class RoleBotListener extends ListenerAdapter {
         guild = event.getJDA().getGuildById(data.getGameConfig().loadSerialized().getGuildId());
         checkGuild(guild, data);
         warChannel = guild.getTextChannelById(data.getGameConfig().loadSerialized().getChannelIds().get("war"));
-
+        guildsCategory = guild.getCategoryById(data.getGameConfig().loadSerialized().getGuildsCategoryId());
         List<Member> members = guild.getMembers();
         for(Member m : members){
             // Check if any members don't have player data
@@ -93,7 +92,7 @@ public class RoleBotListener extends ListenerAdapter {
     @Override
     public void onGuildMemberRemove(GuildMemberRemoveEvent event) {
         Member leavingMember = event.getMember();
-        data.getPlayers().delete(leavingMember.getId()); // delete player
+        data.getPlayers().delete(getAsPlayer(leavingMember)); // delete player
     }
 
     @Override
@@ -134,8 +133,17 @@ public class RoleBotListener extends ListenerAdapter {
                     if (m.isAnnotationPresent(SlashCommand.class)) {
                         SlashCommand sc = m.getAnnotation(SlashCommand.class);
                         if (sc.CommandName().equals(name)) {
-                            if(processSlashCommandAnnotations(sc, event)) {
-                                m.invoke(this, event);
+                            if(sc.isSubCommand()){
+                                String sName = event.getSubcommandName();
+                                if(sc.subCommandName().equals(sName)){
+                                    if(processSlashCommandAnnotations(sc, event)) {
+                                        m.invoke(this, event);
+                                    }
+                                }
+                            } else {
+                                if(processSlashCommandAnnotations(sc, event)) {
+                                    m.invoke(this, event);
+                                }
                             }
                         }
                     }
@@ -405,6 +413,19 @@ public class RoleBotListener extends ListenerAdapter {
         }
     }
 
+    public bot.role.data.structures.Guild getPlayerGuild(Player p){
+        for(bot.role.data.structures.Guild guild : data.getGuilds()){
+            if(guild.isInGuild(p.getIdLong())){
+                return guild;
+            }
+        }
+        return null;
+    }
+
+    public bot.role.data.structures.Guild getMemberGuild(Member m){
+        return getPlayerGuild(getAsPlayer(m));
+    }
+
     /**
      * Process slash command annotation options
      * @param sc Slash command annotation
@@ -434,6 +455,40 @@ public class RoleBotListener extends ListenerAdapter {
         if(sc.validCasteRole()){
             if(!getCasteRoles().contains(event.getOption("role").getAsRole())){
                 event.reply("The role you have selected is not a caste role").setEphemeral(true).queue();
+                return false;
+            }
+        }
+        if(sc.isInGuild()){
+            boolean found = false;
+            for(bot.role.data.structures.Guild guild : data.getGuilds()){
+                if(guild.isInGuild(event.getMember().getIdLong())){
+                    found = true;
+                    break;
+                }
+            }
+            if(!found){
+                event.reply("You must be in a guild to use this command").setEphemeral(true).queue();
+                return false;
+            }
+        }
+        if(sc.isNotInGuild()){
+            for(bot.role.data.structures.Guild guild : data.getGuilds()){
+                if(guild.isInGuild(event.getMember().getIdLong())){
+                    event.reply("You must not be in a guild to use this command").setEphemeral(true).queue();
+                    return false;
+                }
+            }
+        }
+        if(sc.isLeaderOfGuild()){
+            boolean found = false;
+            for(bot.role.data.structures.Guild guild : data.getGuilds()){
+                if(guild.isGuildOwner(event.getMember().getIdLong())){
+                    found = true;
+                    break;
+                }
+            }
+            if(!found){
+                event.reply("You must be a guild owner to use this command").setEphemeral(true).queue();
                 return false;
             }
         }
@@ -641,6 +696,74 @@ public class RoleBotListener extends ListenerAdapter {
         player.swapSlots(slotOne, slotTwo);
         data.saveData(player);
         event.reply("Inventory slots " + slotOne + " and " + slotTwo + " have been swapped.").queue();
+    }
+
+    @SlashCommand(CommandName = "guild", isSubCommand = true, subCommandName = "leave", isInGuild = true)
+    private void guildLeaveSlashCommand(SlashCommandInteractionEvent event){
+        bot.role.data.structures.Guild guild = getMemberGuild(event.getMember());
+        guild.removeFromGuild(event.getMember().getIdLong());
+        if(guild.isEmpty()){
+            data.getGuilds().delete(guild);
+            this.guild.getTextChannelById(guild.getIds().get("textChannel")).delete().queue();
+            this.guild.getVoiceChannelById(guild.getIds().get("voiceChannel")).delete().queue();
+            this.guild.getRoleById(guild.getIds().get("ownerRole")).delete().queue();
+            this.guild.getRoleById(guild.getIds().get("officerRole")).delete().queue();
+            this.guild.getRoleById(guild.getIds().get("memberRole")).delete().queue();
+        } else{
+            data.saveData(guild);
+        }
+        event.reply("You have left the " + guild.getId() + " guild").setEphemeral(true).queue();
+    }
+
+    @SlashCommand(CommandName = "guild", isSubCommand = true, subCommandName = "create", isNotInGuild = true)
+    private void guildCreateSlashCommand(SlashCommandInteractionEvent event){
+        String guildName = event.getOption("guild-name").getAsString();
+        if(data.getGuilds().exists(guildName)){
+            event.reply("A guild with that name already exists!").setEphemeral(true).queue();
+            return;
+        }
+        TextChannel tc = guild.createTextChannel(guildName, guildsCategory).complete();
+        VoiceChannel vc = guild.createVoiceChannel(guildName, guildsCategory).complete();
+        Role owner = guild.createRole().setName(guildName + " owner").complete();
+        guild.addRoleToMember(event.getMember(), owner).queue();
+        Role officer = guild.createRole().setName(guildName + " officer").complete();
+        Role member = guild.createRole().setName(guildName + " member").complete();
+        tc.getManager().putRolePermissionOverride(
+                owner.getIdLong(),
+                new LinkedList<> (Arrays.asList(new Permission[] {Permission.VIEW_CHANNEL})),
+                new LinkedList<> ()
+        ).putRolePermissionOverride(
+                officer.getIdLong(),
+                new LinkedList<> (Arrays.asList(new Permission[] {Permission.VIEW_CHANNEL})),
+                new LinkedList<> ()
+        ).putRolePermissionOverride(
+                member.getIdLong(),
+                new LinkedList<> (Arrays.asList(new Permission[] {Permission.VIEW_CHANNEL})),
+                new LinkedList<> ()
+        ).putRolePermissionOverride(
+                guild.getPublicRole().getIdLong(),
+                new LinkedList<> (),
+                new LinkedList<> (Arrays.asList(new Permission[] {Permission.VIEW_CHANNEL}))
+        ).queue();
+        vc.getManager().putRolePermissionOverride(
+                owner.getIdLong(),
+                new LinkedList<> (Arrays.asList(new Permission[] {Permission.VIEW_CHANNEL})),
+                new LinkedList<> ()
+        ).putRolePermissionOverride(
+                officer.getIdLong(),
+                new LinkedList<> (Arrays.asList(new Permission[] {Permission.VIEW_CHANNEL})),
+                new LinkedList<> ()
+        ).putRolePermissionOverride(
+                member.getIdLong(),
+                new LinkedList<> (Arrays.asList(new Permission[] {Permission.VIEW_CHANNEL})),
+                new LinkedList<> ()
+        ).putRolePermissionOverride(
+                guild.getPublicRole().getIdLong(),
+                new LinkedList<> (),
+                new LinkedList<> (Arrays.asList(new Permission[] {Permission.VIEW_CHANNEL}))
+        ).queue();
+        data.saveData(new bot.role.data.structures.Guild(guildName, event.getMember().getIdLong(), tc.getIdLong(), vc.getIdLong(), owner.getIdLong(), officer.getIdLong(), member.getIdLong(), event.getOption("public").getAsBoolean()));
+        event.reply("Your guild has been created!").setEphemeral(true).queue();
     }
 
     @SlashCommand(CommandName = "challenge", warChannelOnly = true, activityCheck = 1)

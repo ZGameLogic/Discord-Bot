@@ -110,7 +110,14 @@ public class DataRepository<T extends SavableData> implements Iterable<T>{
 		return loadSerialized(id + "");
 	}
 
-	public void delete(String file) {
+	public void delete(T t){
+		delete(t.getId());
+	}
+
+	private void delete(String file) {
+		if(loaded.containsKey(file)){
+			loaded.remove(file);
+		}
 		file = file.replace(".json", "");
 		File fileToDelete = new File(filePath + "//" + file + ".json");
 		fileToDelete.delete();

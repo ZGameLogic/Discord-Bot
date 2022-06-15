@@ -110,6 +110,7 @@ public abstract class RoleBotReady {
         logger.info("Searching for categories...");
         Category war = null;
         Category caste = null;
+        Category guilds = null;
         for(Category category : guild.getCategories()){
             if(category.getName().toLowerCase().contains("war")){
                 logger.info("Found war category");
@@ -117,6 +118,9 @@ public abstract class RoleBotReady {
             } else if(category.getName().toLowerCase().contains("caste system chat")){
                 logger.info("Found caste category");
                 caste = category;
+            } else if(category.getName().toLowerCase().contains("guilds")){
+                logger.info("Found guilds category");
+                guilds = category;
             }
         }
 
@@ -128,6 +132,12 @@ public abstract class RoleBotReady {
             caste = guild.createCategory("——Caste system Chat——").complete();
             logger.info("Added caste category");
         }
+        if(guilds == null){
+            guilds = guild.createCategory("—————Guilds—————").complete();
+            logger.info("Added guilds category");
+        }
+
+        gcv.setGuildsCategoryId(guilds.getIdLong());
         gcv.setWarCategoryId(war.getIdLong());
 
         logger.info("Searching for channels...");

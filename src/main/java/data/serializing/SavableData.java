@@ -5,6 +5,7 @@ import bot.role.data.jsonConfig.Strings;
 import bot.role.data.results.ActivityResults;
 import bot.role.data.results.ChallengeFightResults;
 import bot.role.data.structures.General;
+import bot.role.data.structures.Guild;
 import bot.role.data.structures.KingData;
 import bot.role.data.structures.Player;
 import bot.role.data.dungeon.saveable.Dungeon;
@@ -24,7 +25,8 @@ import lombok.Setter;
 		@JsonSubTypes.Type(Dungeon.class),
 		@JsonSubTypes.Type(ActivityResults.class),
 		@JsonSubTypes.Type(ChallengeFightResults.class),
-		@JsonSubTypes.Type(General.class)
+		@JsonSubTypes.Type(General.class),
+		@JsonSubTypes.Type(Guild.class)
 	}
 )
 public abstract class SavableData {

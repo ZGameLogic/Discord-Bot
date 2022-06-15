@@ -1,6 +1,7 @@
 package bot.role.data.structures;
 
 import bot.role.data.item.Item;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import data.serializing.SavableData;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -27,6 +28,7 @@ public class Guild extends SavableData {
         members = new LinkedList<>();
         ids = new HashMap<>();
         ids.put("ownerRole", ownerRoleId);
+        ids.put("ownerId", ownerId);
         ids.put("officerRole", officerRoleId);
         ids.put("memberRole", memberRoleId);
         ids.put("textChannel", textChannelId);
@@ -38,4 +40,32 @@ public class Guild extends SavableData {
         guildReputationLevelXP = 0;
         nextGuildLevelThreshold = 10;
     }
+
+    @JsonIgnore
+    public boolean isInGuild(long id){
+        return members.contains(id);
+    }
+
+    @JsonIgnore
+    public boolean isGuildOwner(long id){
+        return ids.get("ownerId") == id;
+    }
+
+    public void setOwnerId(long id){
+        ids.put("ownerId", id);
+    }
+
+    public void addToGuild(long id){
+        members.add(id);
+    }
+
+    public void removeFromGuild(long id){
+        members.remove(id);
+    }
+
+    @JsonIgnore
+    public boolean isEmpty(){
+        return members.isEmpty();
+    }
+
 }

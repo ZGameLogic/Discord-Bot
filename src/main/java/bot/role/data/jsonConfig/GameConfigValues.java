@@ -19,6 +19,7 @@ public class GameConfigValues extends SavableData {
     private Map<String, Long> iconIds;
     private Map<String, Long> channelIds;
     private long warCategoryId;
+    private long guildsCategoryId;
     private long guildId;
 
     private int goldTaxMax;
