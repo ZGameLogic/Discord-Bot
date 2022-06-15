@@ -700,19 +700,23 @@ public class RoleBotListener extends ListenerAdapter {
         }
         int goldAmount = 0;
         StatBlock resultChange = null;
+        boolean bounty = false;
+        int base = 0;
         if(attackerPoints >= 3){
             // attacker won
+            bounty = defender.getWinStreak() > 4;
+            base = bounty ? defender.getWinStreak() * 10 : 0;
             attacker.increaseWins();
             defender.increaseLosses();
             if(attackingUp){
                 // attacking up
-                goldAmount = r.nextInt(20);
-                attacker.increaseGold(defender.payGold(goldAmount));
+                goldAmount = r.nextInt(20) - 10 + 20;
+                attacker.increaseGold(defender.payGold(goldAmount) + base);
                 swapCasteRoles(attackerMember, defenderMember);
             } else {
                 // attacking down
-                goldAmount = r.nextInt(20);
-                attacker.increaseGold(defender.payGold(goldAmount));
+                goldAmount = r.nextInt(20) - 10 + 20;
+                attacker.increaseGold(defender.payGold(goldAmount) + base);
             }
         } else {
             // attacker lost
@@ -724,11 +728,11 @@ public class RoleBotListener extends ListenerAdapter {
                 int statChangeAmount = r.nextInt(3) + 1;
                 resultChange = StatBlock.generateByStat(stat, statChangeAmount);
                 attacker.increaseByStatBlock(resultChange);
-                goldAmount = r.nextInt(20);
+                goldAmount = r.nextInt(20) - 10 + 20;
                 defender.increaseGold(attacker.payGold(goldAmount));
             } else {
                 // attacking down
-                goldAmount = r.nextInt(20);
+                goldAmount = r.nextInt(20) - 10 + 20;
                 defender.increaseGold(attacker.payGold(goldAmount));
                 swapCasteRoles(attackerMember, defenderMember);
             }
@@ -746,7 +750,9 @@ public class RoleBotListener extends ListenerAdapter {
                 paddingMultiplier,
                 defenderPaddingLevel,
                 goldAmount,
-                attackingUp
+                attackingUp,
+                bounty,
+                base
         );
 
         attacker.activityCompleted();

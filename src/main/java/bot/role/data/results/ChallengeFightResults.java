@@ -27,6 +27,8 @@ public class ChallengeFightResults extends SavableData {
     private int defenderPaddingLevel;
     private int gold;
     private boolean attackingUp;
+    private boolean bounty;
+    private int bountyAmount;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date time;
@@ -45,7 +47,7 @@ public class ChallengeFightResults extends SavableData {
      * @param defenderPaddingLevel
      * @param gold
      */
-    public ChallengeFightResults(long id, Player attacker, Player defender, int attackerPoints, StatBlock rolled, StatBlock resultStatChange, String attackerRole, String defenderRole, int paddingMultiplier, int defenderPaddingLevel, int gold, boolean attackingUp) {
+    public ChallengeFightResults(long id, Player attacker, Player defender, int attackerPoints, StatBlock rolled, StatBlock resultStatChange, String attackerRole, String defenderRole, int paddingMultiplier, int defenderPaddingLevel, int gold, boolean attackingUp, boolean bounty, int bountyAmount) {
         super(id);
         this.attacker = attacker;
         this.defender = defender;
@@ -58,6 +60,8 @@ public class ChallengeFightResults extends SavableData {
         this.paddingMultiplier = paddingMultiplier;
         this.defenderPaddingLevel = defenderPaddingLevel;
         this.attackingUp = attackingUp;
+        this.bounty = bounty;
+        this.bountyAmount = bountyAmount;
         time = new Date();
     }
 

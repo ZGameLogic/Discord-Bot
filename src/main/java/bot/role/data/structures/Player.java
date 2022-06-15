@@ -34,6 +34,7 @@ public class Player extends SavableData {
     private boolean active;
     @Setter
     private boolean remind;
+    private int winStreak;
 
     /**
      * Creates a new player. This player gets a random stat start, and a random amount of gold
@@ -53,6 +54,7 @@ public class Player extends SavableData {
         gold = random.nextInt(gcv.getStartGoldMax() + 1);
         tournamentVictories = 0;
         wins = 0;
+        winStreak = 0;
         losses = 0;
         activitiesDone = 0;
         inventory = new LinkedList<>();
@@ -391,17 +393,19 @@ public class Player extends SavableData {
 
     public void increaseWins(){
         wins++;
+        winStreak++;
     }
     public void increaseLosses(){
         losses++;
+        winStreak = 0;
     }
 
     public void increaseByStatBlock(StatBlock resultChange) {
-        increaseAgility(resultChange.getAgility());
-        increaseKnowledge(resultChange.getKnowledge());
-        increaseMagic(resultChange.getMagic());
-        increaseStrength(resultChange.getStrength());
-        increaseStamina(resultChange.getStamina());
+        if(resultChange.getAgility() > 0) increaseAgility(resultChange.getAgility());
+        if(resultChange.getKnowledge() > 0) increaseKnowledge(resultChange.getKnowledge());
+        if(resultChange.getMagic() > 0) increaseMagic(resultChange.getMagic());
+        if(resultChange.getStrength() > 0) increaseStrength(resultChange.getStrength());
+        if(resultChange.getStamina() > 0) increaseStamina(resultChange.getStamina());
     }
 
     public boolean isRemind(){

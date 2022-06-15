@@ -210,6 +210,7 @@ public abstract class EmbedMessageGenerator {
             description += "Better luck next time. " + results.getResultStatChange() + "\nGold lost: " + results.getGold() + ".";
             b.setTitle("Fight results: " + results.getAttacker().getName() + " lost");
         }
+        if(results.isBounty()) description += "\n" + defenderName + " had a bounty on them! Bounty: " + results.getBountyAmount() + " gold.";
         b.setDescription(description);
         b.addField("Fight statistics", "Attacker points: " + results.getAttackerPoints() + "\n" +
                 "Defender points: " + (5 - results.getAttackerPoints()), true);
@@ -231,6 +232,7 @@ public abstract class EmbedMessageGenerator {
         SimpleDateFormat sdf = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss");
         description += "Fight time: " + sdf.format(results.getTime()) +"\n" +
                 "Fight between " + attackerName + " (" + results.getAttackerRole() + ") and " + defenderName + " (" + results.getDefenderRole() + ")\n" +
+                "Defender bounty: " + (results.isBounty() ? results.getBountyAmount() : false) + "\n" +
                 "Attacker win: " + results.isAttackerWin() + "\n" +
                 "Score: " + results.getAttackerPoints() + " " + (5 - results.getAttackerPoints()) + "\n" +
                 "Padding Multiplier: x" + results.getPaddingMultiplier() + "\n" +
