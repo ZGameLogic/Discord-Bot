@@ -9,12 +9,14 @@ public class General extends SavableData {
     private int dayCount;
     private int encountersFought;
     private int challengesFought;
+    private int tournamentCount;
 
     public General(){
         super("general");
         dayCount = 0;
         encountersFought = 0;
         challengesFought = 0;
+        tournamentCount = 0;
     }
 
     public General increaseDayCount(){
@@ -29,6 +31,11 @@ public class General extends SavableData {
 
     public General increaseChallengesFought(){
         challengesFought++;
+        return this;
+    }
+
+    public General increaseTournamentCount(){
+        tournamentCount++;
         return this;
     }
 }
