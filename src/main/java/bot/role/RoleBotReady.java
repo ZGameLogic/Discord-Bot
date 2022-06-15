@@ -78,7 +78,18 @@ public abstract class RoleBotReady {
                 .addOption(OptionType.USER, "citizen-two", "One of the two citizens to switch roles", true));
         commands.add(Commands.slash("pass-law", "Create a law for the kingdom to follow from now on!")
                 .addOption(OptionType.STRING, "law", "Law to be added", true));
-
+        // Guilds
+        commands.add(Commands.slash("guild", "All guild related commands")
+                .addSubcommands(new SubcommandData("create", "Creates a guild")
+                        .addOption(OptionType.STRING, "guild-name", "The name of the guild", true)
+                        .addOption(OptionType.BOOLEAN, "public", "If the guild is private or public", true))
+                .addSubcommands(new SubcommandData("join", "Join a guild")
+                        .addOption(OptionType.STRING, "guild-name", "The name of the guild you want to join", true))
+                .addSubcommands(new SubcommandData("leave", "Leaves the current guild"))
+                .addSubcommands(new SubcommandData("promote", "Promotes a member of your guild")
+                        .addOption(OptionType.USER, "player", "The player you want to promote", true)
+                        .addOption(OptionType.ROLE, "rank", "Rank to promote them to", true))
+                .addSubcommands(new SubcommandData("reorder", "Changes the marching order for dungeons")));
         return commands;
     }
 
