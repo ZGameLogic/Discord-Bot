@@ -26,18 +26,11 @@ public abstract class Generators {
     }
 
     public static ShopItem generateShopItem(){
-        Random random = new Random();
-        Item.Rarity rarity = Item.Rarity.random();
-        Item.Material repairMat = Item.Material.random();
-        List<Modifier> mods = new LinkedList<>();
-        for(int i = 0; i < random.nextInt((int)((rarity.getMerit() + 1) * 10)) / 10; i++){
-
-        }
-        return null;
+        return ShopItem.random();
     }
 
     public static Activity generateActivity(){
-        return null;
+        return Activity.random();
     }
 
     public static Tournament generateTournament(){
