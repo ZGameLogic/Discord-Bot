@@ -710,6 +710,10 @@ public class RoleBotListener extends ListenerAdapter {
             this.guild.getRoleById(guild.getIds().get("officerRole")).delete().queue();
             this.guild.getRoleById(guild.getIds().get("memberRole")).delete().queue();
         } else{
+            Role owner = this.guild.getRoleById(guild.getIds().get("ownerRole"));
+            Role officer = this.guild.getRoleById(guild.getIds().get("officerRole"));
+            Role member = this.guild.getRoleById(guild.getIds().get("memberRole"));
+            this.guild.removeRoleFromMember(event.getMember(), owner).queue();
             data.saveData(guild);
         }
         event.reply("You have left the " + guild.getId() + " guild").setEphemeral(true).queue();
