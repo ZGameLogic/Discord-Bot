@@ -89,7 +89,10 @@ public abstract class RoleBotReady {
                 .addSubcommands(new SubcommandData("promote", "Promotes a member of your guild")
                         .addOption(OptionType.USER, "player", "The player you want to promote", true)
                         .addOption(OptionType.ROLE, "rank", "Rank to promote them to", true))
-                .addSubcommands(new SubcommandData("reorder", "Changes the marching order for dungeons")));
+                .addSubcommands(new SubcommandData("reorder", "Changes the marching order for dungeons"))
+                .addSubcommands(new SubcommandData("stats", "Displays the stats of a guild")
+                        .addOption(OptionType.STRING, "guild-name", "Guild to get the stats from", true))
+        );
         return commands;
     }
 
