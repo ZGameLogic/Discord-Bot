@@ -9,11 +9,26 @@ import lombok.ToString;
 import java.util.HashMap;
 
 @Getter
-@AllArgsConstructor
 @NoArgsConstructor
 @ToString
 public class StatBlock {
     private int magic, knowledge, stamina, strength, agility;
+
+    /**
+     *
+     * @param magic
+     * @param knowledge
+     * @param stamina
+     * @param strength
+     * @param agility
+     */
+    public StatBlock(int magic, int knowledge, int stamina, int strength, int agility) {
+        this.magic = magic;
+        this.knowledge = knowledge;
+        this.stamina = stamina;
+        this.strength = strength;
+        this.agility = agility;
+    }
 
     @JsonIgnore
     public HashMap<String, Integer> getAllStats(){

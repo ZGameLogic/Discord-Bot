@@ -1,7 +1,7 @@
 package bot.role.data.jsonConfig;
 
 
-import bot.role.data.item.Modifier;
+import bot.role.data.structures.item.Modifier;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.databind.annotation.JsonNaming;

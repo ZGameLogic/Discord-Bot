@@ -1,4 +1,4 @@
-package bot.role.data.item;
+package bot.role.data.structures.item;
 
 import lombok.*;
 

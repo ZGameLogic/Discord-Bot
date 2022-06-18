@@ -1,9 +1,9 @@
 package bot.role.helpers;
 
 import bot.role.data.Data;
-import bot.role.data.item.Item;
-import bot.role.data.item.Modifier;
-import bot.role.data.item.ShopItem;
+import bot.role.data.structures.item.Item;
+import bot.role.data.structures.item.Modifier;
+import bot.role.data.structures.item.ShopItem;
 import bot.role.data.jsonConfig.Strings;
 import bot.role.data.results.*;
 import bot.role.data.structures.Activity;

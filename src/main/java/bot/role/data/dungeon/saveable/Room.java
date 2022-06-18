@@ -1,6 +1,6 @@
 package bot.role.data.dungeon.saveable;
 
-import bot.role.data.item.Item;
+import bot.role.data.structures.item.Item;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

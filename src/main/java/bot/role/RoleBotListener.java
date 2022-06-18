@@ -3,21 +3,20 @@ package bot.role;
 import bot.Bot;
 import bot.role.data.Data;
 import bot.role.data.ResultsData;
-import bot.role.data.item.ShopItem;
+import bot.role.data.dungeon.saveable.Encounter;
 import bot.role.data.jsonConfig.GameConfigValues;
 import bot.role.data.results.ChallengeFightResults;
-import bot.role.data.structures.General;
-import bot.role.data.structures.KingData;
-import bot.role.data.structures.Player;
+import bot.role.data.structures.*;
 import bot.role.data.jsonConfig.Strings;
-import bot.role.data.structures.StatBlock;
 import bot.role.data.structures.annotations.EmoteCommand;
 import bot.role.data.structures.annotations.SlashCommand;
 import bot.role.helpers.EmbedMessageGenerator;
+import bot.role.helpers.Generators;
 import data.ConfigLoader;
 import data.serializing.DataRepository;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
@@ -218,6 +217,7 @@ public class RoleBotListener extends ListenerAdapter {
         if(random.nextDouble() <= config.getEncounterSpawnChance()){
             // TODO encounter
             logger.info("\tSpawned encounter");
+            Encounter encounter = Generators.generateEncounter(100, 7);
         }
         if(random.nextDouble() <= config.getShopItemSpawnChance()) {
             // TODO item
@@ -235,6 +235,7 @@ public class RoleBotListener extends ListenerAdapter {
             // TODO tournament
             logger.info("\tSpawned tournament");
         }
+        // TODO remove old messages
     }
 
     /**

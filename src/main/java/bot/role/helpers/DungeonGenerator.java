@@ -1,7 +1,7 @@
 package bot.role.helpers;
 
 import bot.role.data.dungeon.saveable.Room;
-import bot.role.data.item.Item;
+import bot.role.data.structures.item.Item;
 import bot.role.data.jsonConfig.GameConfigValues;
 import bot.role.data.dungeon.astar.Node;
 import bot.role.data.dungeon.graph.Edge;

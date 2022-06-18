@@ -1,7 +1,7 @@
 package bot.role.data.structures;
 
-import bot.role.data.item.Item;
-import bot.role.data.item.Modifier;
+import bot.role.data.structures.item.Item;
+import bot.role.data.structures.item.Modifier;
 import bot.role.data.jsonConfig.GameConfigValues;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import data.serializing.DataRepository;

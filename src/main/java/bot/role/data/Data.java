@@ -1,6 +1,6 @@
 package bot.role.data;
 
-import bot.role.data.item.ShopItem;
+import bot.role.data.structures.item.ShopItem;
 import bot.role.data.jsonConfig.GameConfigValues;
 import bot.role.data.structures.*;
 import data.serializing.DataRepository;

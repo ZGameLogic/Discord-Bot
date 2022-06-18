@@ -1,6 +1,6 @@
 package bot.role.data.structures;
 
-import bot.role.data.item.Item;
+import bot.role.data.structures.item.Item;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import data.serializing.SavableData;
 import lombok.Getter;

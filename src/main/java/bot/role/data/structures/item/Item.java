@@ -1,4 +1,4 @@
-package bot.role.data.item;
+package bot.role.data.structures.item;
 
 import bot.role.data.jsonConfig.Strings;
 import data.serializing.DataRepository;

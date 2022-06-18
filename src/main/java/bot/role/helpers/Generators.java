@@ -1,9 +1,6 @@
 package bot.role.helpers;
 
-import bot.role.data.item.ShopItem;
-import bot.role.data.structures.Activity;
 import bot.role.data.dungeon.saveable.Encounter;
-import bot.role.data.structures.Tournament;
 
 import java.util.Random;
 
@@ -20,18 +17,4 @@ public abstract class Generators {
         Encounter e = new Encounter(magic, knowledge, strength, stamina, agility, gold);
         return e;
     }
-
-    public static ShopItem generateShopItem(){
-        return ShopItem.random();
-    }
-
-    public static Activity generateActivity(){
-        return Activity.random();
-    }
-
-    public static Tournament generateTournament(){
-        return Tournament.random();
-    }
-
-
 }
