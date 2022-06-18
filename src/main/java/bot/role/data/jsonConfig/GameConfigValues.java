@@ -30,6 +30,15 @@ public class GameConfigValues extends SavableData {
     private double shopItemSpawnChance;
     private int shopItemLife;
 
+    private double encounterSpawnChance;
+    private int encounterLife;
+
+    private double tournamentSpawnChance;
+    private int tournamentLife;
+
+    private double dungeonSpawnChance;
+    private int dungeonLife;
+
     private int startStatMax;
     private int startGoldMax;
 
@@ -52,6 +61,10 @@ public class GameConfigValues extends SavableData {
         activityLife = 4;
         shopItemSpawnChance = .2;
         shopItemLife = 4;
+        encounterSpawnChance = .15;
+        encounterLife = 4;
+        dungeonSpawnChance = .15;
+        dungeonLife = 6;
         startGoldMax = 30;
         startStatMax = 15;
         paddingMultiplier = .25;

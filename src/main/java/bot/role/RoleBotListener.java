@@ -4,6 +4,7 @@ import bot.Bot;
 import bot.role.data.Data;
 import bot.role.data.ResultsData;
 import bot.role.data.item.ShopItem;
+import bot.role.data.jsonConfig.GameConfigValues;
 import bot.role.data.results.ChallengeFightResults;
 import bot.role.data.structures.General;
 import bot.role.data.structures.KingData;
@@ -206,8 +207,34 @@ public class RoleBotListener extends ListenerAdapter {
         warChannel.sendMessageEmbeds(EmbedMessageGenerator.generateNewDay(g.getDayCount()));
     }
 
+    /**
+     * This task always gets run every minute by Bot.java
+     * @see Bot
+     */
     public void minuteTasks() {
-
+        Random random = new Random();
+        GameConfigValues config = data.getGameConfig().loadSerialized();
+        logger.info("Checking for spawns");
+        if(random.nextDouble() <= config.getEncounterSpawnChance()){
+            // TODO encounter
+            logger.info("\tSpawned encounter");
+        }
+        if(random.nextDouble() <= config.getShopItemSpawnChance()) {
+            // TODO item
+            logger.info("\tSpawned shop item");
+        }
+        if(random.nextDouble() <= config.getActivitySpawnChance()){
+            // TODO activity
+            logger.info("\tSpawned activity");
+        }
+        if(random.nextDouble() <= config.getDungeonSpawnChance()) {
+            // TODO dungeon
+            logger.info("\tSpawned dungeon");
+        }
+        if(random.nextDouble() <= config.getTournamentSpawnChance()) {
+            // TODO tournament
+            logger.info("\tSpawned tournament");
+        }
     }
 
     /**

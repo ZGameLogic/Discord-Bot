@@ -163,7 +163,7 @@ public abstract class RoleBotReady {
                 logger.info("Added channel: " + role.getPlural());
             }
         }
-        List<String> extraChannels = new LinkedList<>(Arrays.asList(new String[]{"war", "activities", "encounters", "items"}));
+        List<String> extraChannels = new LinkedList<>(Arrays.asList(new String[]{"war", "activities", "encounters", "items", "tournaments", "dungeons"}));
         Map<String, Long> channelIds = new HashMap<>();
         for(String channelName : extraChannels){
             boolean found = false;

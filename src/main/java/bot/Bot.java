@@ -124,7 +124,7 @@ public class Bot {
 		RBL.hourBeforeNewDay(); // hour before new day
 	}
 
-	@Scheduled(cron = "* */1 * * * *")
+	@Scheduled(cron = "0 * * * * *")
 	private void minuteTask(){
 		RBL.minuteTasks(); // every minute
 	}
