@@ -3,7 +3,6 @@ package bot.role;
 import bot.Bot;
 import bot.role.data.Data;
 import bot.role.data.ResultsData;
-import bot.role.data.dungeon.saveable.Encounter;
 import bot.role.data.jsonConfig.GameConfigValues;
 import bot.role.data.results.ChallengeFightResults;
 import bot.role.data.structures.*;
@@ -215,9 +214,13 @@ public class RoleBotListener extends ListenerAdapter {
         GameConfigValues config = data.getGameConfig().loadSerialized();
         logger.info("Checking for spawns");
         if(random.nextDouble() <= config.getEncounterSpawnChance()){
-            // TODO encounter
             logger.info("\tSpawned encounter");
-            Encounter encounter = Generators.generateEncounter(100, 7);
+            Encounter encounter = Encounter.generate();
+            TextChannel encounterChannel = guild.getTextChannelById(data.getGameConfig().loadSerialized().getChannelIds().get("encounters"));
+            encounterChannel.sendMessageEmbeds(EmbedMessageGenerator.generate(encounter)).queue(message -> {
+                encounter.setId(message.getId());
+                data.saveData(encounter);
+            });
         }
         if(random.nextDouble() <= config.getShopItemSpawnChance()) {
             // TODO item

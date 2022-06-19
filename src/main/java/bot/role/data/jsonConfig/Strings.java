@@ -305,6 +305,7 @@ public class Strings extends SavableData {
         }
         return null;
     }
+
     /**
      * @return a random agility vendor name
      */

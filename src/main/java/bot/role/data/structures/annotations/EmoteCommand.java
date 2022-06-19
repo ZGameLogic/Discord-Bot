@@ -8,6 +8,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 public @interface EmoteCommand {
-    String channelFrom() default "none";
     String categoryFrom();
+    String channelFrom() default "none";
+    boolean isFromGuildOwner() default false;
 }
