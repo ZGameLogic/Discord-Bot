@@ -508,14 +508,7 @@ public class RoleBotListener extends ListenerAdapter {
             }
         }
         if(sc.isLeaderOfGuild()){
-            boolean found = false;
-            for(bot.role.data.structures.Guild guild : data.getGuilds()){
-                if(guild.isGuildOwner(event.getMember().getIdLong())){
-                    found = true;
-                    break;
-                }
-            }
-            if(!found){
+            if(!isGuildLeader(event.getMember())){
                 event.reply("You must be a guild owner to use this command").setEphemeral(true).queue();
                 return false;
             }
@@ -526,6 +519,17 @@ public class RoleBotListener extends ListenerAdapter {
             return false;
         }
         return true;
+    }
+
+    private boolean isGuildLeader(Member member) {
+        boolean found = false;
+        for(bot.role.data.structures.Guild guild : data.getGuilds()){
+            if(guild.isGuildOwner(member.getIdLong())){
+                found = true;
+                break;
+            }
+        }
+        return found;
     }
 
     @SlashCommand(CommandName = "leaderboard")
