@@ -101,9 +101,40 @@ public abstract class RoleBotReady {
             emojiChecking(guild);
             casteRoleChecking(guild);
             channelChecking(guild);
+            playerRoleChecking(guild, data);
             playerNameRoleChecking(guild, data);
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    private static void playerRoleChecking(Guild guild, Data data) {
+        List<net.dv8tion.jda.api.entities.Role> roles = new LinkedList<>();
+        List<Long> roleIds = new LinkedList<>(data.getGameConfig().loadSerialized().getRoleIds().values());
+        roleIds.remove(data.getGameConfig().loadSerialized().getRoleIds().get("King"));
+        for(net.dv8tion.jda.api.entities.Role role : guild.getRoles()){
+            if(roleIds.contains(role.getIdLong())){
+                roles.add(role);
+            }
+        }
+        for(Member m : guild.getMembers()){
+            boolean found = false;
+            if(!m.getUser().isBot()){
+                for(net.dv8tion.jda.api.entities.Role role : m.getRoles()){
+                    if(roles.contains(role)){
+                        found = true;
+                        break;
+                    }
+                }
+            } else {
+                found = true;
+            }
+            if(!found){
+                logger.info("Assigning " + m.getEffectiveName() + " a random role");
+                Random random = new Random();
+                net.dv8tion.jda.api.entities.Role randomRole = guild.getRoleById(roleIds.get(random.nextInt(roleIds.size())));
+                guild.addRoleToMember(m, randomRole).queue();
+            }
         }
     }
 
