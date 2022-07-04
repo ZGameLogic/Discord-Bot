@@ -1,115 +1,106 @@
 package controllers.pokemon;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
+import controllers.pokemon.structures.Pokemon;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 
 public abstract class PokemonAPI {
 
     private static final String API_URL = "https://pokeapi.co/api/v2/";
-    private static List<String> pokemonNames;
 
-    public static void getByName(String name) throws URISyntaxException, IOException {
-        HttpClient httpclient = HttpClients.createDefault();
-        URIBuilder builder = new URIBuilder(API_URL + "/pokemon/" + name.toLowerCase());
-        URI uri = builder.build();
-        HttpGet request = new HttpGet(uri);
-        HttpResponse response = httpclient.execute(request);
-        System.out.println(EntityUtils.toString(response.getEntity()));
+    /**
+     * Get a pokemon with information from a specific version
+     * @param name Name of the pokemon
+     * @param version version to look up details from version
+     * @return a pokemon with information from a specific version
+     */
+    public static Optional<Pokemon> getByName(String name, String version){
+        Pokemon pokemon = new Pokemon(getRequest(API_URL + "/pokemon/" + name.toLowerCase()), version);
+        return Optional.of(pokemon);
     }
 
-    public static void updateAllNames() {
+    public static Optional<String> getPokedexEntry(int pokedexEntry){
         try {
-            String next = API_URL + "/pokemon?limit=500";
-            List<String> names = new LinkedList<>();
-            while (!next.equalsIgnoreCase("null")) {
-                HttpClient httpclient = HttpClients.createDefault();
-                URIBuilder builder = new URIBuilder(next);
-                URI uri = builder.build();
-                HttpGet request = new HttpGet(uri);
-                HttpResponse response = httpclient.execute(request);
-                JSONObject results = new JSONObject(EntityUtils.toString(response.getEntity()));
-                JSONArray resultsArray = results.getJSONArray("results");
-                for (int i = 0; i < resultsArray.length(); i++) {
-                    names.add(resultsArray.getJSONObject(i).getString("name"));
-                }
-                next = results.getString("next");
-            }
-            pokemonNames = names;
-        } catch (Exception e){
-
-        }
-    }
-
-    /**
-     * Checks if the name given is a valid pokemon name.
-     * Automatically calls updateAllNames to update the name list if it is empty.
-     *
-     * @See updateAllNames
-     * @param name Name to be checked
-     * @return true if the name exists as a pokemon
-     */
-    public static boolean pokemonExists(String name){
-        if(pokemonNames == null) updateAllNames();
-        if(pokemonNames == null) return false;
-        return pokemonNames.contains(name.toLowerCase());
-    }
-
-    /**
-     * Returns a list of names that you could have meant when typing
-     * @param name Name to check with
-     * @return A list of possible names
-     */
-    public static List<String> closeNames(String name){
-        if(pokemonNames == null) updateAllNames();
-        if(pokemonNames == null) return new LinkedList<>();
-        name = name.toLowerCase();
-        List<NameScore> nameScoreList = new LinkedList<>();
-        for(String pokemonName: pokemonNames) {
-            int score = 0;
-            for (int i = 0; i < (name.length() < pokemonName.length() ? name.length() : pokemonName.length()); i++) {
-                if (name.charAt(i) == pokemonName.charAt(i)) {
-                    score++;
+            JSONObject result = getRequest(API_URL + "/pokemon-species/" + pokedexEntry);
+            JSONArray flavorTextEntries = result.getJSONArray("flavor_text_entries");
+            int tries = 0;
+            while(tries < 1000){
+                JSONObject entry = flavorTextEntries.getJSONObject(new Random().nextInt(flavorTextEntries.length()));
+                if(entry.getJSONObject("language").getString("name").equals("en")) {
+                    return Optional.of(entry.getString("flavor_text").replace('\n', ' ').replace('\f', ' '));
                 }
             }
-            nameScoreList.add(new NameScore(pokemonName, score));
+            return Optional.empty();
+        } catch (JSONException e){
+            return Optional.empty();
         }
-        Collections.sort(nameScoreList);
-        List<String> names = new LinkedList<>();
-        for(NameScore ns : nameScoreList.subList(0, 20)){
-            if(ns.getScore() / (double)name.length() >= .5){
-                names.add(ns.getName());
-            }
-        }
-        return names;
     }
 
-    @AllArgsConstructor
-    @Getter
-    private static class NameScore implements Comparable<NameScore>{
-        private String name;
-        private int score;
+    public static List<Pokemon.Type> getWeakToTypes(Collection<Pokemon.Type> types){
+        return getWeakToTypes(types.toArray(new Pokemon.Type[types.size()]));
+    }
 
-        @Override
-        public int compareTo(@NotNull PokemonAPI.NameScore o) {
-            return Integer.compare(o.score, score);
+    public static List<Pokemon.Type> getWeakToTypes(Pokemon.Type...types){
+        Set<Pokemon.Type> weakTo = new HashSet<>();
+        Set<Pokemon.Type> strongAgainst = new HashSet<>();
+        for(Pokemon.Type type : types) {
+            try {
+                JSONObject result = getRequest(API_URL + "/type/" + type.name().toLowerCase());
+                JSONArray doubleDamageFrom = result.getJSONObject("damage_relations").getJSONArray("double_damage_from");
+                for(int i = 0; i < doubleDamageFrom.length(); i++){
+                    weakTo.add(Pokemon.Type.fromString(doubleDamageFrom.getJSONObject(i).getString("name")));
+                }
+                JSONArray halfDamageFrom = result.getJSONObject("damage_relations").getJSONArray("half_damage_from");
+                for(int i = 0; i < halfDamageFrom.length(); i++){
+                    strongAgainst.add(Pokemon.Type.fromString(doubleDamageFrom.getJSONObject(i).getString("name")));
+                }
+            } catch (JSONException e) {
+
+            }
+        }
+        List<Pokemon.Type> total = new LinkedList<>(weakTo);
+        total.removeAll(strongAgainst);
+        return total;
+    }
+
+    public static List<String> getVersions(){
+        List<String> versions = new LinkedList<>();
+        try {
+            String url = API_URL + "/version?limit=50";
+            while(!url.equals("null")) {
+                JSONObject results = getRequest(url);
+                JSONArray names = results.getJSONArray("results");
+                for(int i = 0; i < names.length(); i++){
+                    versions.add(names.getJSONObject(i).getString("name").replace('-', ' '));
+                }
+                url = results.getString("next");
+            }
+        } catch (JSONException e){
+
+        }
+        return versions;
+    }
+
+    private static JSONObject getRequest(String url){
+        try {
+            HttpClient httpclient = HttpClients.createDefault();
+            URIBuilder builder = new URIBuilder(url);
+            URI uri = builder.build();
+            HttpGet request = new HttpGet(uri);
+            HttpResponse response = httpclient.execute(request);
+            return new JSONObject(EntityUtils.toString(response.getEntity()));
+        } catch (Exception e) {
+            return new JSONObject();
         }
     }
 }

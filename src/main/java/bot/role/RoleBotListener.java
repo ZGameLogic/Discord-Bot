@@ -7,12 +7,14 @@ import bot.role.data.jsonConfig.GameConfigValues;
 import bot.role.data.results.ChallengeFightResults;
 import bot.role.data.structures.*;
 import bot.role.data.jsonConfig.Strings;
+import bot.role.data.structures.Activity;
 import bot.role.data.structures.annotations.EmoteCommand;
 import bot.role.data.structures.annotations.SlashCommand;
-import bot.role.helpers.EmbedMessageGenerator;
-import bot.role.helpers.Generators;
+import bot.role.data.structures.item.ShopItem;
+import controllers.discord.EmbedMessageGenerator;
 import data.ConfigLoader;
 import data.serializing.DataRepository;
+import data.serializing.SavableData;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.Guild;
@@ -25,10 +27,12 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Method;
+import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.function.Function;
 
@@ -209,36 +213,73 @@ public class RoleBotListener extends ListenerAdapter {
      * This task always gets run every minute by Bot.java
      * @see Bot
      */
-    public void minuteTasks() {
+    public void minuteTasks() throws NoSuchMethodException {
         Random random = new Random();
         GameConfigValues config = data.getGameConfig().loadSerialized();
+
+        TextChannel encountersTC = guild.getTextChannelById(config.getChannelIds().get("encounters"));
+        TextChannel tournamentsTC = guild.getTextChannelById(config.getChannelIds().get("tournaments"));
+        TextChannel itemsTC = guild.getTextChannelById(config.getChannelIds().get("items"));
+        TextChannel activitiesTC = guild.getTextChannelById(config.getChannelIds().get("activities"));
+        TextChannel dungeonsTC = guild.getTextChannelById(config.getChannelIds().get("dungeons"));
+
+        Emote activate = guild.getEmoteById(config.getIconIds().get("Activate"));
+
         logger.info("Checking for spawns");
         if(random.nextDouble() <= config.getEncounterSpawnChance()){
             logger.info("\tSpawned encounter");
             Encounter encounter = Encounter.generate();
-            TextChannel encounterChannel = guild.getTextChannelById(data.getGameConfig().loadSerialized().getChannelIds().get("encounters"));
-            encounterChannel.sendMessageEmbeds(EmbedMessageGenerator.generate(encounter)).queue(message -> {
+            encountersTC.sendMessageEmbeds(EmbedMessageGenerator.generate(encounter)).queue(message -> {
                 encounter.setId(message.getId());
+                message.addReaction(activate).queue();
                 data.saveData(encounter);
             });
         }
         if(random.nextDouble() <= config.getShopItemSpawnChance()) {
-            // TODO item
             logger.info("\tSpawned shop item");
+            ShopItem item = ShopItem.random();
+            itemsTC.sendMessageEmbeds(EmbedMessageGenerator.generate(item)).queue(message -> {
+                item.setId(message.getId());
+                message.addReaction(activate).queue();
+                data.saveData(item);
+            });
         }
         if(random.nextDouble() <= config.getActivitySpawnChance()){
-            // TODO activity
             logger.info("\tSpawned activity");
+            Activity activity = Activity.random();
+            activitiesTC.sendMessageEmbeds(EmbedMessageGenerator.generate(activity)).queue(message -> {
+                activity.setId(message.getId());
+                message.addReaction(activate).queue();
+                data.saveData(activity);
+            });
         }
         if(random.nextDouble() <= config.getDungeonSpawnChance()) {
             // TODO dungeon
             logger.info("\tSpawned dungeon");
         }
-        if(random.nextDouble() <= config.getTournamentSpawnChance()) {
-            // TODO tournament
-            logger.info("\tSpawned tournament");
-        }
-        // TODO remove old messages
+        if(random.nextDouble() <= config.getTournamentSpawnChance()) spawnTournament();
+
+        OffsetDateTime now = OffsetDateTime.now();
+        // TODO run tournament
+
+
+        // remove old messages
+//        List<SavableData> toDelete = new LinkedList<>();
+//
+//
+//        this.data.deleteData(toDelete);
+    }
+
+    private void spawnTournament() {
+        TextChannel tournamentsTC = guild.getTextChannelById(data.getGameConfig().loadSerialized().getChannelIds().get("tournaments"));
+        Emote activate = guild.getEmoteById(data.getGameConfig().loadSerialized().getIconIds().get("Activate"));
+        logger.info("\tSpawned tournament");
+        Tournament tournament = Tournament.random();
+        tournamentsTC.sendMessageEmbeds(EmbedMessageGenerator.generate(tournament))
+                .setActionRow(Button.secondary("fight_in_tournament", "Enter Tournament").withEmoji(Emoji.fromEmote(activate))).queue(message -> {
+            tournament.setId(message.getId());
+            data.saveData(tournament);
+        });
     }
 
     /**

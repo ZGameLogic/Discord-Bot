@@ -7,6 +7,7 @@ import java.util.Scanner;
 import javax.annotation.PostConstruct;
 import javax.security.auth.login.LoginException;
 
+import bot.pokemon.PokemonListener;
 import controllers.atlassian.BitbucketInterfacer;
 import net.dv8tion.jda.api.entities.*;
 import org.json.JSONException;
@@ -74,6 +75,7 @@ public class Bot {
 		bot.addEventListeners(RBL);
 		bot.addEventListeners(new SteamListener());
 		bot.addEventListeners(new SlashBotListener(PBL, config));
+		bot.addEventListeners(new PokemonListener());
 		
 		// Login
 		try {
@@ -125,7 +127,7 @@ public class Bot {
 	}
 
 	@Scheduled(cron = "0 * * * * *")
-	private void minuteTask(){
+	private void minuteTask() throws NoSuchMethodException {
 		RBL.minuteTasks(); // every minute
 	}
 

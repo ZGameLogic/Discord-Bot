@@ -1,10 +1,8 @@
 package bot.role.data.structures;
 
-import bot.role.data.jsonConfig.Strings;
 import bot.role.data.structures.item.Modifier;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import data.serializing.DataRepository;
 import data.serializing.SavableData;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,18 +19,22 @@ import java.util.Random;
 public class Encounter extends SavableData {
     private int magic, knowledge, strength, stamina, agility;
     private int goldReward;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date departs;
     private String name;
     private Modifier.Stat baneType;
 
-    public Encounter(int magic, int knowledge, int strength, int stamina, int agility, int goldReward) {
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date departs;
+
+    public Encounter(int magic, int knowledge, int strength, int stamina, int agility, int goldReward, Date departs, String name, Modifier.Stat baneType) {
         this.magic = magic;
         this.knowledge = knowledge;
         this.strength = strength;
         this.stamina = stamina;
         this.agility = agility;
         this.goldReward = goldReward;
+        this.name = name;
+        this.baneType = baneType;
+        this.departs = departs;
     }
 
     @JsonIgnore

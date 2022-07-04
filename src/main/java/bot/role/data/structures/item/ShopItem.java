@@ -15,20 +15,21 @@ import java.util.Random;
 public class ShopItem extends SavableData {
 
     private Item item;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date dateToDelete;
     private int goldCost;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
+    private Date departs;
 
     public ShopItem(long id, Item item, int goldCost, Date dateToDelete){
         super(id);
         this.item = item;
         this.goldCost = goldCost;
-        this.dateToDelete = dateToDelete;
+        departs = dateToDelete;
     }
 
     public ShopItem(Item item, Date date, int cost) {
         this.item = item;
-        dateToDelete = date;
+        departs = date;
         goldCost = cost;
     }
 

@@ -60,7 +60,6 @@ public class Activity extends SavableData {
         this.type = type;
         Clock c = Clock.systemUTC();
         c = Clock.offset(c, Duration.ofDays(6 / 2));
-        departs = new Date(c.millis());
     }
 
     public Activity(int activityCost, int gold, Stat statType, int statAmount, Type type) {
@@ -76,10 +75,10 @@ public class Activity extends SavableData {
         this.gold = gold;
         this.activityCost = activityCost;
         this.type = type;
-        this.departs = departs;
         this.activityName = activityName;
         this.statType = statType;
         this.statAmount = statAmount;
+        this.departs = departs;
     }
 
     public static Activity random(){

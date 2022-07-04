@@ -97,9 +97,7 @@ public abstract class DungeonGenerator {
             sRooms.add(new Room(r, encounters, materials, gold));
         }
 
-
-
-        Dungeon dungeon = new Dungeon(id, map, sRooms);
+        Dungeon dungeon = new Dungeon(id, map, sRooms, new Date());
         return dungeon;
     }
 

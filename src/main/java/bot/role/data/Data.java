@@ -1,5 +1,6 @@
 package bot.role.data;
 
+import bot.role.data.dungeon.saveable.Dungeon;
 import bot.role.data.structures.item.ShopItem;
 import bot.role.data.jsonConfig.GameConfigValues;
 import bot.role.data.structures.*;
@@ -9,6 +10,7 @@ import lombok.Getter;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
+import java.util.List;
 
 @Getter
 public class Data {
@@ -22,6 +24,8 @@ public class Data {
     private DataRepository<KingData> kingData;
     private DataRepository<GameConfigValues> gameConfig;
     private DataRepository<General> general;
+    private DataRepository<Tournament> tournaments;
+    private DataRepository<Dungeon> dungeons;
 
     public Data(){
         players = new DataRepository<>(DIR + "\\players");
@@ -32,6 +36,8 @@ public class Data {
         shopItems = new DataRepository<>(DIR + "\\shop items");
         gameConfig = new DataRepository<>(DIR + "\\game config data");
         general = new DataRepository<>(DIR + "\\general");
+        tournaments = new DataRepository<>(DIR + "\\tournaments");
+        dungeons = new DataRepository<>(DIR + "\\dungeons");
 
         if(general.getFiles().length == 0){
             General g = new General();
@@ -63,5 +69,28 @@ public class Data {
                 }
             }
         }
+    }
+
+    public void deleteData(SavableData...data){
+        for(SavableData currentData : data) {
+            for (Field f : Data.class.getDeclaredFields()) {
+                if (f.getType() != String.class) {
+                    ParameterizedType dataListType = (ParameterizedType) f.getGenericType();
+                    Class<?> fieldType = (Class<?>) dataListType.getActualTypeArguments()[0];
+                    if (currentData.getClass() == fieldType) {
+                        try {
+                            DataRepository dataRepository = (DataRepository) f.get(this);
+                            dataRepository.delete(currentData);
+                        } catch (IllegalAccessException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    public void deleteData(List<SavableData> data){
+        deleteData((SavableData[]) data.toArray());
     }
 }

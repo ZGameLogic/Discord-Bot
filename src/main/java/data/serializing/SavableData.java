@@ -6,6 +6,7 @@ import bot.role.data.results.ActivityResults;
 import bot.role.data.results.ChallengeFightResults;
 import bot.role.data.structures.*;
 import bot.role.data.dungeon.saveable.Dungeon;
+import bot.role.data.structures.item.ShopItem;
 import com.fasterxml.jackson.annotation.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,7 +25,10 @@ import lombok.Setter;
 		@JsonSubTypes.Type(ChallengeFightResults.class),
 		@JsonSubTypes.Type(General.class),
 		@JsonSubTypes.Type(Guild.class),
-		@JsonSubTypes.Type(Encounter.class)
+		@JsonSubTypes.Type(Encounter.class),
+		@JsonSubTypes.Type(ShopItem.class),
+		@JsonSubTypes.Type(Activity.class),
+		@JsonSubTypes.Type(Tournament.class)
 	}
 )
 public abstract class SavableData {

@@ -1,6 +1,7 @@
-package bot.role.helpers;
+package controllers.discord;
 
 import bot.role.data.Data;
+import bot.role.data.structures.Tournament;
 import bot.role.data.structures.item.Item;
 import bot.role.data.structures.item.Modifier;
 import bot.role.data.structures.item.ShopItem;
@@ -10,6 +11,7 @@ import bot.role.data.structures.Activity;
 import bot.role.data.structures.Encounter;
 import bot.role.data.structures.Player;
 import bot.role.helpers.roleData.RoleDataRepository;
+import controllers.pokemon.structures.Pokemon;
 import data.serializing.DataRepository;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Member;
@@ -23,6 +25,11 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * This class automatically generates embedded messages
+ * @author Ben Shabowski
+ * @since 1.0
+ */
 public abstract class EmbedMessageGenerator {
 
     private static DataRepository<Strings> strings = new DataRepository<Strings>("arena\\strings");
@@ -37,6 +44,7 @@ public abstract class EmbedMessageGenerator {
     private final static Color ENCOUNTER_COLOR = new Color(56, 78, 115);
     private final static Color PAY_CITIZEN_COLOR = new Color(150, 58, 58);
     private final static Color REMIND_MESSAGE_COLOR = new Color(64, 140, 147);
+    private final static Color TOURNAMENT_COLOR = new Color(80, 21, 108);
 
     private final static Color MYTHIC_ITEM_COLOR = new Color(248, 29, 1);
     private final static Color LEGENDARY_ITEM_COLOR = new Color(248, 170, 1);
@@ -57,7 +65,6 @@ public abstract class EmbedMessageGenerator {
         return b.build();
     }
 
-
     public static MessageEmbed generateRemindMessage(){
         EmbedBuilder b = new EmbedBuilder();
         b.setColor(REMIND_MESSAGE_COLOR);
@@ -68,11 +75,50 @@ public abstract class EmbedMessageGenerator {
         return b.build();
     }
 
+    /**
+     * Generates a Message embed for a king player
+     * @param king King member
+     * @return a built message embed for the king
+     */
     public static MessageEmbed generateNewKing(Member king) {
         EmbedBuilder b = new EmbedBuilder();
         b.setColor(KING_MESSAGE_COLOR);
         b.setTitle("Hail to the new ruler: " + king.getEffectiveName() + "!");
         b.setTimestamp(Instant.now());
+        return b.build();
+    }
+
+    public static MessageEmbed generate(Pokemon pokemon){
+        EmbedBuilder b = new EmbedBuilder();
+        b.setTitle(pokemon.getName());
+        b.setColor(pokemon.getTypes().get(0).getColor());
+        b.setDescription(pokemon.getPokedexEntry());
+        b.setThumbnail(pokemon.getSprite());
+        b.setFooter("Pokedex index: " + pokemon.getPokedexId());
+        String typeString = "";
+        for(Pokemon.Type type : pokemon.getTypes()){
+            typeString += type + " ";
+        }
+        b.addField("Type", typeString, true);
+        typeString = "";
+        for(Pokemon.Type type : pokemon.getWeakTo()){
+            typeString += type + " ";
+        }
+        b.addField("Weak to", typeString, true);
+        String abilities = "";
+        for(Pokemon.Ability ability : pokemon.getAbilities()){
+            abilities += ability.isHidden() ? "*" + ability.getName() + "* " : ability.getName() + " ";
+        }
+        b.addField("Abilities", abilities, false);
+
+        b.addField("Base stats",
+                "Attack " + pokemon.getBaseAttack() + "\n" +
+                        "Defense " + pokemon.getBaseDefense() + "\n" +
+                        "Special Attack " + pokemon.getBaseSpecialAttack() + "\n" +
+                        "Special Defense " + pokemon.getBaseSpecialDefense() + "\n" +
+                        "Speed " + pokemon.getBaseSpeed(),
+                false);
+
         return b.build();
     }
 
@@ -90,6 +136,16 @@ public abstract class EmbedMessageGenerator {
             String embeddedIcon = "<:" + iconStringId + ":" + iconLongId + ">";
             b.addField(p.getName() + " " + embeddedIcon, function.apply(p) + "", true);
         }
+        return b.build();
+    }
+
+    public static MessageEmbed generate(Tournament tournament) {
+        EmbedBuilder b = new EmbedBuilder();
+        b.setColor(TOURNAMENT_COLOR);
+        b.setTitle(tournament.getName());
+        b.setTimestamp(tournament.getDeparts().toInstant());
+        b.setFooter("");
+        b.addField("Entry fee", tournament.getEntryFee() + " gold", true);
         return b.build();
     }
 
@@ -344,7 +400,7 @@ public abstract class EmbedMessageGenerator {
         }
         b.addField("Cost", shopItem.getGoldCost() + " gold", false);
         b.setFooter("Expires");
-        b.setTimestamp(shopItem.getDateToDelete().toInstant());
+        b.setTimestamp(shopItem.getDeparts().toInstant());
         return b.build();
     }
     public static MessageEmbed generate(Activity activity){

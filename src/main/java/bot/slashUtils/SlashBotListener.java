@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import bot.role.RoleBotReady;
 import controllers.atlassian.JiraInterfacer;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.Modal;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
@@ -70,6 +71,11 @@ public class SlashBotListener extends ListenerAdapter {
 		
 		// Role bot listener
 		guild.addCommands(RoleBotReady.getCommands());
+
+		guild.addCommands(Commands.slash("pokemon", "Anything involving the pokemon functionality")
+				.addSubcommands(new SubcommandData("lookup", "Lookup a pokemon by name")
+						.addOption(OptionType.STRING, "name", "The name of the pokemon to lookup", true))
+		);
 
 		// bug report
 		guild.addCommands(Commands.slash("bug-report", "Submit a bug report"));
