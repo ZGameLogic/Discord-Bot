@@ -74,7 +74,7 @@ public class SlashBotListener extends ListenerAdapter {
 
 		guild.addCommands(Commands.slash("pokemon", "Anything involving the pokemon functionality")
 				.addSubcommands(new SubcommandData("lookup", "Lookup a pokemon by name")
-						.addOption(OptionType.STRING, "name", "The name of the pokemon to lookup", true))
+						.addOption(OptionType.STRING, "name", "The name or pokedex index of the pokemon to lookup", true))
 		);
 
 		// bug report

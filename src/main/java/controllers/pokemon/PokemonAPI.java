@@ -21,12 +21,15 @@ public abstract class PokemonAPI {
     /**
      * Get a pokemon with information from a specific version
      * @param name Name of the pokemon
-     * @param version version to look up details from version
      * @return a pokemon with information from a specific version
      */
-    public static Optional<Pokemon> getByName(String name, String version){
-        Pokemon pokemon = new Pokemon(getRequest(API_URL + "/pokemon/" + name.toLowerCase()), version);
-        return Optional.of(pokemon);
+    public static Optional<Pokemon> getByName(String name){
+        JSONObject pokemonJSON = getRequest(API_URL + "/pokemon/" + name.toLowerCase());
+        if(pokemonJSON != null) {
+            Pokemon pokemon = new Pokemon(getRequest(API_URL + "/pokemon/" + name.toLowerCase()));
+            return Optional.of(pokemon);
+        }
+        return Optional.empty();
     }
 
     public static Optional<String> getPokedexEntry(int pokedexEntry){
@@ -51,26 +54,24 @@ public abstract class PokemonAPI {
     }
 
     public static List<Pokemon.Type> getWeakToTypes(Pokemon.Type...types){
-        Set<Pokemon.Type> weakTo = new HashSet<>();
-        Set<Pokemon.Type> strongAgainst = new HashSet<>();
+        List<Pokemon.Type> typeList = new LinkedList<>();
         for(Pokemon.Type type : types) {
             try {
                 JSONObject result = getRequest(API_URL + "/type/" + type.name().toLowerCase());
-                JSONArray doubleDamageFrom = result.getJSONObject("damage_relations").getJSONArray("double_damage_from");
-                for(int i = 0; i < doubleDamageFrom.length(); i++){
-                    weakTo.add(Pokemon.Type.fromString(doubleDamageFrom.getJSONObject(i).getString("name")));
+                JSONArray doubleDamageFromJSON = result.getJSONObject("damage_relations").getJSONArray("double_damage_from");
+                JSONArray halfDamageFromJSON = result.getJSONObject("damage_relations").getJSONArray("half_damage_from");
+                for(int i = 0; i < doubleDamageFromJSON.length(); i++){
+                    typeList.add(Pokemon.Type.fromString(doubleDamageFromJSON.getJSONObject(i).getString("name")));
                 }
-                JSONArray halfDamageFrom = result.getJSONObject("damage_relations").getJSONArray("half_damage_from");
-                for(int i = 0; i < halfDamageFrom.length(); i++){
-                    strongAgainst.add(Pokemon.Type.fromString(doubleDamageFrom.getJSONObject(i).getString("name")));
+                for(int i = 0; i < halfDamageFromJSON.length(); i++){
+                    typeList.remove(Pokemon.Type.fromString(halfDamageFromJSON.getJSONObject(i).getString("name")));
                 }
+
             } catch (JSONException e) {
 
             }
         }
-        List<Pokemon.Type> total = new LinkedList<>(weakTo);
-        total.removeAll(strongAgainst);
-        return total;
+        return new LinkedList<>(new HashSet<>(typeList));
     }
 
     public static List<String> getVersions(){
@@ -100,7 +101,7 @@ public abstract class PokemonAPI {
             HttpResponse response = httpclient.execute(request);
             return new JSONObject(EntityUtils.toString(response.getEntity()));
         } catch (Exception e) {
-            return new JSONObject();
+            return null;
         }
     }
 }

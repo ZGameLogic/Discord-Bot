@@ -21,18 +21,23 @@ public class PokemonListener extends ListenerAdapter {
 
     @Override
     public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-        if(event.getName().equals("pokemon")){
-            switch(event.getSubcommandName()){
-                case "lookup":
-                    handlePokemonLookup(event);
-                    break;
+        try{
+            if(event.getName().equals("pokemon")){
+                switch(event.getSubcommandName()){
+                    case "lookup":
+                        handlePokemonLookup(event);
+                        break;
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+            event.getHook().sendMessage("Unable to complete the command. If this continues to happen submit a bug report with the /bug-report command").setEphemeral(true).queue();
         }
     }
 
     private void handlePokemonLookup(SlashCommandInteractionEvent event){
         event.deferReply().queue();
-        Optional<Pokemon> pokemon = PokemonAPI.getByName(event.getOption("name").getAsString(), "black");
+        Optional<Pokemon> pokemon = PokemonAPI.getByName(event.getOption("name").getAsString());
         if(pokemon.isPresent()){
             event.getHook().sendMessageEmbeds(EmbedMessageGenerator.generate(pokemon.get())).queue();
         } else {

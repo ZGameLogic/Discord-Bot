@@ -107,8 +107,9 @@ public abstract class EmbedMessageGenerator {
         b.addField("Weak to", typeString, true);
         String abilities = "";
         for(Pokemon.Ability ability : pokemon.getAbilities()){
-            abilities += ability.isHidden() ? "*" + ability.getName() + "* " : ability.getName() + " ";
+            abilities += ability.isHidden() ? "*" + ability.getName() + "*, " : ability.getName() + ", ";
         }
+        abilities = abilities.substring(0, abilities.length() - 2);
         b.addField("Abilities", abilities, false);
 
         b.addField("Base stats",

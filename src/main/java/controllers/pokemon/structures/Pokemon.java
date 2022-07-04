@@ -30,7 +30,7 @@ public class Pokemon {
     private List<Ability> abilities;
     private List<Move> moves;
 
-    public Pokemon (JSONObject jsonObject, String version){
+    public Pokemon (JSONObject jsonObject){
         try {
             name = jsonObject.getString("name");
             name = name.substring(0, 1).toUpperCase() + name.substring( 1);
