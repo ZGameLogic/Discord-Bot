@@ -53,21 +53,21 @@ public class Activity extends SavableData {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date departs;
 
-    public Activity(int gold, int activityCost, String activityName, Type type) {
+    public Activity(int gold, int activityCost, String activityName, Type type, Date departs) {
         this.gold = gold;
         this.activityCost = activityCost;
         this.activityName = activityName;
         this.type = type;
-        Clock c = Clock.systemUTC();
-        c = Clock.offset(c, Duration.ofDays(6 / 2));
+        this.departs = departs;
     }
 
-    public Activity(int activityCost, int gold, Stat statType, int statAmount, Type type) {
+    public Activity(int activityCost, int gold, Stat statType, int statAmount, Type type, Date departs) {
         this.activityCost = activityCost;
         this.gold = gold;
         this.statType = statType;
         this.statAmount= statAmount;
         this.type = type;
+        this.departs = departs;
     }
 
     public Activity(long id, int gold, int activityCost, String activityName, Stat statType, int statAmount, Type type, Date departs) {
@@ -85,17 +85,20 @@ public class Activity extends SavableData {
         Random random = new Random();
         Strings strings = new DataRepository<Strings>("arena\\strings").loadSerialized();
         Type type = Type.random();
+        Clock c = Clock.systemUTC();
+        c = Clock.offset(c, Duration.ofDays(6 / 2));
+        Date departs = new Date(c.millis());
         if(type == Type.JOB){
             int aCost = random.nextInt(2) + 1;
             int gold = (random.nextInt(5) + 10) * aCost;
             String activityName = strings.getGoldJobName();
-            return new Activity(gold, aCost, activityName, type);
+            return new Activity(gold, aCost, activityName, type, departs);
         } else {
             int aCost = 2;
             int gold = random.nextInt(50) - 25 + 50;
             Stat statType = Stat.random();
             int statAmount = 5;
-            return new Activity(aCost, gold, statType, statAmount, type);
+            return new Activity(aCost, gold, statType, statAmount, type, departs);
         }
     }
 }
