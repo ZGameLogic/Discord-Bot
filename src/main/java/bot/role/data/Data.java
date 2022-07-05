@@ -10,7 +10,6 @@ import lombok.Getter;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
-import java.util.List;
 
 @Getter
 public class Data {
@@ -88,9 +87,5 @@ public class Data {
                 }
             }
         }
-    }
-
-    public void deleteData(List<SavableData> data){
-        deleteData((SavableData[]) data.toArray());
     }
 }

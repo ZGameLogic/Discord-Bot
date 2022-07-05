@@ -3,6 +3,7 @@ package bot.role;
 import bot.Bot;
 import bot.role.data.Data;
 import bot.role.data.ResultsData;
+import bot.role.data.dungeon.saveable.Dungeon;
 import bot.role.data.jsonConfig.GameConfigValues;
 import bot.role.data.results.ChallengeFightResults;
 import bot.role.data.structures.*;
@@ -30,6 +31,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.util.resources.LocaleData;
 
 import java.lang.reflect.Method;
 import java.time.OffsetDateTime;
@@ -254,20 +256,57 @@ public class RoleBotListener extends ListenerAdapter {
             });
         }
         if(random.nextDouble() <= config.getDungeonSpawnChance()) {
-            // TODO dungeon
+            // TODO spawn dungeon
             logger.info("\tSpawned dungeon");
         }
-        if(random.nextDouble() <= config.getTournamentSpawnChance()) spawnTournament();
+        if(random.nextDouble() <= config.getTournamentSpawnChance()) {
+            spawnTournament();
+            logger.info("\tSpawned tournamnet");
+        }
 
-        OffsetDateTime now = OffsetDateTime.now();
-        // TODO run tournament
+        Date now = new Date();
 
+        // delete stuff
+        for(Encounter encounter : data.getEncounters()){
+            if(encounter.getDeparts().before(now)){
+                data.deleteData(encounter);
+                encountersTC.deleteMessageById(encounter.getId()).queue();
+                logger.info("\tDeleting encounter: " + encounter.getId());
+            }
+        }
 
-        // remove old messages
-//        List<SavableData> toDelete = new LinkedList<>();
-//
-//
-//        this.data.deleteData(toDelete);
+        for(Tournament tournament : data.getTournaments()){
+            if(tournament.getDeparts().before(now)){
+                // TODO run tournamnet
+                data.deleteData(tournament);
+                tournamentsTC.deleteMessageById(tournament.getId()).queue();
+                logger.info("\tDeleting tournament: " + tournament.getId());
+            }
+        }
+
+        for(ShopItem item : data.getShopItems()){
+            if(item.getDeparts().before(now)){
+                data.deleteData(item);
+                itemsTC.deleteMessageById(item.getId()).queue();
+                logger.info("\tDeleting shop item: " + item.getId());
+            }
+        }
+
+        for(Activity activity : data.getActivities()){
+            if(activity.getDeparts().before(now)){
+                data.deleteData(activity);
+                activitiesTC.deleteMessageById(activity.getId()).queue();
+                logger.info("\tDeleting activity: " + activity.getId());
+            }
+        }
+
+        for(Dungeon dungeon : data.getDungeons()){
+            if(dungeon.getDeparts().before(now)){
+                data.deleteData(dungeon);
+                dungeonsTC.deleteMessageById(dungeon.getId());
+                logger.info("\tDeleting dungeon: " + dungeon.getId());
+            }
+        }
     }
 
     private void spawnTournament() {

@@ -190,19 +190,13 @@ public class DataRepository<T extends SavableData> implements Iterable<T>{
 			private int index = 0;
 			private List<T> stuff = getData();
 			@Override
-			public boolean hasNext() {
-				return index < stuff.size();
-			}
+			public boolean hasNext() { return index < stuff.size(); }
 
 			@Override
-			public T next() {
-				return (T)stuff.get(index++);
-			}
+			public T next() { return (T)stuff.get(index++); }
 
 			@Override
-			public void remove() {
-
-			}
+			public void remove() { delete(stuff.get(index--)); }
 		};
 
 		return iterator;
