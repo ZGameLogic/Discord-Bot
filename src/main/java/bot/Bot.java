@@ -10,6 +10,7 @@ import javax.security.auth.login.LoginException;
 import bot.pokemon.PokemonListener;
 import controllers.atlassian.BitbucketInterfacer;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -155,7 +156,7 @@ public class Bot {
 			MessageEmbed discordMessage = BitbucketInterfacer.buildBitbucketMessage(commiter, commiterLink, repoName, repoLink);
 		
 			Message discordSentMessage = bitBucket.sendMessageEmbeds(discordMessage).complete();
-			discordSentMessage.addReaction("U+1F3D7").queue();
+			discordSentMessage.addReaction(Emoji.fromUnicode("U+1F3D7")).queue();
 		}
 	}
 

@@ -19,6 +19,7 @@ import data.serializing.SavableData;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
@@ -225,7 +226,7 @@ public class RoleBotListener extends ListenerAdapter {
         TextChannel activitiesTC = guild.getTextChannelById(config.getChannelIds().get("activities"));
         TextChannel dungeonsTC = guild.getTextChannelById(config.getChannelIds().get("dungeons"));
 
-        Emote activate = guild.getEmoteById(config.getIconIds().get("Activate"));
+        Emoji activate = guild.getEmojiById(config.getIconIds().get("Activate"));
 
         logger.info("Checking for spawns");
         if(random.nextDouble() <= config.getEncounterSpawnChance()){
@@ -311,11 +312,11 @@ public class RoleBotListener extends ListenerAdapter {
 
     private void spawnTournament() {
         TextChannel tournamentsTC = guild.getTextChannelById(data.getGameConfig().loadSerialized().getChannelIds().get("tournaments"));
-        Emote activate = guild.getEmoteById(data.getGameConfig().loadSerialized().getIconIds().get("Activate"));
+        Emoji activate = guild.getEmojiById(data.getGameConfig().loadSerialized().getIconIds().get("Activate"));
         logger.info("\tSpawned tournament");
         Tournament tournament = Tournament.random();
         tournamentsTC.sendMessageEmbeds(EmbedMessageGenerator.generate(tournament))
-                .setActionRow(Button.secondary("fight_in_tournament", "Enter Tournament").withEmoji(Emoji.fromEmote(activate))).queue(message -> {
+                .setActionRow(Button.secondary("fight_in_tournament", "Enter Tournament").withEmoji(activate)).queue(message -> {
             tournament.setId(message.getId());
             data.saveData(tournament);
         });

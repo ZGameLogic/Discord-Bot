@@ -8,6 +8,7 @@ import bot.role.helpers.roleData.RoleDataRepository;
 import data.serializing.DataRepository;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
@@ -233,7 +234,7 @@ public abstract class RoleBotReady {
         for(File f : emoteDir.listFiles()){
             String emoteName = f.getName().replace(".png", "");
             boolean foundOld = false;
-            for(Emote e : guild.getEmotes()){ // look for emote in server
+            for(RichCustomEmoji e : guild.getEmojis()){ // look for emote in server
                 if(e.getName().equals(emoteName)){
                     foundOld = true;
                     newVals.put(emoteName, e.getIdLong());
@@ -243,7 +244,7 @@ public abstract class RoleBotReady {
             }
             if(!foundOld){ // if we didn't find the emote in the server
                 Icon icon = Icon.from(f);
-                Emote uploaded = guild.createEmote(emoteName, icon).complete();
+                RichCustomEmoji uploaded = guild.createEmoji(emoteName, icon).complete();
                 newVals.put(uploaded.getName(), uploaded.getIdLong());
                 logger.info("Added emote: " + emoteName);
             }
