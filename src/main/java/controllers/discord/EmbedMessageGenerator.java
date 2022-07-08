@@ -11,6 +11,7 @@ import bot.role.data.structures.Activity;
 import bot.role.data.structures.Encounter;
 import bot.role.data.structures.Player;
 import bot.role.helpers.roleData.RoleDataRepository;
+import controllers.minecraft.structures.MinecraftServer;
 import controllers.pokemon.structures.Pokemon;
 import data.serializing.DataRepository;
 import net.dv8tion.jda.api.EmbedBuilder;
@@ -52,6 +53,23 @@ public abstract class EmbedMessageGenerator {
     private final static Color RARE_ITEM_COLOR = new Color(0, 248, 241);
     private final static Color UNCOMMON_ITEM_COLOR = new Color(40, 184, 180);
     private final static Color COMMON_ITEM_COLOR = new Color(67, 144, 143);
+
+    private final static Color MINECRAFT_SERVER_COLOR = new Color(130, 179, 98);
+
+    public static MessageEmbed generate(MinecraftServer mcServer){
+        EmbedBuilder b = new EmbedBuilder();
+        b.setColor(MINECRAFT_SERVER_COLOR);
+        if(mcServer.isOnline()){
+            b.setTitle("Server status of: " + mcServer.getServerName());
+            b.setFooter("Online: " + mcServer.isOnline());
+            b.addField("Player count", mcServer.getPlayerCount() + "", true);
+            if(mcServer.getPlayerCount() > 0)
+                b.addField("Online players", mcServer.playerListString(), true);
+        } else {
+            b.setTitle("This server is offline");
+        }
+        return b.build();
+    }
 
     public static MessageEmbed generateRoleStat(List<Player> players, String roleName, String icon){
         EmbedBuilder b = new EmbedBuilder();

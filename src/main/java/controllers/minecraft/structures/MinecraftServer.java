@@ -34,4 +34,13 @@ public class MinecraftServer {
             throw new RuntimeException(e);
         }
     }
+
+    public String playerListString(){
+        String list = "";
+        for(String name : playersOnline){
+            list += name + ", ";
+        }
+
+        return list.length() > 0 ? list.substring(0, list.length() - 2) : "";
+    }
 }

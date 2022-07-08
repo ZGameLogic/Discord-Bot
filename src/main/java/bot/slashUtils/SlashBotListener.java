@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import bot.role.RoleBotReady;
 import controllers.atlassian.JiraInterfacer;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.Modal;
@@ -72,10 +73,19 @@ public class SlashBotListener extends ListenerAdapter {
 		// Role bot listener
 		guild.addCommands(RoleBotReady.getCommands());
 
+		// pokemon
 		guild.addCommands(Commands.slash("pokemon", "Anything involving the pokemon functionality")
 				.addSubcommands(new SubcommandData("lookup", "Lookup a pokemon by name")
 						.addOption(OptionType.STRING, "name", "The name or pokedex index of the pokemon to lookup", true))
 		);
+
+		// minecraft
+		guild.addCommands(Commands.slash("minecraft", "Anything involving the minecraft functionality")
+				.addSubcommands(new SubcommandData("lookup", "Lookup a minecraft server")
+						.addOptions(new OptionData(OptionType.STRING, "server", "The server to lookup", true)
+								.addChoice("vanilla", "zgamelogic.com")
+								.addChoice("ATM7", "zgamelogic.com:25566"))
+		));
 
 		// bug report
 		guild.addCommands(Commands.slash("bug-report", "Submit a bug report"));
