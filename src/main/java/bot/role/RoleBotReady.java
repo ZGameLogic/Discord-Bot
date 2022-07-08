@@ -9,8 +9,10 @@ import data.serializing.DataRepository;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
+import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SlashCommandData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import org.slf4j.Logger;
@@ -60,7 +62,7 @@ public abstract class RoleBotReady {
                 .addOption(OptionType.INTEGER, "slot-two", "The second slot to swap", true));
         commands.add(Commands.slash("pay-citizen", "Gives your gold to a citizen of your choice")
                 .addOption(OptionType.USER, "citizen", "The citizen to receive your gold", true)
-                .addOption(OptionType.INTEGER, "gold", "The amount of gold to give", true));
+                .addOptions(new OptionData(OptionType.INTEGER, "gold", "The amount of gold to give", true).setMinValue(1)));
         commands.add(Commands.slash("pray", "Pray to Shlongbot"));
         commands.add(Commands.slash("fight-stats", "View a more detailed breakdown of a fight between players")
                 .addOption(OptionType.STRING, "id", "id of the fight to get more details on", true));
@@ -68,17 +70,17 @@ public abstract class RoleBotReady {
         // Role bot king
         commands.add(Commands.slash("distribute-wealth", "Gives some of your wealth to a caste system")
                 .addOption(OptionType.ROLE, "role", "The caste level of where you want your gold to go", true)
-                .addOption(OptionType.INTEGER, "gold", "The amount of gold to distribute", true));
-
+                .addOptions(new OptionData(OptionType.INTEGER, "gold", "The amount of gold to distribute", true).setMinValue(1)));
         commands.add(Commands.slash("propose-tax", "Forces a caste to pay a tax at the start of the next day")
                 .addOption(OptionType.ROLE, "role", "The caste level to tax", true)
-                .addOption(OptionType.INTEGER, "gold", "The amount of gold to tax", true));
+                .addOptions(new OptionData(OptionType.INTEGER, "gold", "The amount of gold to tax", true).setRequiredRange(1, 7)));
 
         commands.add(Commands.slash("honorable-promotion", "Forces two citizens to switch roles. Used once per day")
                 .addOption(OptionType.USER, "citizen-one", "One of the two citizens to switch roles", true)
                 .addOption(OptionType.USER, "citizen-two", "One of the two citizens to switch roles", true));
         commands.add(Commands.slash("pass-law", "Create a law for the kingdom to follow from now on!")
                 .addOption(OptionType.STRING, "law", "Law to be added", true));
+
         // Guilds
         commands.add(Commands.slash("guild", "All guild related commands")
                 .addSubcommands(new SubcommandData("create", "Creates a guild")

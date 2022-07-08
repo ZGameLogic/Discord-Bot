@@ -1,17 +1,11 @@
 package controllers.pokemon;
 
+import controllers.network.Network;
 import controllers.pokemon.structures.Pokemon;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.net.URI;
 import java.util.*;
 
 public abstract class PokemonAPI {
@@ -24,9 +18,9 @@ public abstract class PokemonAPI {
      * @return a pokemon with information from a specific version
      */
     public static Optional<Pokemon> getByName(String name){
-        JSONObject pokemonJSON = getRequest(API_URL + "/pokemon/" + name.toLowerCase());
+        JSONObject pokemonJSON = Network.get(API_URL + "/pokemon/" + name.toLowerCase());
         if(pokemonJSON != null) {
-            Pokemon pokemon = new Pokemon(getRequest(API_URL + "/pokemon/" + name.toLowerCase()));
+            Pokemon pokemon = new Pokemon(pokemonJSON);
             return Optional.of(pokemon);
         }
         return Optional.empty();
@@ -34,7 +28,7 @@ public abstract class PokemonAPI {
 
     public static Optional<String> getPokedexEntry(int pokedexEntry){
         try {
-            JSONObject result = getRequest(API_URL + "/pokemon-species/" + pokedexEntry);
+            JSONObject result = Network.get(API_URL + "/pokemon-species/" + pokedexEntry);
             JSONArray flavorTextEntries = result.getJSONArray("flavor_text_entries");
             int tries = 0;
             while(tries < 1000){
@@ -57,7 +51,7 @@ public abstract class PokemonAPI {
         List<Pokemon.Type> typeList = new LinkedList<>();
         for(Pokemon.Type type : types) {
             try {
-                JSONObject result = getRequest(API_URL + "/type/" + type.name().toLowerCase());
+                JSONObject result = Network.get(API_URL + "/type/" + type.name().toLowerCase());
                 JSONArray doubleDamageFromJSON = result.getJSONObject("damage_relations").getJSONArray("double_damage_from");
                 JSONArray halfDamageFromJSON = result.getJSONObject("damage_relations").getJSONArray("half_damage_from");
                 for(int i = 0; i < doubleDamageFromJSON.length(); i++){
@@ -79,7 +73,7 @@ public abstract class PokemonAPI {
         try {
             String url = API_URL + "/version?limit=50";
             while(!url.equals("null")) {
-                JSONObject results = getRequest(url);
+                JSONObject results = Network.get(url);
                 JSONArray names = results.getJSONArray("results");
                 for(int i = 0; i < names.length(); i++){
                     versions.add(names.getJSONObject(i).getString("name").replace('-', ' '));
@@ -90,18 +84,5 @@ public abstract class PokemonAPI {
 
         }
         return versions;
-    }
-
-    private static JSONObject getRequest(String url){
-        try {
-            HttpClient httpclient = HttpClients.createDefault();
-            URIBuilder builder = new URIBuilder(url);
-            URI uri = builder.build();
-            HttpGet request = new HttpGet(uri);
-            HttpResponse response = httpclient.execute(request);
-            return new JSONObject(EntityUtils.toString(response.getEntity()));
-        } catch (Exception e) {
-            return null;
-        }
     }
 }
