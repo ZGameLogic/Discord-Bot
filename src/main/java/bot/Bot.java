@@ -7,6 +7,7 @@ import java.util.Scanner;
 import javax.annotation.PostConstruct;
 import javax.security.auth.login.LoginException;
 
+import bot.messageUtils.MessageListener;
 import bot.minecraft.MinecraftListener;
 import bot.pokemon.PokemonListener;
 import controllers.atlassian.BitbucketInterfacer;
@@ -79,6 +80,7 @@ public class Bot {
 		bot.addEventListeners(new SlashBotListener(PBL, config));
 		bot.addEventListeners(new PokemonListener());
 		bot.addEventListeners(new MinecraftListener());
+		bot.addEventListeners(new MessageListener());
 		
 		// Login
 		try {
