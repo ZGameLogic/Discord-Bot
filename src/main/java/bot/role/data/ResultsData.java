@@ -21,6 +21,7 @@ public class ResultsData {
     private DataRepository<ItemPurchaseResults> itemPurchases;
     private DataRepository<TournamentFightResults> tournamentFights;
     private DataRepository<TournamentResults> tournaments;
+    private DataRepository<MiscResults> miscResults;
 
     public ResultsData(){
         activities = new DataRepository<>(DIR + "\\activities");
@@ -32,6 +33,7 @@ public class ResultsData {
         itemPurchases = new DataRepository<>(DIR + "\\item\\purchases");
         tournamentFights  = new DataRepository<>(DIR + "\\tournament\\fights");
         tournaments = new DataRepository<>(DIR + "\\tournament\\tournament");
+        miscResults = new DataRepository<>(DIR + "\\misc");
     }
 
     /**

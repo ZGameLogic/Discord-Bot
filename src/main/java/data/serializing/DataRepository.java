@@ -34,6 +34,9 @@ public class DataRepository<T extends SavableData> implements Iterable<T>{
 
 	public void saveSerialized(T...yourObject) {
 		for(T t : yourObject){
+			if(t.getId() == null){
+				t.setId(generateID() + "");
+			}
 			saveSerialized(t, t.getId());
 		}
 	}
@@ -167,7 +170,7 @@ public class DataRepository<T extends SavableData> implements Iterable<T>{
 		File dir = new File(filePath);
 		Random random = new Random();
 		long id = random.nextLong();
-		while(id < 0 || new File(filePath + "\\" + id).exists()){
+		while(id < 0 || new File(filePath + "\\" + id + ".json").exists()){
 			id = random.nextLong();
 		}
 		return id;
