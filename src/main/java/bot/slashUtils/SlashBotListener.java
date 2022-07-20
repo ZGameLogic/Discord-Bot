@@ -6,6 +6,7 @@ import java.util.LinkedList;
 import bot.role.RoleBotReady;
 import controllers.atlassian.JiraInterfacer;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
@@ -149,6 +150,13 @@ public class SlashBotListener extends ListenerAdapter {
 				event.replyEmbeds(message).setEphemeral(true).queue();
 				String issueNumber = message.getFooter().getText().replace("Issue: ", "");
 				break;
+			case "add_comment":
+				String issue = event.getValues().get(0).getId();
+				String comment = event.getValue(issue).getAsString();
+				String user = event.getUser().getName();
+				JiraInterfacer.addComment(issue, comment, user);
+				event.reply("Comment has been added to the issue.").queue();
+				break;
 		}
 	}
 
@@ -178,6 +186,21 @@ public class SlashBotListener extends ListenerAdapter {
 				.build();
 
 		event.replyModal(modal).queue();
+	}
+
+	@Override
+	public void onButtonInteraction(ButtonInteractionEvent event) {
+		if(event.getButton().getId().equals("comment_issue")){
+			String issue = event.getMessage().getEmbeds().get(0).getTitle().split(" ")[1];
+			TextInput comment = TextInput.create(issue, "Comment", TextInputStyle.PARAGRAPH)
+					.setRequired(true)
+					.build();
+
+			Modal modal = Modal.create("add_comment", "Add comment")
+					.addActionRows(ActionRow.of(comment))
+					.build();
+			event.replyModal(modal).queue();
+		}
 	}
 	
 	private void rollDice(SlashCommandInteractionEvent event) {

@@ -14,6 +14,31 @@ import java.awt.*;
 
 public abstract class JiraInterfacer {
 
+    public static void addComment(String issue, String comment, String user){
+        String link = "https://zgamelogic.com:8080/rest/api/2/issue/" + issue + "/comment";
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        JSONObject body = new JSONObject();
+        try {
+            body.put("body", "Discord user " + user + " added a comment\n" + comment);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
+        headers.add("Authorization", "Bearer " + App.config.getJiraPat());
+        HttpEntity<String> request = new HttpEntity<>(body.toString(), headers);
+
+        try {
+            JSONObject result = new JSONObject(restTemplate.postForObject(link, request, String.class));
+            System.out.println(result.toString());
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
+    }
+
     public static MessageEmbed submitBug(String title, String description, String strc, String username, long userId, String optIn){
 
         String link = "https://zgamelogic.com:8080/rest/api/2/issue";

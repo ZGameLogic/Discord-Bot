@@ -13,6 +13,7 @@ import bot.pokemon.PokemonListener;
 import controllers.atlassian.BitbucketInterfacer;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -184,6 +185,7 @@ public class Bot {
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setColor(new Color(7, 70, 166));
 		boolean process = false;
+		boolean addCommentButton = false;
 		if(event.equals("issue_generic")){
 			// moved to a different developement
 			String movedTo = jsonInformation.getJSONObject("changelog").getJSONArray("items").getJSONObject(0).getString("toString");
@@ -201,11 +203,14 @@ public class Bot {
 		} else if(event.equals("issue_commented")){
 			// issue was commented on
 			String author = jsonInformation.getJSONObject("comment").getJSONObject("author").getString("displayName");
-			String comment = jsonInformation.getJSONObject("comment").getString("body");
-			eb.setTitle("Bug: " + issueKey + " had a commented added to the ticket", "https://zgamelogic.com:8080/projects/DB/issues/" + issueKey);
-			eb.setDescription(author + " commented on a bug that you submitted.\n Comment: " + comment);
-			eb.setTimestamp(Instant.now());
-			process = true;
+			if(!author.equals("Discord Bot")) {
+				String comment = jsonInformation.getJSONObject("comment").getString("body");
+				eb.setTitle("Bug: " + issueKey + " had a commented added to the ticket", "https://zgamelogic.com:8080/projects/DB/issues/" + issueKey);
+				eb.setDescription(author + " commented on a bug that you submitted.\n Comment: " + comment);
+				eb.setTimestamp(Instant.now());
+				process = true;
+				addCommentButton = true;
+			}
 		} else if(event.equals("issue_created")){
 			// issue what created
 			eb.setTitle("Bug has been created in the workflow.", "https://zgamelogic.com:8080/projects/DB/issues/" + issueKey);
@@ -231,7 +236,12 @@ public class Bot {
 			if(!userId.equals("")) {
 				User user = jdaBot.getUserById(userId);
 				if (user != null) {
-					user.openPrivateChannel().complete().sendMessageEmbeds(eb.build()).queue();
+					if(addCommentButton) {
+						user.openPrivateChannel().complete().sendMessageEmbeds(eb.build())
+								.setActionRow(Button.primary("comment_issue", "Add Comment")).queue();
+					} else {
+						user.openPrivateChannel().complete().sendMessageEmbeds(eb.build()).queue();
+					}
 				} else {
 					System.out.println("Cant find user: " + userId);
 				}
