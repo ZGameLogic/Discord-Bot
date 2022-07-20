@@ -7,12 +7,53 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.MediaType;
 import org.springframework.web.client.RestTemplate;
 
 import java.awt.*;
 
 public abstract class JiraInterfacer {
+
+    public static void optIn(String issue) {
+        String link = "https://zgamelogic.com:8080/rest/api/2/issue/"  + issue;
+        JSONObject issueJSON = getIssue(issue);
+        JSONObject editJSON = new JSONObject();
+        JSONObject fields = new JSONObject();
+        try {
+            fields.put("description", issueJSON.getJSONObject("fields").getString("description").replace("\nOpt-in: false", "\nOpt-in: true"));
+            editJSON.put("fields", fields);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", "Bearer " + App.config.getJiraPat());
+        HttpEntity<String> request = new HttpEntity<>(editJSON.toString(), headers);
+        restTemplate.put(link, request, String.class);
+    }
+
+    public static void optOut(String issue){
+        String link = "https://zgamelogic.com:8080/rest/api/2/issue/"  + issue;
+        JSONObject issueJSON = getIssue(issue);
+        JSONObject editJSON = new JSONObject();
+        JSONObject fields = new JSONObject();
+        try {
+            fields.put("description", issueJSON.getJSONObject("fields").getString("description").replace("\nOpt-in: true", "\nOpt-in: false"));
+            editJSON.put("fields", fields);
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
+
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", "Bearer " + App.config.getJiraPat());
+        HttpEntity<String> request = new HttpEntity<>(editJSON.toString(), headers);
+        restTemplate.put(link, request, String.class);
+    }
 
     public static void addComment(String issue, String comment, String user){
         String link = "https://zgamelogic.com:8080/rest/api/2/issue/" + issue + "/comment";
@@ -32,15 +73,27 @@ public abstract class JiraInterfacer {
 
         try {
             JSONObject result = new JSONObject(restTemplate.postForObject(link, request, String.class));
-            System.out.println(result.toString());
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
+    }
 
+    public static JSONObject getIssue(String issue){
+        String link = "https://zgamelogic.com:8080/rest/api/2/issue/"  + issue;
+        RestTemplate restTemplate = new RestTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.add("Authorization", "Bearer " + App.config.getJiraPat());
+        HttpEntity<String> request = new HttpEntity<>(headers);
+        try {
+            JSONObject result = new JSONObject(restTemplate.exchange(link, HttpMethod.GET, request, String.class).getBody());
+            return result;
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public static MessageEmbed submitBug(String title, String description, String strc, String username, long userId, String optIn){
-
         String link = "https://zgamelogic.com:8080/rest/api/2/issue";
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
@@ -78,4 +131,5 @@ public abstract class JiraInterfacer {
             throw new RuntimeException(e);
         }
     }
+
 }

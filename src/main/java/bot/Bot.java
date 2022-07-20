@@ -7,6 +7,7 @@ import java.util.Scanner;
 import javax.annotation.PostConstruct;
 import javax.security.auth.login.LoginException;
 
+import bot.jira.JiraListener;
 import bot.messageUtils.MessageListener;
 import bot.minecraft.MinecraftListener;
 import bot.pokemon.PokemonListener;
@@ -82,6 +83,7 @@ public class Bot {
 		bot.addEventListeners(new PokemonListener());
 		bot.addEventListeners(new MinecraftListener());
 		bot.addEventListeners(new MessageListener());
+		bot.addEventListeners(new JiraListener());
 		
 		// Login
 		try {
@@ -180,12 +182,20 @@ public class Bot {
 	}
 
 	private void handleJira(JSONObject jsonInformation) throws JSONException {
-		String event = jsonInformation.getString("issue_event_type_name");
+		System.out.println(jsonInformation);
+		String event;
+		if(jsonInformation.has("issue_event_type_name")) {
+			event = jsonInformation.getString("issue_event_type_name");
+		} else {
+			event = "deleted";
+		}
+		System.out.println(event);
 		String issueKey = jsonInformation.getJSONObject("issue").getString("key");
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setColor(new Color(7, 70, 166));
 		boolean process = false;
 		boolean addCommentButton = false;
+		boolean optOutButton = false;
 		if(event.equals("issue_generic")){
 			// moved to a different developement
 			String movedTo = jsonInformation.getJSONObject("changelog").getJSONArray("items").getJSONObject(0).getString("toString");
@@ -216,7 +226,11 @@ public class Bot {
 			eb.setTitle("Bug has been created in the workflow.", "https://zgamelogic.com:8080/projects/DB/issues/" + issueKey);
 			eb.setDescription("Thank you for your bug report. I will get to it as soon as I can.");
 			eb.setFooter("Issue key: " + issueKey);
+			optOutButton = true;
 			process = true;
+		} else if(event.equals("deleted")){
+			// TODO delete button to opt in or out of updates
+			return;
 		}
 
 		if(process){
@@ -232,14 +246,17 @@ public class Bot {
 				}
 			}
 			input.close();
-			if(optIn.equals("fasle")) return;
+			if(optIn.contains("false")){ return; }
 			if(!userId.equals("")) {
 				User user = jdaBot.getUserById(userId);
 				if (user != null) {
-					if(addCommentButton) {
+					if (addCommentButton) {
 						user.openPrivateChannel().complete().sendMessageEmbeds(eb.build())
 								.setActionRow(Button.primary("comment_issue", "Add Comment")).queue();
-					} else {
+					} else if (optOutButton){
+						user.openPrivateChannel().complete().sendMessageEmbeds(eb.build())
+								.setActionRow(Button.primary("opt_out_issue_notif", "Opt out of notifications")).queue();
+					}else {
 						user.openPrivateChannel().complete().sendMessageEmbeds(eb.build()).queue();
 					}
 				} else {
