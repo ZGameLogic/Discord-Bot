@@ -5,9 +5,12 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
 import lombok.Getter;
+import org.springframework.context.annotation.PropertySources;
 
 @Configuration
-@PropertySource("File:discordbot.properties")
+@PropertySources({
+		@PropertySource("File:discordbot.properties"),
+		@PropertySource("File:local.properties")})
 @Getter
 public class ConfigLoader {
 
