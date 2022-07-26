@@ -1,5 +1,6 @@
 package bot.role.data.dungeon.saveable;
 
+import bot.role.helpers.DungeonGenerator;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import data.serializing.SavableData;
@@ -19,12 +20,13 @@ public class Dungeon extends SavableData {
     private List<Room> rooms;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private Date departs;
+    private DungeonGenerator.Size size;
 
-    public Dungeon(long id, int[][] map, List<Room> rooms, Date departs){
-        super(id);
+    public Dungeon(int[][] map, List<Room> rooms, Date departs, DungeonGenerator.Size size){
         this.map = map;
         this.rooms = rooms;
         this.departs = departs;
+        this.size = size;
     }
 
     @JsonIgnore
@@ -51,8 +53,5 @@ public class Dungeon extends SavableData {
     public double getClearedRoomPercentage(){
         return getClearedRoomCount() / (double) rooms.size();
     }
-
-
-
 
 }

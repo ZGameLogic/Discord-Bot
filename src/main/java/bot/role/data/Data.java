@@ -13,7 +13,10 @@ import java.lang.reflect.ParameterizedType;
 
 @Getter
 public class Data {
+
     private static final String DIR = "arena";
+
+    public static final String GFC_DIR = DIR + "\\game config data";
 
     private DataRepository<Player> players;
     private DataRepository<Encounter> encounters;
@@ -33,7 +36,7 @@ public class Data {
         guilds = new DataRepository<>(DIR + "\\guilds");
         kingData = new DataRepository<>(DIR + "\\king");
         shopItems = new DataRepository<>(DIR + "\\shop items");
-        gameConfig = new DataRepository<>(DIR + "\\game config data");
+        gameConfig = new DataRepository<>(GFC_DIR);
         general = new DataRepository<>(DIR + "\\general");
         tournaments = new DataRepository<>(DIR + "\\tournaments");
         dungeons = new DataRepository<>(DIR + "\\dungeons");

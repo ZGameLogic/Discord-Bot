@@ -1,6 +1,7 @@
 package controllers.discord;
 
 import bot.role.data.Data;
+import bot.role.data.dungeon.saveable.Dungeon;
 import bot.role.data.structures.Tournament;
 import bot.role.data.structures.item.Item;
 import bot.role.data.structures.item.Modifier;
@@ -10,6 +11,7 @@ import bot.role.data.results.*;
 import bot.role.data.structures.Activity;
 import bot.role.data.structures.Encounter;
 import bot.role.data.structures.Player;
+import bot.role.helpers.DungeonGenerator;
 import bot.role.helpers.roleData.RoleDataRepository;
 import controllers.minecraft.structures.MinecraftServer;
 import controllers.pokemon.structures.Pokemon;
@@ -47,6 +49,10 @@ public abstract class EmbedMessageGenerator {
     private final static Color REMIND_MESSAGE_COLOR = new Color(64, 140, 147);
     private final static Color TOURNAMENT_COLOR = new Color(80, 21, 108);
 
+    private final static Color SMALL_DUNGEON_COLOR = new Color(118, 191, 38, 255);
+    private final static Color MEDIUM_DUNGEON_COLOR = new Color(59, 94, 21);
+    private final static Color LARGE_DUNGEON_COLOR = new Color(29, 47, 10);
+
     private final static Color MYTHIC_ITEM_COLOR = new Color(248, 29, 1);
     private final static Color LEGENDARY_ITEM_COLOR = new Color(248, 170, 1);
     private final static Color EPIC_ITEM_COLOR = new Color(248, 235, 1);
@@ -55,6 +61,11 @@ public abstract class EmbedMessageGenerator {
     private final static Color COMMON_ITEM_COLOR = new Color(67, 144, 143);
 
     private final static Color MINECRAFT_SERVER_COLOR = new Color(130, 179, 98);
+
+    public enum Detail {
+        SIMPLE,
+        COMPLEX
+    }
 
     public static MessageEmbed generate(MinecraftServer mcServer){
         EmbedBuilder b = new EmbedBuilder();
@@ -168,9 +179,24 @@ public abstract class EmbedMessageGenerator {
         return b.build();
     }
 
-    public enum Detail {
-        SIMPLE,
-        COMPLEX
+    public static MessageEmbed generate(Dungeon dungeon) {
+        EmbedBuilder b = new EmbedBuilder();
+        switch(dungeon.getSize()){
+            case SMALL:
+                b.setColor(SMALL_DUNGEON_COLOR);
+                break;
+            case MEDIUM:
+                b.setColor(MEDIUM_DUNGEON_COLOR);
+                break;
+            case LARGE:
+                b.setColor(LARGE_DUNGEON_COLOR);
+                break;
+        }
+        b.setTitle("Dungeon of DEATH"); // TODO make fun titles
+        b.setImage("attachment://dungeon.png");
+        b.setFooter("Closes");
+        b.setTimestamp(dungeon.getDeparts().toInstant());
+        return b.build();
     }
 
     public static MessageEmbed generateStatsMessage(Player player, Member member){
