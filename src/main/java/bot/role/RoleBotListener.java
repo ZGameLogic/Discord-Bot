@@ -102,7 +102,23 @@ public class RoleBotListener extends ListenerAdapter {
     }
 
     @Override
-    public void onMessageReceived(MessageReceivedEvent event) {}
+    public void onMessageReceived(MessageReceivedEvent event) {
+        if(!event.getAuthor().isBot()) {
+            String message = event.getMessage().getContentRaw();
+            if (message.charAt(0) == '!' && event.getAuthor().getIdLong() == 232675572772372481l) { // valid command and is Ben
+                message = message.substring(1);
+                switch (message.split(" ")[0]) {
+                    case "sa":
+                    case "spawn-activity":
+                        for (int i = 0; i < Integer.parseInt(message.split(" ")[1]); i++) {
+                            spawnActivity();
+                        }
+                        event.getChannel().sendMessage("Activity spawned").queue();
+                        break;
+                }
+            }
+        }
+    }
 
     @Override
     public void onMessageReactionAdd(MessageReactionAddEvent event) {
@@ -248,13 +264,7 @@ public class RoleBotListener extends ListenerAdapter {
             });
         }
         if(random.nextDouble() <= config.getActivitySpawnChance()){
-            logger.info("\tSpawned activity");
-            Activity activity = Activity.random();
-            activitiesTC.sendMessageEmbeds(EmbedMessageGenerator.generate(activity)).queue(message -> {
-                activity.setId(message.getId());
-                message.addReaction(activate).queue();
-                data.saveData(activity);
-            });
+            spawnActivity();
         }
         if(random.nextDouble() <= config.getDungeonSpawnChance()) {
             // TODO spawn dungeon
@@ -308,6 +318,19 @@ public class RoleBotListener extends ListenerAdapter {
                 logger.info("\tDeleting dungeon: " + dungeon.getId());
             }
         }
+    }
+
+    private void spawnActivity() {
+        GameConfigValues config = data.getGameConfig().loadSerialized();
+        TextChannel activitiesTC = guild.getTextChannelById(config.getChannelIds().get("activities"));
+        Emoji activate = guild.getEmojiById(config.getIconIds().get("Activate"));
+        logger.info("\tSpawned activity");
+        Activity activity = Activity.random();
+        activitiesTC.sendMessageEmbeds(EmbedMessageGenerator.generate(activity)).queue(message -> {
+            activity.setId(message.getId());
+            message.addReaction(activate).queue();
+            data.saveData(activity);
+        });
     }
 
     private void spawnTournament() {

@@ -438,7 +438,7 @@ public abstract class EmbedMessageGenerator {
                 b.addField("Reward", activity.getStatAmount() + " " + activity.getStatType(), true);
                 break;
         }
-        b.setDescription("Departs");
+        b.setFooter("Departs");
         b.setTimestamp(activity.getDeparts().toInstant());
         return b.build();
     }
