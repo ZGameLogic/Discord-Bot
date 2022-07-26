@@ -61,13 +61,14 @@ public class Activity extends SavableData {
         this.departs = departs;
     }
 
-    public Activity(int activityCost, int gold, Stat statType, int statAmount, Type type, Date departs) {
+    public Activity(String trainingName, int activityCost, int gold, Stat statType, int statAmount, Type type, Date departs) {
         this.activityCost = activityCost;
         this.gold = gold;
         this.statType = statType;
         this.statAmount= statAmount;
         this.type = type;
         this.departs = departs;
+        activityName = trainingName;
     }
 
     public Activity(long id, int gold, int activityCost, String activityName, Stat statType, int statAmount, Type type, Date departs) {
@@ -97,8 +98,26 @@ public class Activity extends SavableData {
             int aCost = 2;
             int gold = random.nextInt(50) - 25 + 50;
             Stat statType = Stat.random();
+            String trainingName = "";
+            switch(statType){
+                case KNOWLEDGE:
+                    trainingName = strings.getKnowledgeVendorName();
+                    break;
+                case MAGIC:
+                    trainingName = strings.getMagicVendorName();
+                    break;
+                case AGILITY:
+                    trainingName = strings.getAgilityVendorName();
+                    break;
+                case STAMINA:
+                    trainingName = strings.getStaminaVendorName();
+                    break;
+                case STRENGTH:
+                    trainingName = strings.getStrengthVendorName();
+                    break;
+            }
             int statAmount = 5;
-            return new Activity(aCost, gold, statType, statAmount, type, departs);
+            return new Activity(trainingName, aCost, gold, statType, statAmount, type, departs);
         }
     }
 }
