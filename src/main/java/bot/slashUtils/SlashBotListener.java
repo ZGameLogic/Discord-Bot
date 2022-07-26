@@ -165,7 +165,7 @@ public class SlashBotListener extends ListenerAdapter {
 			
 			event.reply("Generated teams").queue();
 			try {
-				event.getTextChannel().sendMessageEmbeds(eb.build()).queue();
+				event.getChannel().asTextChannel().sendMessageEmbeds(eb.build()).queue();
 			} catch (IllegalStateException e) {
 				
 			}

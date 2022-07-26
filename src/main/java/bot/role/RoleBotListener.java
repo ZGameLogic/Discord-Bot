@@ -113,11 +113,11 @@ public class RoleBotListener extends ListenerAdapter {
                     if (m.isAnnotationPresent(EmoteCommand.class)) {
                         EmoteCommand ec = m.getAnnotation(EmoteCommand.class);
                         if(ec.channelFrom().equals("none")){
-                            if (event.getTextChannel().getParentCategory().getName().contains(ec.categoryFrom())) {
+                            if (event.getChannel().asTextChannel().getParentCategory().getName().contains(ec.categoryFrom())) {
                                 m.invoke(this, event);
                             }
                         } else {
-                            if (ec.channelFrom().equals(name) && event.getTextChannel().getParentCategory().getName().contains(ec.categoryFrom())) {
+                            if (ec.channelFrom().equals(name) && event.getChannel().asTextChannel().getParentCategory().getName().contains(ec.categoryFrom())) {
                                 m.invoke(this, event);
                             }
                         }
