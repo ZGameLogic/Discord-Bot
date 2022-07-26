@@ -1,10 +1,10 @@
 package bot.role.data.dungeon.saveable;
 
 import bot.role.data.structures.StatBlock;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import net.minidev.json.annotate.JsonIgnore;
 
 import java.util.Random;
 

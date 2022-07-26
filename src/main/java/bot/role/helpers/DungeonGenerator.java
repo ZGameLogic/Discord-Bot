@@ -1,5 +1,6 @@
 package bot.role.helpers;
 
+import bot.role.data.Data;
 import bot.role.data.dungeon.saveable.Room;
 import bot.role.data.structures.item.Item;
 import bot.role.data.jsonConfig.GameConfigValues;
@@ -16,22 +17,31 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
+import java.time.Clock;
+import java.time.Duration;
 import java.util.*;
 import java.util.List;
 
 public abstract class DungeonGenerator {
 
     public enum Size {
-        SMALL, MEDIUM, LARGE
+        SMALL, MEDIUM, LARGE;
+        public static Size random(){
+            return Size.values()[new Random().nextInt(Size.values().length)];
+        }
     }
 
-    public static Dungeon GenerateDungeon(Size size, long id){
+    public static Dungeon GenerateRandomDungeon(){
+        return GenerateDungeon(Size.random());
+    }
+
+    public static Dungeon GenerateDungeon(Size size){
         int map[][];
         List<bot.role.data.dungeon.Room> rooms;
         List<Vertex> roomCenters;
 
         rooms = new LinkedList<>();
-        GameConfigValues gcv = new DataRepository<GameConfigValues>("game_config").loadSerialized();
+        GameConfigValues gcv = new DataRepository<GameConfigValues>(Data.GFC_DIR).loadSerialized();
         int dungeonRoomCount;
         switch(size){
             case LARGE:
@@ -85,7 +95,7 @@ public abstract class DungeonGenerator {
             // materials
             while((random.nextInt(100) + 1) < 50){
                 Item.Material mat = Item.Material.values()[random.nextInt(Item.Material.values().length)];
-                int number = random.nextInt(10);
+                int number = random.nextInt(10) + 1;
                 if(materials.containsKey(mat)){
                     materials.put(mat, materials.get(mat) + number);
                 } else {
@@ -96,8 +106,10 @@ public abstract class DungeonGenerator {
             int gold = random.nextInt(100) + 1;
             sRooms.add(new Room(r, encounters, materials, gold));
         }
-
-        Dungeon dungeon = new Dungeon(id, map, sRooms, new Date());
+        Clock c = Clock.systemUTC();
+        c = Clock.offset(c, Duration.ofDays(6 / 2));
+        Date departs = new Date(c.millis());
+        Dungeon dungeon = new Dungeon(map, sRooms, departs, size);
         return dungeon;
     }
 
@@ -202,7 +214,7 @@ public abstract class DungeonGenerator {
         }
     }
 
-    public static void saveDungeon(Dungeon dungeon) throws IOException {
+    public static File saveDungeon(Dungeon dungeon) {
         int[][] map = dungeon.getMap();
         int width = map.length * 20 + 40;
         int height = map[0].length * 20 + 40;
@@ -220,7 +232,12 @@ public abstract class DungeonGenerator {
         // switch back to black
         pane.setColor(Color.black);
 
-        BufferedImage tileSet = ImageIO.read(DungeonGenerator.class.getClassLoader().getResourceAsStream("Role bot/Dungeons/tileset.png"));
+        BufferedImage tileSet = null;
+        try {
+            tileSet = ImageIO.read(DungeonGenerator.class.getClassLoader().getResourceAsStream("Role bot/Dungeons/tileset.png"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         for(int x = 0; x < map.length; x++){
             int photoX = x * 20 + 20;
@@ -360,9 +377,15 @@ public abstract class DungeonGenerator {
         pane.dispose();
 
         // Save as PNG
-        File file = new File("dungeon.png");
-        ImageIO.write(bufferedImage, "png", file);
-
+        File file = new File("arena//dungeon photos//dungeon.png");
+        try {
+            file.mkdirs();
+            file.createNewFile();
+            ImageIO.write(bufferedImage, "png", file);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return file;
     }
 
     private static void addDoorsToRoom(bot.role.data.dungeon.Room room, int count){

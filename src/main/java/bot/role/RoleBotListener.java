@@ -12,6 +12,7 @@ import bot.role.data.structures.Activity;
 import bot.role.data.structures.annotations.EmoteCommand;
 import bot.role.data.structures.annotations.SlashCommand;
 import bot.role.data.structures.item.ShopItem;
+import bot.role.helpers.DungeonGenerator;
 import controllers.discord.EmbedMessageGenerator;
 import data.ConfigLoader;
 import data.serializing.DataRepository;
@@ -34,6 +35,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.util.resources.LocaleData;
 
+import java.io.File;
 import java.lang.reflect.Method;
 import java.time.OffsetDateTime;
 import java.util.*;
@@ -114,6 +116,13 @@ public class RoleBotListener extends ListenerAdapter {
                             spawnActivity();
                         }
                         event.getChannel().sendMessage("Activity spawned").queue();
+                        break;
+                    case "sd":
+                    case "spawn-dungeon":
+                        for (int i = 0; i < Integer.parseInt(message.split(" ")[1]); i++) {
+                        spawnDungeon();
+                    }
+                    event.getChannel().sendMessage("Dungeon spawned").queue();
                         break;
                 }
             }
@@ -267,8 +276,7 @@ public class RoleBotListener extends ListenerAdapter {
             spawnActivity();
         }
         if(random.nextDouble() <= config.getDungeonSpawnChance()) {
-            // TODO spawn dungeon
-            logger.info("\tSpawned dungeon");
+            spawnDungeon();
         }
         if(random.nextDouble() <= config.getTournamentSpawnChance()) {
             spawnTournament();
@@ -314,10 +322,25 @@ public class RoleBotListener extends ListenerAdapter {
         for(Dungeon dungeon : data.getDungeons()){
             if(dungeon.getDeparts().before(now)){
                 data.deleteData(dungeon);
-                dungeonsTC.deleteMessageById(dungeon.getId());
+                dungeonsTC.deleteMessageById(dungeon.getId()).queue();
                 logger.info("\tDeleting dungeon: " + dungeon.getId());
             }
         }
+    }
+
+    private void spawnDungeon() {
+        GameConfigValues config = data.getGameConfig().loadSerialized();
+        TextChannel dungeonsTC = guild.getTextChannelById(config.getChannelIds().get("dungeons"));
+        Emoji activate = guild.getEmojiById(config.getIconIds().get("Activate"));
+        Dungeon dungeon = DungeonGenerator.GenerateRandomDungeon();
+        DungeonGenerator.saveDungeon(dungeon);
+        File dungeonPhoto = new File("arena\\dungeon photos\\dungeon.png");
+        logger.info("\tSpawned dungeon");
+        Message message = dungeonsTC.sendFile(dungeonPhoto, "dungeon.png").setEmbeds(EmbedMessageGenerator.generate(dungeon)).complete();
+        dungeon.setId(message.getId());
+        message.addReaction(activate).queue();
+        data.saveData(dungeon);
+        dungeonPhoto.renameTo(new File("arena\\dungeon photos\\" + dungeon.getId() + ".png"));
     }
 
     private void spawnActivity() {

@@ -30,7 +30,9 @@ import lombok.Setter;
 		@JsonSubTypes.Type(ShopItem.class),
 		@JsonSubTypes.Type(Activity.class),
 		@JsonSubTypes.Type(Tournament.class),
-		@JsonSubTypes.Type(MiscResults.class)
+		@JsonSubTypes.Type(MiscResults.class),
+		@JsonSubTypes.Type(StatBlock.class),
+		@JsonSubTypes.Type(bot.role.data.dungeon.saveable.Encounter.class)
 	}
 )
 public abstract class SavableData {
