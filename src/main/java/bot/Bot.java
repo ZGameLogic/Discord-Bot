@@ -65,7 +65,7 @@ public class Bot {
 		
 		// Create bot
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
-		bot.enableIntents(GatewayIntent.GUILD_PRESENCES);
+		bot.enableIntents(GatewayIntent.GUILD_PRESENCES, GatewayIntent.MESSAGE_CONTENT);
 		bot.enableCache(CacheFlag.ACTIVITY);
 		bot.enableIntents(GatewayIntent.GUILD_MEMBERS);
 		bot.setMemberCachePolicy(MemberCachePolicy.ALL);
