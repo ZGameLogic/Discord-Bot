@@ -435,7 +435,7 @@ public abstract class EmbedMessageGenerator {
                 b.setTitle(activity.getActivityName() + " has posted on the city board: " + activity.getStatType() + " training!");
                 b.addField("Activity cost", activity.getActivityCost() + "", true);
                 b.addField("Gold cost", activity.getGold() + " gold", true);
-                b.addField("Reward", activity.getStatAmount() + " " + activity.getStatAmount(), true);
+                b.addField("Reward", activity.getStatAmount() + " " + activity.getStatType(), true);
                 break;
         }
         b.setDescription("Departs");
