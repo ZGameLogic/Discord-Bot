@@ -107,10 +107,10 @@ public abstract class JiraInterfacer {
             fields.put("description", description + "\n" +
                     "Steps to recreate: " + strc + "\n" +
                     "Discord username: " + username + "\n" +
-                    "Discord user ID: " + userId + "\n" +
-                    "Opt-in: " + optIn);
+                    "Discord user ID: " + userId);
             fields.put("assignee", new JSONObject("{\"name\":\"BShabowski\"}"));
             fields.put("issuetype", new JSONObject("{\"name\": \"Bug\"}"));
+            fields.put("labels", "[\"Discord\", \"Notify-User\"]");
             body.put("fields", fields);
         } catch (JSONException e) {
             throw new RuntimeException(e);
