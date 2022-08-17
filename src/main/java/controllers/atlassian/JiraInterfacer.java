@@ -3,6 +3,7 @@ package controllers.atlassian;
 import application.App;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.http.HttpEntity;
@@ -17,41 +18,36 @@ public abstract class JiraInterfacer {
 
     public static void optIn(String issue) {
         String link = "https://zgamelogic.com:8080/rest/api/2/issue/"  + issue;
-        JSONObject issueJSON = getIssue(issue);
-        JSONObject editJSON = new JSONObject();
-        JSONObject fields = new JSONObject();
+        JSONObject update = new JSONObject();
+        JSONArray labels = new JSONArray();
         try {
-            fields.put("description", issueJSON.getJSONObject("fields").getString("description").replace("\nOpt-in: false", "\nOpt-in: true"));
-            editJSON.put("fields", fields);
+            labels.put(new JSONObject("{\"add\":\"Notify-User\"}"));
+            update.put("labels", labels);
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
-
-        RestTemplate restTemplate = new RestTemplate();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        headers.add("Authorization", "Bearer " + App.config.getJiraPat());
-        HttpEntity<String> request = new HttpEntity<>(editJSON.toString(), headers);
-        restTemplate.put(link, request, String.class);
+        putToJira(link, update);
     }
 
     public static void optOut(String issue){
         String link = "https://zgamelogic.com:8080/rest/api/2/issue/"  + issue;
-        JSONObject issueJSON = getIssue(issue);
-        JSONObject editJSON = new JSONObject();
-        JSONObject fields = new JSONObject();
+        JSONObject update = new JSONObject();
+        JSONArray labels = new JSONArray();
         try {
-            fields.put("description", issueJSON.getJSONObject("fields").getString("description").replace("\nOpt-in: true", "\nOpt-in: false"));
-            editJSON.put("fields", fields);
+            labels.put(new JSONObject("{\"remove\":\"Notify-User\"}"));
+            update.put("labels", labels);
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
+        putToJira(link, update);
+    }
 
+    private static void putToJira(String link, JSONObject update) {
         RestTemplate restTemplate = new RestTemplate();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         headers.add("Authorization", "Bearer " + App.config.getJiraPat());
-        HttpEntity<String> request = new HttpEntity<>(editJSON.toString(), headers);
+        HttpEntity<String> request = new HttpEntity<>(update.toString(), headers);
         restTemplate.put(link, request, String.class);
     }
 
@@ -110,7 +106,10 @@ public abstract class JiraInterfacer {
                     "Discord user ID: " + userId);
             fields.put("assignee", new JSONObject("{\"name\":\"BShabowski\"}"));
             fields.put("issuetype", new JSONObject("{\"name\": \"Bug\"}"));
-            fields.put("labels", "[\"Discord\", \"Notify-User\"]");
+            JSONArray labels = new JSONArray();
+            labels.put("Discord");
+            labels.put("Notify-User");
+            fields.put("labels", labels);
             body.put("fields", fields);
         } catch (JSONException e) {
             throw new RuntimeException(e);
