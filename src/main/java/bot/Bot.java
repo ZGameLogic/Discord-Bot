@@ -15,6 +15,7 @@ import controllers.atlassian.BitbucketInterfacer;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -182,14 +183,12 @@ public class Bot {
 	}
 
 	private void handleJira(JSONObject jsonInformation) throws JSONException {
-		System.out.println(jsonInformation);
 		String event;
 		if(jsonInformation.has("issue_event_type_name")) {
 			event = jsonInformation.getString("issue_event_type_name");
 		} else {
 			event = "deleted";
 		}
-		System.out.println(event);
 		String issueKey = jsonInformation.getJSONObject("issue").getString("key");
 		EmbedBuilder eb = new EmbedBuilder();
 		eb.setColor(new Color(7, 70, 166));
@@ -235,18 +234,23 @@ public class Bot {
 
 		if(process){
 			String userId = "";
-			String optIn = "";
+			boolean optIn = false;
 			Scanner input = new Scanner(jsonInformation.getJSONObject("issue").getJSONObject("fields").getString("description"));
-			while(input.hasNextLine()){
+			JSONArray labels = jsonInformation.getJSONObject("issue").getJSONObject("fields").getJSONArray("labels");
+			while(input.hasNextLine()) {
 				String line = input.nextLine();
-				if(line.contains("Discord user ID: ")){
+				if (line.contains("Discord user ID: ")) {
 					userId = line.replace("Discord user ID: ", "");
-				} else if(line.contains("Opt-in: ")){
-					optIn = line.replace("Opt-in: ", "");
 				}
 			}
 			input.close();
-			if(optIn.contains("false")){ return; }
+			for(int i = 0; i < labels.length(); i++){
+				if(labels.getString(i).equals("Notify-User")){
+					optIn = true;
+					break;
+				}
+			}
+			if(!optIn){ return; }
 			if(!userId.equals("")) {
 				User user = jdaBot.getUserById(userId);
 				if (user != null) {
@@ -259,8 +263,6 @@ public class Bot {
 					}else {
 						user.openPrivateChannel().complete().sendMessageEmbeds(eb.build()).queue();
 					}
-				} else {
-					System.out.println("Cant find user: " + userId);
 				}
 			}
 		}
