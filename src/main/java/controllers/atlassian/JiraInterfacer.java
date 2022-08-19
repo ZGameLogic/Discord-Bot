@@ -18,28 +18,32 @@ public abstract class JiraInterfacer {
 
     public static void optIn(String issue) {
         String link = "https://zgamelogic.com:8080/rest/api/2/issue/"  + issue;
+        JSONObject body = new JSONObject();
         JSONObject update = new JSONObject();
         JSONArray labels = new JSONArray();
         try {
             labels.put(new JSONObject("{\"add\":\"Notify-User\"}"));
             update.put("labels", labels);
+            body.put("update", update);
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
-        putToJira(link, update);
+        putToJira(link, body);
     }
 
     public static void optOut(String issue){
         String link = "https://zgamelogic.com:8080/rest/api/2/issue/"  + issue;
+        JSONObject body = new JSONObject();
         JSONObject update = new JSONObject();
         JSONArray labels = new JSONArray();
         try {
             labels.put(new JSONObject("{\"remove\":\"Notify-User\"}"));
             update.put("labels", labels);
+            body.put("update", update);
         } catch (JSONException e) {
             throw new RuntimeException(e);
         }
-        putToJira(link, update);
+        putToJira(link, body);
     }
 
     private static void putToJira(String link, JSONObject update) {
