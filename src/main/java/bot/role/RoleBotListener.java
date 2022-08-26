@@ -9,6 +9,7 @@ import bot.role.data.results.ChallengeFightResults;
 import bot.role.data.structures.*;
 import bot.role.data.jsonConfig.Strings;
 import bot.role.data.structures.Activity;
+import bot.role.data.structures.annotations.ButtonCommand;
 import bot.role.data.structures.annotations.EmoteCommand;
 import bot.role.data.structures.annotations.SlashCommand;
 import bot.role.data.structures.item.ShopItem;
@@ -27,10 +28,12 @@ import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent;
 import net.dv8tion.jda.api.events.guild.member.update.GuildMemberUpdateNicknameEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import sun.util.resources.LocaleData;
@@ -180,6 +183,26 @@ public class RoleBotListener extends ListenerAdapter {
                     }
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
+            event.reply("Unable to complete the command. If this continues to happen submit a bug report with the /bug-report command").setEphemeral(true).queue();
+        }
+    }
+
+    @Override
+    public void onButtonInteraction(ButtonInteractionEvent event) {
+        try {
+                String name = event.getId();
+                for (Method m : getClass().getDeclaredMethods()) {
+                    if (m.isAnnotationPresent(ButtonCommand.class)) {
+                        ButtonCommand bc = m.getAnnotation(ButtonCommand.class);
+                        if (bc.CommandName().equals(name)) {
+                            if(processButtonCommandAnnotations(bc, event)) {
+                                m.invoke(this, event);
+                            }
+                        }
+                    }
+                }
         } catch (Exception e) {
             e.printStackTrace();
             event.reply("Unable to complete the command. If this continues to happen submit a bug report with the /bug-report command").setEphemeral(true).queue();
@@ -582,6 +605,10 @@ public class RoleBotListener extends ListenerAdapter {
 
     public bot.role.data.structures.Guild getMemberGuild(Member m){
         return getPlayerGuild(getAsPlayer(m));
+    }
+
+    private boolean processButtonCommandAnnotations(ButtonCommand bc, ButtonInteractionEvent event) {
+        return true;
     }
 
     /**
