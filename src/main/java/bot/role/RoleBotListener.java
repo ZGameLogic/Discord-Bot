@@ -9,15 +9,14 @@ import bot.role.data.results.ChallengeFightResults;
 import bot.role.data.structures.*;
 import bot.role.data.jsonConfig.Strings;
 import bot.role.data.structures.Activity;
-import bot.role.data.structures.annotations.ButtonCommand;
-import bot.role.data.structures.annotations.EmoteCommand;
-import bot.role.data.structures.annotations.SlashCommand;
+import bot.role.annotations.ButtonCommand;
+import bot.role.annotations.EmoteCommand;
+import bot.role.annotations.SlashCommand;
 import bot.role.data.structures.item.ShopItem;
 import bot.role.helpers.DungeonGenerator;
 import controllers.discord.EmbedMessageGenerator;
 import data.ConfigLoader;
 import data.serializing.DataRepository;
-import data.serializing.SavableData;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.Guild;
@@ -33,14 +32,11 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.util.resources.LocaleData;
 
 import java.io.File;
 import java.lang.reflect.Method;
-import java.time.OffsetDateTime;
 import java.util.*;
 import java.util.function.Function;
 
@@ -603,11 +599,55 @@ public class RoleBotListener extends ListenerAdapter {
         return null;
     }
 
+    private boolean isGuildLeader(Member member) {
+        boolean found = false;
+        for(bot.role.data.structures.Guild guild : data.getGuilds()){
+            if(guild.isGuildOwner(member.getIdLong())){
+                found = true;
+                break;
+            }
+        }
+        return found;
+    }
+
+    private boolean isGuildOfficerPermissions(Member member) {
+        for(bot.role.data.structures.Guild guild : data.getGuilds()){
+            if(guild.isInGuild(member.getIdLong())){
+                if(guild.isGuildOwner(member.getIdLong()) || guild.isGuildOfficer(member.getIdLong())){
+                    return true;
+                }
+                break;
+            }
+        }
+        return false;
+    }
+
     public bot.role.data.structures.Guild getMemberGuild(Member m){
         return getPlayerGuild(getAsPlayer(m));
     }
 
+    private bot.role.data.structures.Guild getGuildByName(String guildName) {
+        if(data.getGuilds().exists(guildName)){
+            return data.getGuilds().loadSerialized(guildName);
+        }
+        return null;
+    }
+
     private boolean processButtonCommandAnnotations(ButtonCommand bc, ButtonInteractionEvent event) {
+
+        if(bc.isOwner()){
+            if (!isGuildLeader(event.getMember())) {
+                event.reply("Only the guild leader is allowed to do this action").setEphemeral(true).queue();
+                return false;
+            }
+        }
+        if(bc.isOfficerPermission()){
+            if(!isGuildOfficerPermissions(event.getMember())){
+                event.reply("You must have officer permissions or above to do this action").setEphemeral(true).queue();
+                return false;
+            }
+        }
+
         return true;
     }
 
@@ -676,17 +716,6 @@ public class RoleBotListener extends ListenerAdapter {
             return false;
         }
         return true;
-    }
-
-    private boolean isGuildLeader(Member member) {
-        boolean found = false;
-        for(bot.role.data.structures.Guild guild : data.getGuilds()){
-            if(guild.isGuildOwner(member.getIdLong())){
-                found = true;
-                break;
-            }
-        }
-        return found;
     }
 
     @SlashCommand(CommandName = "leaderboard")
@@ -887,6 +916,27 @@ public class RoleBotListener extends ListenerAdapter {
         event.reply("Inventory slots " + slotOne + " and " + slotTwo + " have been swapped.").queue();
     }
 
+    @SlashCommand(CommandName = "guild", isSubCommand = true, subCommandName = "join", isNotInGuild = true)
+    private void guildJoinSlashCommand(SlashCommandInteractionEvent event){
+        String guildName = event.getOption("guild-name").getAsString();
+        bot.role.data.structures.Guild guild = getGuildByName(guildName);
+        if(guild == null){
+            event.reply("This guild does not exists").setEphemeral(true).queue();
+            return;
+        }
+        if(guild.isPublicGuild()){
+            guild.addToGuild(event.getMember().getIdLong());
+            data.saveData(guild);
+            Role member = this.guild.getRoleById(guild.getIds().get("memberRole"));
+            this.guild.addRoleToMember(event.getMember(), member).queue();
+            event.reply("You have joined the guild!").setEphemeral(true).queue();
+        } else {
+            // TODO send invite
+            event.reply("A request to join the guild has been sent").setEphemeral(true).queue();
+        }
+
+    }
+
     @SlashCommand(CommandName = "guild", isSubCommand = true, subCommandName = "leave", isInGuild = true)
     private void guildLeaveSlashCommand(SlashCommandInteractionEvent event){
         bot.role.data.structures.Guild guild = getMemberGuild(event.getMember());
@@ -903,6 +953,8 @@ public class RoleBotListener extends ListenerAdapter {
             Role officer = this.guild.getRoleById(guild.getIds().get("officerRole"));
             Role member = this.guild.getRoleById(guild.getIds().get("memberRole"));
             this.guild.removeRoleFromMember(event.getMember(), owner).queue();
+            this.guild.removeRoleFromMember(event.getMember(), officer).queue();
+            this.guild.removeRoleFromMember(event.getMember(), member).queue();
             data.saveData(guild);
         }
         event.reply("You have left the " + guild.getId() + " guild").setEphemeral(true).queue();

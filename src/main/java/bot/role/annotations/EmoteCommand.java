@@ -1,4 +1,4 @@
-package bot.role.data.structures.annotations;
+package bot.role.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -7,11 +7,8 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
-public @interface ButtonCommand {
-
-    String CommandName();
-
-    boolean isOfficer() default false;
-    boolean isOwner() default  false;
-
+public @interface EmoteCommand {
+    String categoryFrom();
+    String channelFrom() default "none";
+    boolean isFromGuildOwner() default false;
 }
