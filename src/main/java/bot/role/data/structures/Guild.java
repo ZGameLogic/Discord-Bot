@@ -51,6 +51,11 @@ public class Guild extends SavableData {
         return ids.get("ownerId") == id;
     }
 
+    @JsonIgnore
+    public boolean isGuildOfficer(long id){
+        return ids.get("officerRole") == id;
+    }
+
     public void setOwnerId(long id){
         ids.put("ownerId", id);
     }
