@@ -32,6 +32,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.utils.FileUpload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -355,7 +356,7 @@ public class RoleBotListener extends ListenerAdapter {
         DungeonGenerator.saveDungeon(dungeon);
         File dungeonPhoto = new File("arena\\dungeon photos\\dungeon.png");
         logger.info("\tSpawned dungeon");
-        Message message = dungeonsTC.sendFile(dungeonPhoto, "dungeon.png").setEmbeds(EmbedMessageGenerator.generate(dungeon)).complete();
+        Message message = dungeonsTC.sendFiles(FileUpload.fromData(dungeonPhoto)).setEmbeds(EmbedMessageGenerator.generate(dungeon)).complete();
         dungeon.setId(message.getId());
         message.addReaction(activate).queue();
         data.saveData(dungeon);
