@@ -71,7 +71,10 @@ public abstract class EmbedMessageGenerator {
     public static MessageEmbed generateGuildJoinRequest(Member member){
         EmbedBuilder b = new EmbedBuilder();
         b.setColor(GUILD_COLOR);
-
+        b.setTitle("A player has requested to join the guild!");
+        b.setDescription(member.getEffectiveName());
+        b.setThumbnail(member.getAvatarUrl());
+        b.setFooter(member.getId());
         return b.build();
     }
 
