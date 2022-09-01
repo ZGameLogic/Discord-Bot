@@ -932,7 +932,15 @@ public class RoleBotListener extends ListenerAdapter {
             this.guild.addRoleToMember(event.getMember(), member).queue();
             event.reply("You have joined the guild!").setEphemeral(true).queue();
         } else {
-            // TODO send invite
+            TextChannel guildTC = this.guild.getTextChannelById(guild.getIds().get("textChannel"));
+
+            /*
+            tournamentsTC.sendMessageEmbeds(EmbedMessageGenerator.generate(tournament))
+                .setActionRow(Button.secondary("fight_in_tournament", "Enter Tournament").withEmoji(activate)).queue(message -> {
+            tournament.setId(message.getId());
+            data.saveData(tournament);
+        });
+             */
             event.reply("A request to join the guild has been sent").setEphemeral(true).queue();
         }
 

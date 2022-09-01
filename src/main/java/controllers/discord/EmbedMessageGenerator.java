@@ -48,6 +48,7 @@ public abstract class EmbedMessageGenerator {
     private final static Color PAY_CITIZEN_COLOR = new Color(150, 58, 58);
     private final static Color REMIND_MESSAGE_COLOR = new Color(64, 140, 147);
     private final static Color TOURNAMENT_COLOR = new Color(80, 21, 108);
+    private final static Color GUILD_COLOR = new Color(87, 70, 14);
 
     private final static Color SMALL_DUNGEON_COLOR = new Color(118, 191, 38, 255);
     private final static Color MEDIUM_DUNGEON_COLOR = new Color(59, 94, 21);
@@ -65,6 +66,13 @@ public abstract class EmbedMessageGenerator {
     public enum Detail {
         SIMPLE,
         COMPLEX
+    }
+
+    public static MessageEmbed generateGuildJoinRequest(Member member){
+        EmbedBuilder b = new EmbedBuilder();
+        b.setColor(GUILD_COLOR);
+
+        return b.build();
     }
 
     public static MessageEmbed generate(MinecraftServer mcServer){
