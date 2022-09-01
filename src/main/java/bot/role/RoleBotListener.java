@@ -960,7 +960,7 @@ public class RoleBotListener extends ListenerAdapter {
         String memberId = event.getMessage().getEmbeds().get(0).getFooter().getText();
         Member member = guild.getMemberById(memberId);
         // disables buttons
-        event.getMessage().editMessageComponents(event.getMessage().getActionRows().get(0).asDisabled()).queue();
+        event.getMessage().editMessageComponents().queue();
         if(member == null){
             event.reply("This member no longer exists").queue();
             return;
@@ -982,7 +982,7 @@ public class RoleBotListener extends ListenerAdapter {
         Member member = guild.getMemberById(memberId);
         Message message = event.getMessage();
         // disables buttons
-        event.getMessage().editMessageComponents(event.getMessage().getActionRows().get(0).asDisabled()).queue();
+        event.getMessage().editMessageComponents().queue();
         if(member == null){
             event.reply("This member no longer exists").queue();
             return;
