@@ -31,10 +31,13 @@ import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.ItemComponent;
+import net.dv8tion.jda.api.interactions.components.LayoutComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import sun.awt.image.ImageWatched;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -189,17 +192,18 @@ public class RoleBotListener extends ListenerAdapter {
     @Override
     public void onButtonInteraction(ButtonInteractionEvent event) {
         try {
-                String name = event.getId();
-                for (Method m : getClass().getDeclaredMethods()) {
-                    if (m.isAnnotationPresent(ButtonCommand.class)) {
-                        ButtonCommand bc = m.getAnnotation(ButtonCommand.class);
-                        if (bc.CommandName().equals(name)) {
-                            if(processButtonCommandAnnotations(bc, event)) {
-                                m.invoke(this, event);
-                            }
+            String name = event.getButton().getId();
+            for (Method m : getClass().getDeclaredMethods()) {
+                if (m.isAnnotationPresent(ButtonCommand.class)) {
+                    ButtonCommand bc = m.getAnnotation(ButtonCommand.class);
+                    if (bc.CommandName().equals(name)) {
+                        if(processButtonCommandAnnotations(bc, event)) {
+                            m.invoke(this, event);
                         }
+                        break;
                     }
                 }
+            }
         } catch (Exception e) {
             e.printStackTrace();
             event.reply("Unable to complete the command. If this continues to happen submit a bug report with the /bug-report command").setEphemeral(true).queue();
@@ -600,6 +604,15 @@ public class RoleBotListener extends ListenerAdapter {
         return null;
     }
 
+    public bot.role.data.structures.Guild getGuildByTextId(long id){
+        for(bot.role.data.structures.Guild guild : data.getGuilds()){
+            if(guild.getIds().get("textChannel").equals(id)){
+                return guild;
+            }
+        }
+        return null;
+    }
+
     private boolean isGuildLeader(Member member) {
         boolean found = false;
         for(bot.role.data.structures.Guild guild : data.getGuilds()){
@@ -635,7 +648,6 @@ public class RoleBotListener extends ListenerAdapter {
     }
 
     private boolean processButtonCommandAnnotations(ButtonCommand bc, ButtonInteractionEvent event) {
-
         if(bc.isOwner()){
             if (!isGuildLeader(event.getMember())) {
                 event.reply("Only the guild leader is allowed to do this action").setEphemeral(true).queue();
@@ -933,17 +945,53 @@ public class RoleBotListener extends ListenerAdapter {
             event.reply("You have joined the guild!").setEphemeral(true).queue();
         } else {
             TextChannel guildTC = this.guild.getTextChannelById(guild.getIds().get("textChannel"));
-
-            /*
-            tournamentsTC.sendMessageEmbeds(EmbedMessageGenerator.generate(tournament))
-                .setActionRow(Button.secondary("fight_in_tournament", "Enter Tournament").withEmoji(activate)).queue(message -> {
-            tournament.setId(message.getId());
-            data.saveData(tournament);
-        });
-             */
+            guildTC.sendMessageEmbeds(EmbedMessageGenerator.generateGuildJoinRequest(event.getMember()))
+                    .setActionRow(
+                            Button.primary("accept_guild_join", "Accept"),
+                            Button.secondary("reject_guild_join", "Reject")
+                    ).queue();
             event.reply("A request to join the guild has been sent").setEphemeral(true).queue();
         }
 
+    }
+
+    @ButtonCommand(CommandName = "accept_guild_join", isOfficerPermission = true)
+    private void acceptGuildJoin(ButtonInteractionEvent event){
+        String memberId = event.getMessage().getEmbeds().get(0).getFooter().getText();
+        Member member = guild.getMemberById(memberId);
+        // disables buttons
+        event.getMessage().editMessageComponents(event.getMessage().getActionRows().get(0).asDisabled()).queue();
+        if(member == null){
+            event.reply("This member no longer exists").queue();
+            return;
+        }
+        event.reply(member.getEffectiveName() + " has been accepted into the guild").queue();
+        bot.role.data.structures.Guild playerGuild = getGuildByTextId(event.getMessageChannel().getIdLong());
+        playerGuild.addToGuild(Long.parseLong(memberId));
+        data.saveData(playerGuild);
+        Role memberRole = guild.getRoleById(playerGuild.getIds().get("memberRole"));
+        guild.addRoleToMember(member, memberRole).queue();
+        member.getUser().openPrivateChannel().queue(privateChannel -> {
+            privateChannel.sendMessage("You have been accepted into the " + playerGuild.getId() + " guild!").queue();
+        });
+    }
+
+    @ButtonCommand(CommandName = "reject_guild_join", isOfficerPermission = true)
+    private void rejectGuildJoin(ButtonInteractionEvent event){
+        String memberId = event.getMessage().getEmbeds().get(0).getFooter().getText();
+        Member member = guild.getMemberById(memberId);
+        Message message = event.getMessage();
+        // disables buttons
+        event.getMessage().editMessageComponents(event.getMessage().getActionRows().get(0).asDisabled()).queue();
+        if(member == null){
+            event.reply("This member no longer exists").queue();
+            return;
+        }
+        event.reply(member.getEffectiveName() + " has been rejected entrance into the guild").queue();
+        bot.role.data.structures.Guild playerGuild = getGuildByTextId(event.getMessageChannel().getIdLong());
+        member.getUser().openPrivateChannel().queue(privateChannel -> {
+            privateChannel.sendMessage("You have been rejected entrance into the " + playerGuild.getId() + " guild").queue();
+        });
     }
 
     @SlashCommand(CommandName = "guild", isSubCommand = true, subCommandName = "leave", isInGuild = true)
