@@ -63,9 +63,20 @@ public abstract class EmbedMessageGenerator {
 
     private final static Color MINECRAFT_SERVER_COLOR = new Color(130, 179, 98);
 
+    private final static Color ATLASSIAN_COLOR = new Color(7, 70, 166);
+
     public enum Detail {
         SIMPLE,
         COMPLEX
+    }
+
+    public static MessageEmbed generateJiraVersion(String versionName, String versionDescription){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(ATLASSIAN_COLOR);
+        eb.setTitle(versionName + " update has been released!");
+        eb.setDescription(versionDescription);
+        eb.setTimestamp(Instant.now());
+        return eb.build();
     }
 
     public static MessageEmbed generateGuildJoinRequest(Member member){
