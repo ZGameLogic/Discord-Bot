@@ -12,6 +12,7 @@ import bot.messageUtils.MessageListener;
 import bot.minecraft.MinecraftListener;
 import bot.pokemon.PokemonListener;
 import controllers.atlassian.BitbucketInterfacer;
+import controllers.discord.EmbedMessageGenerator;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -173,12 +174,7 @@ public class Bot {
 		if(event.equals("jira:version_released")) {
 			String versionName = jsonInformation.getJSONObject("version").getString("name");
 			String versionDescription = jsonInformation.getJSONObject("version").getString("description");
-			EmbedBuilder eb = new EmbedBuilder();
-			eb.setColor(new Color(7, 70, 166));
-			eb.setTitle(versionName + " update has been released!");
-			eb.setDescription(versionDescription);
-			eb.setTimestamp(Instant.now());
-			announcments.sendMessageEmbeds(eb.build()).queue();
+			announcments.sendMessageEmbeds(EmbedMessageGenerator.generateJiraVersion(versionName, versionDescription)).queue();
 		}
 	}
 
