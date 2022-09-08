@@ -143,7 +143,7 @@ public class Bot {
 
 	@Scheduled(cron = "0 0 0 25 12 ?")
 	private void christmasStuff(){
-		RBL.christmas(); // every christmas
+		RBL.christmas(); // every Christmas
 	}
 	
 	private void handleBamboo(JSONObject message) throws JSONException {

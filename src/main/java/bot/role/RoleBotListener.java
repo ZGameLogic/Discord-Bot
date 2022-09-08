@@ -606,7 +606,7 @@ public class RoleBotListener extends ListenerAdapter {
 
     public bot.role.data.structures.Guild getGuildByTextId(long id){
         for(bot.role.data.structures.Guild guild : data.getGuilds()){
-            if(guild.getIds().get("textChannel").equals(id)){
+            if(guild.getIds().getTextChannel() == id){
                 return guild;
             }
         }
@@ -940,11 +940,11 @@ public class RoleBotListener extends ListenerAdapter {
         if(guild.isPublicGuild()){
             guild.addToGuild(event.getMember().getIdLong());
             data.saveData(guild);
-            Role member = this.guild.getRoleById(guild.getIds().get("memberRole"));
+            Role member = this.guild.getRoleById(guild.getIds().getMemberRole());
             this.guild.addRoleToMember(event.getMember(), member).queue();
             event.reply("You have joined the guild!").setEphemeral(true).queue();
         } else {
-            TextChannel guildTC = this.guild.getTextChannelById(guild.getIds().get("textChannel"));
+            TextChannel guildTC = this.guild.getTextChannelById(guild.getIds().getTextChannel());
             guildTC.sendMessageEmbeds(EmbedMessageGenerator.generateGuildJoinRequest(event.getMember()))
                     .setActionRow(
                             Button.primary("accept_guild_join", "Accept"),
@@ -969,7 +969,7 @@ public class RoleBotListener extends ListenerAdapter {
         bot.role.data.structures.Guild playerGuild = getGuildByTextId(event.getMessageChannel().getIdLong());
         playerGuild.addToGuild(Long.parseLong(memberId));
         data.saveData(playerGuild);
-        Role memberRole = guild.getRoleById(playerGuild.getIds().get("memberRole"));
+        Role memberRole = guild.getRoleById(playerGuild.getIds().getMemberRole());
         guild.addRoleToMember(member, memberRole).queue();
         member.getUser().openPrivateChannel().queue(privateChannel -> {
             privateChannel.sendMessage("You have been accepted into the " + playerGuild.getId() + " guild!").queue();
@@ -1000,15 +1000,15 @@ public class RoleBotListener extends ListenerAdapter {
         guild.removeFromGuild(event.getMember().getIdLong());
         if(guild.isEmpty()){
             data.getGuilds().delete(guild);
-            this.guild.getTextChannelById(guild.getIds().get("textChannel")).delete().queue();
-            this.guild.getVoiceChannelById(guild.getIds().get("voiceChannel")).delete().queue();
-            this.guild.getRoleById(guild.getIds().get("ownerRole")).delete().queue();
-            this.guild.getRoleById(guild.getIds().get("officerRole")).delete().queue();
-            this.guild.getRoleById(guild.getIds().get("memberRole")).delete().queue();
+            this.guild.getTextChannelById(guild.getIds().getTextChannel()).delete().queue();
+            this.guild.getVoiceChannelById(guild.getIds().getVoiceChannel()).delete().queue();
+            this.guild.getRoleById(guild.getIds().getOwnerRole()).delete().queue();
+            this.guild.getRoleById(guild.getIds().getOfficerRole()).delete().queue();
+            this.guild.getRoleById(guild.getIds().getMemberRole()).delete().queue();
         } else{
-            Role owner = this.guild.getRoleById(guild.getIds().get("ownerRole"));
-            Role officer = this.guild.getRoleById(guild.getIds().get("officerRole"));
-            Role member = this.guild.getRoleById(guild.getIds().get("memberRole"));
+            Role owner = this.guild.getRoleById(guild.getIds().getOwnerRole());
+            Role officer = this.guild.getRoleById(guild.getIds().getOfficerRole());
+            Role member = this.guild.getRoleById(guild.getIds().getMemberRole());
             this.guild.removeRoleFromMember(event.getMember(), owner).queue();
             this.guild.removeRoleFromMember(event.getMember(), officer).queue();
             this.guild.removeRoleFromMember(event.getMember(), member).queue();
