@@ -728,6 +728,20 @@ public class RoleBotListener extends ListenerAdapter {
             event.reply("You do not have enough activities left").setEphemeral(true).queue();
             return false;
         }
+        if(sc.isFromGuildChat()){
+            long channelId = event.getChannel().getIdLong();
+            boolean found = false;
+            for(bot.role.data.structures.Guild guild : data.getGuilds()){
+                if(guild.getIds().getTextChannel() == channelId){
+                    found = true;
+                    break;
+                }
+            }
+            if(!found){
+                event.reply("This has to be done in a guild chat").setEphemeral(true).queue();
+                return false;
+            }
+        }
         return true;
     }
 

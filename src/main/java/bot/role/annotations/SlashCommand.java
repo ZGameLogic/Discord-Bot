@@ -19,4 +19,5 @@ public @interface SlashCommand {
     boolean isInGuild() default false;
     boolean isNotInGuild() default false;
     boolean isLeaderOfGuild() default false;
+    boolean isFromGuildChat() default false;
 }
