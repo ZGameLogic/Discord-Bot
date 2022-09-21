@@ -14,6 +14,8 @@ import bot.pokemon.PokemonListener;
 import controllers.atlassian.BitbucketInterfacer;
 import controllers.discord.EmbedMessageGenerator;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.channel.concrete.NewsChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.json.JSONArray;
@@ -21,7 +23,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -58,7 +59,7 @@ public class Bot {
 	
 	private Logger logger = LoggerFactory.getLogger(Bot.class);
 	private TextChannel bitBucket;
-	private NewsChannel announcments;
+	private NewsChannel announcements;
 
 	@PostConstruct
 	public void start() {
@@ -91,8 +92,8 @@ public class Bot {
 		try {
 			jdaBot = bot.build().awaitReady();
 			bitBucket = jdaBot.getGuildById(config.getGuildID()).getTextChannelById(config.getBitbucketID());
-			announcments = jdaBot.getGuildById(config.getGuildID()).getNewsChannels().get(0);
-		} catch (LoginException | InterruptedException e) {
+			announcements = jdaBot.getGuildById(config.getGuildID()).getNewsChannels().get(0);
+		} catch (InterruptedException e) {
 			logger.error("Unable to launch bot");
 		}
 	}
@@ -174,7 +175,7 @@ public class Bot {
 		if(event.equals("jira:version_released")) {
 			String versionName = jsonInformation.getJSONObject("version").getString("name");
 			String versionDescription = jsonInformation.getJSONObject("version").getString("description");
-			announcments.sendMessageEmbeds(EmbedMessageGenerator.generateJiraVersion(versionName, versionDescription)).queue();
+			announcements.sendMessageEmbeds(EmbedMessageGenerator.generateJiraVersion(versionName, versionDescription)).queue();
 		}
 	}
 
