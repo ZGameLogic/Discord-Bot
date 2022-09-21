@@ -3,6 +3,7 @@ package webhook.listeners;
 import java.awt.Color;
 
 import controllers.atlassian.BitbucketInterfacer;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -13,7 +14,6 @@ import data.serializing.DataRepository;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
