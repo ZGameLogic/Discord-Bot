@@ -28,6 +28,7 @@ public class Guild extends SavableData {
 
     @Getter
     @AllArgsConstructor
+    @NoArgsConstructor
     public class Ids {
         @Setter
         private long owner;

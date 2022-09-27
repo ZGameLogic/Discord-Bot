@@ -630,10 +630,11 @@ public class RoleBotListener extends ListenerAdapter {
     private boolean isGuildOfficerPermissions(Member member) {
         for(bot.role.data.structures.Guild guild : data.getGuilds()){
             if(guild.isInGuild(member.getIdLong())){
-                if(guild.isGuildOwner(member.getIdLong()) || guild.isGuildOfficer(member.getIdLong())){
-                    return true;
+                for(Role role : member.getRoles()) {
+                    if (guild.isGuildOwner(role.getIdLong()) || guild.isGuildOfficer(role.getIdLong())) {
+                        return true;
+                    }
                 }
-                break;
             }
         }
         return false;
@@ -944,6 +945,77 @@ public class RoleBotListener extends ListenerAdapter {
         player.swapSlots(slotOne, slotTwo);
         data.saveData(player);
         event.reply("Inventory slots " + slotOne + " and " + slotTwo + " have been swapped.").queue();
+    }
+
+    @ButtonCommand(CommandName = "cursor_up", isOfficerPermission = true)
+    private void guildReorderMoveCursorUp(ButtonInteractionEvent event){
+        int selectedIndex = getSelectedIndex(event.getMessage().getEmbeds().get(0).getDescription());
+        LinkedList<String> names = clearSelected(event.getMessage().getEmbeds().get(0).getDescription().split("\n"));
+        if(selectedIndex - 1 < 0){
+            selectedIndex = names.size() - 1;
+        } else {
+            selectedIndex--;
+        }
+        event.editMessageEmbeds(EmbedMessageGenerator.generateGuildOrder(names, selectedIndex)).queue();
+    }
+
+    @ButtonCommand(CommandName = "cursor_down", isOfficerPermission = true)
+    private void guildReorderMoveCursorDown(ButtonInteractionEvent event){
+        int selectedIndex = getSelectedIndex(event.getMessage().getEmbeds().get(0).getDescription());
+        LinkedList<String> names = clearSelected(event.getMessage().getEmbeds().get(0).getDescription().split("\n"));
+        if(selectedIndex + 1 >= names.size()){
+            selectedIndex = 0;
+        } else {
+            selectedIndex++;
+        }
+        event.editMessageEmbeds(EmbedMessageGenerator.generateGuildOrder(names, selectedIndex)).queue();
+    }
+
+    @ButtonCommand(CommandName = "move_selected_up", isOfficerPermission = true)
+    private void guildReorderMoveSelectedUp(ButtonInteractionEvent event){
+        int selectedIndex = getSelectedIndex(event.getMessage().getEmbeds().get(0).getDescription());
+        LinkedList<String> names = clearSelected(event.getMessage().getEmbeds().get(0).getDescription().split("\n"));
+
+    }
+
+    @ButtonCommand(CommandName = "move_selected_up", isOfficerPermission = true)
+    private void guildReorderMoveSelectedDown(ButtonInteractionEvent event){
+        int selectedIndex = getSelectedIndex(event.getMessage().getEmbeds().get(0).getDescription());
+    }
+
+    private LinkedList<String> clearSelected(String[] names){
+        LinkedList<String> newNames = new LinkedList<>();
+        for(String name : names){
+            newNames.add(name.replace("**>", "").replace("<**", ""));
+        }
+        return newNames;
+    }
+
+    private int getSelectedIndex(String desc){
+        String[] players = desc.split("\n");
+        for(int i = 0; i < players.length; i++){
+            if(players[i].contains("**>") && players[i].contains("<**")){
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    @SlashCommand(CommandName = "guild", isSubCommand = true, subCommandName = "reorder", isFromGuildChat = true)
+    private void guildReorderSlashCommand(SlashCommandInteractionEvent event){
+        bot.role.data.structures.Guild guild = getGuildByTextId(event.getChannel().getIdLong());
+        LinkedList<String> names = new LinkedList<>();
+        for(Long id : guild.getMembers()){
+            names.add(this.guild.getMemberById(id).getEffectiveName());
+        }
+        event.replyEmbeds(EmbedMessageGenerator.generateGuildOrder(names, 0))
+                .setActionRow(
+                        Button.primary("move_selected_up", "Move up"),
+                        Button.primary("move_selected_down", "Move down"),
+                        Button.secondary("cursor_up", "Cursor up"),
+                        Button.secondary("cursor_down", "Cursor down"),
+                        Button.success("confirm_order", "Confirm order")
+                ).queue();
     }
 
     @SlashCommand(CommandName = "guild", isSubCommand = true, subCommandName = "join", isNotInGuild = true)
