@@ -170,7 +170,7 @@ public class RoleBotListener extends ListenerAdapter {
                     if (m.isAnnotationPresent(SlashCommand.class)) {
                         SlashCommand sc = m.getAnnotation(SlashCommand.class);
                         if (sc.CommandName().equals(name)) {
-                            if(sc.isSubCommand()){
+                            if(!sc.subCommandName().equals("")){
                                 String sName = event.getSubcommandName();
                                 if(sc.subCommandName().equals(sName)){
                                     if(processSlashCommandAnnotations(sc, event)) {
@@ -323,7 +323,7 @@ public class RoleBotListener extends ListenerAdapter {
 
         for(Tournament tournament : data.getTournaments()){
             if(tournament.getDeparts().before(now)){
-                // TODO run tournamnet
+                // TODO run tournament
                 data.deleteData(tournament);
                 tournamentsTC.deleteMessageById(tournament.getId()).queue();
                 logger.info("\tDeleting tournament: " + tournament.getId());
@@ -684,7 +684,7 @@ public class RoleBotListener extends ListenerAdapter {
         if(sc.positiveGold()){
             int gold = event.getOption("gold").getAsInt();
             if(gold <= 0){
-                event.reply("Gold must be a posative amount").setEphemeral(true).queue();
+                event.reply("Gold must be a positive amount").setEphemeral(true).queue();
                 return false;
             }
         }
@@ -1001,7 +1001,7 @@ public class RoleBotListener extends ListenerAdapter {
         return 0;
     }
 
-    @SlashCommand(CommandName = "guild", isSubCommand = true, subCommandName = "reorder", isFromGuildChat = true)
+    @SlashCommand(CommandName = "guild", subCommandName = "reorder", isFromGuildChat = true)
     private void guildReorderSlashCommand(SlashCommandInteractionEvent event){
         bot.role.data.structures.Guild guild = getGuildByTextId(event.getChannel().getIdLong());
         LinkedList<String> names = new LinkedList<>();
@@ -1018,7 +1018,7 @@ public class RoleBotListener extends ListenerAdapter {
                 ).queue();
     }
 
-    @SlashCommand(CommandName = "guild", isSubCommand = true, subCommandName = "join", isNotInGuild = true)
+    @SlashCommand(CommandName = "guild", subCommandName = "join", isNotInGuild = true)
     private void guildJoinSlashCommand(SlashCommandInteractionEvent event){
         String guildName = event.getOption("guild-name").getAsString();
         bot.role.data.structures.Guild guild = getGuildByName(guildName);
@@ -1083,7 +1083,7 @@ public class RoleBotListener extends ListenerAdapter {
         });
     }
 
-    @SlashCommand(CommandName = "guild", isSubCommand = true, subCommandName = "leave", isInGuild = true)
+    @SlashCommand(CommandName = "guild", subCommandName = "leave", isInGuild = true)
     private void guildLeaveSlashCommand(SlashCommandInteractionEvent event){
         bot.role.data.structures.Guild guild = getMemberGuild(event.getMember());
         guild.removeFromGuild(event.getMember().getIdLong());
@@ -1106,7 +1106,7 @@ public class RoleBotListener extends ListenerAdapter {
         event.reply("You have left the " + guild.getId() + " guild").setEphemeral(true).queue();
     }
 
-    @SlashCommand(CommandName = "guild", isSubCommand = true, subCommandName = "create", isNotInGuild = true)
+    @SlashCommand(CommandName = "guild", subCommandName = "create", isNotInGuild = true)
     private void guildCreateSlashCommand(SlashCommandInteractionEvent event){
         String guildName = event.getOption("guild-name").getAsString();
         if(data.getGuilds().exists(guildName)){
