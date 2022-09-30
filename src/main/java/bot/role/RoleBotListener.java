@@ -978,6 +978,12 @@ public class RoleBotListener extends ListenerAdapter {
 
     }
 
+    @ButtonCommand(CommandName = "confirm_order", isOfficerPermission = true)
+    private void guildConfirmOrder(ButtonInteractionEvent event){
+        event.getMessage().editMessageComponents().queue();
+        event.reply("Guild order has been updated").setEphemeral(true).queue();
+    }
+
     @ButtonCommand(CommandName = "move_selected_up", isOfficerPermission = true)
     private void guildReorderMoveSelectedDown(ButtonInteractionEvent event){
         int selectedIndex = getSelectedIndex(event.getMessage().getEmbeds().get(0).getDescription());
