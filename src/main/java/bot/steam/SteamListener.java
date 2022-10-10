@@ -1,10 +1,10 @@
 package bot.steam;
 
+import net.dv8tion.jda.api.events.session.ReadyEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import controllers.steam.SteamAPI;
-import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
