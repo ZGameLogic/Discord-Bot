@@ -131,8 +131,10 @@ public class Bot {
 		String uid = new JSONObject(bodyString).getString("uid");
 		if(AL.login(uid)){
 			// TODO success
+			return "Success";
 		} else {
 			// TODO failure
+			return "fail";
 		}
 	}
 	
