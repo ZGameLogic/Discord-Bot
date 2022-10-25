@@ -9,7 +9,7 @@ import bot.role.data.results.ChallengeFightResults;
 import bot.role.data.structures.*;
 import bot.role.data.jsonConfig.Strings;
 import bot.role.data.structures.Activity;
-import bot.role.annotations.ButtonCommand;
+import bot.role.annotations.RoleButtonCommand;
 import bot.role.annotations.EmoteCommand;
 import bot.role.annotations.SlashCommand;
 import bot.role.data.structures.item.ShopItem;
@@ -34,13 +34,10 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.components.ItemComponent;
-import net.dv8tion.jda.api.interactions.components.LayoutComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.awt.image.ImageWatched;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -197,8 +194,8 @@ public class RoleBotListener extends ListenerAdapter {
         try {
             String name = event.getButton().getId();
             for (Method m : getClass().getDeclaredMethods()) {
-                if (m.isAnnotationPresent(ButtonCommand.class)) {
-                    ButtonCommand bc = m.getAnnotation(ButtonCommand.class);
+                if (m.isAnnotationPresent(RoleButtonCommand.class)) {
+                    RoleButtonCommand bc = m.getAnnotation(RoleButtonCommand.class);
                     if (bc.CommandName().equals(name)) {
                         if(processButtonCommandAnnotations(bc, event)) {
                             m.invoke(this, event);
@@ -651,7 +648,7 @@ public class RoleBotListener extends ListenerAdapter {
         return null;
     }
 
-    private boolean processButtonCommandAnnotations(ButtonCommand bc, ButtonInteractionEvent event) {
+    private boolean processButtonCommandAnnotations(RoleButtonCommand bc, ButtonInteractionEvent event) {
         if(bc.isOwner()){
             if (!isGuildLeader(event.getMember())) {
                 event.reply("Only the guild leader is allowed to do this action").setEphemeral(true).queue();
@@ -947,7 +944,7 @@ public class RoleBotListener extends ListenerAdapter {
         event.reply("Inventory slots " + slotOne + " and " + slotTwo + " have been swapped.").queue();
     }
 
-    @ButtonCommand(CommandName = "cursor_up", isOfficerPermission = true)
+    @RoleButtonCommand(CommandName = "cursor_up", isOfficerPermission = true)
     private void guildReorderMoveCursorUp(ButtonInteractionEvent event){
         int selectedIndex = getSelectedIndex(event.getMessage().getEmbeds().get(0).getDescription());
         LinkedList<String> names = clearSelected(event.getMessage().getEmbeds().get(0).getDescription().split("\n"));
@@ -959,7 +956,7 @@ public class RoleBotListener extends ListenerAdapter {
         event.editMessageEmbeds(EmbedMessageGenerator.generateGuildOrder(names, selectedIndex)).queue();
     }
 
-    @ButtonCommand(CommandName = "cursor_down", isOfficerPermission = true)
+    @RoleButtonCommand(CommandName = "cursor_down", isOfficerPermission = true)
     private void guildReorderMoveCursorDown(ButtonInteractionEvent event){
         int selectedIndex = getSelectedIndex(event.getMessage().getEmbeds().get(0).getDescription());
         LinkedList<String> names = clearSelected(event.getMessage().getEmbeds().get(0).getDescription().split("\n"));
@@ -971,20 +968,20 @@ public class RoleBotListener extends ListenerAdapter {
         event.editMessageEmbeds(EmbedMessageGenerator.generateGuildOrder(names, selectedIndex)).queue();
     }
 
-    @ButtonCommand(CommandName = "move_selected_up", isOfficerPermission = true)
+    @RoleButtonCommand(CommandName = "move_selected_up", isOfficerPermission = true)
     private void guildReorderMoveSelectedUp(ButtonInteractionEvent event){
         int selectedIndex = getSelectedIndex(event.getMessage().getEmbeds().get(0).getDescription());
         LinkedList<String> names = clearSelected(event.getMessage().getEmbeds().get(0).getDescription().split("\n"));
 
     }
 
-    @ButtonCommand(CommandName = "confirm_order", isOfficerPermission = true)
+    @RoleButtonCommand(CommandName = "confirm_order", isOfficerPermission = true)
     private void guildConfirmOrder(ButtonInteractionEvent event){
         event.getMessage().editMessageComponents().queue();
         event.reply("Guild order has been updated").setEphemeral(true).queue();
     }
 
-    @ButtonCommand(CommandName = "move_selected_up", isOfficerPermission = true)
+    @RoleButtonCommand(CommandName = "move_selected_up", isOfficerPermission = true)
     private void guildReorderMoveSelectedDown(ButtonInteractionEvent event){
         int selectedIndex = getSelectedIndex(event.getMessage().getEmbeds().get(0).getDescription());
     }
@@ -1050,7 +1047,7 @@ public class RoleBotListener extends ListenerAdapter {
 
     }
 
-    @ButtonCommand(CommandName = "accept_guild_join", isOfficerPermission = true)
+    @RoleButtonCommand(CommandName = "accept_guild_join", isOfficerPermission = true)
     private void acceptGuildJoin(ButtonInteractionEvent event){
         String memberId = event.getMessage().getEmbeds().get(0).getFooter().getText();
         Member member = guild.getMemberById(memberId);
@@ -1071,7 +1068,7 @@ public class RoleBotListener extends ListenerAdapter {
         });
     }
 
-    @ButtonCommand(CommandName = "reject_guild_join", isOfficerPermission = true)
+    @RoleButtonCommand(CommandName = "reject_guild_join", isOfficerPermission = true)
     private void rejectGuildJoin(ButtonInteractionEvent event){
         String memberId = event.getMessage().getEmbeds().get(0).getFooter().getText();
         Member member = guild.getMemberById(memberId);
