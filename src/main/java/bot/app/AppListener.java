@@ -60,7 +60,7 @@ public class AppListener extends ListenerAdapter {
                 eb.setDescription("A login was requested from the [app name] app. Please approve or deny this request");
                 eb.setColor(Color.blue);
                 channel.sendMessageEmbeds(eb.build()).setActionRow(
-                        Button.primary("approve_app_login", "Approve"),
+                        Button.success("approve_app_login", "Approve"),
                         Button.danger("deny_app_login", "Deny")
                 ).queue(message -> {
                     loginRequests.saveSerialized(new LoginRequest(message.getId(), uid));
@@ -68,18 +68,34 @@ public class AppListener extends ListenerAdapter {
             });
             return true;
         } catch (Exception e){
-            logger.error(e.toString());
+            logger.error(e.getMessage());
         }
         return false;
     }
 
     @GenericButtonCommand(CommandName = "approve_app_login")
     private void buttonApprove(ButtonInteractionEvent event){
-
+        String messageID = event.getMessage().getId();
+        if(loginRequests.exists(messageID)){
+            LoginRequest lr = loginRequests.loadSerialized(messageID);
+            loginRequests.delete(lr);
+        }
+        event.getMessage().editMessageComponents().queue();
+        EmbedBuilder em = new EmbedBuilder(event.getMessage().getEmbeds().get(0));
+        em.setColor(Color.green);
+        event.editMessageEmbeds(em.build()).queue();
     }
 
     @GenericButtonCommand(CommandName = "deny_app_login")
     private void buttonDeny(ButtonInteractionEvent event){
-
+        String messageID = event.getMessage().getId();
+        if(loginRequests.exists(messageID)){
+            LoginRequest lr = loginRequests.loadSerialized(messageID);
+            loginRequests.delete(lr);
+        }
+        event.getMessage().editMessageComponents().queue();
+        EmbedBuilder em = new EmbedBuilder(event.getMessage().getEmbeds().get(0));
+        em.setColor(Color.red);
+        event.editMessageEmbeds(em.build()).queue();
     }
 }
