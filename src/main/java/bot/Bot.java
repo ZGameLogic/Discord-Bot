@@ -129,7 +129,11 @@ public class Bot {
 	@GetMapping("app/login")
 	public String login(@RequestBody String bodyString) throws JSONException {
 		String uid = new JSONObject(bodyString).getString("uid");
-		AL.login(uid);
+		if(AL.login(uid)){
+			// TODO success
+		} else {
+			// TODO failure
+		}
 	}
 	
 	@GetMapping("/king")
