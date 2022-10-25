@@ -51,20 +51,26 @@ public class AppListener extends ListenerAdapter {
         }
     }
 
-    public void login(String uid){
+    public boolean login(String uid){
         User user = bot.getUserById(uid);
-        user.openPrivateChannel().queue(channel -> {
-            EmbedBuilder eb = new EmbedBuilder();
-            eb.setTitle("Login request from App");
-            eb.setDescription("A login was requested from the [app name] app. Please approve or deny this request");
-            eb.setColor(Color.blue);
-            channel.sendMessageEmbeds(eb.build()).setActionRow(
-                    Button.primary("approve_app_login", "Approve"),
-                    Button.danger("deny_app_login", "Deny")
-            ).queue(message -> {
-                loginRequests.saveSerialized(new LoginRequest(message.getId(), uid));
+        try {
+            user.openPrivateChannel().queue(channel -> {
+                EmbedBuilder eb = new EmbedBuilder();
+                eb.setTitle("Login request from App");
+                eb.setDescription("A login was requested from the [app name] app. Please approve or deny this request");
+                eb.setColor(Color.blue);
+                channel.sendMessageEmbeds(eb.build()).setActionRow(
+                        Button.primary("approve_app_login", "Approve"),
+                        Button.danger("deny_app_login", "Deny")
+                ).queue(message -> {
+                    loginRequests.saveSerialized(new LoginRequest(message.getId(), uid));
+                });
             });
-        });
+            return true;
+        } catch (Exception e){
+            logger.error(e.toString());
+        }
+        return false;
     }
 
     @GenericButtonCommand(CommandName = "approve_app_login")
