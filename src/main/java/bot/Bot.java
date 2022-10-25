@@ -7,6 +7,7 @@ import java.util.Scanner;
 import javax.annotation.PostConstruct;
 import javax.security.auth.login.LoginException;
 
+import bot.app.AppListener;
 import bot.jira.JiraListener;
 import bot.messageUtils.MessageListener;
 import bot.minecraft.MinecraftListener;
@@ -47,6 +48,7 @@ import webhook.listeners.WebHookReactionListener;
 public class Bot {
 	
 	private RoleBotListener RBL;
+	private AppListener AL;
 	private JDA jdaBot;
 
 	private static String TITLE = "\r\n" + 
@@ -77,10 +79,12 @@ public class Bot {
 		PartyBotListener PBL = new PartyBotListener(config);
 		WebHookReactionListener WHRL = new WebHookReactionListener(config);
 		RBL = new RoleBotListener(config);
+		AL = new AppListener();
 		
 		bot.addEventListeners(PBL);
 		bot.addEventListeners(WHRL);
 		bot.addEventListeners(RBL);
+		bot.addEventListeners(AL);
 		bot.addEventListeners(new SteamListener());
 		bot.addEventListeners(new SlashBotListener(PBL, config));
 		bot.addEventListeners(new PokemonListener());
@@ -120,6 +124,12 @@ public class Bot {
 	public void bambooWebhook(@RequestBody String valueOne) throws JSONException {
 		JSONObject JSONInformation = new JSONObject(valueOne);
 		handleBamboo(JSONInformation);
+	}
+
+	@GetMapping("app/login")
+	public String login(@RequestBody String bodyString) throws JSONException {
+		String uid = new JSONObject(bodyString).getString("uid");
+		AL.login(uid);
 	}
 	
 	@GetMapping("/king")
