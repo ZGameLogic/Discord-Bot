@@ -16,6 +16,8 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.lang.reflect.Method;
+import java.util.Date;
+import java.util.LinkedList;
 
 public class AppListener extends ListenerAdapter {
     private Logger logger = LoggerFactory.getLogger(AppListener.class);
@@ -73,12 +75,20 @@ public class AppListener extends ListenerAdapter {
         return false;
     }
 
+    public boolean isApproved(String uid){
+        if(loginRequests.exists(uid)){
+            return loginRequests.loadSerialized(uid).isApproved();
+        }
+        return false;
+    }
+
     @GenericButtonCommand(CommandName = "approve_app_login")
     private void buttonApprove(ButtonInteractionEvent event){
         String messageID = event.getMessage().getId();
         if(loginRequests.exists(messageID)){
             LoginRequest lr = loginRequests.loadSerialized(messageID);
-            loginRequests.delete(lr);
+            lr.setApproved(true);
+            loginRequests.saveSerialized(lr);
         }
         event.getMessage().editMessageComponents().queue();
         EmbedBuilder em = new EmbedBuilder(event.getMessage().getEmbeds().get(0));
@@ -91,11 +101,21 @@ public class AppListener extends ListenerAdapter {
         String messageID = event.getMessage().getId();
         if(loginRequests.exists(messageID)){
             LoginRequest lr = loginRequests.loadSerialized(messageID);
-            loginRequests.delete(lr);
         }
         event.getMessage().editMessageComponents().queue();
         EmbedBuilder em = new EmbedBuilder(event.getMessage().getEmbeds().get(0));
         em.setColor(Color.red);
         event.editMessageEmbeds(em.build()).queue();
+    }
+
+    public void clearOld() {
+        LinkedList<LoginRequest> oldRequests = new LinkedList<>();
+        Date now = new Date();
+        for(LoginRequest request : loginRequests){
+            if(request.getExpires().before(now)){
+                oldRequests.add(request);
+            }
+        }
+        loginRequests.delete(oldRequests);
     }
 }
