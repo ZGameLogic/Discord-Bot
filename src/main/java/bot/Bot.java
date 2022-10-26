@@ -137,6 +137,12 @@ public class Bot {
 			return "fail";
 		}
 	}
+
+	@GetMapping("app/login/request")
+	public String isApproved(@RequestBody String bodyString) throws JSONException {
+		String uid = new JSONObject(bodyString).getString("uid");
+		return AL.isApproved(uid) + "";
+	}
 	
 	@GetMapping("/king")
 	public String getKing() {
@@ -156,6 +162,7 @@ public class Bot {
 	@Scheduled(cron = "0 * * * * *")
 	private void minuteTask() throws NoSuchMethodException {
 		RBL.minuteTasks(); // every minute
+		AL.clearOld();
 	}
 
 	@Scheduled(cron = "0 0 0 25 12 ?")

@@ -7,7 +7,10 @@ import data.serializing.SavableData;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
+import java.time.Clock;
+import java.time.Duration;
 import java.util.Date;
 
 @NoArgsConstructor
@@ -16,10 +19,15 @@ import java.util.Date;
 public class LoginRequest extends SavableData {
     private String uid;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
-    private Date requested;
+    private Date expires;
+    @Setter
+    private boolean approved;
 
     public LoginRequest(String id, String uid) {
-        requested = new Date();
+        Clock c = Clock.systemUTC();
+        c = Clock.offset(c, Duration.ofHours(1)); // set to expire in 1 hour
+        expires = new Date(c.millis());
+        approved = false;
         setId(id);
         this.uid = uid;
     }
