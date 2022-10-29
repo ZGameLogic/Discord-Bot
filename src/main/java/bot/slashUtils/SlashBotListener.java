@@ -1,19 +1,18 @@
 package bot.slashUtils;
 
 import java.awt.Color;
+import java.util.Collection;
 import java.util.LinkedList;
 
 import bot.role.RoleBotReady;
-import controllers.atlassian.JiraInterfacer;
-import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.commands.build.OptionData;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.Modal;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.components.ItemComponent;
+import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu;
+import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
+import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,13 +104,26 @@ public class SlashBotListener extends ListenerAdapter {
 			logger.error("Too many global update commands for today");
 		}
 	}
-	
+
+//	@Override
+//	public void onStringSelectInteraction(StringSelectInteractionEvent event) {
+//		event.reply(event.getInteraction().getSelectedOptions().size() + "").queue();
+//		event.getMessage().editMessageComponents().queue();
+//	}
+
 	@Override
 	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
 		logger.info("Slash command received for " + event.getName() + " by " + event.getMember().getEffectiveName());
 		switch(event.getName()) {
 		case "pray":
 			event.reply("Thank you, my child.").queue();
+//			LinkedList<EntitySelectMenu.SelectTarget> stuff = new LinkedList<>();
+//			stuff.add(EntitySelectMenu.SelectTarget.ROLE);
+//			event.reply("Text").setActionRow(EntitySelectMenu.create("bep", stuff).build()).queue();
+//			LinkedList<SelectOption> strings = new LinkedList<>();
+//			strings.add(SelectOption.of("Label 1", "label1"));
+//			strings.add(SelectOption.of("Label 2", "label2"));
+//			event.reply("Text").setActionRow(StringSelectMenu.create("custom").addOptions(strings).setMinValues(2).setMaxValues(2).build()).queue();
 			break;
 		case "teams-generate":
 			generateTeam(event, event.getOption("command").getAsString());
