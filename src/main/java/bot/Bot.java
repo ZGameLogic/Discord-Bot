@@ -2,6 +2,7 @@ package bot;
 
 import javax.annotation.PostConstruct;
 
+import bot.listeners.GeneralListener;
 import bot.listeners.PartyBot;
 import bot.utils.AdvancedListenerAdapter;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
@@ -51,6 +52,7 @@ public class Bot {
 		LinkedList<AdvancedListenerAdapter> listeners = new LinkedList<>();
 
 		listeners.add(new PartyBot(config));
+		listeners.add(new GeneralListener());
 
 		// Add listeners
 		for(ListenerAdapter a : listeners){
