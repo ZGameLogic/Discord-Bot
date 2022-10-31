@@ -13,13 +13,13 @@ import org.json.JSONObject;
 
 import bot.steam.SteamAppData;
 
-public abstract class SteamAPI {
+public interface SteamAPI {
 	
-	public static final String API_PATH_REVIEW_PREFIX = "http://store.steampowered.com/appreviews/";
-	public static final String API_PATH_REVIEW_SUFFIX = "?json=1";
-	public static final String API_PATH_STORE = "http://store.steampowered.com/api/appdetails?appids=";
+	String API_PATH_REVIEW_PREFIX = "http://store.steampowered.com/appreviews/";
+	String API_PATH_REVIEW_SUFFIX = "?json=1";
+	String API_PATH_STORE = "http://store.steampowered.com/api/appdetails?appids=";
 	
-	public static SteamAppData appReviews(String id) {
+	static SteamAppData appReviews(String id) {
         try {
         	HttpClient httpclient = HttpClients.createDefault();
             URIBuilder builder = new URIBuilder(API_PATH_REVIEW_PREFIX + id + API_PATH_REVIEW_SUFFIX);
