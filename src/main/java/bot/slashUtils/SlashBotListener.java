@@ -1,13 +1,22 @@
 package bot.slashUtils;
 
 import java.awt.Color;
+import java.util.Collection;
 import java.util.LinkedList;
 
+import bot.role.RoleBotReady;
+import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
+import net.dv8tion.jda.api.events.session.ReadyEvent;
+import net.dv8tion.jda.api.interactions.commands.build.OptionData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
+import net.dv8tion.jda.api.interactions.components.ItemComponent;
+import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu;
+import net.dv8tion.jda.api.interactions.components.selections.SelectOption;
+import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import bot.party.PartyBotListener;
-import bot.role.RoleBotListener;
 import controllers.dice.DiceRollingSimulator;
 import controllers.team.Team;
 import controllers.team.TeamGenerator;
@@ -16,12 +25,10 @@ import controllers.team.TeamGenerator.TeamNameException;
 import data.ConfigLoader;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 
 public class SlashBotListener extends ListenerAdapter {
@@ -31,12 +38,10 @@ public class SlashBotListener extends ListenerAdapter {
 	
 	private PartyBotListener PBL;
 	private ConfigLoader CL;
-	private RoleBotListener RBL;
 	
-	public SlashBotListener(PartyBotListener PBL, ConfigLoader CL, RoleBotListener RBL) {
+	public SlashBotListener(PartyBotListener PBL, ConfigLoader CL) {
 		this.PBL = PBL;
 		this.CL = CL;
-		this.RBL = RBL;
 	}
 	
 	/**
@@ -60,61 +65,30 @@ public class SlashBotListener extends ListenerAdapter {
 				.addOption(OptionType.INTEGER, "faces", "Number of faces on each die", true));
 		
 		// Party bot commands
-		guild.addCommands(Commands.slash("create-text", "Creates a text chatroom that only people in the voice channel can see"));
 		guild.addCommands(Commands.slash("rename-chatroom", "Renames chatroom to a new name")
 				.addOption(OptionType.STRING, "name", "Chatroom name", true));
 		guild.addCommands(Commands.slash("limit", "Limits the amount of people who can enter a chatroom")
 				.addOption(OptionType.INTEGER, "count", "Number of people allowed in the chatroom", true));
 		
 		// Role bot listener
-		guild.addCommands(Commands.slash("stats", "Posts the players stats in chat")
-				.addOption(OptionType.USER, "player", "Player's stats to see", false));
-		guild.addCommands(Commands.slash("challenge", "Challenges a player for their role. A win switches the roles!")
-				.addOption(OptionType.USER, "player", "The player you wish to challenge", true));
-		guild.addCommands(Commands.slash("role-stats", "Lists everyone in the caste level and their stats if they can still defend for the day")
-				.addOption(OptionType.ROLE, "role", "Role to see the stats of", true)
-				.addOption(OptionType.BOOLEAN, "include-all", "Whether or not to include the people who have already defended today", false));
-		guild.addCommands(Commands.slash("leaderboard", "Get the top 10 players in a specific category")
-				.addSubcommands(new SubcommandData("strength", "Shows the strength statistic")
-						.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
-				.addSubcommands(new SubcommandData("knowledge", "Shows the knowledge statistic")
-						.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
-				.addSubcommands(new SubcommandData("magic", "Shows the magic statistic")
-						.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
-				.addSubcommands(new SubcommandData("agility", "Shows the agility statistic")
-						.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
-				.addSubcommands(new SubcommandData("stamina", "Shows the stamina statistic")
-						.addOption(OptionType.BOOLEAN, "show-all", "Show all stats, or just the one for the leader board", false))
-				.addSubcommands(new SubcommandData("gold", "Shows the richest citizens"))
-				.addSubcommands(new SubcommandData("total", "Shows the citizens with the most stats"))
-				.addSubcommands(new SubcommandData("wins", "Shows the citizens with the most wins"))
-				.addSubcommands(new SubcommandData("losses", "Shows the citizens with the most losses"))
-				.addSubcommands(new SubcommandData("factions", "Shows the population of each faction"))
-				.addSubcommands(new SubcommandData("activities", "Shows a list of active members who still have not taken their activities for today"))
-				);
-		guild.addCommands(Commands.slash("pay-citizen", "Gives your gold to a citizen of your choice")
-				.addOption(OptionType.USER, "citizen", "The citizen to recieve your gold", true)
-				.addOption(OptionType.INTEGER, "gold", "The amount of gold to give", true));
-		guild.addCommands(Commands.slash("day-history", "Shows the event history for the day")
-				.addOption(OptionType.STRING, "specific-day", "Pick a day to show formatted as: mm:dd:yyyy:k. K being the day shlongshot is on", false));
-		guild.addCommands(Commands.slash("achievements", "Posts the players achievements in chat")
-				.addOption(OptionType.USER, "player", "Player's achievements to see", false));
-		guild.addCommands(Commands.slash("pray", "Pray to Shlongbot"));
-		
-		// Role bot king
-		guild.addCommands(Commands.slash("distribute-wealth", "Gives some of your wealth to a caste system")
-				.addOption(OptionType.ROLE, "role", "The caste level of where you want your gold to go", true)
-				.addOption(OptionType.INTEGER, "gold", "The amount of gold to distribute", true));
-		
-		guild.addCommands(Commands.slash("propose-tax", "Forces a caste to pay a tax at the start of the next day")
-				.addOption(OptionType.ROLE, "role", "The caste level to tax", true)
-				.addOption(OptionType.INTEGER, "gold", "The amount of gold to tax", true));
-		
-		guild.addCommands(Commands.slash("honorable-promotion", "Forces two citizens to switch roles. Used once per day")
-				.addOption(OptionType.USER, "citizen-one", "One of the two citizens to switch roles", true)
-				.addOption(OptionType.USER, "citizen-two", "One of the two citizens to switch roles", true));
-		guild.addCommands(Commands.slash("pass-law", "Create a law for the kingdom to follow from now on!")
-				.addOption(OptionType.STRING, "law", "Law to be added", true));
+		guild.addCommands(RoleBotReady.getCommands());
+
+		// pokemon
+		guild.addCommands(Commands.slash("pokemon", "Anything involving the pokemon functionality")
+				.addSubcommands(new SubcommandData("lookup", "Lookup a pokemon by name")
+						.addOption(OptionType.STRING, "name", "The name or pokedex index of the pokemon to lookup", true))
+		);
+
+		// minecraft
+		guild.addCommands(Commands.slash("minecraft", "Anything involving the minecraft functionality")
+				.addSubcommands(new SubcommandData("lookup", "Lookup a minecraft server")
+						.addOptions(new OptionData(OptionType.STRING, "server", "The server to lookup", true)
+								.addChoice("vanilla", "zgamelogic.com")
+								.addChoice("ATM7", "zgamelogic.com:25566"))
+		));
+
+		// bug report
+		guild.addCommands(Commands.slash("bug-report", "Submit a bug report"));
 		
 		try {
 			guild.submit();
@@ -130,13 +104,26 @@ public class SlashBotListener extends ListenerAdapter {
 			logger.error("Too many global update commands for today");
 		}
 	}
-	
+
+//	@Override
+//	public void onStringSelectInteraction(StringSelectInteractionEvent event) {
+//		event.reply(event.getInteraction().getSelectedOptions().size() + "").queue();
+//		event.getMessage().editMessageComponents().queue();
+//	}
+
 	@Override
 	public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
-		logger.info("Slash command recieved for " + event.getName() + " by " + event.getMember().getEffectiveName());
+		logger.info("Slash command received for " + event.getName() + " by " + event.getMember().getEffectiveName());
 		switch(event.getName()) {
 		case "pray":
 			event.reply("Thank you, my child.").queue();
+//			LinkedList<EntitySelectMenu.SelectTarget> stuff = new LinkedList<>();
+//			stuff.add(EntitySelectMenu.SelectTarget.ROLE);
+//			event.reply("Text").setActionRow(EntitySelectMenu.create("bep", stuff).build()).queue();
+//			LinkedList<SelectOption> strings = new LinkedList<>();
+//			strings.add(SelectOption.of("Label 1", "label1"));
+//			strings.add(SelectOption.of("Label 2", "label2"));
+//			event.reply("Text").setActionRow(StringSelectMenu.create("custom").addOptions(strings).setMinValues(2).setMaxValues(2).build()).queue();
 			break;
 		case "teams-generate":
 			generateTeam(event, event.getOption("command").getAsString());
@@ -147,9 +134,6 @@ public class SlashBotListener extends ListenerAdapter {
 		case "teams-help":
 			sendTeamHelp(event);
 			break;
-		case "create-text":
-			PBL.createTextChannel(event);
-			break;
 		case "rename-chatroom":
 			PBL.renameChannel(event);
 			break;
@@ -157,39 +141,6 @@ public class SlashBotListener extends ListenerAdapter {
 			PBL.limit(event);
 		case "roll-dice":
 			rollDice(event);
-			break;
-		case "stats":
-			RBL.sendStats(event);
-			break;
-		case "challenge":
-			RBL.challenge(event);
-			break;
-		case "role-stats":
-			RBL.sendRoleStats(event);
-			break;
-		case "leaderboard":
-			RBL.leaderBoard(event);
-			break;
-		case "pass-law":
-			RBL.passLaw(event);
-			break;
-		case "distribute-wealth":
-			RBL.distributeWealth(event);
-			break;
-		case "propose-tax":
-			RBL.submitTax(event);
-			break;
-		case "honorable-promotion":
-			RBL.honorablePromotion(event);
-			break;
-		case "pay-citizen":
-			RBL.payCitizen(event);
-			break;
-		case "day-history":
-			RBL.getDayHistory(event);
-			break;
-		case "achievements":
-			RBL.sendAchievements(event);
 			break;
 		}
 	}
@@ -226,7 +177,7 @@ public class SlashBotListener extends ListenerAdapter {
 			
 			event.reply("Generated teams").queue();
 			try {
-				event.getTextChannel().sendMessageEmbeds(eb.build()).queue();
+				event.getChannel().asTextChannel().sendMessageEmbeds(eb.build()).queue();
 			} catch (IllegalStateException e) {
 				
 			}

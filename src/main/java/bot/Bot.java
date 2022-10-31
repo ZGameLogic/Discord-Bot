@@ -1,20 +1,34 @@
 package bot;
 
 import java.awt.Color;
+import java.time.Instant;
+import java.util.Scanner;
 
 import javax.annotation.PostConstruct;
 import javax.security.auth.login.LoginException;
 
+import bot.app.AppListener;
+import bot.jira.JiraListener;
+import bot.messageUtils.MessageListener;
+import bot.minecraft.MinecraftListener;
+import bot.pokemon.PokemonListener;
+import controllers.atlassian.BitbucketInterfacer;
+import controllers.discord.EmbedMessageGenerator;
+import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.channel.concrete.NewsChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.client.RestTemplate;
 
 import application.App;
 import bot.party.PartyBotListener;
@@ -22,17 +36,9 @@ import bot.role.RoleBotListener;
 import bot.slashUtils.SlashBotListener;
 import bot.steam.SteamListener;
 import data.ConfigLoader;
-import data.database.arena.activity.ActivityRepository;
-import data.database.arena.encounter.EncounterRepository;
-import data.database.arena.misc.GameInformationRepository;
-import data.database.arena.player.PlayerRepository;
-import data.database.arena.shopItem.ShopItemRepository;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.TextChannel;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
@@ -41,29 +47,21 @@ import webhook.listeners.WebHookReactionListener;
 @RestController
 public class Bot {
 	
-	@Autowired
-	PlayerRepository playerData;
-	@Autowired
-	GameInformationRepository gameData;
-	@Autowired
-	ShopItemRepository shopItemData;
-	@Autowired
-	EncounterRepository encounterData;
-	@Autowired
-	ActivityRepository activityData;
-	
 	private RoleBotListener RBL;
-	
+	private AppListener AL;
+	private JDA jdaBot;
+
 	private static String TITLE = "\r\n" + 
 			"   ____  ___  _                   _   ___      _  ______  \r\n" + 
 			"  / /\\ \\|   \\(_)___ __ ___ _ _ __| | | _ ) ___| |_\\ \\ \\ \\ \r\n" + 
 			" < <  > > |) | (_-</ _/ _ \\ '_/ _` | | _ \\/ _ \\  _|> > > >\r\n" + 
 			"  \\_\\/_/|___/|_/__/\\__\\___/_| \\__,_| |___/\\___/\\__/_/_/_/ \r\n" + 
-			"  v2.0.0\tBen Shabowski\tJacob Marszalek\r\n" + 
+			"  v3.0.0\tBen Shabowski\r\n" +
 			"";
 	
 	private Logger logger = LoggerFactory.getLogger(Bot.class);
 	private TextChannel bitBucket;
+	private NewsChannel announcements;
 
 	@PostConstruct
 	public void start() {
@@ -72,7 +70,7 @@ public class Bot {
 		
 		// Create bot
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
-		bot.enableIntents(GatewayIntent.GUILD_PRESENCES);
+		bot.enableIntents(GatewayIntent.GUILD_PRESENCES, GatewayIntent.MESSAGE_CONTENT);
 		bot.enableCache(CacheFlag.ACTIVITY);
 		bot.enableIntents(GatewayIntent.GUILD_MEMBERS);
 		bot.setMemberCachePolicy(MemberCachePolicy.ALL);
@@ -80,19 +78,26 @@ public class Bot {
 		// Add listeners
 		PartyBotListener PBL = new PartyBotListener(config);
 		WebHookReactionListener WHRL = new WebHookReactionListener(config);
-		RBL = new RoleBotListener(config, playerData, gameData, shopItemData, encounterData, activityData);
+		RBL = new RoleBotListener(config);
+		AL = new AppListener();
 		
 		bot.addEventListeners(PBL);
 		bot.addEventListeners(WHRL);
 		bot.addEventListeners(RBL);
+		bot.addEventListeners(AL);
 		bot.addEventListeners(new SteamListener());
-		bot.addEventListeners(new SlashBotListener(PBL, config, RBL));
+		bot.addEventListeners(new SlashBotListener(PBL, config));
+		bot.addEventListeners(new PokemonListener());
+		bot.addEventListeners(new MinecraftListener());
+		bot.addEventListeners(new MessageListener());
+		bot.addEventListeners(new JiraListener());
 		
 		// Login
 		try {
-			JDA jdaBot = bot.build().awaitReady();
+			jdaBot = bot.build().awaitReady();
 			bitBucket = jdaBot.getGuildById(config.getGuildID()).getTextChannelById(config.getBitbucketID());
-		} catch (LoginException | InterruptedException e) {
+			announcements = jdaBot.getGuildById(config.getGuildID()).getNewsChannels().get(0);
+		} catch (InterruptedException e) {
 			logger.error("Unable to launch bot");
 		}
 	}
@@ -102,29 +107,67 @@ public class Bot {
 		JSONObject JSONInformation = new JSONObject(valueOne);
 		handleBitbucket(JSONInformation);
 	}
-	
+
+	@PostMapping("/webhook/jira")
+	public void jiraWebhook(@RequestBody String valueOne) throws JSONException {
+		JSONObject JSONInformation = new JSONObject(valueOne);
+		handleJira(JSONInformation);
+	}
+
+	@PostMapping("/webhook/jira/release")
+	public void jiraWebhookRelease(@RequestBody String valueOne) throws JSONException {
+		JSONObject JSONInformation = new JSONObject(valueOne);
+		handleJiraRelease(JSONInformation);
+	}
+
 	@PostMapping("/webhook/bamboo")
 	public void bambooWebhook(@RequestBody String valueOne) throws JSONException {
 		JSONObject JSONInformation = new JSONObject(valueOne);
 		handleBamboo(JSONInformation);
 	}
+
+	@GetMapping("app/login")
+	public String login(@RequestBody String bodyString) throws JSONException {
+		String uid = new JSONObject(bodyString).getString("uid");
+		if(AL.login(uid)){
+			// TODO success
+			return "Success";
+		} else {
+			// TODO failure
+			return "fail";
+		}
+	}
+
+	@GetMapping("app/login/request")
+	public String isApproved(@RequestBody String bodyString) throws JSONException {
+		String uid = new JSONObject(bodyString).getString("uid");
+		return AL.isApproved(uid) + "";
+	}
 	
 	@GetMapping("/king")
 	public String getKing() {
-		return RoleBotListener.getKing();
+		return null/*RoleBotListener.getKing()*/;
 	}
-	
-	@GetMapping("/auditPlayer")
-	public String auditPlayer(@RequestBody String valueOne) throws JSONException {
-		JSONObject JSONInformation = new JSONObject(valueOne);
-		JSONObject json = new JSONObject();
-		json.put("result", RBL.audit(JSONInformation.getLong("player_id")));
-		return json.toString();
+
+	@Scheduled(cron = "0 0 0,12 * * *")
+	private void newDay(){
+		RBL.newDay(); // new day
 	}
-	
-	@GetMapping("/listMembers")
-	public String listMembers() throws JSONException {
-		return RBL.getPlayerList().toString();
+
+	@Scheduled(cron = "0 0 23,11 * * *")
+	private void hourBeforeNewDay(){
+		RBL.hourBeforeNewDay(); // hour before new day
+	}
+
+	@Scheduled(cron = "0 * * * * *")
+	private void minuteTask() throws NoSuchMethodException {
+		RBL.minuteTasks(); // every minute
+		AL.clearOld();
+	}
+
+	@Scheduled(cron = "0 0 0 25 12 ?")
+	private void christmasStuff(){
+		RBL.christmas(); // every Christmas
 	}
 	
 	private void handleBamboo(JSONObject message) throws JSONException {
@@ -143,46 +186,105 @@ public class Bot {
 			String commiter = message.getJSONObject("actor").getString("displayName");
 			String commiterLink = message.getJSONObject("actor").getJSONObject("links").getJSONArray("self").getJSONObject(0).getString("href");
 		
-			MessageEmbed discordMessage = buildBitbucketMessage(commiter, commiterLink, repoName, repoLink);
+			MessageEmbed discordMessage = BitbucketInterfacer.buildBitbucketMessage(commiter, commiterLink, repoName, repoLink);
 		
 			Message discordSentMessage = bitBucket.sendMessageEmbeds(discordMessage).complete();
-			discordSentMessage.addReaction("U+1F3D7").queue();
+			discordSentMessage.addReaction(Emoji.fromUnicode("U+1F3D7")).queue();
 		}
 	}
-	
-	private MessageEmbed buildBitbucketMessage(String commiter, String commiterLink, String repoName, String repoLink) {
+
+	private void handleJiraRelease(JSONObject jsonInformation) throws JSONException {
+		String event = jsonInformation.getString("webhookEvent");
+		if(event.equals("jira:version_released")) {
+			String versionName = jsonInformation.getJSONObject("version").getString("name");
+			String versionDescription = jsonInformation.getJSONObject("version").getString("description");
+			announcements.sendMessageEmbeds(EmbedMessageGenerator.generateJiraVersion(versionName, versionDescription)).queue();
+		}
+	}
+
+	private void handleJira(JSONObject jsonInformation) throws JSONException {
+		String event;
+		if(jsonInformation.has("issue_event_type_name")) {
+			event = jsonInformation.getString("issue_event_type_name");
+		} else {
+			event = "deleted";
+		}
+		String issueKey = jsonInformation.getJSONObject("issue").getString("key");
 		EmbedBuilder eb = new EmbedBuilder();
-		
-		eb.setTitle("Bitbucket push to " + repoName, repoLink);
-		eb.setColor(Color.GRAY);
-		eb.setAuthor(commiter, commiterLink);
-		
-		try {
-			JSONObject commits = new JSONObject(getCommitList());
-			
-			if(commits.has("values")) {
-			
-				for(int i = 0; i < 5; i++) {
-					String displayID = commits.getJSONArray("values").getJSONObject(i).getString("displayId");
-					String message = commits.getJSONArray("values").getJSONObject(i).getString("message");
-				
-					eb.addField(displayID, message, false);
-				}
-			}else {
-				String displayID = commits.getString("displayId");
-				String message = commits.getString("message");
-				eb.addField(displayID, message, false);
+		eb.setColor(new Color(7, 70, 166));
+		boolean process = false;
+		boolean addCommentButton = false;
+		boolean optOutButton = false;
+		if(event.equals("issue_generic")){
+			// moved to a different developement
+			String movedTo = jsonInformation.getJSONObject("changelog").getJSONArray("items").getJSONObject(0).getString("toString");
+			String movedFrom = jsonInformation.getJSONObject("changelog").getJSONArray("items").getJSONObject(0).getString("fromString");
+			String transition = "Issue was moved from " + movedFrom + " to " + movedTo;
+			if(movedTo.equals("Done")){
+				eb.setTitle("Bug: " + issueKey + " has been resovled", "https://zgamelogic.com:8080/projects/DB/issues/" + issueKey);
+				eb.setDescription("Thank you so much for bringing this bug to my attention and the fix will be out in the next release.");
+			} else {
+				eb.setTitle("Bug: " + issueKey + " has been moved to " + movedTo, "https://zgamelogic.com:8080/projects/DB/issues/" + issueKey);
+				eb.setDescription("A bug that you submitted has changed developement status from  " + movedFrom + " to " + movedTo);
 			}
-		} catch (JSONException e) {
-			e.printStackTrace();
+			eb.setTimestamp(Instant.now());
+			process = true;
+		} else if(event.equals("issue_commented")){
+			// issue was commented on
+			String author = jsonInformation.getJSONObject("comment").getJSONObject("author").getString("displayName");
+			if(!author.equals("Discord Bot")) {
+				String comment = jsonInformation.getJSONObject("comment").getString("body");
+				eb.setTitle("Bug: " + issueKey + " had a commented added to the ticket", "https://zgamelogic.com:8080/projects/DB/issues/" + issueKey);
+				eb.setDescription(author + " commented on a bug that you submitted.\n Comment: " + comment);
+				eb.setTimestamp(Instant.now());
+				process = true;
+				addCommentButton = true;
+			}
+		} else if(event.equals("issue_created")){
+			// issue what created
+			eb.setTitle("Bug has been created in the workflow.", "https://zgamelogic.com:8080/projects/DB/issues/" + issueKey);
+			eb.setDescription("Thank you for your bug report. I will get to it as soon as I can.");
+			eb.setFooter("Issue key: " + issueKey);
+			optOutButton = true;
+			process = true;
+		} else if(event.equals("deleted")){
+			// TODO delete button to opt in or out of updates
+			return;
 		}
-		return eb.build();
-	}
-	
-	private static String getCommitList() {
-		String link = "https://zgamelogic.com:7990/rest/api/1.0/projects/BSPR/repos/discord-bot/commits/development";
-		RestTemplate restTemplate = new RestTemplate();
-		String result = restTemplate.getForObject(link, String.class);
-		return result;
+
+		if(process){
+			String userId = "";
+			boolean optIn = false;
+			Scanner input = new Scanner(jsonInformation.getJSONObject("issue").getJSONObject("fields").getString("description"));
+			JSONArray labels = jsonInformation.getJSONObject("issue").getJSONObject("fields").getJSONArray("labels");
+			while(input.hasNextLine()) {
+				String line = input.nextLine();
+				if (line.contains("Discord user ID: ")) {
+					userId = line.replace("Discord user ID: ", "");
+				}
+			}
+			input.close();
+			for(int i = 0; i < labels.length(); i++){
+				if(labels.getString(i).equals("Notify-User")){
+					optIn = true;
+					break;
+				}
+			}
+			if(!optIn){ return; }
+			if(!userId.equals("")) {
+				User user = jdaBot.getUserById(userId);
+				if (user != null) {
+					if (addCommentButton) {
+						user.openPrivateChannel().complete().sendMessageEmbeds(eb.build())
+								.setActionRow(Button.primary("comment_issue", "Add Comment")).queue();
+					} else if (optOutButton){
+						user.openPrivateChannel().complete().sendMessageEmbeds(eb.build())
+								.setActionRow(Button.primary("opt_out_issue_notif", "Opt out of notifications")).queue();
+					}else {
+						user.openPrivateChannel().complete().sendMessageEmbeds(eb.build()).queue();
+					}
+				}
+			}
+		}
 	}
 }
