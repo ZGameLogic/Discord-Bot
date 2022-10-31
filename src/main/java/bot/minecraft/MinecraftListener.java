@@ -2,8 +2,8 @@ package bot.minecraft;
 
 import controllers.discord.EmbedMessageGenerator;
 import controllers.minecraft.MinecraftAPI;
-import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
