@@ -3,20 +3,18 @@ package bot.party;
 import java.util.LinkedList;
 import java.util.List;
 
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
+import net.dv8tion.jda.api.events.session.ReadyEvent;
+import net.dv8tion.jda.api.events.session.SessionRecreateEvent;
+import net.dv8tion.jda.api.events.session.SessionResumeEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import data.ConfigLoader;
-import net.dv8tion.jda.api.entities.AudioChannel;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.VoiceChannel;
-import net.dv8tion.jda.api.events.ReadyEvent;
-import net.dv8tion.jda.api.events.ReconnectedEvent;
-import net.dv8tion.jda.api.events.ResumedEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction;
 
@@ -58,44 +56,30 @@ public class PartyBotListener extends ListenerAdapter {
 	}
 
 	@Override
-	public void onReconnected(ReconnectedEvent event) {
+	public void onSessionRecreate(SessionRecreateEvent event) {
 		logger.info("Party bot listener re-activated");
 		checkCreateChatroom(event.getJDA().getGuildById(guildID).getVoiceChannelById(createChatID),
 				event.getJDA().getGuildById(guildID));
 	}
 
 	@Override
-	public void onResumed(ResumedEvent event) {
+	public void onSessionResume(SessionResumeEvent event) {
 		logger.info("Party bot listener re-activated");
 		checkCreateChatroom(event.getJDA().getGuildById(guildID).getVoiceChannelById(createChatID),
 				event.getJDA().getGuildById(guildID));
 	}
 
-	/**
-	 * On voice chat join
-	 */
 	@Override
-	public void onGuildVoiceJoin(GuildVoiceJoinEvent event) {
-		playerJoined(event.getChannelJoined(), event.getMember(), event.getGuild());
+	public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
+		if(event.getChannelJoined() != null && event.getChannelLeft() != null){
+			playerLeft(event.getChannelLeft(), event.getMember(), event.getGuild());
+			playerJoined(event.getChannelJoined(), event.getMember(), event.getGuild());
+		} else if (event.getChannelJoined() != null) {
+			playerJoined(event.getChannelJoined(), event.getMember(), event.getGuild());
+		} else if (event.getChannelLeft() != null) {
+			playerLeft(event.getChannelLeft(), event.getMember(), event.getGuild());
+		}
 	}
-
-	/**
-	 * On voice chat move
-	 */
-	@Override
-	public void onGuildVoiceMove(GuildVoiceMoveEvent event) {
-		playerLeft(event.getChannelLeft(), event.getMember(), event.getGuild());
-		playerJoined(event.getChannelJoined(), event.getMember(), event.getGuild());
-	}
-
-	/**
-	 * On voice chat leave
-	 */
-	@Override
-	public void onGuildVoiceLeave(GuildVoiceLeaveEvent event) {
-		playerLeft(event.getChannelLeft(), event.getMember(), event.getGuild());
-	}
-
 
 	/**
 	 * Renames the voice channel Also renames any connected text channels

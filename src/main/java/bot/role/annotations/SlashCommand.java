@@ -14,9 +14,9 @@ public @interface SlashCommand {
     boolean warChannelOnly() default false;
     int activityCheck() default 0;
     boolean validCasteRole() default false;
-    boolean isSubCommand() default false;
     String subCommandName() default "";
     boolean isInGuild() default false;
     boolean isNotInGuild() default false;
     boolean isLeaderOfGuild() default false;
+    boolean isFromGuildChat() default false;
 }

@@ -9,7 +9,7 @@ import bot.role.data.results.ChallengeFightResults;
 import bot.role.data.structures.*;
 import bot.role.data.jsonConfig.Strings;
 import bot.role.data.structures.Activity;
-import bot.role.annotations.ButtonCommand;
+import bot.role.annotations.RoleButtonCommand;
 import bot.role.annotations.EmoteCommand;
 import bot.role.annotations.SlashCommand;
 import bot.role.data.structures.item.ShopItem;
@@ -20,8 +20,10 @@ import data.serializing.DataRepository;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.channel.concrete.Category;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
-import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRemoveEvent;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberRoleAddEvent;
@@ -30,14 +32,12 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.MessageReactionAddEvent;
+import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.components.ItemComponent;
-import net.dv8tion.jda.api.interactions.components.LayoutComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.awt.image.ImageWatched;
 
 import java.io.File;
 import java.lang.reflect.Method;
@@ -167,7 +167,7 @@ public class RoleBotListener extends ListenerAdapter {
                     if (m.isAnnotationPresent(SlashCommand.class)) {
                         SlashCommand sc = m.getAnnotation(SlashCommand.class);
                         if (sc.CommandName().equals(name)) {
-                            if(sc.isSubCommand()){
+                            if(!sc.subCommandName().equals("")){
                                 String sName = event.getSubcommandName();
                                 if(sc.subCommandName().equals(sName)){
                                     if(processSlashCommandAnnotations(sc, event)) {
@@ -194,8 +194,8 @@ public class RoleBotListener extends ListenerAdapter {
         try {
             String name = event.getButton().getId();
             for (Method m : getClass().getDeclaredMethods()) {
-                if (m.isAnnotationPresent(ButtonCommand.class)) {
-                    ButtonCommand bc = m.getAnnotation(ButtonCommand.class);
+                if (m.isAnnotationPresent(RoleButtonCommand.class)) {
+                    RoleButtonCommand bc = m.getAnnotation(RoleButtonCommand.class);
                     if (bc.CommandName().equals(name)) {
                         if(processButtonCommandAnnotations(bc, event)) {
                             m.invoke(this, event);
@@ -320,7 +320,7 @@ public class RoleBotListener extends ListenerAdapter {
 
         for(Tournament tournament : data.getTournaments()){
             if(tournament.getDeparts().before(now)){
-                // TODO run tournamnet
+                // TODO run tournament
                 data.deleteData(tournament);
                 tournamentsTC.deleteMessageById(tournament.getId()).queue();
                 logger.info("\tDeleting tournament: " + tournament.getId());
@@ -627,10 +627,11 @@ public class RoleBotListener extends ListenerAdapter {
     private boolean isGuildOfficerPermissions(Member member) {
         for(bot.role.data.structures.Guild guild : data.getGuilds()){
             if(guild.isInGuild(member.getIdLong())){
-                if(guild.isGuildOwner(member.getIdLong()) || guild.isGuildOfficer(member.getIdLong())){
-                    return true;
+                for(Role role : member.getRoles()) {
+                    if (guild.isGuildOwner(role.getIdLong()) || guild.isGuildOfficer(role.getIdLong())) {
+                        return true;
+                    }
                 }
-                break;
             }
         }
         return false;
@@ -647,7 +648,7 @@ public class RoleBotListener extends ListenerAdapter {
         return null;
     }
 
-    private boolean processButtonCommandAnnotations(ButtonCommand bc, ButtonInteractionEvent event) {
+    private boolean processButtonCommandAnnotations(RoleButtonCommand bc, ButtonInteractionEvent event) {
         if(bc.isOwner()){
             if (!isGuildLeader(event.getMember())) {
                 event.reply("Only the guild leader is allowed to do this action").setEphemeral(true).queue();
@@ -680,7 +681,7 @@ public class RoleBotListener extends ListenerAdapter {
         if(sc.positiveGold()){
             int gold = event.getOption("gold").getAsInt();
             if(gold <= 0){
-                event.reply("Gold must be a posative amount").setEphemeral(true).queue();
+                event.reply("Gold must be a positive amount").setEphemeral(true).queue();
                 return false;
             }
         }
@@ -727,6 +728,20 @@ public class RoleBotListener extends ListenerAdapter {
         if(player.activitiesLeftToday() < sc.activityCheck()){
             event.reply("You do not have enough activities left").setEphemeral(true).queue();
             return false;
+        }
+        if(sc.isFromGuildChat()){
+            long channelId = event.getChannel().getIdLong();
+            boolean found = false;
+            for(bot.role.data.structures.Guild guild : data.getGuilds()){
+                if(guild.getIds().getTextChannel() == channelId){
+                    found = true;
+                    break;
+                }
+            }
+            if(!found){
+                event.reply("This has to be done in a guild chat").setEphemeral(true).queue();
+                return false;
+            }
         }
         return true;
     }
@@ -929,7 +944,84 @@ public class RoleBotListener extends ListenerAdapter {
         event.reply("Inventory slots " + slotOne + " and " + slotTwo + " have been swapped.").queue();
     }
 
-    @SlashCommand(CommandName = "guild", isSubCommand = true, subCommandName = "join", isNotInGuild = true)
+    @RoleButtonCommand(CommandName = "cursor_up", isOfficerPermission = true)
+    private void guildReorderMoveCursorUp(ButtonInteractionEvent event){
+        int selectedIndex = getSelectedIndex(event.getMessage().getEmbeds().get(0).getDescription());
+        LinkedList<String> names = clearSelected(event.getMessage().getEmbeds().get(0).getDescription().split("\n"));
+        if(selectedIndex - 1 < 0){
+            selectedIndex = names.size() - 1;
+        } else {
+            selectedIndex--;
+        }
+        event.editMessageEmbeds(EmbedMessageGenerator.generateGuildOrder(names, selectedIndex)).queue();
+    }
+
+    @RoleButtonCommand(CommandName = "cursor_down", isOfficerPermission = true)
+    private void guildReorderMoveCursorDown(ButtonInteractionEvent event){
+        int selectedIndex = getSelectedIndex(event.getMessage().getEmbeds().get(0).getDescription());
+        LinkedList<String> names = clearSelected(event.getMessage().getEmbeds().get(0).getDescription().split("\n"));
+        if(selectedIndex + 1 >= names.size()){
+            selectedIndex = 0;
+        } else {
+            selectedIndex++;
+        }
+        event.editMessageEmbeds(EmbedMessageGenerator.generateGuildOrder(names, selectedIndex)).queue();
+    }
+
+    @RoleButtonCommand(CommandName = "move_selected_up", isOfficerPermission = true)
+    private void guildReorderMoveSelectedUp(ButtonInteractionEvent event){
+        int selectedIndex = getSelectedIndex(event.getMessage().getEmbeds().get(0).getDescription());
+        LinkedList<String> names = clearSelected(event.getMessage().getEmbeds().get(0).getDescription().split("\n"));
+
+    }
+
+    @RoleButtonCommand(CommandName = "confirm_order", isOfficerPermission = true)
+    private void guildConfirmOrder(ButtonInteractionEvent event){
+        event.getMessage().editMessageComponents().queue();
+        event.reply("Guild order has been updated").setEphemeral(true).queue();
+    }
+
+    @RoleButtonCommand(CommandName = "move_selected_up", isOfficerPermission = true)
+    private void guildReorderMoveSelectedDown(ButtonInteractionEvent event){
+        int selectedIndex = getSelectedIndex(event.getMessage().getEmbeds().get(0).getDescription());
+    }
+
+    private LinkedList<String> clearSelected(String[] names){
+        LinkedList<String> newNames = new LinkedList<>();
+        for(String name : names){
+            newNames.add(name.replace("**>", "").replace("<**", ""));
+        }
+        return newNames;
+    }
+
+    private int getSelectedIndex(String desc){
+        String[] players = desc.split("\n");
+        for(int i = 0; i < players.length; i++){
+            if(players[i].contains("**>") && players[i].contains("<**")){
+                return i;
+            }
+        }
+        return 0;
+    }
+
+    @SlashCommand(CommandName = "guild", subCommandName = "reorder", isFromGuildChat = true)
+    private void guildReorderSlashCommand(SlashCommandInteractionEvent event){
+        bot.role.data.structures.Guild guild = getGuildByTextId(event.getChannel().getIdLong());
+        LinkedList<String> names = new LinkedList<>();
+        for(Long id : guild.getMembers()){
+            names.add(this.guild.getMemberById(id).getEffectiveName());
+        }
+        event.replyEmbeds(EmbedMessageGenerator.generateGuildOrder(names, 0))
+                .setActionRow(
+                        Button.primary("move_selected_up", "Move up"),
+                        Button.primary("move_selected_down", "Move down"),
+                        Button.secondary("cursor_up", "Cursor up"),
+                        Button.secondary("cursor_down", "Cursor down"),
+                        Button.success("confirm_order", "Confirm order")
+                ).queue();
+    }
+
+    @SlashCommand(CommandName = "guild", subCommandName = "join", isNotInGuild = true)
     private void guildJoinSlashCommand(SlashCommandInteractionEvent event){
         String guildName = event.getOption("guild-name").getAsString();
         bot.role.data.structures.Guild guild = getGuildByName(guildName);
@@ -955,7 +1047,7 @@ public class RoleBotListener extends ListenerAdapter {
 
     }
 
-    @ButtonCommand(CommandName = "accept_guild_join", isOfficerPermission = true)
+    @RoleButtonCommand(CommandName = "accept_guild_join", isOfficerPermission = true)
     private void acceptGuildJoin(ButtonInteractionEvent event){
         String memberId = event.getMessage().getEmbeds().get(0).getFooter().getText();
         Member member = guild.getMemberById(memberId);
@@ -976,7 +1068,7 @@ public class RoleBotListener extends ListenerAdapter {
         });
     }
 
-    @ButtonCommand(CommandName = "reject_guild_join", isOfficerPermission = true)
+    @RoleButtonCommand(CommandName = "reject_guild_join", isOfficerPermission = true)
     private void rejectGuildJoin(ButtonInteractionEvent event){
         String memberId = event.getMessage().getEmbeds().get(0).getFooter().getText();
         Member member = guild.getMemberById(memberId);
@@ -994,7 +1086,7 @@ public class RoleBotListener extends ListenerAdapter {
         });
     }
 
-    @SlashCommand(CommandName = "guild", isSubCommand = true, subCommandName = "leave", isInGuild = true)
+    @SlashCommand(CommandName = "guild", subCommandName = "leave", isInGuild = true)
     private void guildLeaveSlashCommand(SlashCommandInteractionEvent event){
         bot.role.data.structures.Guild guild = getMemberGuild(event.getMember());
         guild.removeFromGuild(event.getMember().getIdLong());
@@ -1017,7 +1109,7 @@ public class RoleBotListener extends ListenerAdapter {
         event.reply("You have left the " + guild.getId() + " guild").setEphemeral(true).queue();
     }
 
-    @SlashCommand(CommandName = "guild", isSubCommand = true, subCommandName = "create", isNotInGuild = true)
+    @SlashCommand(CommandName = "guild", subCommandName = "create", isNotInGuild = true)
     private void guildCreateSlashCommand(SlashCommandInteractionEvent event){
         String guildName = event.getOption("guild-name").getAsString();
         if(data.getGuilds().exists(guildName)){

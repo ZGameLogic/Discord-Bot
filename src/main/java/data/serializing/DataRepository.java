@@ -117,6 +117,12 @@ public class DataRepository<T extends SavableData> implements Iterable<T>{
 		delete(t.getId());
 	}
 
+	public void delete(LinkedList<T> list){
+		for(T t : list){
+			delete(t);
+		}
+	}
+
 	private void delete(String file) {
 		if(loaded.containsKey(file)){
 			loaded.remove(file);

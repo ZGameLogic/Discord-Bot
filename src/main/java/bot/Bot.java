@@ -7,6 +7,7 @@ import java.util.Scanner;
 import javax.annotation.PostConstruct;
 import javax.security.auth.login.LoginException;
 
+import bot.app.AppListener;
 import bot.jira.JiraListener;
 import bot.messageUtils.MessageListener;
 import bot.minecraft.MinecraftListener;
@@ -14,6 +15,8 @@ import bot.pokemon.PokemonListener;
 import controllers.atlassian.BitbucketInterfacer;
 import controllers.discord.EmbedMessageGenerator;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.channel.concrete.NewsChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.json.JSONArray;
@@ -21,7 +24,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,6 +48,7 @@ import webhook.listeners.WebHookReactionListener;
 public class Bot {
 	
 	private RoleBotListener RBL;
+	private AppListener AL;
 	private JDA jdaBot;
 
 	private static String TITLE = "\r\n" + 
@@ -58,7 +61,7 @@ public class Bot {
 	
 	private Logger logger = LoggerFactory.getLogger(Bot.class);
 	private TextChannel bitBucket;
-	private NewsChannel announcments;
+	private NewsChannel announcements;
 
 	@PostConstruct
 	public void start() {
@@ -76,10 +79,12 @@ public class Bot {
 		PartyBotListener PBL = new PartyBotListener(config);
 		WebHookReactionListener WHRL = new WebHookReactionListener(config);
 		RBL = new RoleBotListener(config);
+		AL = new AppListener();
 		
 		bot.addEventListeners(PBL);
 		bot.addEventListeners(WHRL);
 		bot.addEventListeners(RBL);
+		bot.addEventListeners(AL);
 		bot.addEventListeners(new SteamListener());
 		bot.addEventListeners(new SlashBotListener(PBL, config));
 		bot.addEventListeners(new PokemonListener());
@@ -91,8 +96,8 @@ public class Bot {
 		try {
 			jdaBot = bot.build().awaitReady();
 			bitBucket = jdaBot.getGuildById(config.getGuildID()).getTextChannelById(config.getBitbucketID());
-			announcments = jdaBot.getGuildById(config.getGuildID()).getNewsChannels().get(0);
-		} catch (LoginException | InterruptedException e) {
+			announcements = jdaBot.getGuildById(config.getGuildID()).getNewsChannels().get(0);
+		} catch (InterruptedException e) {
 			logger.error("Unable to launch bot");
 		}
 	}
@@ -120,6 +125,24 @@ public class Bot {
 		JSONObject JSONInformation = new JSONObject(valueOne);
 		handleBamboo(JSONInformation);
 	}
+
+	@GetMapping("app/login")
+	public String login(@RequestBody String bodyString) throws JSONException {
+		String uid = new JSONObject(bodyString).getString("uid");
+		if(AL.login(uid)){
+			// TODO success
+			return "Success";
+		} else {
+			// TODO failure
+			return "fail";
+		}
+	}
+
+	@GetMapping("app/login/request")
+	public String isApproved(@RequestBody String bodyString) throws JSONException {
+		String uid = new JSONObject(bodyString).getString("uid");
+		return AL.isApproved(uid) + "";
+	}
 	
 	@GetMapping("/king")
 	public String getKing() {
@@ -139,6 +162,7 @@ public class Bot {
 	@Scheduled(cron = "0 * * * * *")
 	private void minuteTask() throws NoSuchMethodException {
 		RBL.minuteTasks(); // every minute
+		AL.clearOld();
 	}
 
 	@Scheduled(cron = "0 0 0 25 12 ?")
@@ -174,7 +198,7 @@ public class Bot {
 		if(event.equals("jira:version_released")) {
 			String versionName = jsonInformation.getJSONObject("version").getString("name");
 			String versionDescription = jsonInformation.getJSONObject("version").getString("description");
-			announcments.sendMessageEmbeds(EmbedMessageGenerator.generateJiraVersion(versionName, versionDescription)).queue();
+			announcements.sendMessageEmbeds(EmbedMessageGenerator.generateJiraVersion(versionName, versionDescription)).queue();
 		}
 	}
 
