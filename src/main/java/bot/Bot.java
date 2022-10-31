@@ -1,6 +1,12 @@
 package bot;
 
 import javax.annotation.PostConstruct;
+
+import bot.listeners.PartyBot;
+import bot.utils.AdvancedListenerAdapter;
+import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RestController;
@@ -12,6 +18,9 @@ import net.dv8tion.jda.api.JDABuilder;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
+
+import java.util.HashMap;
+import java.util.LinkedList;
 
 @RestController
 public class Bot {
@@ -38,8 +47,15 @@ public class Bot {
 		bot.enableCache(CacheFlag.ACTIVITY);
 		bot.enableIntents(GatewayIntent.GUILD_MEMBERS);
 		bot.setMemberCachePolicy(MemberCachePolicy.ALL);
-		
+
+		LinkedList<AdvancedListenerAdapter> listeners = new LinkedList<>();
+
+		listeners.add(new PartyBot(config));
+
 		// Add listeners
+		for(ListenerAdapter a : listeners){
+			bot.addEventListeners(a);
+		}
 		
 		// Login
 		try {
@@ -47,5 +63,29 @@ public class Bot {
 		} catch (InterruptedException e) {
 			logger.error("Unable to launch bot");
 		}
+
+		// Add slash commands
+		HashMap<String, LinkedList<CommandData>> guildCommands = new HashMap<>();
+		LinkedList<CommandData> globalCommands = new LinkedList<>();
+		for(AdvancedListenerAdapter listener : listeners){
+			globalCommands.addAll(listener.getGlobalSlashCommands());
+			for(String key : listener.getGuildSlashCommands().keySet()){
+				if(guildCommands.containsKey(key)){
+					guildCommands.get(key).addAll(listener.getGuildSlashCommands().get(key));
+				}else {
+					guildCommands.put(key, listener.getGuildSlashCommands().get(key));
+				}
+			}
+		}
+
+		// Update global
+		CommandListUpdateAction global = jdaBot.updateCommands();
+		global.addCommands(globalCommands).submit();
+		// Update guild
+		guildCommands.forEach((id, commands) -> {
+			CommandListUpdateAction guild = jdaBot.getGuildById(id).updateCommands();
+			guild.addCommands(commands);
+			guild.queue();
+		});
 	}
 }

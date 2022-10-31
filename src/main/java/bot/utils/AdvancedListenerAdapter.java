@@ -21,6 +21,7 @@ import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 /**
@@ -130,10 +131,13 @@ public abstract class AdvancedListenerAdapter extends ListenerAdapter {
 
     private final static Logger logger = LoggerFactory.getLogger(AdvancedListenerAdapter.class);
     @Getter
-    private final LinkedList<CommandData> slashCommands;
+    private final LinkedList<CommandData> globalSlashCommands;
+    @Getter
+    private final HashMap<String, LinkedList<CommandData>> guildSlashCommands;
 
     public AdvancedListenerAdapter(){
-        slashCommands = new LinkedList<>();
+        globalSlashCommands = new LinkedList<>();
+        guildSlashCommands = new HashMap<>();
     }
 
     @Override
@@ -254,11 +258,27 @@ public abstract class AdvancedListenerAdapter extends ListenerAdapter {
         return methods;
     }
 
-    public void addCommands(CommandData ... data){
-        Collections.addAll(slashCommands, data);
+    public void addGlobalCommands(CommandData ... data){
+        Collections.addAll(globalSlashCommands, data);
     }
 
-    public void addCommand(CommandData data){
-        slashCommands.add(data);
+    public void addGlobalCommand(CommandData data){
+        globalSlashCommands.add(data);
+    }
+
+    public void addGuildCommands(String id, CommandData ... data){
+        for(CommandData d : data){
+            addGuildCommand(id, d);
+        }
+    }
+
+    public void addGuildCommand(String id, CommandData data){
+        if(guildSlashCommands.containsKey(id)){
+            guildSlashCommands.get(id).add(data);
+        } else {
+            LinkedList<CommandData> commands = new LinkedList<>();
+            commands.add(data);
+            guildSlashCommands.put(id, commands);
+        }
     }
 }
