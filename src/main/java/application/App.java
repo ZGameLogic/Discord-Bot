@@ -15,7 +15,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * @author Ben Shabowski
  *
  */
-@SpringBootApplication(scanBasePackages = {"webhook", "bot"})
+@SpringBootApplication(scanBasePackages = {"bot"})
 @EnableScheduling
 public class App {
 	public static ConfigLoader config;

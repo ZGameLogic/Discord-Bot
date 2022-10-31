@@ -20,33 +20,9 @@ public class ConfigLoader {
 	@Value("${keystore.location}")
 	private String keystoreLocation;
 
-	@Value("${use.ssl:true}")
+	@Value("${use.ssl:false}")
 	private boolean useSSL;
-	
-	@Value("${Webhook.port}")
+
+	@Value("${Webhook.port:2001}")
 	private int webHookPort;
-	
-	@Value("${chatroom.cat.id}")
-	private long chatroomCatID;
-	
-	@Value("${create.chat.id}")
-	private long createChatID;
-	
-	@Value("${guild.id}")
-	private long guildID;
-	
-	@Value("${afk.id:0}")
-	private long AFKID;
-	
-	@Value("${bitbucket.id}")
-	private long bitbucketID;
-	
-	@Value("${admin.password}")
-	private String adminPassword;
-
-	@Value("${jira.pat}")
-	private String jiraPat;
-
-	@Value("${bitbucket.pat}")
-	private String bitbucketPat;
 }
