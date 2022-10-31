@@ -52,7 +52,7 @@ public class Bot {
 	@Autowired
 	ActivityRepository activityData;
 	
-	private RoleBotListener RBL;
+	//private RoleBotListener RBL;
 	
 	private static String TITLE = "\r\n" + 
 			"   ____  ___  _                   _   ___      _  ______  \r\n" + 
@@ -80,13 +80,13 @@ public class Bot {
 		// Add listeners
 		PartyBotListener PBL = new PartyBotListener(config);
 		WebHookReactionListener WHRL = new WebHookReactionListener(config);
-		RBL = new RoleBotListener(config, playerData, gameData, shopItemData, encounterData, activityData);
+		//RBL = new RoleBotListener(config, playerData, gameData, shopItemData, encounterData, activityData);
 		
 		bot.addEventListeners(PBL);
 		bot.addEventListeners(WHRL);
-		bot.addEventListeners(RBL);
+		//bot.addEventListeners(RBL);
 		bot.addEventListeners(new SteamListener());
-		bot.addEventListeners(new SlashBotListener(PBL, config, RBL));
+		bot.addEventListeners(new SlashBotListener(PBL, config));
 		
 		// Login
 		try {
@@ -114,18 +114,18 @@ public class Bot {
 		return RoleBotListener.getKing();
 	}
 	
-	@GetMapping("/auditPlayer")
-	public String auditPlayer(@RequestBody String valueOne) throws JSONException {
-		JSONObject JSONInformation = new JSONObject(valueOne);
-		JSONObject json = new JSONObject();
-		json.put("result", RBL.audit(JSONInformation.getLong("player_id")));
-		return json.toString();
-	}
-	
-	@GetMapping("/listMembers")
-	public String listMembers() throws JSONException {
-		return RBL.getPlayerList().toString();
-	}
+//	@GetMapping("/auditPlayer")
+//	public String auditPlayer(@RequestBody String valueOne) throws JSONException {
+//		JSONObject JSONInformation = new JSONObject(valueOne);
+//		JSONObject json = new JSONObject();
+//		json.put("result", RBL.audit(JSONInformation.getLong("player_id")));
+//		return json.toString();
+//	}
+//
+//	@GetMapping("/listMembers")
+//	public String listMembers() throws JSONException {
+//		return RBL.getPlayerList().toString();
+//	}
 	
 	private void handleBamboo(JSONObject message) throws JSONException {
 		String status = message.getJSONObject("build").getString("status");
