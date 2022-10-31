@@ -1,10 +1,10 @@
 package bot.steam;
 
+import net.dv8tion.jda.api.events.session.ReadyEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import controllers.steam.SteamAPI;
-import net.dv8tion.jda.api.events.ReadyEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
@@ -25,9 +25,9 @@ public class SteamListener extends ListenerAdapter {
 					String appID = word.replace("https://store.steampowered.com/app/", "").split("/")[0];
 					SteamAppData SAD = SteamAPI.appReviews(appID);
 					if(event.isFromGuild()) {
-						event.getTextChannel().sendMessageEmbeds(SAD.generateEmbeds()).queue();
+						event.getChannel().asTextChannel().sendMessageEmbeds(SAD.generateEmbeds()).queue();
 					} else {
-						event.getPrivateChannel().sendMessageEmbeds(SAD.generateEmbeds()).queue();
+						event.getChannel().asPrivateChannel().sendMessageEmbeds(SAD.generateEmbeds()).queue();
 					}
 				}
 			}
