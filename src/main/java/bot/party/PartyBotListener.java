@@ -3,23 +3,18 @@ package bot.party;
 import java.util.LinkedList;
 import java.util.List;
 
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
+import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
+import net.dv8tion.jda.api.events.session.ReadyEvent;
+import net.dv8tion.jda.api.events.session.SessionRecreateEvent;
+import net.dv8tion.jda.api.events.session.SessionResumeEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import data.ConfigLoader;
-import data.serializing.DataCacher;
-import net.dv8tion.jda.api.Permission;
-import net.dv8tion.jda.api.entities.AudioChannel;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.TextChannel;
-import net.dv8tion.jda.api.entities.VoiceChannel;
-import net.dv8tion.jda.api.events.ReadyEvent;
-import net.dv8tion.jda.api.events.ReconnectedEvent;
-import net.dv8tion.jda.api.events.ResumedEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceJoinEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceLeaveEvent;
-import net.dv8tion.jda.api.events.guild.voice.GuildVoiceMoveEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.SlashCommandInteraction;
 
@@ -35,19 +30,12 @@ public class PartyBotListener extends ListenerAdapter {
 	private final long guildID;
 	private final long AFKID;
 
-	private DataCacher<Connections> links; 
-
 	public PartyBotListener(ConfigLoader config) {
 
 		chatroomCatID = config.getChatroomCatID();
 		createChatID = config.getCreateChatID();
 		guildID = config.getGuildID();
 		AFKID = config.getAFKID();
-
-		links = new DataCacher<>("party\\links");
-		if(!links.exists("Channel Links")) {
-			links.saveSerialized(new Connections());
-		}
 
 		chatroomNames = new LinkedList<>();
 		chatroomNames.add("Chatroom");
@@ -68,87 +56,29 @@ public class PartyBotListener extends ListenerAdapter {
 	}
 
 	@Override
-	public void onReconnected(ReconnectedEvent event) {
+	public void onSessionRecreate(SessionRecreateEvent event) {
 		logger.info("Party bot listener re-activated");
 		checkCreateChatroom(event.getJDA().getGuildById(guildID).getVoiceChannelById(createChatID),
 				event.getJDA().getGuildById(guildID));
 	}
 
 	@Override
-	public void onResumed(ResumedEvent event) {
+	public void onSessionResume(SessionResumeEvent event) {
 		logger.info("Party bot listener re-activated");
 		checkCreateChatroom(event.getJDA().getGuildById(guildID).getVoiceChannelById(createChatID),
 				event.getJDA().getGuildById(guildID));
 	}
 
-	/**
-	 * On voice chat join
-	 */
 	@Override
-	public void onGuildVoiceJoin(GuildVoiceJoinEvent event) {
-		playerJoined(event.getChannelJoined(), event.getMember(), event.getGuild());
-	}
-
-	/**
-	 * On voice chat move
-	 */
-	@Override
-	public void onGuildVoiceMove(GuildVoiceMoveEvent event) {
-		playerLeft(event.getChannelLeft(), event.getMember(), event.getGuild());
-		playerJoined(event.getChannelJoined(), event.getMember(), event.getGuild());
-	}
-
-	/**
-	 * On voice chat leave
-	 */
-	@Override
-	public void onGuildVoiceLeave(GuildVoiceLeaveEvent event) {
-		playerLeft(event.getChannelLeft(), event.getMember(), event.getGuild());
-	}
-
-	/**
-	 * Creates a text channel based off the slash event Also creates a link between
-	 * the text and audio channel the member is in
-	 * 
-	 * @param event
-	 */
-	public void createTextChannel(SlashCommandInteraction event) {
-		// get voice channel the user is is
-		try {
-			// if the member is in a chatroom
-			AudioChannel voice = event.getMember().getVoiceState().getChannel();
-			// if the chatroom is in the chatroom category ID
-			if (event.getGuild().getVoiceChannelById(voice.getIdLong()).getParentCategoryIdLong() == chatroomCatID &&
-					voice.getIdLong() != createChatID && voice.getIdLong() != AFKID) {
-				// if the chatroom doesnt already have a text channel
-				if (!links.loadSerialized("Channel Links").hasLink(voice.getIdLong())) {
-					// create text channel
-					TextChannel newChannel = event.getGuild().createTextChannel(voice.getName())
-							.setParent(event.getGuild().getCategoryById(chatroomCatID)).complete();
-
-					// Hide the channel from everyone
-					newChannel.createPermissionOverride(event.getGuild().getPublicRole())
-							.setDeny(Permission.VIEW_CHANNEL).queue();
-
-					// Add anyone in the text channel to be able to see the text channel
-					for (Member m : voice.getMembers()) {
-						newChannel.createPermissionOverride(m).setAllow(Permission.VIEW_CHANNEL).queue();
-					}
-					Connections link = links.loadSerialized("Channel Links");
-					link.addLink(voice.getIdLong(), newChannel.getIdLong());
-					links.saveSerialized(link);
-
-					event.reply("Text channel created").setEphemeral(true).queue();
-				} else {
-					event.reply("Voice channel already has a text channel").setEphemeral(true).queue();
-				}
-			} else {
-				event.reply("You are not in a voice channel that supports this command").setEphemeral(true).queue();
-			}
-		} catch (NullPointerException e) {
-			event.reply("You are not in a voice channel that supports this command").setEphemeral(true).queue();
+	public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
+		if(event.getChannelJoined() != null && event.getChannelLeft() != null){
+			playerLeft(event.getChannelLeft(), event.getMember(), event.getGuild());
+			playerJoined(event.getChannelJoined(), event.getMember(), event.getGuild());
+		} else if (event.getChannelJoined() != null) {
+			playerJoined(event.getChannelJoined(), event.getMember(), event.getGuild());
+		} else if (event.getChannelLeft() != null) {
+			playerLeft(event.getChannelLeft(), event.getMember(), event.getGuild());
 		}
-
 	}
 
 	/**
@@ -164,10 +94,6 @@ public class PartyBotListener extends ListenerAdapter {
 				try {
 					// rename the channel and set valid command to true
 					voice.getManager().setName(event.getOption("name").getAsString()).queue();
-					Connections connections = links.loadSerialized("Channel Links");
-					if (connections.hasLink(voice.getIdLong())) {
-						event.getGuild().getTextChannelById(connections.getLink(voice.getIdLong())).getManager().setName(event.getOption("name").getAsString()).queue();
-					}
 					event.reply("Channel name updated").setEphemeral(true).queue();
 					logger.info("Renamed chatroom");
 				} catch (IllegalArgumentException e1) {
@@ -214,21 +140,9 @@ public class PartyBotListener extends ListenerAdapter {
 		VoiceChannel channel = guild.getVoiceChannelById(channelLeft.getIdLong());
 		if (channel.getParentCategoryIdLong() == chatroomCatID) {
 			if (channel.getIdLong() != createChatID && channel.getIdLong() != AFKID) {
-				Connections link = links.loadSerialized("Channel Links");
 				// We get here if the channel left in is the chatroom categories
 				if (channel.getMembers().size() == 0) {
-					if (link.hasLink(channelLeft.getIdLong())) {
-						guild.getTextChannelById(link.getLink(channelLeft.getIdLong())).delete().queue();
-						link.removeLink(channelLeft.getIdLong());
-						links.saveSerialized(link);
-						logger.info("Deleted chatroom");
-					}
 					channel.delete().queue();
-				} else {
-					if (link.hasLink(channelLeft.getIdLong())) {
-						guild.getTextChannelById(link.getLink(channelLeft.getIdLong())).putPermissionOverride(member).setDeny(Permission.VIEW_CHANNEL)
-								.queue();
-					}
 				}
 			}
 		}
@@ -246,12 +160,6 @@ public class PartyBotListener extends ListenerAdapter {
 		if (channel.getParentCategoryIdLong() == chatroomCatID) {
 			if (channel.getIdLong() == createChatID) {
 				checkCreateChatroom(channel, guild);
-			} else {
-				Connections link = links.loadSerialized("Channel Links");
-				if (link.hasLink(channelJoined.getIdLong())) {
-					guild.getTextChannelById(link.getLink(channelJoined.getIdLong())).putPermissionOverride(member).setAllow(Permission.VIEW_CHANNEL)
-							.queue();
-				}
 			}
 		}
 	}
