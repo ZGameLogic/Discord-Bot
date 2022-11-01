@@ -28,4 +28,13 @@ public class ConfigLoader {
 
 	@Value("${Webhook.port:2001}")
 	private int webHookPort;
+
+	@Value("${database.name}")
+	private String databaseName;
+
+	@Value("${sql.username}")
+	private String sqlUsername;
+
+	@Value("${sql.password}")
+	private String sqlPassword;
 }
