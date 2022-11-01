@@ -5,9 +5,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 import data.ConfigLoader;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
@@ -16,6 +18,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  *
  */
 @SpringBootApplication(scanBasePackages = {"bot"})
+@EnableJpaRepositories({"data.database"})
+@EntityScan({"data.database"})
 @EnableScheduling
 public class App {
 	public static ConfigLoader config;
@@ -44,6 +48,18 @@ public class App {
 			props.setProperty("server.ssl.key-alias", "tomcat");
 			props.setProperty("server.ssl.key-store-password", config.getKeystorePassword());
 		}
+
+		// Stuff for SQL
+		props.setProperty("spring.datasource.url", "jdbc:sqlserver://zgamelogic.com;databaseName=" + config.getDatabaseName());
+		props.setProperty("spring.datasource.username", config.getSqlUsername());
+		props.setProperty("spring.datasource.password", config.getSqlPassword());
+		props.setProperty("spring.datasource.driver-class-name", "com.microsoft.sqlserver.jdbc.SQLServerDriver");
+		props.setProperty("spring.jpa.hibernate.ddl-auto", "update");
+		props.setProperty("spring.jpa.show-sql", "true");
+		props.setProperty("org.hibernate.dialect.MySQLInnoDBDialect", "true");
+		props.setProperty("spring.jpa.properties.hibernate.enable_lazy_load_no_trans", "true");
+		props.setProperty("spring.jpa.properties.hibernate.show_sql", "false");
+
 		app.setDefaultProperties(props);
 		app.run(args);
 	}
