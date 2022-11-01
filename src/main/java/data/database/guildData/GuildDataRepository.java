@@ -1,9 +1,8 @@
-package data.database.arena.activity;
+package data.database.guildData;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 
 @Component
-public interface ActivityRepository extends JpaRepository<Activity, Long> {
-
+public interface GuildDataRepository extends JpaRepository<GuildData, Long> {
 }
