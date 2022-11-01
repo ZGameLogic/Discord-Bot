@@ -10,11 +10,8 @@ import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
-import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.requests.restaction.CommandListUpdateAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,14 +26,13 @@ import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 
 @RestController
 public class Bot {
 
 	@Autowired
-	GuildDataRepository guildData;
+	private GuildDataRepository guildData;
 
 	private JDA jdaBot;
 	private static String TITLE = "\r\n" + 
@@ -64,7 +60,7 @@ public class Bot {
 		LinkedList<AdvancedListenerAdapter> listeners = new LinkedList<>();
 
 		listeners.add(new PartyBot(guildData));
-		listeners.add(new GeneralListener());
+		listeners.add(new GeneralListener(guildData));
 
 		// Add listeners
 		for(ListenerAdapter a : listeners){
@@ -76,20 +72,6 @@ public class Bot {
 			jdaBot = bot.build().awaitReady();
 		} catch (InterruptedException e) {
 			logger.error("Unable to launch bot");
-		}
-
-		// Add slash commands
-		HashMap<String, LinkedList<CommandData>> guildCommands = new HashMap<>();
-		LinkedList<CommandData> globalCommands = new LinkedList<>();
-		for(AdvancedListenerAdapter listener : listeners){
-			globalCommands.addAll(listener.getGlobalSlashCommands());
-			for(String key : listener.getGuildSlashCommands().keySet()){
-				if(guildCommands.containsKey(key)){
-					guildCommands.get(key).addAll(listener.getGuildSlashCommands().get(key));
-				}else {
-					guildCommands.put(key, listener.getGuildSlashCommands().get(key));
-				}
-			}
 		}
 
 		//update guilds
@@ -104,27 +86,18 @@ public class Bot {
 						))
 						.setTopic("This is a channel made by shlongbot")
 						.queue(textChannel -> {
-							GuildData newGuild = new GuildData();
-							newGuild.setId(guild.getIdLong());
-							newGuild.setConfigChannelId(textChannel.getIdLong());
-							newGuild.setChatroomEnabled(false);
-							Message m = textChannel.sendMessageEmbeds(EmbedMessageGenerator.welcomeMessage(guild.getOwner().getEffectiveName(), guild.getName()))
+							textChannel.sendMessageEmbeds(EmbedMessageGenerator.welcomeMessage(guild.getOwner().getEffectiveName(), guild.getName()))
 											.setActionRow(Button.danger("enable_party", "Party Bot"))
-									.complete();
-							newGuild.setConfigMessageId(m.getIdLong());
-							guildData.save(newGuild);
+							.queue(message -> {
+								GuildData newGuild = new GuildData();
+								newGuild.setId(guild.getIdLong());
+								newGuild.setConfigChannelId(textChannel.getIdLong());
+								newGuild.setChatroomEnabled(false);
+								newGuild.setConfigMessageId(message.getIdLong());
+								guildData.save(newGuild);
+							});
 						});
 			}
 		}
-
-		// Update global
-		CommandListUpdateAction global = jdaBot.updateCommands();
-		global.addCommands(globalCommands).submit();
-		// Update guild
-		guildCommands.forEach((id, commands) -> {
-			CommandListUpdateAction guild = jdaBot.getGuildById(id).updateCommands();
-			guild.addCommands(commands);
-			guild.queue();
-		});
 	}
 }
