@@ -18,7 +18,8 @@ public abstract class EmbedMessageGenerator {
                 "This bot contains multiple functions, and here is where you can enable/disable them. " +
                 "Simply press the button at the bottom of this message to enable/disable a feature. " +
                 "Green means its enabled, and red means its disabled. " +
-                "Everything is disabled by default.");
+                "Everything is disabled by default. As features for the bot are released, expect them " +
+                "to appear under this message as a button.");
         return eb.build();
     }
 }

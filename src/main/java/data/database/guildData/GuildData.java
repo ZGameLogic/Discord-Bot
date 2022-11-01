@@ -21,5 +21,6 @@ public class GuildData {
 
     private boolean chatroomEnabled;
     private long partyCategory, afkChannelId, createChatId;
+    private long limitCommandId, renameCommandId;
 
 }

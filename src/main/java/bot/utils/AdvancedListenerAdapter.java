@@ -272,6 +272,10 @@ public abstract class AdvancedListenerAdapter extends ListenerAdapter {
         }
     }
 
+    public void addGuildCommands(long id, CommandData ... data){
+        addGuildCommands(id + "", data);
+    }
+
     public void addGuildCommand(String id, CommandData data){
         if(guildSlashCommands.containsKey(id)){
             guildSlashCommands.get(id).add(data);
