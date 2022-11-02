@@ -23,7 +23,7 @@ import java.util.List;
 
 public class PartyBot extends AdvancedListenerAdapter {
 
-    private GuildDataRepository guildData;
+    private final GuildDataRepository guildData;
     // Linked List of names to hold chatroom names
     private final LinkedList<String> chatroomNames;
 
@@ -140,6 +140,13 @@ public class PartyBot extends AdvancedListenerAdapter {
     @Override
     public void onReady(ReadyEvent event) {
         super.onReady(event);
+        new Thread(() -> {
+            for(GuildData data : guildData.findAll()){
+                if(data.isChatroomEnabled()){
+                    checkCreateChatroom(event.getJDA().getGuildById(data.getId()));
+                }
+            }
+        }, "PartyBot Startup").start();
     }
 
     @Override
