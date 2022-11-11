@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -83,6 +84,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                     plan.setAuthorId(event.getUser().getIdLong());
                     plan.setCount(count);
                     plan.setId(event.getIdLong());
+                    plan.addToLog("Created event");
                     planRepository.save(plan);
                 });
     }
@@ -127,6 +129,10 @@ public class PlannerBot extends AdvancedListenerAdapter {
         }
         Message message = event.getChannel().sendMessageEmbeds(EmbedMessageGenerator.plan(plan, event.getGuild())).complete();
         plan.setMessageId(message.getIdLong());
+        plan.addToLog("Added people to event");
+        PrivateChannel channel = event.getGuild().getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().complete();
+        Message m = channel.sendMessageEmbeds(EmbedMessageGenerator.creatorMessage(plan, event.getGuild())).complete();
+        plan.setPrivateMessageId(m.getIdLong());
         planRepository.save(plan);
     }
 
@@ -136,6 +142,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         event.getMessage().editMessageComponents().queue();
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         plan.planAccepted(userId);
+        plan.addToLog(event.getJDA().getUserById(userId).getName() + " accepted");
         planRepository.save(plan);
         Guild guild = event.getJDA().getGuildById(plan.getGuildId());
         guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage(event.getUser().getName() + " has accepted to join " + plan.getTitle()).queue());
@@ -144,6 +151,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         } catch (Exception e){
             log.error("Error editing text message for event " + plan.getTitle(), e);
         }
+        // TODO edit private message
         for(Long currentUserId: plan.getInvitees().keySet()){
             try {
                 guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> {
@@ -167,10 +175,16 @@ public class PlannerBot extends AdvancedListenerAdapter {
         event.getMessage().editMessageComponents().queue();
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         plan.planDeclined(userId);
+        plan.addToLog(event.getJDA().getUserById(userId).getName() + " declined");
         planRepository.save(plan);
         Guild guild = event.getJDA().getGuildById(plan.getGuildId());
         guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage(event.getUser().getName() + " has declined to join " + plan.getTitle()).queue());
-        guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.plan(plan, guild)).queue());
+        try {
+            guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.plan(plan, guild)).queue());
+        } catch (Exception e){
+            log.error("Error editing text message for event " + plan.getTitle(), e);
+        }
+        // TODO edit private message
         for(Long currentUserId: plan.getInvitees().keySet()){
             try {
                 guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> {
