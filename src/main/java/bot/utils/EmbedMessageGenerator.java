@@ -36,7 +36,11 @@ public abstract class EmbedMessageGenerator {
         String inviter = guild.getMemberById(plan.getAuthorId()).getEffectiveName();
         int count = plan.getCount();
         eb.setTitle(inviter + " has invited you to join them doing: " + plan.getTitle());
-        eb.setDescription(inviter + " is looking for " + count + " people to join them for " + plan.getTitle() + " (" + plan.getInvitees().size() + " invited).\n" + plan.getNotes());
+        String desc = inviter + " is looking for " + count + " people to join them for " + plan.getTitle() + " (" + plan.getInvitees().size() + " invited).\n" + plan.getNotes();
+        if(plan.getAccepted().size() >= count){
+            desc += "\nWe are no longer looking for more members to join this event. Check back later in case someone drops out.";
+        }
+        eb.setDescription(desc);
         eb.addField("People accepted", plan.getAccepted().size() + "/" + count, true);
         String attendees = "";
         for(Long id: plan.getAccepted()){
