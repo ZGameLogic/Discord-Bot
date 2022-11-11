@@ -5,6 +5,8 @@ import com.zgamelogic.AdvancedListenerAdapter;
 import data.database.planData.Plan;
 import data.database.planData.PlanRepository;
 import data.database.planData.User;
+import jdk.nashorn.internal.runtime.logging.Logger;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
@@ -20,10 +22,12 @@ import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
+import org.apache.juli.logging.Log;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 
+@Slf4j
 public class PlannerBot extends AdvancedListenerAdapter {
 
     private final PlanRepository planRepository;
@@ -105,12 +109,16 @@ public class PlannerBot extends AdvancedListenerAdapter {
         }
         plan.setInvitees(invitees);
         for(Member m : event.getMentions().getMembers()){
-            PrivateChannel pm = m.getUser().openPrivateChannel().complete();
-            Message message = pm.sendMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, event.getGuild()))
-                    .addActionRow(Button.success("accept_event", "Accept"),
-                            Button.danger("deny_event", "Deny"))
-                    .complete();
-            plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
+            try {
+                PrivateChannel pm = m.getUser().openPrivateChannel().complete();
+                Message message = pm.sendMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, event.getGuild()))
+                        .addActionRow(Button.success("accept_event", "Accept"),
+                                Button.danger("deny_event", "Deny"))
+                        .complete();
+                plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
+            } catch (Exception e){
+                log.error("Error sending message to member to create event", e);
+            }
         }
         try {
             event.reply("plan created").setEphemeral(true).queue();
@@ -131,17 +139,25 @@ public class PlannerBot extends AdvancedListenerAdapter {
         planRepository.save(plan);
         Guild guild = event.getJDA().getGuildById(plan.getGuildId());
         guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage(event.getUser().getName() + " has accepted to join " + plan.getTitle()).queue());
-        guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.plan(plan, guild)).queue());
+        try {
+            guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.plan(plan, guild)).queue());
+        } catch (Exception e){
+            log.error("Error editing text message for event " + plan.getTitle(), e);
+        }
         for(Long currentUserId: plan.getInvitees().keySet()){
-            guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> {
-                User user = plan.getInvitees().get(currentUserId);
-                channel.retrieveMessageById(user.getMessageId()).queue(message -> {
-                    message.editMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild)).queue();
-                    if(plan.getAccepted().size() >= plan.getCount()){
-                        message.editMessageComponents().queue();
-                    }
+            try {
+                guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> {
+                    User user = plan.getInvitees().get(currentUserId);
+                    channel.retrieveMessageById(user.getMessageId()).queue(message -> {
+                        message.editMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild)).queue();
+                        if(plan.getAccepted().size() >= plan.getCount()){
+                            message.editMessageComponents().queue();
+                        }
+                    });
                 });
-            });
+            } catch (Exception e){
+                log.error("Error editing message to private member", e);
+            }
         }
     }
 
@@ -156,10 +172,14 @@ public class PlannerBot extends AdvancedListenerAdapter {
         guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage(event.getUser().getName() + " has declined to join " + plan.getTitle()).queue());
         guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.plan(plan, guild)).queue());
         for(Long currentUserId: plan.getInvitees().keySet()){
-            guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> {
-                User user = plan.getInvitees().get(currentUserId);
-                channel.retrieveMessageById(user.getMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild)).queue());
-            });
+            try {
+                guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> {
+                    User user = plan.getInvitees().get(currentUserId);
+                    channel.retrieveMessageById(user.getMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild)).queue());
+                });
+            } catch (Exception e){
+                log.error("Error editing message to private member", e);
+            }
         }
     }
 }
