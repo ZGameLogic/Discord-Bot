@@ -27,10 +27,21 @@ public class Plan {
     private String title;
     private String notes;
     private Long authorId;
+    private Long guildId;
+    private Long channelId;
+    private Long messageId;
     private Integer count;
 
     public void updateMessageIdForUser(long userId, long messageId){
         invitees.get(userId).setMessageId(messageId);
+    }
+
+    public void planAccepted(long userId){
+        invitees.get(userId).setStatus(1);
+    }
+
+    public void planDeclined(long userId){
+        invitees.get(userId).setStatus(-1);
     }
 
     public LinkedList<Long> getAccepted(){

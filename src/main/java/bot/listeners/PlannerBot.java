@@ -73,6 +73,8 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 .queue(message -> {
                     Plan plan = new Plan();
                     plan.setTitle(title);
+                    plan.setChannelId(event.getChannel().getIdLong());
+                    plan.setGuildId(event.getGuild().getIdLong());
                     plan.setNotes(notes);
                     plan.setAuthorId(event.getUser().getIdLong());
                     plan.setCount(count);
@@ -83,20 +85,50 @@ public class PlannerBot extends AdvancedListenerAdapter {
 
     @ButtonResponse(buttonId = "accept_event")
     private void acceptEvent(ButtonInteraction event){
-        // TODO clear buttons for that user
-        // TODO update database
-        // TODO send message to event organizer
-        // TODO update event embed
-        // TODO update private message embeds
+        long userId = event.getUser().getIdLong();
+        event.getMessage().editMessageComponents().queue();
+        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        plan.planAccepted(userId);
+        planRepository.save(plan);
+        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
+        guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> {
+            channel.sendMessage(event.getUser().getName() + " has accepted to join " + plan.getTitle()).queue();
+        });
+        guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> {
+            message.editMessageEmbeds(EmbedMessageGenerator.plan(plan, guild)).queue();
+        });
+        for(Long currentUserId: plan.getInvitees().keySet()){
+            guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> {
+                User user = plan.getInvitees().get(currentUserId);
+                channel.retrieveMessageById(user.getMessageId()).queue(message -> {
+                    message.editMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild)).queue();
+                });
+            });
+        }
     }
 
     @ButtonResponse(buttonId = "deny_event")
     private void denyEvent(ButtonInteraction event){
-        // TODO clear buttons for that user
-        // TODO update database
-        // TODO send message to event organizer
-        // TODO update event embed
-        // TODO update private message embeds
+        long userId = event.getUser().getIdLong();
+        event.getMessage().editMessageComponents().queue();
+        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        plan.planDeclined(userId);
+        planRepository.save(plan);
+        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
+        guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> {
+            channel.sendMessage(event.getUser().getName() + " has declined to join " + plan.getTitle()).queue();
+        });
+        guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> {
+            message.editMessageEmbeds(EmbedMessageGenerator.plan(plan, guild)).queue();
+        });
+        for(Long currentUserId: plan.getInvitees().keySet()){
+            guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> {
+                User user = plan.getInvitees().get(currentUserId);
+                channel.retrieveMessageById(user.getMessageId()).queue(message -> {
+                    message.editMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild)).queue();
+                });
+            });
+        }
     }
 
     @EntitySelectionResponse(menuId = "People")
@@ -117,7 +149,9 @@ public class PlannerBot extends AdvancedListenerAdapter {
                     .complete();
             plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
         }
+        event.reply("plan created").setEphemeral(true).queue();
+        Message message = event.getChannel().sendMessageEmbeds(EmbedMessageGenerator.plan(plan, event.getGuild())).complete();
+        plan.setMessageId(message.getIdLong());
         planRepository.save(plan);
-        event.replyEmbeds(EmbedMessageGenerator.plan(plan, event.getGuild())).queue();
     }
 }
