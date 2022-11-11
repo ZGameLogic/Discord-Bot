@@ -1,6 +1,8 @@
 package bot.listeners;
 
 import com.zgamelogic.AdvancedListenerAdapter;
+import data.database.planData.Plan;
+import data.database.planData.PlanRepository;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -18,6 +20,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class PlannerBot extends AdvancedListenerAdapter {
 
+    private PlanRepository planRepository;
+
+    public PlannerBot(PlanRepository planRepository) {
+        this.planRepository = planRepository;
+    }
+
     @Override
     public void onReady(@NotNull ReadyEvent event) {
         super.onReady(event);
@@ -30,7 +38,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
 
     @SlashResponse(commandName = "plan_event")
     private void planEventSlashCommand(SlashCommandInteractionEvent event){
-        TextInput time = TextInput.create("time", "Time of the event", TextInputStyle.SHORT)
+        TextInput time = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
                 .setPlaceholder("Today at 4:30pm").build();
         TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
                 .setPlaceholder("Hunt Showdown").build();
@@ -45,16 +53,22 @@ public class PlannerBot extends AdvancedListenerAdapter {
 
     @ModalResponse(modalName = "plan_event_modal")
     private void planEventModalResponse(ModalInteractionEvent event){
-        String time = event.getValue("time").getAsString();
+        String notes = event.getValue("notes").getAsString();
         String title = event.getValue("title").getAsString();
-        String count = event.getValue("count").getAsString();
-        // TODO update database
+        int count = Integer.parseInt(event.getValue("count").getAsString());
+
         event.reply("Select people to invite").setActionRow(
                         EntitySelectMenu.create("People", EntitySelectMenu.SelectTarget.USER)
                                 .setMinValues(1)
                                 .setMaxValues(10)
                                 .build())
-                .queue();
+                .queue(message -> {
+                    Plan plan = new Plan();
+                    plan.setTitle(title);
+                    plan.setNotes(notes);
+                    plan.setAuthorId(event.getUser().getIdLong());
+                    plan.setCount(count);
+                });
     }
 
     @ButtonResponse(buttonId = "accept_event")
