@@ -3,6 +3,7 @@ package data.database.planData;
 import lombok.*;
 
 import javax.persistence.*;
+import java.util.LinkedList;
 import java.util.Map;
 
 @Getter
@@ -21,10 +22,38 @@ public class Plan {
     @MapKeyColumn(name="Plan_Player_Status_Id")
     @Column(name="status")
     @CollectionTable(name="Plan_Player_Status", joinColumns=@JoinColumn(name="example_id"))
-    private Map<String, String> attributes;
+    private Map<Long, User> invitees;
 
     private String title;
     private String notes;
     private Long authorId;
     private Integer count;
+
+    public void updateMessageIdForUser(long userId, long messageId){
+        invitees.get(userId).setMessageId(messageId);
+    }
+
+    public LinkedList<Long> getAccepted(){
+        LinkedList<Long> accepted = new LinkedList<>();
+        invitees.forEach((id, user) -> {
+            if(user.getStatus() == 1) accepted.add(id);
+        });
+        return accepted;
+    }
+
+    public LinkedList<Long> getDeclined(){
+        LinkedList<Long> declined = new LinkedList<>();
+        invitees.forEach((id, user) -> {
+            if(user.getStatus() == -1) declined.add(id);
+        });
+        return declined;
+    }
+
+    public LinkedList<Long> getPending(){
+        LinkedList<Long> pending = new LinkedList<>();
+        invitees.forEach((id, user) -> {
+            if(user.getStatus() == 0) pending.add(id);
+        });
+        return pending;
+    }
 }
