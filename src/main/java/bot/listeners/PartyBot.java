@@ -1,6 +1,6 @@
 package bot.listeners;
 
-import bot.utils.AdvancedListenerAdapter;
+import com.zgamelogic.AdvancedListenerAdapter;
 import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
 import net.dv8tion.jda.api.entities.Guild;
