@@ -58,6 +58,7 @@ public abstract class EmbedMessageGenerator {
         eb.setColor(GENERAL_COLOR);
         eb.setTitle(plan.getTitle());
         eb.setDescription(plan.getNotes());
+        eb.setFooter(plan.getId() + "");
         eb.addField("Coordinator", guild.getMemberById(plan.getAuthorId()).getEffectiveName(), true);
         String status = "";
         for(long id: plan.getAccepted()){
