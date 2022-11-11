@@ -112,7 +112,11 @@ public class PlannerBot extends AdvancedListenerAdapter {
                     .complete();
             plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
         }
-        event.reply("plan created").setEphemeral(true).queue();
+        try {
+            event.reply("plan created").setEphemeral(true).queue();
+        } catch (Exception e){
+
+        }
         Message message = event.getChannel().sendMessageEmbeds(EmbedMessageGenerator.plan(plan, event.getGuild())).complete();
         plan.setMessageId(message.getIdLong());
         planRepository.save(plan);
