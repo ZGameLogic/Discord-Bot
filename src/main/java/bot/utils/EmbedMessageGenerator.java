@@ -53,8 +53,29 @@ public abstract class EmbedMessageGenerator {
         return eb.build();
     }
 
+    public static MessageEmbed creatorMessage(Plan plan, Guild guild){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setTitle("Plan details for: " + plan.getTitle());
+        eb.setDescription(plan.getNotes() + "\n" + plan.getLog());
+        String status = "";
+        for(long id: plan.getAccepted()){
+            String name = guild.getMemberById(id).getEffectiveName();
+            status += name + ": accepted\n";
+        }
+        for(long id: plan.getPending()){
+            String name = guild.getMemberById(id).getEffectiveName();
+            status += name + ": pending invite\n";
+        }
+        for(long id: plan.getDeclined()){
+            String name = guild.getMemberById(id).getEffectiveName();
+            status += name + ": declined\n";
+        }
+        eb.addField("Invite status", status, false);
+        return eb.build();
+    }
+
     /**
-     * Use this for creating a message for the plan message
+     * Use this for creating a message for the plan message for the guild
      * @return An embed message
      */
     public static MessageEmbed plan(Plan plan, Guild guild){

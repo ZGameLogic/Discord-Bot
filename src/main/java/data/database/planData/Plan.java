@@ -3,6 +3,11 @@ package data.database.planData;
 import lombok.*;
 
 import javax.persistence.*;
+import java.text.SimpleDateFormat;
+import java.time.DateTimeException;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeFormatterBuilder;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -26,10 +31,12 @@ public class Plan {
 
     private String title;
     private String notes;
+    private String log;
     private Long authorId;
     private Long guildId;
     private Long channelId;
     private Long messageId;
+    private Long privateMessageId;
     private Integer count;
 
     public void updateMessageIdForUser(long userId, long messageId){
@@ -58,6 +65,11 @@ public class Plan {
             if(user.getStatus() == -1) declined.add(id);
         });
         return declined;
+    }
+
+    public void addToLog(String message){
+        SimpleDateFormat dtf = new SimpleDateFormat("MM-dd HH:mm");
+        log += dtf.format(new Date())+ ": " + message + "\n";
     }
 
     public LinkedList<Long> getPending(){
