@@ -67,8 +67,18 @@ public class PlannerBot extends AdvancedListenerAdapter {
     private void planEventModalResponse(ModalInteractionEvent event){
         String notes = event.getValue("notes").getAsString();
         String title = event.getValue("title").getAsString();
-        int count = Integer.parseInt(event.getValue("count").getAsString());
-
+        int count = 0;
+        try {
+            count = Integer.parseInt(event.getValue("count").getAsString());
+        } catch (NumberFormatException e){
+            event.reply("Invalid number").setEphemeral(true).queue();
+            return;
+        }
+        if(count < 1){
+            event.reply("Invalid number").setEphemeral(true).queue();
+            return;
+        }
+        int finalCount = count;
         event.reply("Select people to invite (Don't include yourself). Plan id:" + event.getIdLong()).setActionRow(
                         EntitySelectMenu.create("People", EntitySelectMenu.SelectTarget.USER)
                                 .setMinValues(1)
@@ -82,7 +92,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                     plan.setGuildId(event.getGuild().getIdLong());
                     plan.setNotes(notes);
                     plan.setAuthorId(event.getUser().getIdLong());
-                    plan.setCount(count);
+                    plan.setCount(finalCount);
                     plan.setId(event.getIdLong());
                     plan.addToLog("Created event");
                     planRepository.save(plan);
