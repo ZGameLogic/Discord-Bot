@@ -65,7 +65,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
     private void planEventModalResponse(ModalInteractionEvent event){
         String notes = event.getValue("notes").getAsString();
         String title = event.getValue("title").getAsString();
-        int count = 0;
+        int count;
         try {
             count = Integer.parseInt(event.getValue("count").getAsString());
         } catch (NumberFormatException e){
@@ -150,6 +150,44 @@ public class PlannerBot extends AdvancedListenerAdapter {
         planRepository.save(plan);
     }
 
+    @ModalResponse(modalName = "send_message_modal")
+    private void sendMessageModal(ModalInteractionEvent event){
+        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        String message = event.getValue("message").getAsString();
+        plan.getAccepted().forEach(id -> event.getJDA().openPrivateChannelById(id).queue(
+                channel -> channel.sendMessage("A message in regards to the plans made for: " + plan.getTitle() + "\n" + message).queue()
+        ));
+        event.reply("Message sent to all accepted people").setEphemeral(true).queue();
+    }
+
+    @ButtonResponse(buttonId = "send_message")
+    private void sendMessageEvent(ButtonInteraction event){
+        TextInput message = TextInput.create("message", "Message to be sent to accepted users", TextInputStyle.PARAGRAPH).build();
+        event.replyModal(Modal.create("send_message_modal", "Send message").addActionRow(message) .build()) .queue();
+    }
+
+    @ButtonResponse(buttonId = "delete_event")
+    private void deleteEvent(ButtonInteraction event){
+        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
+        // delete guild message
+        guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> message.delete().queue());
+        // delete coordinator message
+        event.getJDA().openPrivateChannelById(plan.getAuthorId()).queue(
+                channel -> channel.retrieveMessageById(plan.getPrivateMessageId()).queue(
+                        message -> message.delete().queue()
+                )
+        );
+        // delete private messages
+        plan.getInvitees().forEach((id, user) -> event.getJDA().openPrivateChannelById(id).queue(
+                channel -> channel.retrieveMessageById(user.getMessageId()).queue(
+                        message -> message.delete().queue()
+                )
+        ));
+        // delete from database
+        planRepository.delete(plan);
+    }
+
     @ButtonResponse(buttonId = "drop_out_event")
     private void dropOutEvent(ButtonInteraction event){
         long userId = event.getUser().getIdLong();
@@ -204,31 +242,29 @@ public class PlannerBot extends AdvancedListenerAdapter {
             User user = plan.getInvitees().get(currentUserId);
             int state = user.getStatus();
             try {
-                guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> {
-                    channel.retrieveMessageById(user.getMessageId()).queue(message -> {
-                        message.editMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild)).queue();
-                        if(state == 1){ // if user accepted
+                guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> channel.retrieveMessageById(user.getMessageId()).queue(message -> {
+                    message.editMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild)).queue();
+                    if(state == 1){ // if user accepted
+                        message.editMessageComponents(
+                                ActionRow.of(
+                                        Button.danger("drop_out_event", "Drop out")
+                                )
+                        ).queue();
+                    } else if(state == -1){ // if user declined
+                        message.editMessageComponents().queue();
+                    } else if(state == 0){
+                        if(full){
+                            message.editMessageComponents().queue();
+                        } else { // if not full and unsure still
                             message.editMessageComponents(
                                     ActionRow.of(
-                                            Button.danger("drop_out_event", "Drop out")
+                                            Button.success("accept_event", "Accept"),
+                                            Button.danger("deny_event", "Deny")
                                     )
                             ).queue();
-                        } else if(state == -1){ // if user declined
-                            message.editMessageComponents().queue();
-                        } else if(state == 0){
-                            if(full){
-                                message.editMessageComponents().queue();
-                            } else { // if not full and unsure still
-                                message.editMessageComponents(
-                                        ActionRow.of(
-                                                Button.success("accept_event", "Accept"),
-                                                Button.danger("deny_event", "Deny")
-                                        )
-                                ).queue();
-                            }
                         }
-                    });
-                });
+                    }
+                }));
             } catch (Exception e){
                 log.error("Error editing message to private member", e);
             }
