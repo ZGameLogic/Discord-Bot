@@ -5,12 +5,10 @@ import com.zgamelogic.AdvancedListenerAdapter;
 import data.database.planData.Plan;
 import data.database.planData.PlanRepository;
 import data.database.planData.User;
-import jdk.nashorn.internal.runtime.logging.Logger;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.channel.Channel;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -24,7 +22,6 @@ import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
-import org.apache.juli.logging.Log;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -136,7 +133,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         try {
             event.reply("plan created").setEphemeral(true).queue();
         } catch (Exception e){
-
+            log.error("Error creating event", e);
         }
         Message message = event.getChannel().sendMessageEmbeds(EmbedMessageGenerator.plan(plan, event.getGuild())).complete();
         plan.setMessageId(message.getIdLong());
