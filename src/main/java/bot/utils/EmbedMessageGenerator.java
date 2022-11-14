@@ -6,7 +6,6 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 
 import java.awt.*;
-import java.util.LinkedList;
 
 public abstract class EmbedMessageGenerator {
 
@@ -42,13 +41,13 @@ public abstract class EmbedMessageGenerator {
         }
         eb.setDescription(desc);
         eb.addField("People accepted", plan.getAccepted().size() + "/" + count, true);
-        String attendees = "";
+        StringBuilder attendees = new StringBuilder();
         for(Long id: plan.getAccepted()){
             String name = guild.getMemberById(id).getEffectiveName();
-            attendees += name + "\n";
+            attendees.append(name).append("\n");
         }
-        if(attendees.isEmpty()) attendees = "People who accept will show up here";
-        eb.addField("People attending", attendees, false);
+        if(attendees.length() == 0) attendees = new StringBuilder("People who accept will show up here");
+        eb.addField("People attending", attendees.toString(), false);
         eb.setFooter(plan.getId() + "");
         return eb.build();
     }
@@ -57,21 +56,26 @@ public abstract class EmbedMessageGenerator {
         EmbedBuilder eb = new EmbedBuilder();
         eb.setTitle("Plan details for: " + plan.getTitle());
         eb.setDescription(plan.getNotes() + "\n" + plan.getLog());
-        String status = "";
+        infoBody(plan, guild, eb);
+        eb.setFooter(plan.getId() + "");
+        return eb.build();
+    }
+
+    private static void infoBody(Plan plan, Guild guild, EmbedBuilder eb) {
+        StringBuilder status = new StringBuilder();
         for(long id: plan.getAccepted()){
             String name = guild.getMemberById(id).getEffectiveName();
-            status += name + ": accepted\n";
+            status.append(name).append(": accepted\n");
         }
         for(long id: plan.getPending()){
             String name = guild.getMemberById(id).getEffectiveName();
-            status += name + ": pending invite\n";
+            status.append(name).append(": pending invite\n");
         }
         for(long id: plan.getDeclined()){
             String name = guild.getMemberById(id).getEffectiveName();
-            status += name + ": declined\n";
+            status.append(name).append(": declined\n");
         }
-        eb.addField("Invite status", status, false);
-        return eb.build();
+        eb.addField("Invite status", status.toString(), false);
     }
 
     /**
@@ -85,20 +89,7 @@ public abstract class EmbedMessageGenerator {
         eb.setDescription(plan.getNotes());
         eb.setFooter(plan.getId() + "");
         eb.addField("Coordinator", guild.getMemberById(plan.getAuthorId()).getEffectiveName(), true);
-        String status = "";
-        for(long id: plan.getAccepted()){
-            String name = guild.getMemberById(id).getEffectiveName();
-            status += name + ": accepted\n";
-        }
-        for(long id: plan.getPending()){
-            String name = guild.getMemberById(id).getEffectiveName();
-            status += name + ": pending invite\n";
-        }
-        for(long id: plan.getDeclined()){
-            String name = guild.getMemberById(id).getEffectiveName();
-            status += name + ": declined\n";
-        }
-        eb.addField("Invite status", status, false);
+        infoBody(plan, guild, eb);
         return eb.build();
     }
 }

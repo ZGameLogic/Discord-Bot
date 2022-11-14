@@ -4,9 +4,6 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.text.SimpleDateFormat;
-import java.time.DateTimeException;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeFormatterBuilder;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Map;
@@ -80,9 +77,6 @@ public class Plan {
         SimpleDateFormat dtf = new SimpleDateFormat("MM-dd HH:mm");
         if(log == null) log = "";
         log += dtf.format(new Date())+ ": " + message + "\n";
-        if(log.split("\n").length > 4){
-
-        }
     }
 
     public LinkedList<Long> getPending(){
