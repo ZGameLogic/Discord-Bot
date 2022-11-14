@@ -31,6 +31,7 @@ public class Plan {
 
     private String title;
     private String notes;
+    @Column(columnDefinition = "varchar(max)")
     private String log;
     private Long authorId;
     private Long guildId;
@@ -55,6 +56,10 @@ public class Plan {
         invitees.get(userId).setStatus(0);
     }
 
+    public boolean isFull(){
+        return getAccepted().size() >= count;
+    }
+
     public LinkedList<Long> getAccepted(){
         LinkedList<Long> accepted = new LinkedList<>();
         invitees.forEach((id, user) -> {
@@ -73,7 +78,11 @@ public class Plan {
 
     public void addToLog(String message){
         SimpleDateFormat dtf = new SimpleDateFormat("MM-dd HH:mm");
+        if(log == null) log = "";
         log += dtf.format(new Date())+ ": " + message + "\n";
+        if(log.split("\n").length > 4){
+
+        }
     }
 
     public LinkedList<Long> getPending(){
