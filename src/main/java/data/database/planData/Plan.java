@@ -51,6 +51,10 @@ public class Plan {
         invitees.get(userId).setStatus(-1);
     }
 
+    public void planDropOut(long userId){
+        invitees.get(userId).setStatus(0);
+    }
+
     public LinkedList<Long> getAccepted(){
         LinkedList<Long> accepted = new LinkedList<>();
         invitees.forEach((id, user) -> {
