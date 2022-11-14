@@ -61,6 +61,32 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 .queue();
     }
 
+    @ModalResponse(modalName = "edit_event_modal")
+    private void editEventModal(ModalInteractionEvent event){
+        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        String notes = event.getValue("notes").getAsString();
+        String title = event.getValue("title").getAsString();
+        int count;
+        try {
+            count = Integer.parseInt(event.getValue("count").getAsString());
+        } catch (NumberFormatException e){
+            event.reply("Invalid number").setEphemeral(true).queue();
+            return;
+        }
+        if(count < 1){
+            event.reply("Invalid number").setEphemeral(true).queue();
+            return;
+        }
+        int finalCount = count;
+        plan.setCount(count);
+        plan.setTitle(title);
+        plan.setNotes(notes);
+        plan.addToLog("Event details edited");
+        updateMessages(plan, event.getJDA().getGuildById(plan.getGuildId()));
+        planRepository.save(plan);
+        event.reply("Plan details have been edited").setEphemeral(true).queue();
+    }
+
     @ModalResponse(modalName = "plan_event_modal")
     private void planEventModalResponse(ModalInteractionEvent event){
         String notes = event.getValue("notes").getAsString();
@@ -143,6 +169,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         m.editMessageComponents(
                 ActionRow.of(
                         Button.secondary("send_message", "Send message"),
+                        Button.secondary("edit_event", "Edit details"),
                         Button.danger("delete_event", "Delete event")
                 )
         ).queue();
@@ -164,6 +191,23 @@ public class PlannerBot extends AdvancedListenerAdapter {
     private void sendMessageEvent(ButtonInteraction event){
         TextInput message = TextInput.create("message", "Message to be sent to accepted users", TextInputStyle.PARAGRAPH).build();
         event.replyModal(Modal.create("send_message_modal", "Send message").addActionRow(message) .build()) .queue();
+    }
+
+    @ButtonResponse(buttonId = "edit_event")
+    private void editDetailsButtonEvent(ButtonInteraction event){
+        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        TextInput time = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
+                .setValue(plan.getNotes()).build();
+        TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
+                .setValue(plan.getTitle()).build();
+        TextInput count = TextInput.create("count", "Number of people looking for", TextInputStyle.SHORT)
+                .setValue(plan.getCount() + "").build();
+        event.replyModal(Modal.create("edit_event_modal", "Details of meeting")
+                        .addActionRow(name)
+                        .addActionRow(time)
+                        .addActionRow(count)
+                        .build())
+                .queue();
     }
 
     @ButtonResponse(buttonId = "delete_event")
