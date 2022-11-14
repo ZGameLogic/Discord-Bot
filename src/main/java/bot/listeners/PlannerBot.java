@@ -143,6 +143,12 @@ public class PlannerBot extends AdvancedListenerAdapter {
         plan.addToLog("Added people to event");
         PrivateChannel channel = event.getGuild().getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().complete();
         Message m = channel.sendMessageEmbeds(EmbedMessageGenerator.creatorMessage(plan, event.getGuild())).complete();
+        m.editMessageComponents(
+                ActionRow.of(
+                        Button.secondary("send_message", "Send message"),
+                        Button.danger("delete_event", "Delete event")
+                )
+        ).queue();
         plan.setPrivateMessageId(m.getIdLong());
         planRepository.save(plan);
     }
@@ -155,36 +161,10 @@ public class PlannerBot extends AdvancedListenerAdapter {
         Guild guild = event.getJDA().getGuildById(plan.getGuildId());
         plan.planDropOut(userId);
         plan.addToLog(event.getJDA().getUserById(userId).getName() + " dropped out");
-        event.reply("You dropped out of the event").setEphemeral(true).queue();
         guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage(event.getUser().getName() + " has dropped out of " + plan.getTitle()).queue());
-        try {
-            guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.plan(plan, guild)).queue());
-        } catch (Exception e){
-            log.error("Error editing text message for event " + plan.getTitle(), e);
-        }
-        // TODO edit private coordinator message
-        for(Long currentUserId: plan.getInvitees().keySet()){
-            try {
-                guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> {
-                    User user = plan.getInvitees().get(currentUserId);
-                    channel.retrieveMessageById(user.getMessageId()).queue(message -> {
-                        message.editMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild)).queue();
-                        if(plan.getAccepted().size() < plan.getCount()){
-                            if(!plan.getAccepted().contains(currentUserId) && !plan.getDeclined().contains(currentUserId)) {
-                                message.editMessageComponents(
-                                        ActionRow.of(Button.success("accept_event", "Accept"),
-                                                Button.danger("deny_event", "Deny"))
-                                ).queue();
-                            }
-                        }
-                    });
-                });
-            } catch (Exception e){
-                log.error("Error editing message to private member", e);
-            }
-        }
-
         planRepository.save(plan);
+        event.deferEdit().queue();
+        updateMessages(plan, guild);
     }
 
     @ButtonResponse(buttonId = "accept_event")
@@ -196,25 +176,58 @@ public class PlannerBot extends AdvancedListenerAdapter {
         planRepository.save(plan);
         Guild guild = event.getJDA().getGuildById(plan.getGuildId());
         guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage(event.getUser().getName() + " has accepted to join " + plan.getTitle()).queue());
+        event.deferEdit().queue();
+        updateMessages(plan, guild);
+    }
+
+    @ButtonResponse(buttonId = "deny_event")
+    private void denyEvent(ButtonInteraction event){
+        long userId = event.getUser().getIdLong();
+        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        plan.planDeclined(userId);
+        plan.addToLog(event.getJDA().getUserById(userId).getName() + " declined");
+        planRepository.save(plan);
+        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
+        guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage(event.getUser().getName() + " has declined to join " + plan.getTitle()).queue());
+        event.deferEdit().queue();
+        updateMessages(plan, guild);
+    }
+
+    private void updateMessages(Plan plan, Guild guild){
+        // Get the state of the plan
+        boolean full = plan.isFull();
+        // update guild message
         try {
             guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.plan(plan, guild)).queue());
         } catch (Exception e){
-            log.error("Error editing text message for event " + plan.getTitle(), e);
+            log.error("Error editing public guild message for event " + plan.getTitle(), e);
         }
-        event.reply("You accepted to join").setEphemeral(true).queue();
-        event.getMessage().editMessageComponents(
-                ActionRow.of(Button.danger("drop_out_event", "Drop out"))
-        ).queue();
-        // TODO edit private message
+        // update private messages
         for(Long currentUserId: plan.getInvitees().keySet()){
+            User user = plan.getInvitees().get(currentUserId);
+            int state = user.getStatus();
             try {
                 guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> {
-                    User user = plan.getInvitees().get(currentUserId);
                     channel.retrieveMessageById(user.getMessageId()).queue(message -> {
                         message.editMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild)).queue();
-                        if(plan.getAccepted().size() >= plan.getCount()){
-                            if(!plan.getAccepted().contains(currentUserId)) {
+                        if(state == 1){ // if user accepted
+                            message.editMessageComponents(
+                                    ActionRow.of(
+                                            Button.danger("drop_out_event", "Drop out")
+                                    )
+                            ).queue();
+                        } else if(state == -1){ // if user declined
+                            message.editMessageComponents().queue();
+                        } else if(state == 0){
+                            if(full){
                                 message.editMessageComponents().queue();
+                            } else { // if not full and unsure still
+                                message.editMessageComponents(
+                                        ActionRow.of(
+                                                Button.success("accept_event", "Accept"),
+                                                Button.danger("deny_event", "Deny")
+                                        )
+                                ).queue();
                             }
                         }
                     });
@@ -223,34 +236,10 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 log.error("Error editing message to private member", e);
             }
         }
-    }
-
-    @ButtonResponse(buttonId = "deny_event")
-    private void denyEvent(ButtonInteraction event){
-        long userId = event.getUser().getIdLong();
-        event.getMessage().editMessageComponents().queue();
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-        plan.planDeclined(userId);
-        plan.addToLog(event.getJDA().getUserById(userId).getName() + " declined");
-        planRepository.save(plan);
-        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
-        guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage(event.getUser().getName() + " has declined to join " + plan.getTitle()).queue());
         try {
-            guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.plan(plan, guild)).queue());
+            guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.retrieveMessageById(plan.getPrivateMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.creatorMessage(plan, guild)).queue()));
         } catch (Exception e){
-            log.error("Error editing text message for event " + plan.getTitle(), e);
-        }
-        event.reply("You declined to join").setEphemeral(true).queue();
-        // TODO edit private message
-        for(Long currentUserId: plan.getInvitees().keySet()){
-            try {
-                guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> {
-                    User user = plan.getInvitees().get(currentUserId);
-                    channel.retrieveMessageById(user.getMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild)).queue());
-                });
-            } catch (Exception e){
-                log.error("Error editing message to private member", e);
-            }
+            log.error("Error editing private message for event " + plan.getTitle(), e);
         }
     }
 }
