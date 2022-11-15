@@ -229,7 +229,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 )
         ));
         // delete from database
-        planRepository.delete(plan);
+        planRepository.deleteById(plan.getId());
     }
 
     @ButtonResponse(buttonId = "drop_out_event")
