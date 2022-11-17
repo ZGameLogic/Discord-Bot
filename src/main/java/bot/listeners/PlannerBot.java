@@ -5,6 +5,7 @@ import com.zgamelogic.AdvancedListenerAdapter;
 import data.database.planData.Plan;
 import data.database.planData.PlanRepository;
 import data.database.planData.User;
+import interfaces.TwilioInterface;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -13,6 +14,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -42,7 +44,28 @@ public class PlannerBot extends AdvancedListenerAdapter {
             guild.upsertCommand(
                     Commands.slash("plan_event", "Plan an event with friends")
             ).queue();
+            guild.upsertCommand(
+                    Commands.slash("send_text", "Send a text from shlongbot")
+            ).queue();
         }
+    }
+
+    @SlashResponse(commandName = "send_text")
+    private void sendTextSlashCommand(SlashCommandInteractionEvent event){
+        TextInput number = TextInput.create("number", "Number to send to", TextInputStyle.SHORT)
+                .setPlaceholder("16309999999").build();
+        TextInput message = TextInput.create("message", "Message", TextInputStyle.PARAGRAPH).build();
+        event.replyModal(Modal.create("text", "Text Message")
+                .addActionRow(number)
+                .addActionRow(message).build()).queue();
+    }
+
+    @ModalResponse(modalName = "text")
+    private void sendTextModal(ModalInteractionEvent event){
+        String number = event.getValue("number").getAsString();
+        String message = event.getValue("message").getAsString();
+        TwilioInterface.sendMessage(number, message);
+        event.reply("Message sent").queue();
     }
 
     @SlashResponse(commandName = "plan_event")
