@@ -37,4 +37,13 @@ public class ConfigLoader {
 
 	@Value("${sql.password}")
 	private String sqlPassword;
+
+	@Value("${twilio.sid}")
+	private String twilioSID;
+
+	@Value("${twilio.token}")
+	private String twilioToken;
+
+	@Value("${twilio.number}")
+	private String twilioNumber;
 }

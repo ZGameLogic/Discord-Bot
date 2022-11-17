@@ -8,6 +8,7 @@ import bot.listeners.PlannerBot;
 import com.zgamelogic.AdvancedListenerAdapter;
 import data.database.guildData.GuildDataRepository;
 import data.database.planData.PlanRepository;
+import data.database.userData.UserDataRepository;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +31,9 @@ public class Bot {
 	private GuildDataRepository guildData;
 	@Autowired
 	private PlanRepository planRepository;
+	@Autowired
+	private UserDataRepository userData;
+
 	private final static String TITLE = "\r\n" +
 			"   ____  ___  _                   _   ___      _  ______  \r\n" + 
 			"  / /\\ \\|   \\(_)___ __ ___ _ _ __| | | _ ) ___| |_\\ \\ \\ \\ \r\n" + 
@@ -56,7 +60,7 @@ public class Bot {
 
 		listeners.add(new PartyBot(guildData));
 		listeners.add(new GeneralListener(guildData));
-		listeners.add(new PlannerBot(planRepository));
+		listeners.add(new PlannerBot(planRepository, userData));
 
 		// Add listeners
 		for(ListenerAdapter a : listeners){
