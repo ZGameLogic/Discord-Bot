@@ -6,6 +6,7 @@ import data.database.planData.Plan;
 import data.database.planData.PlanRepository;
 import data.database.planData.User;
 import data.database.userData.UserDataRepository;
+import interfaces.TwilioInterface;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -201,31 +202,34 @@ public class PlannerBot extends AdvancedListenerAdapter {
                         .complete();
                 plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
                 if(userData.existsById(m.getIdLong())){
-
+                    TwilioInterface.sendMessage(
+                            userData.getOne(m.getIdLong()).getPhone_number() + "",
+                            event.getUser().getName() + " has invited you to " + plan.getTitle() + "." +
+                                    " Reply to the invite on discord."
+                    );
                 }
             } catch (Exception e){
                 log.error("Error sending message to member to create event", e);
             }
         }
         try {
-            event.getHook().setEphemeral(true).sendMessage("Plan created").queue();
+            Message message = event.getHook().sendMessageEmbeds(EmbedMessageGenerator.plan(plan, event.getGuild())).complete();
+            plan.setMessageId(message.getIdLong());
+            plan.addToLog("Added people to event");
+            PrivateChannel channel = event.getGuild().getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().complete();
+            Message m = channel.sendMessageEmbeds(EmbedMessageGenerator.creatorMessage(plan, event.getGuild())).complete();
+            m.editMessageComponents(
+                    ActionRow.of(
+                            Button.secondary("send_message", "Send message"),
+                            Button.secondary("edit_event", "Edit details"),
+                            Button.danger("delete_event", "Delete event")
+                    )
+            ).queue();
+            plan.setPrivateMessageId(m.getIdLong());
+            planRepository.save(plan);
         } catch (Exception e){
             log.error("Error sending creating event message reply", e);
         }
-        Message message = event.getChannel().sendMessageEmbeds(EmbedMessageGenerator.plan(plan, event.getGuild())).complete();
-        plan.setMessageId(message.getIdLong());
-        plan.addToLog("Added people to event");
-        PrivateChannel channel = event.getGuild().getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().complete();
-        Message m = channel.sendMessageEmbeds(EmbedMessageGenerator.creatorMessage(plan, event.getGuild())).complete();
-        m.editMessageComponents(
-                ActionRow.of(
-                        Button.secondary("send_message", "Send message"),
-                        Button.secondary("edit_event", "Edit details"),
-                        Button.danger("delete_event", "Delete event")
-                )
-        ).queue();
-        plan.setPrivateMessageId(m.getIdLong());
-        planRepository.save(plan);
     }
 
     @ModalResponse(modalName = "send_message_modal")
