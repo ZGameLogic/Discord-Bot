@@ -5,6 +5,8 @@ import com.zgamelogic.AdvancedListenerAdapter;
 import data.database.planData.Plan;
 import data.database.planData.PlanRepository;
 import data.database.planData.User;
+import data.database.userData.UserDataRepository;
+import interfaces.TwilioInterface;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -13,7 +15,9 @@ import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonInteraction;
@@ -30,9 +34,11 @@ import java.util.HashMap;
 public class PlannerBot extends AdvancedListenerAdapter {
 
     private final PlanRepository planRepository;
+    private final UserDataRepository userData;
 
-    public PlannerBot(PlanRepository planRepository) {
+    public PlannerBot(PlanRepository planRepository, UserDataRepository userData) {
         this.planRepository = planRepository;
+        this.userData = userData;
     }
 
     @Override
@@ -42,7 +48,49 @@ public class PlannerBot extends AdvancedListenerAdapter {
             guild.upsertCommand(
                     Commands.slash("plan_event", "Plan an event with friends")
             ).queue();
+            guild.upsertCommand(
+                    Commands.slash("text_notifications", "Enable or disable text message notifications")
+                            .addSubcommands(
+                                    new SubcommandData("enable", "Enables text messaging")
+                                            .addOption(OptionType.STRING, "number", "your phone number. EX: 16301112222", true),
+                                    new SubcommandData("disable", "Disables text messaging")
+                            )
+            ).queue();
         }
+    }
+
+    @SlashResponse(commandName = "text_notifications", subCommandName = "enable")
+    private void enableTextSlash(SlashCommandInteractionEvent event){
+        String formatted = event.getOption("number").getAsString()
+                .replace("(", "")
+                .replace(")", "")
+                .replace("-", "")
+                .replace(" ", "")
+                .replace("+", "");
+        if(formatted.length() < 10) {
+            event.reply("Phone number is too short").queue();
+            return;
+        }
+        try {
+            Long number = Long.parseLong(formatted);
+            data.database.userData.User user = new data.database.userData.User(
+                    event.getUser().getIdLong(),
+                    number,
+                    event.getUser().getName()
+            );
+            userData.save(user);
+        } catch (NumberFormatException e){
+            event.reply("Invalid phone number").queue();
+        }
+        event.reply("Text notifications for plans enabled").setEphemeral(true).queue();
+    }
+
+    @SlashResponse(commandName = "text_notifications", subCommandName = "disable")
+    private void disableTextSlash(SlashCommandInteractionEvent event){
+        if(userData.existsById(event.getUser().getIdLong())){
+            userData.deleteById(event.getUser().getIdLong());
+        }
+        event.reply("Text messaging disabled").setEphemeral(true).queue();
     }
 
     @SlashResponse(commandName = "plan_event")
@@ -125,6 +173,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
 
     @EntitySelectionResponse(menuId = "People")
     private void planPeople(EntitySelectInteraction event){
+        event.deferReply().queue();
         long planId = Long.parseLong(event.getMessage().getContentRaw().split(":")[1]);
         Plan plan = planRepository.getOne(planId);
         if(!plan.getInvitees().isEmpty()){
@@ -152,29 +201,35 @@ public class PlannerBot extends AdvancedListenerAdapter {
                                 Button.danger("deny_event", "Deny"))
                         .complete();
                 plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
+                if(userData.existsById(m.getIdLong())){
+                    TwilioInterface.sendMessage(
+                            userData.getOne(m.getIdLong()).getPhone_number() + "",
+                            event.getUser().getName() + " has invited you to " + plan.getTitle() + "." +
+                                    " Reply to the invite on discord."
+                    );
+                }
             } catch (Exception e){
                 log.error("Error sending message to member to create event", e);
             }
         }
         try {
-            event.reply("plan created").setEphemeral(true).queue();
+            Message message = event.getHook().sendMessageEmbeds(EmbedMessageGenerator.plan(plan, event.getGuild())).complete();
+            plan.setMessageId(message.getIdLong());
+            plan.addToLog("Added people to event");
+            PrivateChannel channel = event.getGuild().getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().complete();
+            Message m = channel.sendMessageEmbeds(EmbedMessageGenerator.creatorMessage(plan, event.getGuild())).complete();
+            m.editMessageComponents(
+                    ActionRow.of(
+                            Button.secondary("send_message", "Send message"),
+                            Button.secondary("edit_event", "Edit details"),
+                            Button.danger("delete_event", "Delete event")
+                    )
+            ).queue();
+            plan.setPrivateMessageId(m.getIdLong());
+            planRepository.save(plan);
         } catch (Exception e){
-            log.error("Error creating event", e);
+            log.error("Error sending creating event message reply", e);
         }
-        Message message = event.getChannel().sendMessageEmbeds(EmbedMessageGenerator.plan(plan, event.getGuild())).complete();
-        plan.setMessageId(message.getIdLong());
-        plan.addToLog("Added people to event");
-        PrivateChannel channel = event.getGuild().getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().complete();
-        Message m = channel.sendMessageEmbeds(EmbedMessageGenerator.creatorMessage(plan, event.getGuild())).complete();
-        m.editMessageComponents(
-                ActionRow.of(
-                        Button.secondary("send_message", "Send message"),
-                        Button.secondary("edit_event", "Edit details"),
-                        Button.danger("delete_event", "Delete event")
-                )
-        ).queue();
-        plan.setPrivateMessageId(m.getIdLong());
-        planRepository.save(plan);
     }
 
     @ModalResponse(modalName = "send_message_modal")
