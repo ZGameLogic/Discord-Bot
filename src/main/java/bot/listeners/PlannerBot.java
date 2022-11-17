@@ -5,7 +5,7 @@ import com.zgamelogic.AdvancedListenerAdapter;
 import data.database.planData.Plan;
 import data.database.planData.PlanRepository;
 import data.database.planData.User;
-import interfaces.TwilioInterface;
+import data.database.userData.UserDataRepository;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
@@ -16,6 +16,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.buttons.ButtonInteraction;
@@ -32,9 +33,11 @@ import java.util.HashMap;
 public class PlannerBot extends AdvancedListenerAdapter {
 
     private final PlanRepository planRepository;
+    private final UserDataRepository userData;
 
-    public PlannerBot(PlanRepository planRepository) {
+    public PlannerBot(PlanRepository planRepository, UserDataRepository userData) {
         this.planRepository = planRepository;
+        this.userData = userData;
     }
 
     @Override
@@ -45,27 +48,48 @@ public class PlannerBot extends AdvancedListenerAdapter {
                     Commands.slash("plan_event", "Plan an event with friends")
             ).queue();
             guild.upsertCommand(
-                    Commands.slash("send_text", "Send a text from shlongbot")
+                    Commands.slash("text_notifications", "Enable or disable text message notifications")
+                            .addSubcommands(
+                                    new SubcommandData("enable", "Enables text messaging")
+                                            .addOption(OptionType.STRING, "number", "your phone number. EX: 16301112222", true),
+                                    new SubcommandData("disable", "Disables text messaging")
+                            )
             ).queue();
         }
     }
 
-    @SlashResponse(commandName = "send_text")
-    private void sendTextSlashCommand(SlashCommandInteractionEvent event){
-        TextInput number = TextInput.create("number", "Number to send to", TextInputStyle.SHORT)
-                .setPlaceholder("16309999999").build();
-        TextInput message = TextInput.create("message", "Message", TextInputStyle.PARAGRAPH).build();
-        event.replyModal(Modal.create("text", "Text Message")
-                .addActionRow(number)
-                .addActionRow(message).build()).queue();
+    @SlashResponse(commandName = "text_notifications", subCommandName = "enable")
+    private void enableTextSlash(SlashCommandInteractionEvent event){
+        String formatted = event.getOption("number").getAsString()
+                .replace("(", "")
+                .replace(")", "")
+                .replace("-", "")
+                .replace(" ", "")
+                .replace("+", "");
+        if(formatted.length() < 10) {
+            event.reply("Phone number is too short").queue();
+            return;
+        }
+        try {
+            Long number = Long.parseLong(formatted);
+            data.database.userData.User user = new data.database.userData.User(
+                    event.getUser().getIdLong(),
+                    number,
+                    event.getUser().getName()
+            );
+            userData.save(user);
+        } catch (NumberFormatException e){
+            event.reply("Invalid phone number").queue();
+        }
+        event.reply("Text notifications for plans enabled").setEphemeral(true).queue();
     }
 
-    @ModalResponse(modalName = "text")
-    private void sendTextModal(ModalInteractionEvent event){
-        String number = event.getValue("number").getAsString();
-        String message = event.getValue("message").getAsString();
-        TwilioInterface.sendMessage(number, message);
-        event.reply("Message sent").queue();
+    @SlashResponse(commandName = "text_notifications", subCommandName = "disable")
+    private void disableTextSlash(SlashCommandInteractionEvent event){
+        if(userData.existsById(event.getUser().getIdLong())){
+            userData.deleteById(event.getUser().getIdLong());
+        }
+        event.reply("Text messaging disabled").setEphemeral(true).queue();
     }
 
     @SlashResponse(commandName = "plan_event")
@@ -148,6 +172,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
 
     @EntitySelectionResponse(menuId = "People")
     private void planPeople(EntitySelectInteraction event){
+        event.deferReply().queue();
         long planId = Long.parseLong(event.getMessage().getContentRaw().split(":")[1]);
         Plan plan = planRepository.getOne(planId);
         if(!plan.getInvitees().isEmpty()){
@@ -175,14 +200,17 @@ public class PlannerBot extends AdvancedListenerAdapter {
                                 Button.danger("deny_event", "Deny"))
                         .complete();
                 plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
+                if(userData.existsById(m.getIdLong())){
+
+                }
             } catch (Exception e){
                 log.error("Error sending message to member to create event", e);
             }
         }
         try {
-            event.reply("plan created").setEphemeral(true).queue();
+            event.getHook().setEphemeral(true).sendMessage("Plan created").queue();
         } catch (Exception e){
-            log.error("Error creating event", e);
+            log.error("Error sending creating event message reply", e);
         }
         Message message = event.getChannel().sendMessageEmbeds(EmbedMessageGenerator.plan(plan, event.getGuild())).complete();
         plan.setMessageId(message.getIdLong());
