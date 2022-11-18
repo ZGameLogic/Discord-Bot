@@ -37,17 +37,24 @@ public abstract class EmbedMessageGenerator {
         eb.setTitle(inviter + " has invited you to join them doing: " + plan.getTitle());
         String desc = inviter + " is looking for " + count + " people to join them for " + plan.getTitle() + " (" + plan.getInvitees().size() + " invited).\n" + plan.getNotes();
         if(plan.getAccepted().size() >= count){
-            desc += "\nWe are no longer looking for more members to join this event. Check back later in case someone drops out.";
+            desc += "\nWe are no longer looking for more members to join this event. Check back later in case someone drops out.\nYou can also waitlist yourself so if anyone does drop out, you will join the event.";
         }
         eb.setDescription(desc);
-        eb.addField("People accepted", plan.getAccepted().size() + "/" + count, true);
         StringBuilder attendees = new StringBuilder();
         for(Long id: plan.getAccepted()){
             String name = guild.getMemberById(id).getEffectiveName();
             attendees.append(name).append("\n");
         }
         if(attendees.length() == 0) attendees = new StringBuilder("People who accept will show up here");
-        eb.addField("People attending", attendees.toString(), false);
+        eb.addField("People accepted " + plan.getAccepted().size() + "/" + count, attendees.toString(), true);
+        if(plan.getWaitlist().size() > 0){
+            StringBuilder waitlistees = new StringBuilder();
+            for(Long id: plan.getWaitlist()){
+                String name = guild.getMemberById(id).getEffectiveName();
+                waitlistees.append(name).append("\n");
+            }
+            eb.addField("Waitlisted", waitlistees.toString(), true);
+        }
         eb.setFooter(plan.getId() + "");
         return eb.build();
     }
@@ -66,6 +73,10 @@ public abstract class EmbedMessageGenerator {
         for(long id: plan.getAccepted()){
             String name = guild.getMemberById(id).getEffectiveName();
             status.append(name).append(": accepted\n");
+        }
+        for(long id: plan.getWaitlist()){
+            String name = guild.getMemberById(id).getEffectiveName();
+            status.append(name).append(": wait-listed\n");
         }
         for(long id: plan.getPending()){
             String name = guild.getMemberById(id).getEffectiveName();
