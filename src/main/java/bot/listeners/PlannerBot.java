@@ -14,6 +14,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -40,6 +41,20 @@ public class PlannerBot extends AdvancedListenerAdapter {
     public PlannerBot(PlanRepository planRepository, UserDataRepository userData) {
         this.planRepository = planRepository;
         this.userData = userData;
+    }
+
+    @Override
+    public void onMessageReceived(MessageReceivedEvent event) {
+        super.onMessageReceived(event);
+        if(event.isFromGuild()) return;
+        if(event.getAuthor().getIdLong() != 232675572772372481l) return;
+        String message = event.getMessage().getContentRaw();
+        if(message.charAt(0) != '!') return;
+        Plan plan = planRepository.getOne(Long.parseLong(message.replace("!", "")));
+        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
+        updateMessages(plan, guild);
+        log.info("Event " + plan.getId() + " manually updated");
+        event.getChannel().asPrivateChannel().sendMessage("Event messages updated").queue();
     }
 
     @Override
