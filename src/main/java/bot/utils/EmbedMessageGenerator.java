@@ -32,7 +32,7 @@ public abstract class EmbedMessageGenerator {
     public static MessageEmbed singleInvite(Plan plan, Guild guild){
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(GENERAL_COLOR);
-        String inviter = guild.getMemberById(plan.getAuthorId()).getEffectiveName();
+        String inviter = guild.getJDA().getUserById(plan.getAuthorId()).getName();
         int count = plan.getCount();
         eb.setTitle(inviter + " has invited you to join them doing: " + plan.getTitle());
         String desc = inviter + " is looking for " + count + " people to join them for " + plan.getTitle() + " (" + plan.getInvitees().size() + " invited).\n" + plan.getNotes();
@@ -42,7 +42,7 @@ public abstract class EmbedMessageGenerator {
         eb.setDescription(desc);
         StringBuilder attendees = new StringBuilder();
         for(Long id: plan.getAccepted()){
-            String name = guild.getMemberById(id).getEffectiveName();
+            String name = guild.getJDA().getUserById(id).getName();
             attendees.append(name).append("\n");
         }
         if(attendees.length() == 0) attendees = new StringBuilder("People who accept will show up here");
@@ -50,10 +50,10 @@ public abstract class EmbedMessageGenerator {
         if(plan.getWaitlist().size() > 0){
             StringBuilder waitlistees = new StringBuilder();
             for(Long id: plan.getWaitlist()){
-                String name = guild.getMemberById(id).getEffectiveName();
+                String name = guild.getJDA().getUserById(id).getName();
                 waitlistees.append(name).append("\n");
             }
-            eb.addField("Waitlisted", waitlistees.toString(), true);
+            eb.addField("Wait list", waitlistees.toString(), true);
         }
         eb.setFooter(plan.getId() + "");
         return eb.build();
@@ -71,19 +71,19 @@ public abstract class EmbedMessageGenerator {
     private static void infoBody(Plan plan, Guild guild, EmbedBuilder eb) {
         StringBuilder status = new StringBuilder();
         for(long id: plan.getAccepted()){
-            String name = guild.getMemberById(id).getEffectiveName();
+            String name = guild.getJDA().getUserById(id).getName();
             status.append(name).append(": accepted\n");
         }
         for(long id: plan.getWaitlist()){
-            String name = guild.getMemberById(id).getEffectiveName();
-            status.append(name).append(": wait-listed\n");
+            String name = guild.getJDA().getUserById(id).getName();
+            status.append(name).append(": wait listed\n");
         }
         for(long id: plan.getPending()){
-            String name = guild.getMemberById(id).getEffectiveName();
+            String name = guild.getJDA().getUserById(id).getName();
             status.append(name).append(": pending invite\n");
         }
         for(long id: plan.getDeclined()){
-            String name = guild.getMemberById(id).getEffectiveName();
+            String name = guild.getJDA().getUserById(id).getName();
             status.append(name).append(": declined\n");
         }
         eb.addField("Invite status", status.toString(), false);
@@ -99,7 +99,7 @@ public abstract class EmbedMessageGenerator {
         eb.setTitle(plan.getTitle());
         eb.setDescription(plan.getNotes());
         eb.setFooter(plan.getId() + "");
-        eb.addField("Coordinator", guild.getMemberById(plan.getAuthorId()).getEffectiveName(), true);
+        eb.addField("Coordinator", guild.getJDA().getUserById(plan.getAuthorId()).getName(), true);
         eb.addField("People accepted", plan.getAccepted().size() + "/" + plan.getCount(), true);
         infoBody(plan, guild, eb);
         return eb.build();
