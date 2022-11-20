@@ -70,6 +70,16 @@ public abstract class EmbedMessageGenerator {
 
     private static void infoBody(Plan plan, Guild guild, EmbedBuilder eb) {
         StringBuilder status = new StringBuilder();
+        int accepted = plan.getAccepted().size();
+        status.append("filled:`");
+        for(int i = 1; i <= 20; i++){
+            if(i < Math.round(20.0 / plan.getCount() * accepted) || plan.isFull()){
+                status.append("█");
+            } else {
+                status.append(" ");
+            }
+        }
+        status.append("`\n");
         for(long id: plan.getAccepted()){
             String name = guild.getJDA().getUserById(id).getName();
             status.append(name).append(": accepted\n");
@@ -93,7 +103,7 @@ public abstract class EmbedMessageGenerator {
      * Use this for creating a message for the plan message for the guild
      * @return An embed message
      */
-    public static MessageEmbed plan(Plan plan, Guild guild){
+    public static MessageEmbed guildPublicMessage(Plan plan, Guild guild){
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(GENERAL_COLOR);
         eb.setTitle(plan.getTitle());
