@@ -229,7 +229,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
             }
         }
         try {
-            Message message = event.getHook().sendMessageEmbeds(EmbedMessageGenerator.plan(plan, event.getGuild())).complete();
+            Message message = event.getHook().sendMessageEmbeds(EmbedMessageGenerator.guildPublicMessage(plan, event.getGuild())).complete();
             plan.setMessageId(message.getIdLong());
             plan.addToLog("Added people to event");
             PrivateChannel channel = event.getGuild().getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().complete();
@@ -369,7 +369,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         boolean full = plan.isFull();
         // update guild message
         try {
-            guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.plan(plan, guild)).queue());
+            guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.guildPublicMessage(plan, guild)).queue());
         } catch (Exception e){
             log.error("Error editing public guild message for event " + plan.getTitle(), e);
         }
