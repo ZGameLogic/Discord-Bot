@@ -96,7 +96,7 @@ public class GeneralListener extends AdvancedListenerAdapter {
         ).openPrivateChannel().queue(privateChannel -> {
             privateChannel.sendMessage(event.getValue("message").getAsString()).queue();
         });
-        event.reply("Message sent").setEphemeral(true).queue();
+        event.reply("Message sent back\n" + event.getValue("message").getAsString()).queue();
     }
 
     @Override
