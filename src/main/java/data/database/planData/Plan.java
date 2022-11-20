@@ -4,6 +4,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.text.SimpleDateFormat;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Map;
@@ -41,12 +42,22 @@ public class Plan {
         invitees.get(userId).setMessageId(messageId);
     }
 
+    public void planWaitlist(long userId) {
+        User user = invitees.get(userId);
+        user.setStatus(2);
+        user.setWaitlist_time(new Date());
+    }
+
     public void planAccepted(long userId){
-        invitees.get(userId).setStatus(1);
+        User user = invitees.get(userId);
+        user.setStatus(1);
+        user.setWaitlist_time(null);
     }
 
     public void planDeclined(long userId){
-        invitees.get(userId).setStatus(-1);
+        User user = invitees.get(userId);
+        user.setStatus(-1);
+        user.setWaitlist_time(null);
     }
 
     public void planDropOut(long userId){
@@ -71,6 +82,20 @@ public class Plan {
             if(user.getStatus() == -1) declined.add(id);
         });
         return declined;
+    }
+
+    public LinkedList<Long> getWaitlist(){
+        LinkedList<User> waitlist = new LinkedList<>();
+        invitees.forEach((id, user) -> {
+            if(user.getStatus() == 2) waitlist.add(user);
+        });
+        Comparator<User> dateComparator = Comparator.comparing(User::getWaitlist_time);
+        waitlist.sort(dateComparator);
+        LinkedList<Long> sortedIds =  new LinkedList<>();
+        waitlist.forEach(user -> {
+            sortedIds.add(user.getId());
+        });
+        return sortedIds;
     }
 
     public void addToLog(String message){
