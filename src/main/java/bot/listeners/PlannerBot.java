@@ -14,6 +14,7 @@ import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -29,6 +30,7 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.LinkedList;
 
 @Slf4j
 public class PlannerBot extends AdvancedListenerAdapter {
@@ -39,6 +41,20 @@ public class PlannerBot extends AdvancedListenerAdapter {
     public PlannerBot(PlanRepository planRepository, UserDataRepository userData) {
         this.planRepository = planRepository;
         this.userData = userData;
+    }
+
+    @Override
+    public void onMessageReceived(MessageReceivedEvent event) {
+        super.onMessageReceived(event);
+        if(event.isFromGuild()) return;
+        if(event.getAuthor().getIdLong() != 232675572772372481l) return;
+        String message = event.getMessage().getContentRaw();
+        if(message.charAt(0) != '!') return;
+        Plan plan = planRepository.getOne(Long.parseLong(message.replace("!", "")));
+        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
+        updateMessages(plan, guild);
+        log.info("Event " + plan.getId() + " manually updated");
+        event.getChannel().asPrivateChannel().sendMessage("Event messages updated").queue();
     }
 
     @Override
@@ -296,8 +312,17 @@ public class PlannerBot extends AdvancedListenerAdapter {
         plan.planDropOut(userId);
         plan.addToLog(event.getJDA().getUserById(userId).getName() + " dropped out");
         guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage(event.getUser().getName() + " has dropped out of " + plan.getTitle()).queue());
-        planRepository.save(plan);
         event.deferEdit().queue();
+        // Check to see if anyone is on the waitlist
+        if(plan.getWaitlist().size() > 0){
+            LinkedList<Long> waitlist = plan.getWaitlist();
+            long waitlistId = waitlist.removeFirst();
+            plan.planAccepted(waitlistId);
+            plan.addToLog(event.getJDA().getUserById(waitlistId).getName() + " has been moved from waitlist");
+            guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage(event.getJDA().getUserById(waitlistId).getName() + " accepted " + plan.getTitle()).queue());
+            guild.getMemberById(waitlistId).getUser().openPrivateChannel().queue(channel -> channel.sendMessage("You got moved off the waitlist and accepted " + plan.getTitle()).queue());
+        }
+        planRepository.save(plan);
         updateMessages(plan, guild);
     }
 
@@ -312,6 +337,18 @@ public class PlannerBot extends AdvancedListenerAdapter {
         guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage(event.getUser().getName() + " has accepted to join " + plan.getTitle()).queue());
         event.deferEdit().queue();
         updateMessages(plan, guild);
+    }
+
+    @ButtonResponse(buttonId = "waitlist_event")
+    private void waitlistEvent(ButtonInteraction event){
+        long userId = event.getUser().getIdLong();
+        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        plan.planWaitlist(userId);
+        plan.addToLog(event.getJDA().getUserById(userId).getName() + " was added to waitlist");
+        event.reply("Added to the waitlist. You will be notified if someone drops out").setEphemeral(true).queue();
+        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
+        updateMessages(plan, guild);
+        planRepository.save(plan);
     }
 
     @ButtonResponse(buttonId = "deny_event")
@@ -353,7 +390,12 @@ public class PlannerBot extends AdvancedListenerAdapter {
                         message.editMessageComponents().queue();
                     } else if(state == 0){
                         if(full){
-                            message.editMessageComponents().queue();
+                            message.editMessageComponents(
+                                    ActionRow.of(
+                                            Button.secondary("waitlist_event", "Waitlist"),
+                                            Button.danger("deny_event", "Deny")
+                                    )
+                            ).queue();
                         } else { // if not full and unsure still
                             message.editMessageComponents(
                                     ActionRow.of(
@@ -361,6 +403,10 @@ public class PlannerBot extends AdvancedListenerAdapter {
                                             Button.danger("deny_event", "Deny")
                                     )
                             ).queue();
+                        }
+                    } else if(state == 2){
+                        if(full){
+                            message.editMessageComponents().queue();
                         }
                     }
                 }));
