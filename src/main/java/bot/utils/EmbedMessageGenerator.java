@@ -99,7 +99,10 @@ public abstract class EmbedMessageGenerator {
         eb.setTitle(plan.getTitle());
         eb.setDescription(plan.getNotes());
         eb.setFooter(plan.getId() + "");
-        eb.addField("Coordinator", guild.getJDA().getUserById(plan.getAuthorId()).getName(), true);
+        guild.getJDA();
+        guild.getJDA().getGuildById(plan.getGuildId());
+        guild.getJDA().getGuildById(plan.getGuildId()).getMemberById(plan.getAuthorId()).getUser();
+        eb.addField("Coordinator", guild.getJDA().getGuildById(plan.getGuildId()).getMemberById(plan.getAuthorId()).getUser().getName(), true);
         eb.addField("People accepted", plan.getAccepted().size() + "/" + plan.getCount(), true);
         infoBody(plan, guild, eb);
         return eb.build();

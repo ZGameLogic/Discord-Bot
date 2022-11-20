@@ -206,7 +206,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 event.reply("You cannot add yourself to an event you are planning").setEphemeral(true).queue();
                 return;
             }
-            invitees.put(m.getIdLong(), new User(m.getIdLong(), 0));
+            invitees.put(m.getIdLong(), new User(m.getIdLong(), User.Status.Waiting));
         }
         plan.setInvitees(invitees);
         for(Member m : event.getMentions().getMembers()){
@@ -246,6 +246,34 @@ public class PlannerBot extends AdvancedListenerAdapter {
         } catch (Exception e){
             log.error("Error sending creating event message reply", e);
         }
+    }
+
+    @ButtonResponse(buttonId = "duplicate_event")
+    private void duplicateEvent(ButtonInteraction event){
+        event.deferReply().queue();
+        Plan original = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        Guild guild = event.getJDA().getGuildById(original.getGuildId());
+        long planId = event.getIdLong();
+        Plan plan = new Plan();
+        plan.setId(event.getIdLong());
+        plan.duplicatePlanWithWaitlistFromPlan(original, original.getInvitees().get(event.getUser().getIdLong()));
+        // make new plan public message
+        Message message = event.getJDA().getGuildById(plan.getGuildId()).getTextChannelById(plan.getChannelId()).sendMessageEmbeds(EmbedMessageGenerator.plan(plan, guild)).complete();
+        plan.setMessageId(message.getIdLong());
+        // make new plan private message
+        message = event.getChannel().sendMessageEmbeds(EmbedMessageGenerator.creatorMessage(plan, guild)).complete();
+        plan.setPrivateMessageId(message.getIdLong());
+        for(Long id: plan.getAccepted()){
+            PrivateChannel pm = event.getJDA().getUserById(id).openPrivateChannel().complete();
+            message = pm.sendMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild))
+                    .addActionRow(Button.success("accept_event", "Accept"),
+                            Button.danger("drop_out_event", "Drop out")
+                    ).complete();
+            plan.updateMessageIdForUser(id, message.getIdLong());
+        }
+        updateMessages(plan, guild);
+        planRepository.save(original);
+        planRepository.save(plan);
     }
 
     @ModalResponse(modalName = "send_message_modal")
@@ -376,19 +404,19 @@ public class PlannerBot extends AdvancedListenerAdapter {
         // update private messages
         for(Long currentUserId: plan.getInvitees().keySet()){
             User user = plan.getInvitees().get(currentUserId);
-            int state = user.getStatus();
+            User.Status state = user.getStatus();
             try {
                 guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> channel.retrieveMessageById(user.getMessageId()).queue(message -> {
                     message.editMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild)).queue();
-                    if(state == 1){ // if user accepted
+                    if(state == User.Status.Accepted){ // if user accepted
                         message.editMessageComponents(
                                 ActionRow.of(
                                         Button.danger("drop_out_event", "Drop out")
                                 )
                         ).queue();
-                    } else if(state == -1){ // if user declined
+                    } else if(state == User.Status.Declined){ // if user declined
                         message.editMessageComponents().queue();
-                    } else if(state == 0){
+                    } else if(state == User.Status.Waiting){
                         if(full){
                             message.editMessageComponents(
                                     ActionRow.of(
@@ -404,10 +432,27 @@ public class PlannerBot extends AdvancedListenerAdapter {
                                     )
                             ).queue();
                         }
-                    } else if(state == 2){
+                    } else if(state == User.Status.Waitlist){ // if on the waitlist
                         if(full){
-                            message.editMessageComponents().queue();
-                        }
+                            if(plan.getWaitlist().size() >= plan.getCount() + 1){ // if there is enough people on the waitlist to duplicate event
+                                LinkedList<Long> waitlist = plan.getWaitlist();
+                                LinkedList<Long> allowed = new LinkedList<>();
+                                for(int i = 0; i < plan.getCount() + 1; i++){
+                                    allowed.add(waitlist.removeFirst());
+                                }
+                                if(allowed.contains(currentUserId)) { // if this is a user that will be put in the event if it were duplicated
+                                    message.editMessageComponents(
+                                            ActionRow.of(
+                                                    Button.success("duplicate_event", "Duplicate event")
+                                            )
+                                    ).queue();
+                                } else {
+                                    message.editMessageComponents().queue();
+                                }
+                            } else {
+                                message.editMessageComponents().queue();
+                            }
+                        } // should never not be full and on the waitlist
                     }
                 }));
             } catch (Exception e){

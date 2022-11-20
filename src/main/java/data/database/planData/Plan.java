@@ -4,10 +4,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.text.SimpleDateFormat;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 @Getter
 @Setter
@@ -42,26 +39,54 @@ public class Plan {
         invitees.get(userId).setMessageId(messageId);
     }
 
+    public void duplicatePlanWithWaitlistFromPlan(Plan plan, User user){
+        title = plan.getTitle();
+        notes = plan.getNotes();
+        count = plan.getCount();
+        authorId = user.getId();
+        channelId = plan.getChannelId();
+        guildId = plan.getGuildId();
+        LinkedList<Long> waitlist = plan.getWaitlist();
+        waitlist.remove(user.getId());
+        invitees = new HashMap<>();
+        for(int i = 0; i < count; i++){
+            User cUser = plan.getInvitees().get(waitlist.removeFirst());
+            plan.planDeclined(cUser.getId());
+            invitees.put(cUser.getId(), cUser);
+            planAccepted(cUser.getId());
+        }
+        plan.addToLog("User duplicated this plan");
+        addToLog("Plan created with duplication");
+    }
+
     public void planWaitlist(long userId) {
         User user = invitees.get(userId);
-        user.setStatus(2);
+        user.setStatus(User.Status.Waitlist);
         user.setWaitlist_time(new Date());
     }
 
     public void planAccepted(long userId){
         User user = invitees.get(userId);
-        user.setStatus(1);
+        user.setStatus(User.Status.Accepted);
         user.setWaitlist_time(null);
     }
 
     public void planDeclined(long userId){
         User user = invitees.get(userId);
-        user.setStatus(-1);
+        user.setStatus(User.Status.Declined);
+        user.setWaitlist_time(null);
+    }
+
+    public void planMaybe(long userId){
+        User user = invitees.get(userId);
+        user.setStatus(User.Status.Maybe);
         user.setWaitlist_time(null);
     }
 
     public void planDropOut(long userId){
-        invitees.get(userId).setStatus(0);
+        User user = invitees.get(userId);
+        user.setStatus(User.Status.Waiting);
+        user.setWaitlist_time(null);
     }
 
     public boolean isFull(){
@@ -71,7 +96,7 @@ public class Plan {
     public LinkedList<Long> getAccepted(){
         LinkedList<Long> accepted = new LinkedList<>();
         invitees.forEach((id, user) -> {
-            if(user.getStatus() == 1) accepted.add(id);
+            if(user.getStatus() == User.Status.Accepted) accepted.add(id);
         });
         return accepted;
     }
@@ -79,7 +104,7 @@ public class Plan {
     public LinkedList<Long> getDeclined(){
         LinkedList<Long> declined = new LinkedList<>();
         invitees.forEach((id, user) -> {
-            if(user.getStatus() == -1) declined.add(id);
+            if(user.getStatus() == User.Status.Declined) declined.add(id);
         });
         return declined;
     }
@@ -87,7 +112,7 @@ public class Plan {
     public LinkedList<Long> getWaitlist(){
         LinkedList<User> waitlist = new LinkedList<>();
         invitees.forEach((id, user) -> {
-            if(user.getStatus() == 2) waitlist.add(user);
+            if(user.getStatus() == User.Status.Waitlist) waitlist.add(user);
         });
         Comparator<User> dateComparator = Comparator.comparing(User::getWaitlist_time);
         waitlist.sort(dateComparator);
@@ -96,6 +121,14 @@ public class Plan {
             sortedIds.add(user.getId());
         });
         return sortedIds;
+    }
+
+    public LinkedList<Long> getMaybe(){
+        LinkedList<Long> maybe = new LinkedList<>();
+        invitees.forEach((id, user) -> {
+            if(user.getStatus() == User.Status.Maybe) maybe.add(id);
+        });
+        return maybe;
     }
 
     public void addToLog(String message){
@@ -107,7 +140,7 @@ public class Plan {
     public LinkedList<Long> getPending(){
         LinkedList<Long> pending = new LinkedList<>();
         invitees.forEach((id, user) -> {
-            if(user.getStatus() == 0) pending.add(id);
+            if(user.getStatus() == User.Status.Waiting) pending.add(id);
         });
         return pending;
     }
