@@ -9,8 +9,14 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.api.events.guild.UnavailableGuildLeaveEvent;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,6 +71,32 @@ public class GeneralListener extends AdvancedListenerAdapter {
             logger.warn("Unable to delete guild data. Was removed too quickly.");
         }
         guildData.deleteById(event.getGuild().getIdLong());
+    }
+
+    @Override
+    public void onMessageReceived(MessageReceivedEvent event) {
+        if(!event.isFromGuild() && !event.getAuthor().isBot()){
+            event.getJDA().getUserById(232675572772372481l).openPrivateChannel().queue(channel -> {
+                channel.sendMessage("Message from " + event.getAuthor().getName() + ":" + event.getAuthor().getId() + "\n" + event.getMessage().getContentRaw())
+                        .setActionRow(Button.secondary("reply_message", "Reply")).queue();
+            });
+        }
+    }
+
+    @ButtonResponse(buttonId = "reply_message")
+    private void replyMessageButtonPresses(ButtonInteractionEvent event){
+        TextInput message = TextInput.create("message", "Reply", TextInputStyle.PARAGRAPH).build();
+        event.replyModal(Modal.create("reply_message_modal", "Message response").addActionRow(message).build()).queue();
+    }
+
+    @ModalResponse(modalName = "reply_message_modal")
+    private void modalResponseMessageReply(ModalInteractionEvent event){
+        event.getJDA().getUserById(
+                event.getMessage().getContentRaw().split("\n")[0].split(":")[1]
+        ).openPrivateChannel().queue(privateChannel -> {
+            privateChannel.sendMessage(event.getValue("message").getAsString()).queue();
+        });
+        event.reply("Message sent").setEphemeral(true).queue();
     }
 
     @Override
