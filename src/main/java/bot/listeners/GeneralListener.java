@@ -13,6 +13,9 @@ import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.ItemComponent;
+import net.dv8tion.jda.api.interactions.components.LayoutComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
@@ -43,6 +46,26 @@ public class GeneralListener extends AdvancedListenerAdapter {
                     welcomeBot(guild);
                 }
             }
+            for(GuildData guild: guildData.findAll()){
+                Guild g = event.getJDA().getGuildById(guild.getId());
+                g.getTextChannelById(guild.getConfigChannelId()).retrieveMessageById(guild.getConfigMessageId()).queue(message -> {
+                    LinkedList<LayoutComponent> components = new LinkedList<>();
+                    LinkedList<ItemComponent> ics = new LinkedList<>();
+                    if(guild.getChatroomEnabled() == null || !guild.getChatroomEnabled()){
+                        ics.add(Button.danger("enable_party", "Party Bot"));
+                    } else {
+                        ics.add(Button.success("disable_party", "Party Bot"));
+                    }
+                    if(guild.getPlanEnabled() == null || !guild.getPlanEnabled()){
+                        ics.add(Button.danger("enable_plan", "Plan bot"));
+                    } else {
+                        ics.add(Button.success("disable_plan", "Plan bot"));
+                    }
+                    ActionRow row = ActionRow.of(ics);
+                    components.add(row);
+                    message.editMessageComponents(components).queue();
+                });
+            }
         }, "Guild Checking Thread").start();
     }
 
@@ -58,7 +81,7 @@ public class GeneralListener extends AdvancedListenerAdapter {
         try {
             // edit the discord
             GuildData savedGuild = guildData.findById(event.getGuild().getIdLong()).get();
-            if(savedGuild.isChatroomEnabled()) {
+            if(savedGuild.getChatroomEnabled()) {
                 // commands
                 guild.deleteCommandById(savedGuild.getLimitCommandId()).queue();
                 guild.deleteCommandById(savedGuild.getRenameCommandId()).queue();
@@ -113,12 +136,12 @@ public class GeneralListener extends AdvancedListenerAdapter {
                 .setTopic("This is a channel made by shlongbot")
                 .queue(textChannel -> {
                     textChannel.sendMessageEmbeds(EmbedMessageGenerator.welcomeMessage(guild.getOwner().getEffectiveName(), guild.getName()))
-                            .setActionRow(Button.danger("enable_party", "Party Bot"))
                             .queue(message -> {
                                 GuildData newGuild = new GuildData();
                                 newGuild.setId(guild.getIdLong());
                                 newGuild.setConfigChannelId(textChannel.getIdLong());
                                 newGuild.setChatroomEnabled(false);
+                                newGuild.setPlanEnabled(false);
                                 newGuild.setConfigMessageId(message.getIdLong());
                                 guildData.save(newGuild);
                             });

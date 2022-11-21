@@ -21,6 +21,9 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * Party bot stuff
+ */
 public class PartyBot extends AdvancedListenerAdapter {
 
     private final GuildDataRepository guildData;
@@ -84,11 +87,11 @@ public class PartyBot extends AdvancedListenerAdapter {
 
         // edit the database
         savedGuild.setChatroomEnabled(false);
-        savedGuild.setPartyCategory(0);
-        savedGuild.setCreateChatId(0);
-        savedGuild.setAfkChannelId(0);
-        savedGuild.setRenameCommandId(0);
-        savedGuild.setLimitCommandId(0);
+        savedGuild.setPartyCategory(null);
+        savedGuild.setCreateChatId(null);
+        savedGuild.setAfkChannelId(null);
+        savedGuild.setRenameCommandId(null);
+        savedGuild.setLimitCommandId(null);
         guildData.save(savedGuild);
     }
 
@@ -142,7 +145,7 @@ public class PartyBot extends AdvancedListenerAdapter {
         super.onReady(event);
         new Thread(() -> {
             for(GuildData data : guildData.findAll()){
-                if(data.isChatroomEnabled()){
+                if(data.getChatroomEnabled()){
                     checkCreateChatroom(event.getJDA().getGuildById(data.getId()));
                 }
             }
@@ -152,7 +155,7 @@ public class PartyBot extends AdvancedListenerAdapter {
     @Override
     public void onSessionResume(SessionResumeEvent event) {
         for(GuildData data : guildData.findAll()){
-            if(data.isChatroomEnabled()){
+            if(data.getChatroomEnabled()){
                 checkCreateChatroom(event.getJDA().getGuildById(data.getId()));
             }
         }
@@ -160,7 +163,7 @@ public class PartyBot extends AdvancedListenerAdapter {
 
     @Override
     public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
-        if(guildData.findById(event.getGuild().getIdLong()).get().isChatroomEnabled()) {
+        if(guildData.findById(event.getGuild().getIdLong()).get().getChatroomEnabled()) {
             if (event.getChannelJoined() != null && event.getChannelLeft() != null) {
                 playerLeft(event.getChannelLeft(), event.getMember(), event.getGuild());
                 playerJoined(event.getChannelJoined(), event.getMember(), event.getGuild());
