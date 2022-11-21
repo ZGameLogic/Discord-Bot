@@ -35,15 +35,15 @@ public abstract class EmbedMessageGenerator {
         String inviter = guild.getJDA().getUserById(plan.getAuthorId()).getName();
         int count = plan.getCount();
         eb.setTitle(inviter + " has invited you to join them doing: " + plan.getTitle());
-        String desc = inviter + " is looking for " + count + " people to join them for " + plan.getTitle() + " (" + plan.getInvitees().size() + " invited).\n" + plan.getNotes();
+        String desc = inviter + " is looking for " + count + " people to join them for " + plan.getTitle() + " (" + plan.getInvitees().size() + " invited).\n" +
+                "For more details, visit the planning channel in the discord server: " + guild.getName() + "\n" + plan.getNotes();
         if(plan.getAccepted().size() >= count){
             desc += "\nWe are no longer looking for more members to join this event. Check back later in case someone drops out.\nYou can also waitlist yourself so if anyone does drop out, you will join the event.";
         }
         eb.setDescription(desc);
         StringBuilder attendees = new StringBuilder();
         for(Long id: plan.getAccepted()){
-            String name = guild.getJDA().getUserById(id).getName();
-            attendees.append(name).append("\n");
+            attendees.append("<@").append(id).append(">").append("\n");
         }
         if(attendees.length() == 0) attendees = new StringBuilder("People who accept will show up here");
         eb.addField("People accepted " + plan.getAccepted().size() + "/" + count, attendees.toString(), true);
@@ -81,20 +81,16 @@ public abstract class EmbedMessageGenerator {
 //        }
 //        status.append("`\n");
         for(long id: plan.getAccepted()){
-            String name = guild.getJDA().getUserById(id).getName();
-            status.append(name).append(": accepted\n");
+            status.append("<@").append(id).append(">").append(": accepted\n");
         }
         for(long id: plan.getWaitlist()){
-            String name = guild.getJDA().getUserById(id).getName();
-            status.append(name).append(": wait listed\n");
+            status.append("<@").append(id).append(">").append(": wait listed\n");
         }
         for(long id: plan.getPending()){
-            String name = guild.getJDA().getUserById(id).getName();
-            status.append(name).append(": pending invite\n");
+            status.append("<@").append(id).append(">").append(": pending invite\n");
         }
         for(long id: plan.getDeclined()){
-            String name = guild.getJDA().getUserById(id).getName();
-            status.append(name).append(": declined\n");
+            status.append("<@").append(id).append(">").append(": declined\n");
         }
         eb.addField("Invite status", status.toString(), false);
     }
