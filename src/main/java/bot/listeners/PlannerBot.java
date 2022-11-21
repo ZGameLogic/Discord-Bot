@@ -196,6 +196,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         event.reply("Select people to invite (Don't include yourself). This cannot be changed. Plan id:" + event.getIdLong()).setActionRow(
                         EntitySelectMenu.create("People", EntitySelectMenu.SelectTarget.USER)
                                 .setMinValues(1)
+                                .setMaxValues(25)
                                 .build())
                 .setEphemeral(true)
                 .queue(message -> {
