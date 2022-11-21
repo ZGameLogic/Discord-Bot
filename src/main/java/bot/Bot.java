@@ -60,7 +60,7 @@ public class Bot {
 
 		listeners.add(new PartyBot(guildData));
 		listeners.add(new GeneralListener(guildData));
-		listeners.add(new PlannerBot(planRepository, userData));
+		listeners.add(new PlannerBot(planRepository, userData, guildData));
 
 		// Add listeners
 		for(ListenerAdapter a : listeners){

@@ -19,8 +19,13 @@ public class GuildData {
 
     private long configChannelId, configMessageId;
 
-    private boolean chatroomEnabled;
-    private long partyCategory, afkChannelId, createChatId;
-    private long limitCommandId, renameCommandId;
+    // party bot stuff
+    private Boolean chatroomEnabled;
+    private Long partyCategory, afkChannelId, createChatId;
+    private Long limitCommandId, renameCommandId;
 
+    // planner bot stuff
+    private Boolean planEnabled;
+    private Long planChannelId;
+    private Long createPlanCommandId, textCommandId;
 }
