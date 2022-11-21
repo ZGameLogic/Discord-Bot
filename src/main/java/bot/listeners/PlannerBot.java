@@ -29,10 +29,15 @@ import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
+import net.dv8tion.jda.api.utils.TimeFormat;
 import org.jetbrains.annotations.NotNull;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.TimeZone;
 
 @Slf4j
 public class PlannerBot extends AdvancedListenerAdapter {
@@ -75,6 +80,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         Guild guild = event.getGuild();
         GuildData dbGuild = guildData.getOne(guild.getIdLong());
         guild.deleteCommandById(dbGuild.getCreatePlanCommandId()).queue();
+        guild.deleteCommandById(dbGuild.getTextCommandId());
         guild.getTextChannelById(dbGuild.getPlanChannelId()).delete().queue();
         dbGuild.setPlanEnabled(false);
         dbGuild.setPlanChannelId(null);
@@ -88,17 +94,15 @@ public class PlannerBot extends AdvancedListenerAdapter {
         super.onReady(event);
         for(Guild guild: event.getJDA().getGuilds()){
             guild.upsertCommand(
-                    Commands.slash("plan_event", "Plan an event with friends")
-            ).queue();
-            guild.upsertCommand(
-                    Commands.slash("text_notifications", "Enable or disable text message notifications")
-                            .addSubcommands(
-                                    new SubcommandData("enable", "Enables text messaging")
-                                            .addOption(OptionType.STRING, "number", "your phone number. EX: 16301112222", true),
-                                    new SubcommandData("disable", "Disables text messaging")
-                            )
+                    Commands.slash("test", "Test command")
             ).queue();
         }
+    }
+
+    @SlashResponse(commandName = "test")
+    private void testSlash(SlashCommandInteractionEvent event){
+        String nowAsIso= "1669072380";
+        event.reply(TimeFormat.DATE_TIME_SHORT.format(new Date().getTime())).queue();
     }
 
     @SlashResponse(commandName = "text_notifications", subCommandName = "enable")
