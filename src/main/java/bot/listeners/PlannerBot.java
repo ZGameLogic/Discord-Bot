@@ -241,7 +241,8 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 PrivateChannel pm = m.getUser().openPrivateChannel().complete();
                 Message message = pm.sendMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, event.getGuild()))
                         .addActionRow(Button.success("accept_event", "Accept"),
-                                Button.danger("deny_event", "Deny"))
+                                Button.danger("deny_event", "Deny"),
+                                Button.primary("maybe_event", "Maybe"))
                         .complete();
                 plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
                 if(userData.existsById(m.getIdLong())){
@@ -333,6 +334,11 @@ public class PlannerBot extends AdvancedListenerAdapter {
 
     @ButtonResponse(buttonId = "drop_out_event")
     private void dropOutEvent(ButtonInteraction event){
+        event.editButton(Button.danger("confirm_drop_out_event", "Confirm Dropout")).queue();
+    }
+
+    @ButtonResponse(buttonId = "confirm_drop_out_event")
+    private void confirmDropOutEvent(ButtonInteraction event){
         long userId = event.getUser().getIdLong();
         event.getMessage().editMessageComponents().queue();
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
@@ -392,6 +398,18 @@ public class PlannerBot extends AdvancedListenerAdapter {
         updateMessages(plan, guild);
     }
 
+    @ButtonResponse(buttonId = "maybe_event")
+    private void maybeEvent(ButtonInteractionEvent event){
+        long userId = event.getUser().getIdLong();
+        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        plan.planMaybed(userId);
+        plan.addToLog(event.getJDA().getUserById(userId).getName() + " maybed");
+        planRepository.save(plan);
+        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
+        event.deferEdit().queue();
+        updateMessages(plan, guild);
+    }
+
     private void updateMessages(Plan plan, Guild guild){
         // Get the state of the plan
         boolean full = plan.isFull();
@@ -417,6 +435,23 @@ public class PlannerBot extends AdvancedListenerAdapter {
                     } else if(state == -1){ // if user declined
                         message.editMessageComponents().queue();
                     } else if(state == 0){
+                        if(full){
+                            message.editMessageComponents(
+                                    ActionRow.of(
+                                            Button.secondary("waitlist_event", "Waitlist"),
+                                            Button.danger("deny_event", "Deny")
+                                    )
+                            ).queue();
+                        } else { // if not full and unsure still
+                            message.editMessageComponents(
+                                    ActionRow.of(
+                                            Button.success("accept_event", "Accept"),
+                                            Button.danger("deny_event", "Deny"),
+                                            Button.primary("maybe_event", "Maybe")
+                                    )
+                            ).queue();
+                        }
+                    } else if(state == 3){
                         if(full){
                             message.editMessageComponents(
                                     ActionRow.of(
