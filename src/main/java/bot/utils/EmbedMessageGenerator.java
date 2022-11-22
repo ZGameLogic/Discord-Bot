@@ -50,10 +50,16 @@ public abstract class EmbedMessageGenerator {
         if(plan.getWaitlist().size() > 0){
             StringBuilder waitlistees = new StringBuilder();
             for(Long id: plan.getWaitlist()){
-                String name = guild.getJDA().getUserById(id).getName();
-                waitlistees.append(name).append("\n");
+                waitlistees.append("<@").append(id).append(">").append("\n");
             }
             eb.addField("Wait list", waitlistees.toString(), true);
+        }
+        if(plan.getMaybes().size() > 0){
+            StringBuilder maybes = new StringBuilder();
+            for(Long id: plan.getWaitlist()){
+                maybes.append("<@").append(id).append(">").append("\n");
+            }
+            eb.addField("Maybes", maybes.toString(), true);
         }
         eb.setFooter(plan.getId() + "");
         return eb.build();
