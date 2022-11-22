@@ -86,6 +86,9 @@ public abstract class EmbedMessageGenerator {
         for(long id: plan.getWaitlist()){
             status.append("<@").append(id).append(">").append(": wait listed\n");
         }
+        for(long id: plan.getMaybes()){
+            status.append("<@").append(id).append(">").append(": maybe\n");
+        }
         for(long id: plan.getPending()){
             status.append("<@").append(id).append(">").append(": pending invite\n");
         }
