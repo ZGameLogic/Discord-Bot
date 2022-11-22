@@ -334,6 +334,11 @@ public class PlannerBot extends AdvancedListenerAdapter {
 
     @ButtonResponse(buttonId = "drop_out_event")
     private void dropOutEvent(ButtonInteraction event){
+        event.editButton(Button.danger("confirm_drop_out_event", "Confirm Dropout")).queue();
+    }
+
+    @ButtonResponse(buttonId = "confirm_drop_out_event")
+    private void confirmDropOutEvent(ButtonInteraction event){
         long userId = event.getUser().getIdLong();
         event.getMessage().editMessageComponents().queue();
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
