@@ -54,6 +54,12 @@ public class Plan {
         user.setWaitlist_time(null);
     }
 
+    public void planMaybed(long userId){
+        User user = invitees.get(userId);
+        user.setStatus(3);
+        user.setWaitlist_time(null);
+    }
+
     public void planDeclined(long userId){
         User user = invitees.get(userId);
         user.setStatus(-1);
@@ -82,6 +88,14 @@ public class Plan {
             if(user.getStatus() == -1) declined.add(id);
         });
         return declined;
+    }
+
+    public LinkedList<Long> getMaybes(){
+        LinkedList<Long> maybe = new LinkedList<>();
+        invitees.forEach((id, user) -> {
+            if(user.getStatus() == 3) maybe.add(id);
+        });
+        return maybe;
     }
 
     public LinkedList<Long> getWaitlist(){
