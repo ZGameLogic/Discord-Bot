@@ -106,13 +106,13 @@ public class GeneralListener extends AdvancedListenerAdapter {
         }
     }
 
-    @ButtonResponse(buttonId = "reply_message")
+    @ButtonResponse("reply_message")
     private void replyMessageButtonPresses(ButtonInteractionEvent event){
         TextInput message = TextInput.create("message", "Reply", TextInputStyle.PARAGRAPH).build();
         event.replyModal(Modal.create("reply_message_modal", "Message response").addActionRow(message).build()).queue();
     }
 
-    @ModalResponse(modalName = "reply_message_modal")
+    @ModalResponse("reply_message_modal")
     private void modalResponseMessageReply(ModalInteractionEvent event){
         event.getJDA().getUserById(
                 event.getMessage().getContentRaw().split("\n")[0].split(":")[1]
