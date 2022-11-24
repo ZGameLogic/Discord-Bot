@@ -47,7 +47,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         this.guildData = guildData;
     }
 
-    @ButtonResponse(buttonId = "enable_plan")
+    @ButtonResponse("enable_plan")
     private void enablePlan(ButtonInteractionEvent event){
         event.editButton(Button.success("disable_plan", "Plan bot")).queue();
         Guild guild = event.getGuild();
@@ -69,7 +69,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         guildData.save(dbGuild);
     }
 
-    @ButtonResponse(buttonId = "disable_plan")
+    @ButtonResponse("disable_plan")
     private void disablePlan(ButtonInteractionEvent event){
         event.editButton(Button.danger("enable_plan", "Plan bot")).queue();
         Guild guild = event.getGuild();
@@ -101,7 +101,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         }
     }
 
-    @SlashResponse(commandName = "text_notifications", subCommandName = "enable")
+    @SlashResponse(value = "text_notifications", subCommandName = "enable")
     private void enableTextSlash(SlashCommandInteractionEvent event){
         String formatted = event.getOption("number").getAsString()
                 .replace("(", "")
@@ -127,7 +127,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         event.reply("Text notifications for plans enabled").setEphemeral(true).queue();
     }
 
-    @SlashResponse(commandName = "text_notifications", subCommandName = "disable")
+    @SlashResponse(value = "text_notifications", subCommandName = "disable")
     private void disableTextSlash(SlashCommandInteractionEvent event){
         if(userData.existsById(event.getUser().getIdLong())){
             userData.deleteById(event.getUser().getIdLong());
@@ -135,7 +135,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         event.reply("Text messaging disabled").setEphemeral(true).queue();
     }
 
-    @SlashResponse(commandName = "plan_event")
+    @SlashResponse("plan_event")
     private void planEventSlashCommand(SlashCommandInteractionEvent event){
         TextInput time = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
                 .setPlaceholder("Today at 4:30pm").build();
@@ -151,7 +151,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 .queue();
     }
 
-    @ModalResponse(modalName = "edit_event_modal")
+    @ModalResponse("edit_event_modal")
     private void editEventModal(ModalInteractionEvent event){
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         String notes = event.getValue("notes").getAsString();
@@ -177,7 +177,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         event.reply("Plan details have been edited").setEphemeral(true).queue();
     }
 
-    @ModalResponse(modalName = "plan_event_modal")
+    @ModalResponse("plan_event_modal")
     private void planEventModalResponse(ModalInteractionEvent event){
         String notes = event.getValue("notes").getAsString();
         String title = event.getValue("title").getAsString();
@@ -213,7 +213,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 });
     }
 
-    @EntitySelectionResponse(menuId = "People")
+    @EntitySelectionResponse("People")
     private void planPeople(EntitySelectInteraction event){
         event.deferReply().setEphemeral(true).queue();
         long planId = Long.parseLong(event.getMessage().getContentRaw().split(":")[1]);
@@ -277,7 +277,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         event.getHook().setEphemeral(true).sendMessage("Event created in <#" + gd.getPlanChannelId() + ">").queue();
     }
 
-    @ModalResponse(modalName = "send_message_modal")
+    @ModalResponse("send_message_modal")
     private void sendMessageModal(ModalInteractionEvent event){
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         String message = event.getValue("message").getAsString();
@@ -287,13 +287,13 @@ public class PlannerBot extends AdvancedListenerAdapter {
         event.reply("Message sent to all accepted people").setEphemeral(true).queue();
     }
 
-    @ButtonResponse(buttonId = "send_message")
+    @ButtonResponse("send_message")
     private void sendMessageEvent(ButtonInteraction event){
         TextInput message = TextInput.create("message", "Message to be sent to accepted users", TextInputStyle.PARAGRAPH).build();
         event.replyModal(Modal.create("send_message_modal", "Send message").addActionRow(message) .build()) .queue();
     }
 
-    @ButtonResponse(buttonId = "edit_event")
+    @ButtonResponse("edit_event")
     private void editDetailsButtonEvent(ButtonInteraction event){
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         TextInput time = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
@@ -310,7 +310,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 .queue();
     }
 
-    @ButtonResponse(buttonId = "delete_event")
+    @ButtonResponse("delete_event")
     private void deleteEvent(ButtonInteraction event){
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         Guild guild = event.getJDA().getGuildById(plan.getGuildId());
@@ -332,12 +332,12 @@ public class PlannerBot extends AdvancedListenerAdapter {
         planRepository.deleteById(plan.getId());
     }
 
-    @ButtonResponse(buttonId = "drop_out_event")
+    @ButtonResponse("drop_out_event")
     private void dropOutEvent(ButtonInteraction event){
         event.editButton(Button.danger("confirm_drop_out_event", "Confirm Dropout")).queue();
     }
 
-    @ButtonResponse(buttonId = "confirm_drop_out_event")
+    @ButtonResponse("confirm_drop_out_event")
     private void confirmDropOutEvent(ButtonInteraction event){
         long userId = event.getUser().getIdLong();
         event.getMessage().editMessageComponents().queue();
@@ -360,7 +360,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         updateMessages(plan, guild);
     }
 
-    @ButtonResponse(buttonId = "accept_event")
+    @ButtonResponse("accept_event")
     private void acceptEvent(ButtonInteraction event){
         long userId = event.getUser().getIdLong();
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
@@ -373,7 +373,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         updateMessages(plan, guild);
     }
 
-    @ButtonResponse(buttonId = "waitlist_event")
+    @ButtonResponse("waitlist_event")
     private void waitlistEvent(ButtonInteraction event){
         long userId = event.getUser().getIdLong();
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
@@ -385,7 +385,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         planRepository.save(plan);
     }
 
-    @ButtonResponse(buttonId = "deny_event")
+    @ButtonResponse("deny_event")
     private void denyEvent(ButtonInteraction event){
         long userId = event.getUser().getIdLong();
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
@@ -398,7 +398,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         updateMessages(plan, guild);
     }
 
-    @ButtonResponse(buttonId = "maybe_event")
+    @ButtonResponse("maybe_event")
     private void maybeEvent(ButtonInteractionEvent event){
         long userId = event.getUser().getIdLong();
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));

@@ -39,7 +39,7 @@ public class PartyBot extends AdvancedListenerAdapter {
         chatroomNames.add("Roomchat");
     }
 
-    @ButtonResponse(buttonId = "enable_party")
+    @ButtonResponse("enable_party")
     private void enableParty(ButtonInteractionEvent event){
         event.editButton(Button.success("disable_party", "Party Bot")).queue();
         // edit the discord
@@ -72,7 +72,7 @@ public class PartyBot extends AdvancedListenerAdapter {
         guildData.save(savedGuild);
     }
 
-    @ButtonResponse(buttonId = "disable_party")
+    @ButtonResponse("disable_party")
     private void disableParty(ButtonInteractionEvent event){
         event.editButton(Button.danger("enable_party", "Party Bot")).queue();
         // edit the discord
@@ -95,7 +95,7 @@ public class PartyBot extends AdvancedListenerAdapter {
         guildData.save(savedGuild);
     }
 
-    @SlashResponse(commandName = "rename-chatroom")
+    @SlashResponse("rename-chatroom")
     private void renameChatroom(SlashCommandInteractionEvent event){
         try {
             // get voice channel the user is in
@@ -116,7 +116,7 @@ public class PartyBot extends AdvancedListenerAdapter {
         }
     }
 
-    @SlashResponse(commandName = "limit")
+    @SlashResponse("limit")
     private void limit(SlashCommandInteractionEvent event){
         try {
             // get voice channel the user is in
