@@ -2,6 +2,7 @@ package bot;
 
 import javax.annotation.PostConstruct;
 
+import bot.listeners.DevopsBot;
 import bot.listeners.GeneralListener;
 import bot.listeners.PartyBot;
 import bot.listeners.PlannerBot;
@@ -61,6 +62,7 @@ public class Bot {
 		listeners.add(new PartyBot(guildData));
 		listeners.add(new GeneralListener(guildData));
 		listeners.add(new PlannerBot(planRepository, userData, guildData));
+		listeners.add(new DevopsBot());
 
 		// Add listeners
 		for(ListenerAdapter a : listeners){

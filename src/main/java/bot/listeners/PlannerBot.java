@@ -77,9 +77,9 @@ public class PlannerBot extends AdvancedListenerAdapter {
         guild.deleteCommandById(dbGuild.getCreatePlanCommandId()).queue();
         guild.getTextChannelById(dbGuild.getPlanChannelId()).delete().queue();
         dbGuild.setPlanEnabled(false);
-        dbGuild.setPlanChannelId(null);
-        dbGuild.setCreatePlanCommandId(null);
-        dbGuild.setTextCommandId(null);
+        dbGuild.setPlanChannelId(0l);
+        dbGuild.setCreatePlanCommandId(0l);
+        dbGuild.setTextCommandId(0l);
         guildData.save(dbGuild);
     }
 
