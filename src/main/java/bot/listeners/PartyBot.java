@@ -17,6 +17,7 @@ import net.dv8tion.jda.api.events.session.SessionResumeEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -55,7 +56,7 @@ public class PartyBot extends AdvancedListenerAdapter {
         if(afk == null){
             afk = guild.createVoiceChannel("AFK", cat).complete();
             guild.getManager().setAfkChannel(afk).queue();
-            guild.getManager().setAfkTimeout(Guild.Timeout.SECONDS_300);
+            guild.getManager().setAfkTimeout(Guild.Timeout.SECONDS_300).queue();
         } else {
             afk.getManager().setParent(cat).queue();
         }
@@ -141,7 +142,7 @@ public class PartyBot extends AdvancedListenerAdapter {
      * Login event
      */
     @Override
-    public void onReady(ReadyEvent event) {
+    public void onReady(@NotNull ReadyEvent event) {
         super.onReady(event);
         new Thread(() -> {
             for(GuildData data : guildData.findAll()){
@@ -153,7 +154,7 @@ public class PartyBot extends AdvancedListenerAdapter {
     }
 
     @Override
-    public void onSessionResume(SessionResumeEvent event) {
+    public void onSessionResume(@NotNull SessionResumeEvent event) {
         for(GuildData data : guildData.findAll()){
             if(data.getChatroomEnabled()){
                 checkCreateChatroom(event.getJDA().getGuildById(data.getId()));
@@ -176,7 +177,7 @@ public class PartyBot extends AdvancedListenerAdapter {
     }
 
     /**
-     * Deletes this channel if there are no players in it and it matches the chat
+     * Deletes this channel if there are no players in it, and it matches the chat
      * category
      *
      * @param channelLeft The channel the user left
