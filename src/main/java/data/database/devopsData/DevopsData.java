@@ -25,8 +25,7 @@ public class DevopsData {
     private String jiraPAT, bitbucketPAT, bambooPAT;
 
     private Long devopsCatId;
-
+    private Long devopsRoleId;
     private Long devopsGeneralChatId, devopsGeneralTextId;
-
-    private Long createBranchSlashId;
+    private Long createBranchSlashId, createBugReportSlashId, createJiraIssueSlashId;
 }
