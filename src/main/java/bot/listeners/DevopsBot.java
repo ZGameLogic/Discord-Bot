@@ -8,17 +8,26 @@ import data.database.guildData.GuildDataRepository;
 import interfaces.atlassian.BambooInterface;
 import interfaces.atlassian.BitbucketInterface;
 import interfaces.atlassian.JiraInterface;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.StringSelectInteractionEvent;
 import net.dv8tion.jda.api.interactions.InteractionHook;
+import net.dv8tion.jda.api.interactions.commands.Command;
+import net.dv8tion.jda.api.interactions.commands.DefaultMemberPermissions;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
+
+import java.awt.*;
 
 public class DevopsBot extends AdvancedListenerAdapter {
 
@@ -37,10 +46,11 @@ public class DevopsBot extends AdvancedListenerAdapter {
         GuildData gd = guildDataRepository.getOne(guild.getIdLong());
         DevopsData dd = devopsDataRepository.getOne(guild.getIdLong());
         gd.setDevopsEnabled(false);
-        guild.getTextChannelById(dd.getDevopsGeneralChatId()).delete().queue();
+        guild.getVoiceChannelById(dd.getDevopsGeneralChatId()).delete().queue();
         guild.getTextChannelById(dd.getDevopsGeneralTextId()).delete().queue();
         guild.deleteCommandById(dd.getCreateBranchSlashId()).queue();
         guild.getCategoryById(dd.getDevopsCatId()).delete().queue();
+        guild.getRoleById(dd.getDevopsRoleId()).delete().queue();
         guildDataRepository.save(gd);
         devopsDataRepository.deleteById(guild.getIdLong());
     }
@@ -141,8 +151,44 @@ public class DevopsBot extends AdvancedListenerAdapter {
             dd.setBambooPAT(bamboo)
                 .setJiraPAT(jira)
                 .setBitbucketPAT(bitbucket);
-            devopsDataRepository.save(dd);
             message.sendMessage("Holy cow you did it right. Lets get your discord server setup.").setEphemeral(true).queue();
+            // update discord server
+            Guild guild = event.getGuild();
+            Role role = guild.createRole()
+                    .setName("devops")
+                    .setColor(new Color(110, 44, 110))
+                    .complete();
+            dd.setDevopsRoleId(role.getIdLong());
+            Category cat = guild.createCategory("devops").complete();
+            cat.upsertPermissionOverride(role).setAllowed(Permission.VIEW_CHANNEL).queue();
+            cat.upsertPermissionOverride(event.getGuild().getPublicRole()).setDenied(Permission.VIEW_CHANNEL).queue();
+            dd.setDevopsCatId(cat.getIdLong());
+            dd.setDevopsGeneralTextId(guild.createTextChannel("general dev", cat).complete().getIdLong());
+            dd.setDevopsGeneralChatId(guild.createVoiceChannel("general dev", cat).complete().getIdLong());
+            Command createBranch = guild.upsertCommand(Commands.slash("create_branch", "Creates a branch off of development")
+                    .addOption(OptionType.STRING, "name", "Branch name", true)
+                    ).complete();
+            // TODO create permissions for this slash command
+            dd.setCreateBranchSlashId(createBranch.getIdLong());
+            dd.setCreateBugReportSlashId(
+              guild.upsertCommand("bug", "Create a bug report").complete().getIdLong()
+            );
+            dd.setCreateJiraIssueSlashId(
+              guild.upsertCommand("issue", "Create a jira issue on this board")
+                      .complete().getIdLong()
+            );
+            // TODO create permissions for this slash command
+            devopsDataRepository.save(dd);
+            GuildData gd = guildDataRepository.getOne(event.getGuild().getIdLong());
+            gd.setDevopsEnabled(true);
+            guildDataRepository.save(gd);
+            message.sendMessage("You should be all set to go now!").setEphemeral(true).queue();
+
+            guild.getTextChannelById(gd.getConfigChannelId()).retrieveMessageById(gd.getConfigMessageId()).queue(cMessage -> {
+                ActionRow row = cMessage.getActionRows().get(0);
+                row.updateComponent("enable_devops", Button.success("disable_devops", "Devops bot"));
+                cMessage.editMessageComponents(row).queue();
+            });
 
         } else {
             message.sendMessage("Not all PATs were successful in validating. Check your PATs and try again.").setEphemeral(true).queue();
@@ -153,7 +199,7 @@ public class DevopsBot extends AdvancedListenerAdapter {
         return "Checking atlassian " + step + "...\n" +
                 "Jira: " + atlassianCheckMessageEmoji(jira) + "\n" +
                 "Bamboo: " + atlassianCheckMessageEmoji(bamboo) + "\n" +
-                "Bitbucket:" + atlassianCheckMessageEmoji(bitbucket);
+                "Bitbucket: " + atlassianCheckMessageEmoji(bitbucket);
     }
 
     private String atlassianCheckMessageEmoji(int status){
