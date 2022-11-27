@@ -1,4 +1,4 @@
-package data.database.cardData;
+package data.database.cardData.cards;
 
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,7 +17,7 @@ import javax.persistence.Table;
 @NoArgsConstructor
 @ToString
 @Entity
-@Table(name = "Cards")
+@Table(name = "cards")
 public class CardData {
 
     @Id
@@ -25,7 +25,6 @@ public class CardData {
     private long id;
 
     private String collection;
-    private int rarity;
+    private Integer rarity;
     private String name;
-    private boolean holographic;
 }

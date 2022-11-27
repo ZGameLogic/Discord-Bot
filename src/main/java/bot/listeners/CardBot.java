@@ -1,12 +1,54 @@
 package bot.listeners;
 
 import com.zgamelogic.AdvancedListenerAdapter;
+import data.database.cardData.cards.CardData;
+import data.database.cardData.cards.CardDataRepository;
+import data.database.cardData.guild.GuildCardData;
+import data.database.cardData.guild.GuildCardDataRepository;
+import data.database.cardData.player.PlayerCardDataRepository;
+import data.database.guildData.GuildData;
+import data.database.guildData.GuildDataRepository;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.GenericMessageEvent;
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent;
-import org.jetbrains.annotations.NotNull;
+import net.dv8tion.jda.api.events.session.ReadyEvent;
+import net.dv8tion.jda.api.interactions.components.ActionRow;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+
+import java.util.LinkedList;
 
 public class CardBot extends AdvancedListenerAdapter {
+
+    private CardDataRepository cardDataRepository;
+    private GuildCardDataRepository guildCardDataRepository;
+    private PlayerCardDataRepository playerCardDataRepository;
+    private GuildDataRepository guildDataRepository;
+
+    public CardBot(GuildDataRepository guildDataRepository, CardDataRepository cardDataRepository, GuildCardDataRepository guildCardDataRepository, PlayerCardDataRepository playerCardDataRepository) {
+        this.cardDataRepository = cardDataRepository;
+        this.guildCardDataRepository = guildCardDataRepository;
+        this.playerCardDataRepository = playerCardDataRepository;
+        this.guildDataRepository = guildDataRepository;
+    }
+
+    @ButtonResponse("enable_cards")
+    private void enableCards(ButtonInteractionEvent event){
+        event.deferEdit().queue();
+
+        guildDataRepository.save(guildDataRepository.getById(event.getGuild().getIdLong()).setCardsEnabled(true));
+        ActionRow row = event.getMessage().getActionRows().get(0);
+        row.updateComponent("enable_cards", Button.success("disable_cards", "Cards bot"));
+        event.getHook().editOriginalComponents(row).queue();
+    }
+
+    @ButtonResponse("disable_cards")
+    private void disableCards(ButtonInteractionEvent event){
+        event.editButton(Button.danger("enable_cards", "Cards bot")).queue();
+        guildDataRepository.save(guildDataRepository.getById(event.getGuild().getIdLong()).setCardsEnabled(false));
+        GuildCardData guildData = guildCardDataRepository.getById(event.getGuild().getIdLong());
+        guildCardDataRepository.delete(guildData);
+    }
 
     @Override
     public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
@@ -19,8 +61,7 @@ public class CardBot extends AdvancedListenerAdapter {
     }
 
     @Override
-    public void onGenericMessageReaction(@NotNull GenericMessageReactionEvent event) {
-        super.onGenericMessageReaction(event);
+    public void onGenericMessageReaction(GenericMessageReactionEvent event) {
         // TODO update points
     }
 
