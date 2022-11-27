@@ -28,4 +28,7 @@ public class GuildData {
     private Boolean planEnabled;
     private Long planChannelId;
     private Long createPlanCommandId, textCommandId;
+
+    // devops bot stuff
+    private Boolean devopsEnabled;
 }

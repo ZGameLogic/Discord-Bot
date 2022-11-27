@@ -78,7 +78,7 @@ public class PartyBot extends AdvancedListenerAdapter {
         event.editButton(Button.danger("enable_party", "Party Bot")).queue();
         // edit the discord
         Guild guild = event.getGuild();
-        GuildData savedGuild = guildData.findById(event.getGuild().getIdLong()).get();
+        GuildData savedGuild = guildData.getOne(event.getGuild().getIdLong());
         // commands
         guild.deleteCommandById(savedGuild.getLimitCommandId()).queue();
         guild.deleteCommandById(savedGuild.getRenameCommandId()).queue();
@@ -88,11 +88,11 @@ public class PartyBot extends AdvancedListenerAdapter {
 
         // edit the database
         savedGuild.setChatroomEnabled(false);
-        savedGuild.setPartyCategory(null);
-        savedGuild.setCreateChatId(null);
-        savedGuild.setAfkChannelId(null);
-        savedGuild.setRenameCommandId(null);
-        savedGuild.setLimitCommandId(null);
+        savedGuild.setPartyCategory(0l);
+        savedGuild.setCreateChatId(0l);
+        savedGuild.setAfkChannelId(0l);
+        savedGuild.setRenameCommandId(0l);
+        savedGuild.setLimitCommandId(0l);
         guildData.save(savedGuild);
     }
 
