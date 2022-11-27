@@ -2,11 +2,10 @@ package bot;
 
 import javax.annotation.PostConstruct;
 
-import bot.listeners.DevopsBot;
-import bot.listeners.GeneralListener;
-import bot.listeners.PartyBot;
-import bot.listeners.PlannerBot;
+import bot.listeners.*;
 import com.zgamelogic.AdvancedListenerAdapter;
+import data.database.cardData.CardDataRepository;
+import data.database.cardData.guild.GuildCardDataRepository;
 import data.database.devopsData.DevopsDataRepository;
 import data.database.guildData.GuildDataRepository;
 import data.database.planData.PlanRepository;
@@ -37,6 +36,10 @@ public class Bot {
 	private UserDataRepository userData;
 	@Autowired
 	private DevopsDataRepository devopsDataRepository;
+	@Autowired
+	private CardDataRepository cardDataRepository;
+	@Autowired
+	private GuildCardDataRepository guildCardDataRepository;
 
 	private final static String TITLE = "\r\n" +
 			"   ____  ___  _                   _   ___      _  ______  \r\n" + 
@@ -59,6 +62,7 @@ public class Bot {
 		bot.enableCache(CacheFlag.ACTIVITY);
 		bot.enableIntents(GatewayIntent.GUILD_MEMBERS);
 		bot.setMemberCachePolicy(MemberCachePolicy.ALL);
+		bot.setEventPassthrough(true);
 
 		LinkedList<AdvancedListenerAdapter> listeners = new LinkedList<>();
 
@@ -66,6 +70,7 @@ public class Bot {
 		listeners.add(new GeneralListener(guildData));
 		listeners.add(new PlannerBot(planRepository, userData, guildData));
 		listeners.add(new DevopsBot(devopsDataRepository, guildData));
+		listeners.add(new CardBot());
 
 		// Add listeners
 		for(ListenerAdapter a : listeners){
