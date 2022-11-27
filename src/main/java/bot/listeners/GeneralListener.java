@@ -61,6 +61,11 @@ public class GeneralListener extends AdvancedListenerAdapter {
                     } else {
                         ics.add(Button.success("disable_plan", "Plan bot"));
                     }
+                    if(guild.getDevopsEnabled() == null || !guild.getDevopsEnabled()){
+                        ics.add(Button.danger("enable_devops", "Devops bot").asDisabled());
+                    } else {
+                        ics.add(Button.success("disable_devops", "Devops bot"));
+                    }
                     ActionRow row = ActionRow.of(ics);
                     components.add(row);
                     message.editMessageComponents(components).queue();
@@ -99,10 +104,8 @@ public class GeneralListener extends AdvancedListenerAdapter {
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         if(!event.isFromGuild() && !event.getAuthor().isBot()){
-            event.getJDA().getUserById(232675572772372481l).openPrivateChannel().queue(channel -> {
-                channel.sendMessage("Message from " + event.getAuthor().getName() + ":" + event.getAuthor().getId() + "\n" + event.getMessage().getContentRaw())
-                        .setActionRow(Button.secondary("reply_message", "Reply")).queue();
-            });
+            event.getJDA().getUserById(232675572772372481l).openPrivateChannel().queue(channel -> channel.sendMessage("Message from " + event.getAuthor().getName() + ":" + event.getAuthor().getId() + "\n" + event.getMessage().getContentRaw())
+                    .setActionRow(Button.secondary("reply_message", "Reply")).queue());
         }
     }
 
@@ -116,9 +119,7 @@ public class GeneralListener extends AdvancedListenerAdapter {
     private void modalResponseMessageReply(ModalInteractionEvent event){
         event.getJDA().getUserById(
                 event.getMessage().getContentRaw().split("\n")[0].split(":")[1]
-        ).openPrivateChannel().queue(privateChannel -> {
-            privateChannel.sendMessage(event.getValue("message").getAsString()).queue();
-        });
+        ).openPrivateChannel().queue(privateChannel -> privateChannel.sendMessage(event.getValue("message").getAsString()).queue());
         event.reply("Message sent back\n" + event.getValue("message").getAsString()).queue();
     }
 
@@ -134,17 +135,15 @@ public class GeneralListener extends AdvancedListenerAdapter {
                         new LinkedList<>(Collections.singletonList(Permission.VIEW_CHANNEL)
                         ))
                 .setTopic("This is a channel made by shlongbot")
-                .queue(textChannel -> {
-                    textChannel.sendMessageEmbeds(EmbedMessageGenerator.welcomeMessage(guild.getOwner().getEffectiveName(), guild.getName()))
-                            .queue(message -> {
-                                GuildData newGuild = new GuildData();
-                                newGuild.setId(guild.getIdLong());
-                                newGuild.setConfigChannelId(textChannel.getIdLong());
-                                newGuild.setChatroomEnabled(false);
-                                newGuild.setPlanEnabled(false);
-                                newGuild.setConfigMessageId(message.getIdLong());
-                                guildData.save(newGuild);
-                            });
-                });
+                .queue(textChannel -> textChannel.sendMessageEmbeds(EmbedMessageGenerator.welcomeMessage(guild.getOwner().getEffectiveName(), guild.getName()))
+                        .queue(message -> {
+                            GuildData newGuild = new GuildData();
+                            newGuild.setId(guild.getIdLong());
+                            newGuild.setConfigChannelId(textChannel.getIdLong());
+                            newGuild.setChatroomEnabled(false);
+                            newGuild.setPlanEnabled(false);
+                            newGuild.setConfigMessageId(message.getIdLong());
+                            guildData.save(newGuild);
+                        }));
     }
 }

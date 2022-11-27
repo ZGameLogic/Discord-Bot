@@ -2,10 +2,12 @@ package bot;
 
 import javax.annotation.PostConstruct;
 
+import bot.listeners.DevopsBot;
 import bot.listeners.GeneralListener;
 import bot.listeners.PartyBot;
 import bot.listeners.PlannerBot;
 import com.zgamelogic.AdvancedListenerAdapter;
+import data.database.devopsData.DevopsDataRepository;
 import data.database.guildData.GuildDataRepository;
 import data.database.planData.PlanRepository;
 import data.database.userData.UserDataRepository;
@@ -33,6 +35,8 @@ public class Bot {
 	private PlanRepository planRepository;
 	@Autowired
 	private UserDataRepository userData;
+	@Autowired
+	private DevopsDataRepository devopsDataRepository;
 
 	private final static String TITLE = "\r\n" +
 			"   ____  ___  _                   _   ___      _  ______  \r\n" + 
@@ -61,6 +65,7 @@ public class Bot {
 		listeners.add(new PartyBot(guildData));
 		listeners.add(new GeneralListener(guildData));
 		listeners.add(new PlannerBot(planRepository, userData, guildData));
+		listeners.add(new DevopsBot(devopsDataRepository, guildData));
 
 		// Add listeners
 		for(ListenerAdapter a : listeners){
