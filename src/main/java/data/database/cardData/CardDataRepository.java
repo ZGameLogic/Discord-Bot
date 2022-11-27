@@ -1,8 +1,0 @@
-package data.database.cardData;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Component;
-
-@Component
-public interface CardDataRepository extends JpaRepository<CardData, Long> {
-}

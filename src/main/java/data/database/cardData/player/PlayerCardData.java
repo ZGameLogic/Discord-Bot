@@ -1,23 +1,35 @@
-package data.database.cardData.guild;
+package data.database.cardData.player;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.ToString;
+import lombok.experimental.Accessors;
 
-import javax.persistence.Column;
-import javax.persistence.ElementCollection;
-import javax.persistence.Embeddable;
+import javax.persistence.*;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
-@Embeddable
+@Accessors(chain = true)
 @Getter
 @Setter
+@ToString
+@Entity
+@Table(name = "card_player")
 public class PlayerCardData {
 
-    @Column
+    @Id
+    @Column(name = "user_id")
+    private long userId;
+
     @ElementCollection
+    @CollectionTable(name="decks")
     private List<Long> deck;
+
     private Long currency;
+    private Long progress;
+    private Date joinedVoice;
 
     public PlayerCardData(){
         deck = new LinkedList<>();

@@ -4,8 +4,9 @@ import javax.annotation.PostConstruct;
 
 import bot.listeners.*;
 import com.zgamelogic.AdvancedListenerAdapter;
-import data.database.cardData.CardDataRepository;
+import data.database.cardData.cards.CardDataRepository;
 import data.database.cardData.guild.GuildCardDataRepository;
+import data.database.cardData.player.PlayerCardDataRepository;
 import data.database.devopsData.DevopsDataRepository;
 import data.database.guildData.GuildDataRepository;
 import data.database.planData.PlanRepository;
@@ -40,6 +41,8 @@ public class Bot {
 	private CardDataRepository cardDataRepository;
 	@Autowired
 	private GuildCardDataRepository guildCardDataRepository;
+	@Autowired
+	private PlayerCardDataRepository playerCardDataRepository;
 
 	private final static String TITLE = "\r\n" +
 			"   ____  ___  _                   _   ___      _  ______  \r\n" + 
@@ -70,7 +73,7 @@ public class Bot {
 		listeners.add(new GeneralListener(guildData));
 		listeners.add(new PlannerBot(planRepository, userData, guildData));
 		listeners.add(new DevopsBot(devopsDataRepository, guildData));
-		listeners.add(new CardBot());
+		listeners.add(new CardBot(guildData, cardDataRepository, guildCardDataRepository, playerCardDataRepository));
 
 		// Add listeners
 		for(ListenerAdapter a : listeners){
