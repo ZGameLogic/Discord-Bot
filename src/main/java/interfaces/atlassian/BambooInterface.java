@@ -5,7 +5,10 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 
 public abstract class BambooInterface {
 
@@ -19,8 +22,12 @@ public abstract class BambooInterface {
         HttpGet httpget = new HttpGet(url);
         try {
             HttpResponse httpresponse = httpclient.execute(httpget);
-            return httpresponse.getStatusLine().getStatusCode() == 200;
-            // TODO do more checks than this
+            if(httpresponse.getStatusLine().getStatusCode() != 200) return false;
+            BufferedReader in = new BufferedReader(new InputStreamReader(httpresponse.getEntity().getContent()));
+            for(int i = 0; i < 5; i++){
+                in.readLine();
+            }
+            return in.readLine().contains("Atlassian Bamboo");
         } catch (IOException e) {
             return false;
         }
