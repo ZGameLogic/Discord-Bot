@@ -77,14 +77,17 @@ public class CardBot extends AdvancedListenerAdapter {
           guild.upsertCommand(Commands.slash("cards", "Slash command for card bot")
                   .addSubcommands(
                           new SubcommandData("collection", "View your entire collection completion")
-                                  .addOption(OptionType.STRING, "collection", "Specific collection data", false, true),
+                                  .addOption(OptionType.STRING, "collection", "Specific collection data", false, true)
+                                  .addOption(OptionType.USER, "user", "Specific user data", false),
                           new SubcommandData("sell", "Sell a specific card you own")
                                   .addOption(OptionType.STRING,"collection", "Specific collection", true)
                                   .addOption(OptionType.STRING, "name", "Specific card name", true, true)
                                   .addOption(OptionType.INTEGER, "price", "Price for card", true),
                           new SubcommandData("buy_pack", "Buy a number of packs. 100 pips each.")
                                   .addOption(OptionType.INTEGER, "count", "Number of packs you want to buy", true)
-                                  .addOption(OptionType.STRING, "collection", "Specific collection of cards. 250 pips each.", false, true)
+                                  .addOption(OptionType.STRING, "collection", "Specific collection of cards. 250 pips each.", false, true),
+                          new SubcommandData("status", "View how many unopened packs you have and your pip count")
+
                   )
           ).complete().getIdLong()
         );
@@ -171,6 +174,13 @@ public class CardBot extends AdvancedListenerAdapter {
 
     }
 
+    @SlashResponse(value = "cards", subCommandName = "status")
+    private void statusSlashCommand(SlashCommandInteractionEvent event){
+        event.replyEmbeds(
+                EmbedMessageGenerator.cardPlayerStatus(event.getUser().getName(), playerCardDataRepository.getById(event.getUser().getIdLong()))
+        ).queue();
+    }
+
     @SlashResponse(value = "cards", subCommandName = "buy_pack")
     private void buyPackSlashCommand(SlashCommandInteractionEvent event){
         if(event.getOption("count").getAsInt() <= 0) { // need a positive number of packs
@@ -230,6 +240,7 @@ public class CardBot extends AdvancedListenerAdapter {
             PlayerCardData pcd = playerCardDataRepository.getById(event.getMember().getIdLong());
             long seconds = (new Date().getTime() - pcd.getJoinedVoice().getTime()) / 1000;
             pcd.addProgress(seconds);
+            pcd.setJoinedVoice(null);
             playerCardDataRepository.save(pcd);
         }
         if(event.getChannelJoined() != null){
