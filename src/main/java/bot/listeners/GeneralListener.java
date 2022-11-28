@@ -66,6 +66,11 @@ public class GeneralListener extends AdvancedListenerAdapter {
                     } else {
                         ics.add(Button.success("disable_devops", "Devops bot"));
                     }
+                    if(guild.getCardsEnabled() == null || !guild.getCardsEnabled()){
+                        ics.add(Button.danger("enable_cards", "Cards bot"));
+                    } else {
+                        ics.add(Button.success("disable_cards", "Cards bot"));
+                    }
                     ActionRow row = ActionRow.of(ics);
                     components.add(row);
                     message.editMessageComponents(components).queue();
