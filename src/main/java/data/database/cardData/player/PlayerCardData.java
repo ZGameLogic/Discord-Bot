@@ -14,6 +14,7 @@ import java.util.List;
 @Accessors(chain = true)
 @Getter
 @Setter
+@NoArgsConstructor
 @ToString
 @Entity
 @Table(name = "card_player")
@@ -31,8 +32,11 @@ public class PlayerCardData {
     private Long progress;
     private Date joinedVoice;
 
-    public PlayerCardData(){
+    public PlayerCardData(Long userId){
+        this.userId = userId;
         deck = new LinkedList<>();
+        currency = 0l;
+        progress = 0l;
     }
 
     public void addCard(long cardId){
@@ -57,6 +61,50 @@ public class PlayerCardData {
 
     public boolean hasCurrency(long amount){
         return currency >= amount;
+    }
+
+    public void addCurrency(int amount){
+        currency += amount;
+    }
+
+    public void removeCurrency(int amount){
+        currency -= amount;
+    }
+
+    public boolean hasCurrency(int amount){
+        return currency >= amount;
+    }
+
+    public void addProgress(long amount){
+        progress += amount;
+    }
+
+    public void removeProgress(long amount){
+        progress -= amount;
+    }
+
+    public boolean hasProgress(long amount){
+        return progress >= amount;
+    }
+
+    public void addProgress(int amount){
+        progress += amount;
+    }
+
+    public void removeProgress(int amount){
+        progress -= amount;
+    }
+
+    public boolean hasProgress(int amount){
+        return progress >= amount;
+    }
+
+    public int getPackCount(){
+        return (int)(progress / 3600);
+    }
+
+    public void redeemPack(){
+        removeProgress(3600);
     }
 
 }

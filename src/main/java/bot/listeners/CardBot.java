@@ -1,13 +1,16 @@
 package bot.listeners;
 
 import com.zgamelogic.AdvancedListenerAdapter;
-import data.database.cardData.cards.CardData;
 import data.database.cardData.cards.CardDataRepository;
 import data.database.cardData.guild.GuildCardData;
 import data.database.cardData.guild.GuildCardDataRepository;
+import data.database.cardData.player.PlayerCardData;
 import data.database.cardData.player.PlayerCardDataRepository;
-import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.GenericMessageEvent;
@@ -16,7 +19,9 @@ import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 
+import java.util.Date;
 import java.util.LinkedList;
+import java.util.List;
 
 public class CardBot extends AdvancedListenerAdapter {
 
@@ -30,6 +35,27 @@ public class CardBot extends AdvancedListenerAdapter {
         this.guildCardDataRepository = guildCardDataRepository;
         this.playerCardDataRepository = playerCardDataRepository;
         this.guildDataRepository = guildDataRepository;
+    }
+
+    @Override
+    public void onReady(ReadyEvent event) {
+        new Thread(() -> {
+            List<PlayerCardData> newPlayers = new LinkedList<>();
+            for(Guild guild: event.getJDA().getGuilds()){
+                for(Member member: guild.getMembers()){
+                    if(!playerCardDataRepository.existsById(member.getIdLong())){
+                        PlayerCardData playerData = new PlayerCardData(member.getIdLong());
+                        newPlayers.add(playerData);
+                    }
+                }
+            }
+            playerCardDataRepository.saveAll(newPlayers);
+        }, "Card bot ready thread").start();
+    }
+
+    @Override
+    public void onGuildMemberJoin(GuildMemberJoinEvent event) {
+        playerCardDataRepository.save(new PlayerCardData(event.getUser().getIdLong()));
     }
 
     @ButtonResponse("enable_cards")
@@ -53,10 +79,18 @@ public class CardBot extends AdvancedListenerAdapter {
     @Override
     public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
         if(event.getChannelLeft() != null){
-            // TODO update points (if the join time isnt null)
+            PlayerCardData pcd = playerCardDataRepository.getById(event.getMember().getIdLong());
+            long seconds = (new Date().getTime() - pcd.getJoinedVoice().getTime()) / 1000;
+            pcd.addProgress(seconds);
+            playerCardDataRepository.save(pcd);
         }
         if(event.getChannelJoined() != null){
-            // TODO update player joined timestamp (or keep null if in afk)
+            if(event.getGuild().getAfkChannel() == null ||
+                    event.getChannelJoined().getIdLong() != event.getGuild().getAfkChannel().getIdLong()){
+                PlayerCardData pcd = playerCardDataRepository.getById(event.getMember().getIdLong());
+                pcd.setJoinedVoice(new Date());
+                playerCardDataRepository.save(pcd);
+            }
         }
     }
 
@@ -70,5 +104,9 @@ public class CardBot extends AdvancedListenerAdapter {
         if(event.isFromGuild()){
             // TODO update points
         }
+    }
+
+    private void addPlayer(User user){
+
     }
 }
