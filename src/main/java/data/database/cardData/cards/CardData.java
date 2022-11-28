@@ -30,6 +30,17 @@ public class CardData {
     private Integer rarity;
     private String name;
 
+    public String toDiscordMessage(boolean includeCollection){
+        if(includeCollection){
+            return collection + " " + String.format("__%04d__ **", id) + name + "**";
+        }
+        return String.format("__%04d__ **", id) + name + "**";
+    }
+
+    public int getSellback(){
+        return 16 + (-(rarity - 5));
+    }
+
     @Override
     public boolean equals(Object obj) {
         if(obj instanceof CardData){

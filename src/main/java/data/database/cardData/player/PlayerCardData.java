@@ -104,7 +104,7 @@ public class PlayerCardData {
 
     public void redeemPack(){
         removeProgress(3600);
-        addPack("generic");
+        addPack();
     }
 
     public void addPack(){
@@ -141,8 +141,11 @@ public class PlayerCardData {
 
     public void removePack(String collection){
         if(packs.containsKey(collection)){
-            if(packs.get(collection) == 1){ packs.remove(collection); }
-            else {packs.put(collection, packs.get(collection) - 1); }
+            packs.put(collection, packs.get(collection) - 1);
         }
+    }
+
+    public void removeAllPacks() {
+        packs = new HashMap<>();
     }
 }
