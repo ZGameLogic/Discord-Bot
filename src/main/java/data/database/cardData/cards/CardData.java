@@ -5,13 +5,11 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.experimental.Accessors;
-import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
-import java.util.HashMap;
 
 @Accessors(chain = true)
 @Getter
@@ -55,7 +53,6 @@ public class CardData {
 
     @Override
     public int hashCode() {
-        System.out.println("called2");
         return Long.hashCode(id);
     }
 }
