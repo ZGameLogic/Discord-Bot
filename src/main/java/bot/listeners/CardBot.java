@@ -12,6 +12,7 @@ import data.database.guildData.GuildDataRepository;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
@@ -27,6 +28,7 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -34,10 +36,10 @@ import java.util.stream.Stream;
 
 public class CardBot extends AdvancedListenerAdapter {
 
-    private CardDataRepository cardDataRepository;
-    private GuildCardDataRepository guildCardDataRepository;
-    private PlayerCardDataRepository playerCardDataRepository;
-    private GuildDataRepository guildDataRepository;
+    private final CardDataRepository cardDataRepository;
+    private final GuildCardDataRepository guildCardDataRepository;
+    private final PlayerCardDataRepository playerCardDataRepository;
+    private final GuildDataRepository guildDataRepository;
 
     public CardBot(GuildDataRepository guildDataRepository, CardDataRepository cardDataRepository, GuildCardDataRepository guildCardDataRepository, PlayerCardDataRepository playerCardDataRepository) {
         this.cardDataRepository = cardDataRepository;
@@ -47,7 +49,7 @@ public class CardBot extends AdvancedListenerAdapter {
     }
 
     @Override
-    public void onReady(ReadyEvent event) {
+    public void onReady(@NotNull ReadyEvent event) {
         new Thread(() -> {
             List<PlayerCardData> newPlayers = new LinkedList<>();
             for(Guild guild: event.getJDA().getGuilds()){
@@ -80,7 +82,7 @@ public class CardBot extends AdvancedListenerAdapter {
                                   .addOption(OptionType.STRING, "collection", "Specific collection data", false, true)
                                   .addOption(OptionType.USER, "user", "Specific user data", false),
                           new SubcommandData("sell", "Sell a specific card you own")
-                                  .addOption(OptionType.STRING,"collection", "Specific collection", true)
+                                  .addOption(OptionType.STRING,"collection", "Specific collection", true, true)
                                   .addOption(OptionType.STRING, "name", "Specific card name", true, true)
                                   .addOption(OptionType.INTEGER, "price", "Price for card", true),
                           new SubcommandData("buy_pack", "Buy a number of packs. 100 pips each.")
@@ -97,8 +99,8 @@ public class CardBot extends AdvancedListenerAdapter {
                         .setTopic("A shop for all things cards")
                         .addRolePermissionOverride(
                                 event.getGuild().getPublicRole().getIdLong(),
-                                new LinkedList<>(Arrays.asList(Permission.VIEW_CHANNEL)),
-                                new LinkedList<>(Arrays.asList(Permission.MESSAGE_SEND))
+                                new LinkedList<>(Collections.singletonList(Permission.VIEW_CHANNEL)),
+                                new LinkedList<>(Collections.singletonList(Permission.MESSAGE_SEND))
                         )
                 .complete().getIdLong());
         guildCardDataRepository.save(data);
@@ -141,10 +143,9 @@ public class CardBot extends AdvancedListenerAdapter {
     @AutoCompleteResponse(slashCommandId = "cards", slashSubCommandId = "sell", focusedOption = "collection")
     private void sellCollectionAutocomplete(CommandAutoCompleteInteractionEvent event){
         Set<String> collections = new HashSet<>();
-        for(long cardId: playerCardDataRepository.getById(event.getUser().getIdLong()).getDeck()){
-            collections.add(cardDataRepository.getById(cardId).getCollection());
-        }
-        String[] words = collections.toArray(new String[0]);
+        String[] words = cardDataRepository.listCardCollectionsById(
+                playerCardDataRepository.getById(event.getUser().getIdLong()).getDeck()
+        ).toArray(new String[0]);
         List<Command.Choice> options = Stream.of(words)
                 .filter(word -> word.startsWith(event.getFocusedOption().getValue()))
                 .map(word -> new Command.Choice(word, word))
@@ -154,12 +155,11 @@ public class CardBot extends AdvancedListenerAdapter {
 
     @AutoCompleteResponse(slashCommandId = "cards", slashSubCommandId = "sell", focusedOption = "name")
     private void sellNameAutocomplete(CommandAutoCompleteInteractionEvent event){
-        Set<String> names = new HashSet<>();
-        String collection = event.getOption("collection").getAsString();
-        for(long cardId: playerCardDataRepository.getById(event.getUser().getIdLong()).getDeck()){
-            CardData card = cardDataRepository.getById(cardId);
-            if(card.getCollection().equals(collection)) names.add(cardDataRepository.getById(cardId).getCollection());
-        }
+        String collection = event.getOption("collection") == null ? "" : event.getOption("collection").getAsString();
+        Set<String> names = new HashSet<>(cardDataRepository.findByCollectionAndIds(
+                playerCardDataRepository.getById(event.getUser().getIdLong()).getDeck(),
+                collection
+        ));
         String[] words = names.toArray(new String[0]);
         List<Command.Choice> options = Stream.of(words)
                 .filter(word -> word.startsWith(event.getFocusedOption().getValue()))
@@ -171,7 +171,56 @@ public class CardBot extends AdvancedListenerAdapter {
     @SlashResponse(value = "cards", subCommandName = "sell")
     private void sellSlashCommand(SlashCommandInteractionEvent event){
         event.deferReply().queue();
+        Guild guild = event.getGuild();
+        TextChannel shopChannel = guild.getTextChannelById(guildCardDataRepository.getById(guild.getIdLong()).getShopTextChannelId());
+        long user = event.getUser().getIdLong();
+        LinkedList<CardData> results = cardDataRepository.findCardsByCollectionAndName(
+                event.getOption("collection").getAsString(),
+                event.getOption("name").getAsString()
+        );
+        if(results.size() == 0){
+            event.getHook().setEphemeral(true).sendMessage("That card does not exist").queue();
+            return;
+        }
+        CardData card = results.get(0);
+        if(event.getOption("price").getAsInt() <= 0){
+            event.getHook().setEphemeral(true).sendMessage("Price must be positive").queue();
+            return;
+        }
+        PlayerCardData player = playerCardDataRepository.getById(event.getUser().getIdLong());
+        if(!player.hasCard(card.getId())){
+            event.getHook().setEphemeral(true).sendMessage("You do not own this card").queue();
+            return;
+        }
+        player.removeCard(card.getId());
+        shopChannel.sendMessageEmbeds(EmbedMessageGenerator.cardShopMessage(user, card, event.getOption("price").getAsInt()))
+                .addActionRow(Button.primary("purchase_card", "Purchase")).queue();
+        event.getHook().setEphemeral(true).sendMessage("Added to the <#" + shopChannel.getId() + ">").queue();
+        playerCardDataRepository.save(player);
+    }
 
+    @ButtonResponse("purchase_card")
+    private void purchaseCard(ButtonInteractionEvent event){
+        long cardId = Long.parseLong(event.getMessage().getEmbeds().get(0).getDescription().split("__")[1]);
+        long userId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
+        int price = Integer.parseInt(event.getMessage().getEmbeds().get(0).getFields().get(0).getValue());
+        PlayerCardData player = playerCardDataRepository.getById(event.getUser().getIdLong());
+        if(player.getDeck().contains(cardId)){
+            event.reply("You already own this card").setEphemeral(true).queue();
+            return;
+        }
+        if(!player.hasCurrency(price)){
+            event.reply("You don't have enough pips to buy this card").setEphemeral(true).queue();
+            return;
+        }
+        player.removeCurrency(price);
+        player.addCard(cardId);
+        event.reply("You have purchased this card").setEphemeral(true).queue();
+        event.getMessage().delete().queue();
+        playerCardDataRepository.save(player);
+        PlayerCardData seller = playerCardDataRepository.getById(userId);
+        seller.addCurrency(price);
+        playerCardDataRepository.save(seller);
     }
 
     @SlashResponse(value = "cards", subCommandName = "open_packs")
@@ -208,7 +257,7 @@ public class CardBot extends AdvancedListenerAdapter {
                 newCards.add(id);
             }
         }
-        newCards.forEach(id -> player.addCard(id));
+        newCards.forEach(player::addCard);
         int moneyMade = 0;
         for(long id: dupCards){
             moneyMade += cardDataRepository.getById(id).getSellback();
@@ -237,7 +286,7 @@ public class CardBot extends AdvancedListenerAdapter {
             event.reply("You can't buy negative packs").setEphemeral(true).queue();
             return;
         }
-        if(event.getOption("collection") != null && !collectionExists(event.getOption("collection").getAsString())){ // need collection to exist
+        if(event.getOption("collection") != null && collectionDoesntExists(event.getOption("collection").getAsString())){ // need collection to exist
             event.reply("That collection does not exist").setEphemeral(true).queue();
             return;
         }
@@ -276,7 +325,7 @@ public class CardBot extends AdvancedListenerAdapter {
         PlayerCardData player = playerCardDataRepository.getById(userId);
         OptionMapping collection = event.getOption("collection");
         if(collection != null){
-            if(!collectionExists(collection.getAsString())) {
+            if(collectionDoesntExists(collection.getAsString())) {
                 event.getHook().sendMessage("That collection does not exist").queue();
                 return;
             }
@@ -327,7 +376,28 @@ public class CardBot extends AdvancedListenerAdapter {
         playerCardDataRepository.save(pcd);
     }
 
-    private boolean collectionExists(String collection){
-        return cardDataRepository.listCardCollections().contains(collection);
+    private boolean collectionDoesntExists(String collection){
+        return !cardDataRepository.listCardCollections().contains(collection);
+    }
+
+    public void tenMinuteTasks(){
+        LinkedList<PlayerCardData> updated = new LinkedList<>();
+        for(PlayerCardData player: playerCardDataRepository.findAll()){
+            boolean edited = false;
+            if(player.getJoinedVoice() != null){
+                long seconds = (new Date().getTime() - player.getJoinedVoice().getTime()) / 1000;
+                player.setJoinedVoice(new Date());
+                player.addProgress(seconds);
+                edited = true;
+            }
+            if(player.getProgress() >= 3600){
+                player.setProgress(0l);
+                player.addPack();
+                edited = true;
+            }
+            if(edited) updated.add(player);
+        }
+        playerCardDataRepository.saveAll(updated);
+        System.out.println("finished this up");
     }
 }
