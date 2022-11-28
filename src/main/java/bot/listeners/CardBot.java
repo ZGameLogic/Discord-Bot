@@ -86,8 +86,8 @@ public class CardBot extends AdvancedListenerAdapter {
                           new SubcommandData("buy_pack", "Buy a number of packs. 100 pips each.")
                                   .addOption(OptionType.INTEGER, "count", "Number of packs you want to buy", true)
                                   .addOption(OptionType.STRING, "collection", "Specific collection of cards. 250 pips each.", false, true),
-                          new SubcommandData("status", "View how many unopened packs you have and your pip count")
-
+                          new SubcommandData("status", "View how many unopened packs you have and your pip count"),
+                          new SubcommandData("open_packs", "Opens all the packs that you have")
                   )
           ).complete().getIdLong()
         );
@@ -174,6 +174,56 @@ public class CardBot extends AdvancedListenerAdapter {
 
     }
 
+    @SlashResponse(value = "cards", subCommandName = "open_packs")
+    private void openPacks(SlashCommandInteractionEvent event){
+        event.deferReply().queue();
+        PlayerCardData player = playerCardDataRepository.getById(event.getUser().getIdLong());
+        LinkedList<Long> cardsInPack = new LinkedList<>();
+        for(String collection: player.getPacks().keySet()){
+            LinkedList<CardData> cardPool = new LinkedList<>();
+            if(collection.equals("generic")){
+                cardPool.addAll(cardDataRepository.findAll());
+            } else {
+                cardPool.addAll(cardDataRepository.findCardsByCollection(collection));
+            }
+            LinkedList<Long> idPool = new LinkedList<>();
+            for(CardData card: cardPool){
+                for(int i = 0; i < card.getRarity(); i++) idPool.add(card.getId());
+            }
+            for(int i = 0; i < player.getPacks().get(collection); i++){
+                for(int j = 0; j < 5; j++){ // draw a card
+                    cardsInPack.add(idPool.get(new Random().nextInt(idPool.size())));
+                }
+            }
+        }
+        player.removeAllPacks();
+        LinkedList<Long> newCards = new LinkedList<>();
+        LinkedList<Long> dupCards = new LinkedList<>();
+        for(long id: cardsInPack){
+            if(player.hasCard(id)){
+                dupCards.add(id);
+            } else if(newCards.contains(id)){
+                dupCards.add(id);
+            } else {
+                newCards.add(id);
+            }
+        }
+        newCards.forEach(id -> player.addCard(id));
+        int moneyMade = 0;
+        for(long id: dupCards){
+            moneyMade += cardDataRepository.getById(id).getSellback();
+        }
+        player.addCurrency(moneyMade);
+        playerCardDataRepository.save(player);
+        event.getHook().sendMessageEmbeds(EmbedMessageGenerator.cardPackOpen(
+                event.getUser().getName(),
+                newCards,
+                dupCards,
+                cardDataRepository,
+                moneyMade
+        )).queue();
+    }
+
     @SlashResponse(value = "cards", subCommandName = "status")
     private void statusSlashCommand(SlashCommandInteractionEvent event){
         event.replyEmbeds(
@@ -221,16 +271,18 @@ public class CardBot extends AdvancedListenerAdapter {
     @SlashResponse(value = "cards", subCommandName = "collection")
     private void collectionSlashCommand(SlashCommandInteractionEvent event){
         event.deferReply().queue();
-        PlayerCardData player = playerCardDataRepository.getById(event.getUser().getIdLong());
+        long userId = event.getOption("user") != null ? event.getOption("user").getAsUser().getIdLong() : event.getUser().getIdLong();
+        String username = event.getOption("user") != null ? event.getOption("user").getAsUser().getName() : event.getUser().getName();
+        PlayerCardData player = playerCardDataRepository.getById(userId);
         OptionMapping collection = event.getOption("collection");
         if(collection != null){
             if(!collectionExists(collection.getAsString())) {
                 event.getHook().sendMessage("That collection does not exist").queue();
                 return;
             }
-            event.getHook().sendMessageEmbeds(EmbedMessageGenerator.specificCollectionView(event.getUser().getName(), collection.getAsString(), new LinkedList<>(player.getDeck()), cardDataRepository)).queue();
+            event.getHook().sendMessageEmbeds(EmbedMessageGenerator.specificCollectionView(username, collection.getAsString(), new LinkedList<>(player.getDeck()), cardDataRepository)).queue();
         } else {
-            event.getHook().sendMessageEmbeds(EmbedMessageGenerator.overallCollectionView(event.getUser().getName(), new LinkedList<>(player.getDeck()), cardDataRepository)).queue();
+            event.getHook().sendMessageEmbeds(EmbedMessageGenerator.overallCollectionView(username, new LinkedList<>(player.getDeck()), cardDataRepository)).queue();
         }
     }
 
