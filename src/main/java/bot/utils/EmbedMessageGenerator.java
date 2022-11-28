@@ -32,11 +32,11 @@ public abstract class EmbedMessageGenerator {
         eb.setTitle("Card opening for " + username);
         StringBuilder desc = new StringBuilder("New cards\n==========\n");
         for(long id: newCards){
-            desc.append(cards.getById(id).toDiscordMessage(true)).append("\n");
+            desc.append(cards.getOne(id).toDiscordMessage(true)).append("\n");
         }
         desc.append("\nDuplicate cards\n===============\n");
         for(long id: dupCards){
-            CardData card = cards.getById(id);
+            CardData card = cards.getOne(id);
             desc.append(card.toDiscordMessage(true)).append(" +").append(card.getSellback()).append(" pip\n");
         }
         eb.setDescription(desc.toString());

@@ -104,7 +104,7 @@ public class CardBot extends AdvancedListenerAdapter {
                         )
                 .complete().getIdLong());
         guildCardDataRepository.save(data);
-        guildDataRepository.save(guildDataRepository.getById(event.getGuild().getIdLong()).setCardsEnabled(true));
+        guildDataRepository.save(guildDataRepository.getOne(event.getGuild().getIdLong()).setCardsEnabled(true));
         ActionRow row = event.getMessage().getActionRows().get(0);
         row.updateComponent("enable_cards", Button.success("disable_cards", "Cards bot"));
         event.getHook().editOriginalComponents(row).queue();
@@ -113,8 +113,8 @@ public class CardBot extends AdvancedListenerAdapter {
     @ButtonResponse("disable_cards")
     private void disableCards(ButtonInteractionEvent event){
         event.editButton(Button.danger("enable_cards", "Cards bot")).queue();
-        guildDataRepository.save(guildDataRepository.getById(event.getGuild().getIdLong()).setCardsEnabled(false));
-        GuildCardData guildData = guildCardDataRepository.getById(event.getGuild().getIdLong());
+        guildDataRepository.save(guildDataRepository.getOne(event.getGuild().getIdLong()).setCardsEnabled(false));
+        GuildCardData guildData = guildCardDataRepository.getOne(event.getGuild().getIdLong());
         event.getGuild().retrieveCommandById(guildData.getSlashCommandId()).queue(command -> command.delete().queue());
         event.getGuild().getTextChannelById(guildData.getShopTextChannelId()).delete().queue();
         guildCardDataRepository.delete(guildData);
@@ -144,7 +144,7 @@ public class CardBot extends AdvancedListenerAdapter {
     private void sellCollectionAutocomplete(CommandAutoCompleteInteractionEvent event){
         Set<String> collections = new HashSet<>();
         String[] words = cardDataRepository.listCardCollectionsById(
-                playerCardDataRepository.getById(event.getUser().getIdLong()).getDeck()
+                playerCardDataRepository.getOne(event.getUser().getIdLong()).getDeck()
         ).toArray(new String[0]);
         List<Command.Choice> options = Stream.of(words)
                 .filter(word -> word.startsWith(event.getFocusedOption().getValue()))
@@ -157,7 +157,7 @@ public class CardBot extends AdvancedListenerAdapter {
     private void sellNameAutocomplete(CommandAutoCompleteInteractionEvent event){
         String collection = event.getOption("collection") == null ? "" : event.getOption("collection").getAsString();
         Set<String> names = new HashSet<>(cardDataRepository.findByCollectionAndIds(
-                playerCardDataRepository.getById(event.getUser().getIdLong()).getDeck(),
+                playerCardDataRepository.getOne(event.getUser().getIdLong()).getDeck(),
                 collection
         ));
         String[] words = names.toArray(new String[0]);
@@ -172,7 +172,7 @@ public class CardBot extends AdvancedListenerAdapter {
     private void sellSlashCommand(SlashCommandInteractionEvent event){
         event.deferReply().queue();
         Guild guild = event.getGuild();
-        TextChannel shopChannel = guild.getTextChannelById(guildCardDataRepository.getById(guild.getIdLong()).getShopTextChannelId());
+        TextChannel shopChannel = guild.getTextChannelById(guildCardDataRepository.getOne(guild.getIdLong()).getShopTextChannelId());
         long user = event.getUser().getIdLong();
         LinkedList<CardData> results = cardDataRepository.findCardsByCollectionAndName(
                 event.getOption("collection").getAsString(),
@@ -187,7 +187,7 @@ public class CardBot extends AdvancedListenerAdapter {
             event.getHook().setEphemeral(true).sendMessage("Price must be positive").queue();
             return;
         }
-        PlayerCardData player = playerCardDataRepository.getById(event.getUser().getIdLong());
+        PlayerCardData player = playerCardDataRepository.getOne(event.getUser().getIdLong());
         if(!player.hasCard(card.getId())){
             event.getHook().setEphemeral(true).sendMessage("You do not own this card").queue();
             return;
@@ -204,7 +204,7 @@ public class CardBot extends AdvancedListenerAdapter {
         long cardId = Long.parseLong(event.getMessage().getEmbeds().get(0).getDescription().split("__")[1]);
         long userId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
         int price = Integer.parseInt(event.getMessage().getEmbeds().get(0).getFields().get(0).getValue());
-        PlayerCardData player = playerCardDataRepository.getById(event.getUser().getIdLong());
+        PlayerCardData player = playerCardDataRepository.getOne(event.getUser().getIdLong());
         if(player.getDeck().contains(cardId)){
             event.reply("You already own this card").setEphemeral(true).queue();
             return;
@@ -218,7 +218,7 @@ public class CardBot extends AdvancedListenerAdapter {
         event.reply("You have purchased this card").setEphemeral(true).queue();
         event.getMessage().delete().queue();
         playerCardDataRepository.save(player);
-        PlayerCardData seller = playerCardDataRepository.getById(userId);
+        PlayerCardData seller = playerCardDataRepository.getOne(userId);
         seller.addCurrency(price);
         playerCardDataRepository.save(seller);
     }
@@ -226,7 +226,7 @@ public class CardBot extends AdvancedListenerAdapter {
     @SlashResponse(value = "cards", subCommandName = "open_packs")
     private void openPacks(SlashCommandInteractionEvent event){
         event.deferReply().queue();
-        PlayerCardData player = playerCardDataRepository.getById(event.getUser().getIdLong());
+        PlayerCardData player = playerCardDataRepository.getOne(event.getUser().getIdLong());
         LinkedList<Long> cardsInPack = new LinkedList<>();
         for(String collection: player.getPacks().keySet()){
             LinkedList<CardData> cardPool = new LinkedList<>();
@@ -260,7 +260,7 @@ public class CardBot extends AdvancedListenerAdapter {
         newCards.forEach(player::addCard);
         int moneyMade = 0;
         for(long id: dupCards){
-            moneyMade += cardDataRepository.getById(id).getSellback();
+            moneyMade += cardDataRepository.getOne(id).getSellback();
         }
         player.addCurrency(moneyMade);
         playerCardDataRepository.save(player);
@@ -276,7 +276,7 @@ public class CardBot extends AdvancedListenerAdapter {
     @SlashResponse(value = "cards", subCommandName = "status")
     private void statusSlashCommand(SlashCommandInteractionEvent event){
         event.replyEmbeds(
-                EmbedMessageGenerator.cardPlayerStatus(event.getUser().getName(), playerCardDataRepository.getById(event.getUser().getIdLong()))
+                EmbedMessageGenerator.cardPlayerStatus(event.getUser().getName(), playerCardDataRepository.getOne(event.getUser().getIdLong()))
         ).queue();
     }
 
@@ -290,7 +290,7 @@ public class CardBot extends AdvancedListenerAdapter {
             event.reply("That collection does not exist").setEphemeral(true).queue();
             return;
         }
-        PlayerCardData player = playerCardDataRepository.getById(event.getUser().getIdLong());
+        PlayerCardData player = playerCardDataRepository.getOne(event.getUser().getIdLong());
         int count = event.getOption("count").getAsInt();
         if(event.getOption("collection") == null) { // regular pack
             int purchaseTotal = count * 100;
@@ -321,7 +321,7 @@ public class CardBot extends AdvancedListenerAdapter {
         event.deferReply().queue();
         long userId = event.getOption("user") != null ? event.getOption("user").getAsUser().getIdLong() : event.getUser().getIdLong();
         String username = event.getOption("user") != null ? event.getOption("user").getAsUser().getName() : event.getUser().getName();
-        PlayerCardData player = playerCardDataRepository.getById(userId);
+        PlayerCardData player = playerCardDataRepository.getOne(userId);
         OptionMapping collection = event.getOption("collection");
         if(collection != null){
             if(collectionDoesntExists(collection.getAsString())) {
@@ -337,7 +337,7 @@ public class CardBot extends AdvancedListenerAdapter {
     @Override
     public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
         if(event.getChannelLeft() != null){
-            PlayerCardData pcd = playerCardDataRepository.getById(event.getMember().getIdLong());
+            PlayerCardData pcd = playerCardDataRepository.getOne(event.getMember().getIdLong());
             long seconds = (new Date().getTime() - pcd.getJoinedVoice().getTime()) / 1000;
             pcd.addProgress(seconds);
             pcd.setJoinedVoice(null);
@@ -346,7 +346,7 @@ public class CardBot extends AdvancedListenerAdapter {
         if(event.getChannelJoined() != null){
             if(event.getGuild().getAfkChannel() == null ||
                     event.getChannelJoined().getIdLong() != event.getGuild().getAfkChannel().getIdLong()){
-                PlayerCardData pcd = playerCardDataRepository.getById(event.getMember().getIdLong());
+                PlayerCardData pcd = playerCardDataRepository.getOne(event.getMember().getIdLong());
                 pcd.setJoinedVoice(new Date());
                 playerCardDataRepository.save(pcd);
             }
@@ -357,7 +357,7 @@ public class CardBot extends AdvancedListenerAdapter {
     public void onGenericMessageReaction(GenericMessageReactionEvent event) {
         if(!event.isFromGuild()) return;
         if(event.getUser().isBot()) return;
-        PlayerCardData pcd = playerCardDataRepository.getById(event.getMember().getIdLong());
+        PlayerCardData pcd = playerCardDataRepository.getOne(event.getMember().getIdLong());
         if(event.getRawData().getString("t").equals("MESSAGE_REACTION_ADD")){
             pcd.addProgress(270);
         } else {
@@ -370,7 +370,7 @@ public class CardBot extends AdvancedListenerAdapter {
     public void onMessageReceived(MessageReceivedEvent event) {
         if(!event.isFromGuild()) return;
         if(event.getAuthor().isBot()) return;
-        PlayerCardData pcd = playerCardDataRepository.getById(event.getAuthor().getIdLong());
+        PlayerCardData pcd = playerCardDataRepository.getOne(event.getAuthor().getIdLong());
         pcd.addProgress(180);
         playerCardDataRepository.save(pcd);
     }
