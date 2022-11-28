@@ -21,5 +21,5 @@ public class GuildCardData {
     @Column(name = "id")
     private long id;
 
-    private Long tradeSlashCommandId;
+    private Long slashCommandId;
 }

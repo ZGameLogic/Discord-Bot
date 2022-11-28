@@ -1,15 +1,54 @@
 package bot.utils;
 
+import data.database.cardData.cards.CardData;
+import data.database.cardData.cards.CardDataRepository;
 import data.database.planData.Plan;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 
 import java.awt.*;
+import java.util.LinkedList;
 
 public abstract class EmbedMessageGenerator {
 
     private final static Color GENERAL_COLOR = new Color(99, 42, 129);
+    private final static Color CARD_COLOR = new Color(43, 97, 158);
+
+    public static MessageEmbed overallCollectionView(String user, LinkedList<Long> deck, CardDataRepository cards){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(CARD_COLOR);
+        eb.setTitle(user + "'s collection stats");
+        String desc = "";
+        for(String collection: cards.listCardCollections()){ // go through each collection
+            LinkedList<CardData> cardsInCollection = cards.findCardsByCollection(collection);
+            int total = cardsInCollection.size(); // get total number of cards in the collection
+            int userTotal = 0; // number of cards the user has in the collection
+            for(long cardId: deck){
+                if(cardsInCollection.contains(new CardData().setId(cardId))) userTotal++;
+            }
+            desc += collection + ": " + userTotal + "/" + total + "\n";
+        }
+        eb.setDescription(desc);
+        return eb.build();
+    }
+
+    public static MessageEmbed specificCollectionView(String user, String collectionName, LinkedList<Long> deck, CardDataRepository cards){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(CARD_COLOR);
+        eb.setTitle(user + "'s " + collectionName + " collection");
+        String desc = "";
+        LinkedList<CardData> cardsInCollection = cards.findCardsByCollection(collectionName);
+        int total = cardsInCollection.size(); // get total number of cards in the collection
+        int userTotal = 0; // number of cards the user has in the collection
+        for(CardData card: cardsInCollection){
+            desc += String.format("__%04d__ **", card.getId()) + card.getName() + "**: \t" + (deck.contains(card.getId()) ? "collected" : "not collected") + "\n";
+            if(deck.contains(card.getId())) userTotal++;
+        }
+        desc += "Collected " + userTotal + " out of " + total + " cards in the collection";
+        eb.setDescription(desc);
+        return eb.build();
+    }
 
     public static MessageEmbed welcomeMessage(String ownerName, String guildName){
         EmbedBuilder eb = new EmbedBuilder();
