@@ -56,7 +56,7 @@ public abstract class EmbedMessageGenerator {
         }
         if(plan.getMaybes().size() > 0){
             StringBuilder maybes = new StringBuilder();
-            for(Long id: plan.getWaitlist()){
+            for(Long id: plan.getMaybes()){
                 maybes.append("<@").append(id).append(">").append("\n");
             }
             eb.addField("Maybes", maybes.toString(), true);
