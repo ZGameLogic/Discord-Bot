@@ -314,7 +314,6 @@ public class CardBot extends AdvancedListenerAdapter {
             playerCardDataRepository.save(player);
             event.reply("You have purchased " + count + " " + collection + " packs").queue();
         }
-        System.out.println(playerCardDataRepository.getById(event.getUser().getIdLong()).getPacks().size());
     }
 
     @SlashResponse(value = "cards", subCommandName = "collection")
