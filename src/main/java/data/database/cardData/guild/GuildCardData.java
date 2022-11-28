@@ -22,4 +22,5 @@ public class GuildCardData {
     private long id;
 
     private Long slashCommandId;
+    private Long shopTextChannelId;
 }
