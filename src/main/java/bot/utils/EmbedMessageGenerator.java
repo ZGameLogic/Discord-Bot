@@ -16,20 +16,30 @@ public abstract class EmbedMessageGenerator {
     private final static Color GENERAL_COLOR = new Color(99, 42, 129);
     private final static Color CARD_COLOR = new Color(43, 97, 158);
 
+    public static MessageEmbed cardShopMessage(long userId, CardData card, int price){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(CARD_COLOR);
+        eb.setTitle(card.getName() + " for sale!");
+        eb.setDescription(card.toDiscordMessage(true));
+        eb.addField("Price", price + "", true);
+        eb.setFooter(userId + "");
+        return eb.build();
+    }
+
     public static MessageEmbed cardPackOpen(String username, LinkedList<Long> newCards, LinkedList<Long> dupCards, CardDataRepository cards, int moneyMade){
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(CARD_COLOR);
         eb.setTitle("Card opening for " + username);
-        String desc = "New cards\n==========\n";
+        StringBuilder desc = new StringBuilder("New cards\n==========\n");
         for(long id: newCards){
-            desc += cards.getById(id).toDiscordMessage(true) + "\n";
+            desc.append(cards.getById(id).toDiscordMessage(true)).append("\n");
         }
-        desc += "\nDuplicate cards\n===============\n";
+        desc.append("\nDuplicate cards\n===============\n");
         for(long id: dupCards){
             CardData card = cards.getById(id);
-            desc += card.toDiscordMessage(true) + " +" + card.getSellback() + " pip\n";
+            desc.append(card.toDiscordMessage(true)).append(" +").append(card.getSellback()).append(" pip\n");
         }
-        eb.setDescription(desc);
+        eb.setDescription(desc.toString());
         eb.addField("Money made", moneyMade + "", true);
         return eb.build();
     }
@@ -38,13 +48,13 @@ public abstract class EmbedMessageGenerator {
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(CARD_COLOR);
         eb.setTitle("Status for " + user);
-        String desc = "";
+        StringBuilder desc = new StringBuilder();
         for(String collection: player.getPacks().keySet()){
-            desc += collection + ": " + player.getPacks().get(collection) + "\n";
+            desc.append(collection).append(": ").append(player.getPacks().get(collection)).append("\n");
         }
-        eb.setDescription(desc);
+        eb.setDescription(desc.toString());
         eb.addField("Pips", player.getCurrency() + "", true);
-        String progress = "";
+        String progress;
         if(player.getProgress() >= 3600){
             progress = "Ready to redeem";
         } else if (player.getProgress() >= 3300){
@@ -62,7 +72,7 @@ public abstract class EmbedMessageGenerator {
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(CARD_COLOR);
         eb.setTitle(user + "'s collection stats");
-        String desc = "";
+        StringBuilder desc = new StringBuilder();
         for(String collection: cards.listCardCollections()){ // go through each collection
             LinkedList<CardData> cardsInCollection = cards.findCardsByCollection(collection);
             int total = cardsInCollection.size(); // get total number of cards in the collection
@@ -70,9 +80,9 @@ public abstract class EmbedMessageGenerator {
             for(long cardId: deck){
                 if(cardsInCollection.contains(new CardData().setId(cardId))) userTotal++;
             }
-            desc += collection + ": " + userTotal + "/" + total + "\n";
+            desc.append(collection).append(": ").append(userTotal).append("/").append(total).append("\n");
         }
-        eb.setDescription(desc);
+        eb.setDescription(desc.toString());
         return eb.build();
     }
 
@@ -80,16 +90,16 @@ public abstract class EmbedMessageGenerator {
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(CARD_COLOR);
         eb.setTitle(user + "'s " + collectionName + " collection");
-        String desc = "";
+        StringBuilder desc = new StringBuilder();
         LinkedList<CardData> cardsInCollection = cards.findCardsByCollection(collectionName);
         int total = cardsInCollection.size(); // get total number of cards in the collection
         int userTotal = 0; // number of cards the user has in the collection
         for(CardData card: cardsInCollection){
-            desc += card.toDiscordMessage(false) + ": \t" + (deck.contains(card.getId()) ? "collected" : "not collected") + "\n";
+            desc.append(card.toDiscordMessage(false)).append(": \t").append(deck.contains(card.getId()) ? "collected" : "not collected").append("\n");
             if(deck.contains(card.getId())) userTotal++;
         }
-        desc += "Collected " + userTotal + " out of " + total + " cards in the collection";
-        eb.setDescription(desc);
+        desc.append("Collected ").append(userTotal).append(" out of ").append(total).append(" cards in the collection");
+        eb.setDescription(desc.toString());
         return eb.build();
     }
 

@@ -15,6 +15,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.RestController;
 
 import application.App;
@@ -53,6 +54,7 @@ public class Bot {
 			"";
 	
 	private final Logger logger = LoggerFactory.getLogger(Bot.class);
+	private CardBot CB;
 
 	@PostConstruct
 	public void start() {
@@ -73,7 +75,8 @@ public class Bot {
 		listeners.add(new GeneralListener(guildData));
 		listeners.add(new PlannerBot(planRepository, userData, guildData));
 		listeners.add(new DevopsBot(devopsDataRepository, guildData));
-		listeners.add(new CardBot(guildData, cardDataRepository, guildCardDataRepository, playerCardDataRepository));
+		CB = new CardBot(guildData, cardDataRepository, guildCardDataRepository, playerCardDataRepository);
+		listeners.add(CB);
 
 		// Add listeners
 		for(ListenerAdapter a : listeners){
@@ -86,5 +89,10 @@ public class Bot {
 		} catch (InterruptedException e) {
 			logger.error("Unable to launch bot");
 		}
+	}
+
+	@Scheduled(cron = "0 */10 * * * *")
+	private void tenMinuteTask() {
+		CB.tenMinuteTasks();
 	}
 }
