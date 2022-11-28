@@ -13,7 +13,8 @@ import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
-import net.dv8tion.jda.api.events.message.GenericMessageEvent;
+import net.dv8tion.jda.api.events.message.MessageDeleteEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.message.react.GenericMessageReactionEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
@@ -96,17 +97,23 @@ public class CardBot extends AdvancedListenerAdapter {
 
     @Override
     public void onGenericMessageReaction(GenericMessageReactionEvent event) {
-        // TODO update points
+        if(!event.isFromGuild()) return;
+        if(event.getUser().isBot()) return;
+        PlayerCardData pcd = playerCardDataRepository.getById(event.getMember().getIdLong());
+        if(event.getRawData().getString("t").equals("MESSAGE_REACTION_ADD")){
+            pcd.addProgress(270);
+        } else {
+            pcd.removeProgress(270);
+        }
+        playerCardDataRepository.save(pcd);
     }
 
     @Override
-    public void onGenericMessage(GenericMessageEvent event) {
-        if(event.isFromGuild()){
-            // TODO update points
-        }
-    }
-
-    private void addPlayer(User user){
-
+    public void onMessageReceived(MessageReceivedEvent event) {
+        if(!event.isFromGuild()) return;
+        if(event.getAuthor().isBot()) return;
+        PlayerCardData pcd = playerCardDataRepository.getById(event.getAuthor().getIdLong());
+        pcd.addProgress(180);
+        playerCardDataRepository.save(pcd);
     }
 }
