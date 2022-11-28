@@ -398,6 +398,5 @@ public class CardBot extends AdvancedListenerAdapter {
             if(edited) updated.add(player);
         }
         playerCardDataRepository.saveAll(updated);
-        System.out.println("finished this up");
     }
 }
