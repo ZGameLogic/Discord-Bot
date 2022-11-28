@@ -7,9 +7,7 @@ import lombok.ToString;
 import lombok.experimental.Accessors;
 
 import javax.persistence.*;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 @Accessors(chain = true)
 @Getter
@@ -28,6 +26,10 @@ public class PlayerCardData {
     @CollectionTable(name="decks")
     private List<Long> deck;
 
+    @ElementCollection
+    @CollectionTable(name="player_packs")
+    private Map<String, Integer> packs;
+
     private Long currency;
     private Long progress;
     private Date joinedVoice;
@@ -35,6 +37,7 @@ public class PlayerCardData {
     public PlayerCardData(Long userId){
         this.userId = userId;
         deck = new LinkedList<>();
+        packs = new HashMap<>();
         currency = 0l;
         progress = 0l;
     }
@@ -99,12 +102,47 @@ public class PlayerCardData {
         return progress >= amount;
     }
 
-    public int getPackCount(){
-        return (int)(progress / 3600);
-    }
-
     public void redeemPack(){
         removeProgress(3600);
+        addPack("generic");
     }
 
+    public void addPack(){
+        addPack("generic");
+    }
+
+    public void addPack(int count){
+        for(int i = 0; i < count; i++) addPack("generic");
+    }
+
+    public void addPack(String collection, int count){
+        for(int i = 0; i < count; i++) addPack(collection);
+    }
+
+    public void addPack(String collection){
+        if(packs.containsKey(collection)){
+            packs.put(collection, packs.get(collection) + 1);
+        } else {
+            packs.put(collection, 1);
+        }
+    }
+
+    public void removePack(){
+        removePack("generic");
+    }
+
+    public void removePack(String collection, int count){
+        for(int i = 0; i < count; i++) removePack(collection);
+    }
+
+    public void removePack(int count){
+        for(int i = 0; i < count; i++) removePack("generic");
+    }
+
+    public void removePack(String collection){
+        if(packs.containsKey(collection)){
+            if(packs.get(collection) == 1){ packs.remove(collection); }
+            else {packs.put(collection, packs.get(collection) - 1); }
+        }
+    }
 }
