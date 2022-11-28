@@ -2,6 +2,7 @@ package bot.utils;
 
 import data.database.cardData.cards.CardData;
 import data.database.cardData.cards.CardDataRepository;
+import data.database.cardData.player.PlayerCardData;
 import data.database.planData.Plan;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
@@ -14,6 +15,19 @@ public abstract class EmbedMessageGenerator {
 
     private final static Color GENERAL_COLOR = new Color(99, 42, 129);
     private final static Color CARD_COLOR = new Color(43, 97, 158);
+
+    public static MessageEmbed cardPlayerStatus(String user, PlayerCardData player){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(CARD_COLOR);
+        eb.setTitle("Status for " + user);
+        String desc = "";
+        for(String collection: player.getPacks().keySet()){
+            desc += collection + ": " + player.getPacks().get(collection) + "\n";
+        }
+        eb.setDescription(desc);
+        eb.addField("Pips", player.getCurrency() + "", true);
+        return eb.build();
+    }
 
     public static MessageEmbed overallCollectionView(String user, LinkedList<Long> deck, CardDataRepository cards){
         EmbedBuilder eb = new EmbedBuilder();
