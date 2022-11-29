@@ -4,6 +4,7 @@ import javax.annotation.PostConstruct;
 
 import bot.listeners.*;
 import com.zgamelogic.AdvancedListenerAdapter;
+import data.database.cardData.cards.CardData;
 import data.database.cardData.cards.CardDataRepository;
 import data.database.cardData.guild.GuildCardDataRepository;
 import data.database.cardData.player.PlayerCardDataRepository;
@@ -12,10 +13,15 @@ import data.database.guildData.GuildDataRepository;
 import data.database.planData.PlanRepository;
 import data.database.userData.UserDataRepository;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import application.App;
@@ -26,6 +32,7 @@ import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
 import java.util.LinkedList;
+import java.util.Random;
 
 @RestController
 public class Bot {
@@ -94,5 +101,30 @@ public class Bot {
 	@Scheduled(cron = "0 */10 * * * *")
 	private void tenMinuteTask() {
 		CB.tenMinuteTasks();
+	}
+
+	@PostMapping("/api/cards")
+	private void addCards(@RequestBody String value) throws JSONException {
+		JSONObject json = new JSONObject(value);
+		if(!json.has("token")) return;
+		if(!json.getString("token").equals(App.config.getApiToken())) return;
+		int index = json.getInt("id start");
+		String collection = json.getString("collection");
+		LinkedList<CardData> newCards = new LinkedList<>();
+		JSONArray jsonCards = json.getJSONArray("cards");
+		for(int i = 0; i < jsonCards.length(); i++){
+			JSONObject card = jsonCards.getJSONObject(i);
+			CardData newCard = new CardData();
+			newCard.setId(index + i);
+			newCard.setName(card.getString("name"));
+			newCard.setCollection(collection);
+			if(card.has("rarity")){
+				newCard.setRarity(card.getInt("rarity"));
+			} else {
+				newCard.setRarity(new Random().nextInt(10) + 1);
+			}
+			newCards.add(newCard);
+		}
+		cardDataRepository.saveAll(newCards);
 	}
 }
