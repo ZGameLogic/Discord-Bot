@@ -46,4 +46,7 @@ public class ConfigLoader {
 
 	@Value("${twilio.number}")
 	private String twilioNumber;
+
+	@Value("${api.token}")
+	private String apiToken;
 }
