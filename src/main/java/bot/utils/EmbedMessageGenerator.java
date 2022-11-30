@@ -7,9 +7,12 @@ import data.database.planData.Plan;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.User;
 
 import java.awt.*;
 import java.util.LinkedList;
+
+import static bot.listeners.CardBot.PAGE_SIZE;
 
 public abstract class EmbedMessageGenerator {
 
@@ -86,20 +89,25 @@ public abstract class EmbedMessageGenerator {
         return eb.build();
     }
 
-    public static MessageEmbed specificCollectionView(String user, String collectionName, LinkedList<Long> deck, CardDataRepository cards){
+    public static MessageEmbed specificCollectionView(User user, String collectionName, LinkedList<Long> deck, LinkedList<CardData> cardsInCollection, int page){
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(CARD_COLOR);
-        eb.setTitle(user + "'s " + collectionName + " collection");
+        eb.setTitle(user.getName() + "'s " + collectionName + " collection");
         StringBuilder desc = new StringBuilder();
-        LinkedList<CardData> cardsInCollection = cards.findCardsByCollection(collectionName);
+        desc.append("<@").append(user.getId()).append(">\n");
         int total = cardsInCollection.size(); // get total number of cards in the collection
         int userTotal = 0; // number of cards the user has in the collection
+        int index = 0;
         for(CardData card: cardsInCollection){
-            desc.append(card.toDiscordMessage(false)).append(": \t").append(deck.contains(card.getId()) ? "collected" : "not collected").append("\n");
+            if(index >= page * PAGE_SIZE && index < (page + 1) * PAGE_SIZE) {
+                desc.append(card.toDiscordMessage(false)).append(": \t").append(deck.contains(card.getId()) ? "collected" : "not collected").append("\n");
+            }
+            index++;
             if(deck.contains(card.getId())) userTotal++;
         }
         desc.append("Collected ").append(userTotal).append(" out of ").append(total).append(" cards in the collection");
         eb.setDescription(desc.toString());
+        if(total > PAGE_SIZE) eb.setFooter("page " + (page + 1));
         return eb.build();
     }
 
