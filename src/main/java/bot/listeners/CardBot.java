@@ -12,6 +12,7 @@ import data.database.guildData.GuildDataRepository;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
@@ -35,6 +36,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class CardBot extends AdvancedListenerAdapter {
+
+    public static final int PAGE_SIZE = 25;
 
     private final CardDataRepository cardDataRepository;
     private final GuildCardDataRepository guildCardDataRepository;
@@ -328,10 +331,29 @@ public class CardBot extends AdvancedListenerAdapter {
                 event.getHook().sendMessage("That collection does not exist").queue();
                 return;
             }
-            event.getHook().sendMessageEmbeds(EmbedMessageGenerator.specificCollectionView(username, collection.getAsString(), new LinkedList<>(player.getDeck()), cardDataRepository)).queue();
+            LinkedList<CardData> cardsInCollection = cardDataRepository.findCardsByCollection(collection.getAsString());
+            if(cardsInCollection.size() > PAGE_SIZE) {
+                event.getHook().sendMessageEmbeds(EmbedMessageGenerator.specificCollectionView(event.getUser(), collection.getAsString(), new LinkedList<>(player.getDeck()), cardsInCollection, 0))
+                        .addActionRow(Button.primary("cards_next_page", "Next page")).queue();
+            } else {
+                event.getHook().sendMessageEmbeds(EmbedMessageGenerator.specificCollectionView(event.getUser(), collection.getAsString(), new LinkedList<>(player.getDeck()), cardsInCollection, 0)).queue();
+            }
         } else {
             event.getHook().sendMessageEmbeds(EmbedMessageGenerator.overallCollectionView(username, new LinkedList<>(player.getDeck()), cardDataRepository)).queue();
         }
+    }
+
+    @ButtonResponse("cards_next_page")
+    private void nextPage(ButtonInteractionEvent event){
+        String title = event.getMessage().getEmbeds().get(0).getTitle();
+        String username = title.split(" ")[0].replace("'s", "");
+        User user = event.getGuild().getMemberById(event.getMessage().getEmbeds().get(0).getDescription().split("\n")[0].replace("<@", "").replace(">", "")).getUser();
+        PlayerCardData player = playerCardDataRepository.getById(user.getIdLong());
+        String collection = title.replace(username + "'s", "").replace("collection", "").trim();
+        int page = Integer.parseInt(event.getMessage().getEmbeds().get(0).getFooter().getText().split(" ")[1]) - 1;
+        LinkedList<CardData> cardsInCollection = cardDataRepository.findCardsByCollection(collection);
+        page = (page + 1) * PAGE_SIZE > cardsInCollection.size() ? 0: page + 1;
+        event.editMessageEmbeds(EmbedMessageGenerator.specificCollectionView(user, collection, new LinkedList<>(player.getDeck()), cardsInCollection, page)).queue();
     }
 
     @Override
