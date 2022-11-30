@@ -345,6 +345,7 @@ public class CardBot extends AdvancedListenerAdapter {
 
     @ButtonResponse("cards_next_page")
     private void nextPage(ButtonInteractionEvent event){
+        event.editButton(event.getButton().asDisabled()).queue();
         String title = event.getMessage().getEmbeds().get(0).getTitle();
         String username = title.split(" ")[0].replace("'s", "");
         User user = event.getGuild().getMemberById(event.getMessage().getEmbeds().get(0).getDescription().split("\n")[0].replace("<@", "").replace(">", "")).getUser();
@@ -353,7 +354,8 @@ public class CardBot extends AdvancedListenerAdapter {
         int page = Integer.parseInt(event.getMessage().getEmbeds().get(0).getFooter().getText().split(" ")[1]) - 1;
         LinkedList<CardData> cardsInCollection = cardDataRepository.findCardsByCollection(collection);
         page = (page + 1) * PAGE_SIZE > cardsInCollection.size() ? 0: page + 1;
-        event.editMessageEmbeds(EmbedMessageGenerator.specificCollectionView(user, collection, new LinkedList<>(player.getDeck()), cardsInCollection, page)).queue();
+        event.getMessage().editMessageEmbeds(EmbedMessageGenerator.specificCollectionView(user, collection, new LinkedList<>(player.getDeck()), cardsInCollection, page)).queue();
+        event.getMessage().editMessageComponents(ActionRow.of(Button.primary("cards_next_page", "Next Page"))).queue();
     }
 
     @Override
