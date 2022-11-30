@@ -167,6 +167,7 @@ public abstract class EmbedMessageGenerator {
 
     public static MessageEmbed creatorMessage(Plan plan, Guild guild){
         EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(GENERAL_COLOR);
         eb.setTitle("Plan details for: " + plan.getTitle());
         eb.setDescription(plan.getNotes() + "\n" + plan.getLog());
         infoBody(plan, guild, eb);
@@ -176,16 +177,16 @@ public abstract class EmbedMessageGenerator {
 
     private static void infoBody(Plan plan, Guild guild, EmbedBuilder eb) {
         StringBuilder status = new StringBuilder();
-//        int accepted = plan.getAccepted().size();
-//        status.append("filled:`");
-//        for(int i = 1; i <= 20; i++){
-//            if(i < Math.round(20.0 / plan.getCount() * accepted) || plan.isFull()){
-//                status.append("█");
-//            } else {
-//                status.append(" ");
-//            }
-//        }
-//        status.append("`\n");
+        int accepted = plan.getAccepted().size();
+        status.append("filled:`");
+        for(int i = 1; i <= 20; i++){
+            if(i < 20.0 * plan.getCount() / accepted || plan.isFull()){
+                status.append("█");
+            } else {
+                status.append(" ");
+            }
+        }
+        status.append("`\n");
         for(long id: plan.getAccepted()){
             status.append("<@").append(id).append(">").append(": accepted\n");
         }
