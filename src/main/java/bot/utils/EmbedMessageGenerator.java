@@ -179,13 +179,13 @@ public abstract class EmbedMessageGenerator {
         StringBuilder status = new StringBuilder();
         int accepted = plan.getAccepted().size();
         status.append("filled:`");
-        for(int i = 1; i <= 20; i++){
-            if(i < 20.0 * plan.getCount() / accepted || plan.isFull()){
-                status.append("█");
-            } else {
-                status.append(" ");
-            }
-        }
+//        for(int i = 1; i <= 20; i++){
+//            if(i < 20.0 * plan.getCount() / accepted || plan.isFull()){
+//                status.append("█");
+//            } else {
+//                status.append(" ");
+//            }
+//        }
         status.append("`\n");
         for(long id: plan.getAccepted()){
             status.append("<@").append(id).append(">").append(": accepted\n");
