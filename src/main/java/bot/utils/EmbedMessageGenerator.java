@@ -44,6 +44,12 @@ public abstract class EmbedMessageGenerator {
         }
         eb.setDescription(desc.toString());
         eb.addField("Money made", moneyMade + "", true);
+        if(!eb.isValidLength()){
+            eb = new EmbedBuilder();
+            eb.setColor(CARD_COLOR);
+            eb.setTitle("You did good kid");
+            eb.setDescription("You have so many cards in this opening that I cannot send the whole message. Could I send multiple? Yes. But I think we both know you don't care that much.");
+        }
         return eb.build();
     }
 

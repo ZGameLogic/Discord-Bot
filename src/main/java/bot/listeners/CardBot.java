@@ -69,7 +69,9 @@ public class CardBot extends AdvancedListenerAdapter {
 
     @Override
     public void onGuildMemberJoin(GuildMemberJoinEvent event) {
-        playerCardDataRepository.save(new PlayerCardData(event.getUser().getIdLong()));
+        if(guildDataRepository.findById(event.getGuild().getIdLong()).get().getCardsEnabled()) {
+            playerCardDataRepository.save(new PlayerCardData(event.getUser().getIdLong()));
+        }
     }
 
     @ButtonResponse("enable_cards")
@@ -364,19 +366,21 @@ public class CardBot extends AdvancedListenerAdapter {
 
     @Override
     public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
-        if(event.getChannelLeft() != null){
-            PlayerCardData pcd = playerCardDataRepository.findById(event.getMember().getIdLong()).get();
-            long seconds = (new Date().getTime() - pcd.getJoinedVoice().getTime()) / 1000;
-            pcd.addProgress(seconds);
-            pcd.setJoinedVoice(null);
-            playerCardDataRepository.save(pcd);
-        }
-        if(event.getChannelJoined() != null){
-            if(event.getGuild().getAfkChannel() == null ||
-                    event.getChannelJoined().getIdLong() != event.getGuild().getAfkChannel().getIdLong()){
+        if(guildDataRepository.findById(event.getGuild().getIdLong()).get().getCardsEnabled()) {
+            if (event.getChannelLeft() != null) {
                 PlayerCardData pcd = playerCardDataRepository.findById(event.getMember().getIdLong()).get();
-                pcd.setJoinedVoice(new Date());
+                long seconds = (new Date().getTime() - pcd.getJoinedVoice().getTime()) / 1000;
+                pcd.addProgress(seconds);
+                pcd.setJoinedVoice(null);
                 playerCardDataRepository.save(pcd);
+            }
+            if (event.getChannelJoined() != null) {
+                if (event.getGuild().getAfkChannel() == null ||
+                        event.getChannelJoined().getIdLong() != event.getGuild().getAfkChannel().getIdLong()) {
+                    PlayerCardData pcd = playerCardDataRepository.findById(event.getMember().getIdLong()).get();
+                    pcd.setJoinedVoice(new Date());
+                    playerCardDataRepository.save(pcd);
+                }
             }
         }
     }
