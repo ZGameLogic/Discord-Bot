@@ -12,7 +12,12 @@ import data.database.devopsData.DevopsDataRepository;
 import data.database.guildData.GuildDataRepository;
 import data.database.planData.PlanRepository;
 import data.database.userData.UserDataRepository;
+import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -31,9 +36,12 @@ import net.dv8tion.jda.api.requests.GatewayIntent;
 import net.dv8tion.jda.api.utils.MemberCachePolicy;
 import net.dv8tion.jda.api.utils.cache.CacheFlag;
 
-import java.util.LinkedList;
-import java.util.Random;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
+@Slf4j
 @RestController
 public class Bot {
 
@@ -62,6 +70,7 @@ public class Bot {
 	
 	private final Logger logger = LoggerFactory.getLogger(Bot.class);
 	private CardBot CB;
+	private JDA bot;
 
 	@PostConstruct
 	public void start() {
@@ -89,10 +98,12 @@ public class Bot {
 		for(ListenerAdapter a : listeners){
 			bot.addEventListeners(a);
 		}
+
+		this.bot = bot.build();
 		
 		// Login
 		try {
-			bot.build().awaitReady();
+			this.bot.awaitReady();
 		} catch (InterruptedException e) {
 			logger.error("Unable to launch bot");
 		}
@@ -126,5 +137,19 @@ public class Bot {
 			newCards.add(newCard);
 		}
 		cardDataRepository.saveAll(newCards);
+	}
+
+	@PostMapping(value = "/sms")
+	private void receiveMessage(@RequestBody String body) throws URISyntaxException {
+		List<NameValuePair> params = URLEncodedUtils.parse(new URI("?" + body), StandardCharsets.UTF_8);
+		Map<String, String> mapped = new HashMap<>();
+		for (NameValuePair param : params) {
+			mapped.put(param.getName(), param.getValue());
+		}
+		bot.getUserById(232675572772372481L).openPrivateChannel().queue(privateChannel -> privateChannel.sendMessage("Text message received from number: " + mapped.get("From") + "\n" +
+				"Body: " + mapped.get("Body"))
+				.addActionRow(Button.primary("reply_text", "respond")).queue());
+		log.info("Text message from: " + mapped.get("From"));
+		log.info("Body: " + mapped.get("Body"));
 	}
 }
