@@ -63,17 +63,16 @@ public abstract class EmbedMessageGenerator {
         }
         eb.setDescription(desc.toString());
         eb.addField("Pips", player.getCurrency() + "", true);
-        String progress;
-        if(player.getProgress() >= 3600){
-            progress = "Ready to redeem";
-        } else if (player.getProgress() >= 3300){
-            progress = "Almost there";
-        } else if (player.getProgress() >= 1800){
-            progress = "Halfway there";
-        } else {
-            progress = "Not close";
+        StringBuilder progress = new StringBuilder("`");
+        for(int i = 0; i < 20; i++){
+            if(i < (20 * (player.getProgress() / 3600.0))){
+                progress.append("█");
+            } else {
+                progress.append(" ");
+            }
         }
-        eb.addField("Free pack progress", progress, true);
+        progress.append("`");
+        eb.addField("Free pack progress", progress.toString(), true);
         return eb.build();
     }
 
@@ -184,15 +183,15 @@ public abstract class EmbedMessageGenerator {
     private static void infoBody(Plan plan, Guild guild, EmbedBuilder eb) {
         StringBuilder status = new StringBuilder();
         int accepted = plan.getAccepted().size();
-//        status.append("filled:`");
-//        for(int i = 1; i <= 20; i++){
-//            if(i < 20.0 * plan.getCount() / accepted || plan.isFull()){
-//                status.append("█");
-//            } else {
-//                status.append(" ");
-//            }
-//        }
-//        status.append("`\n");
+        status.append("filled:`");
+        for(int i = 1; i <= 20; i++){
+            if(i < 20.0 * plan.getCount() / accepted || plan.isFull()){
+                status.append("█");
+            } else {
+                status.append(" ");
+            }
+        }
+        status.append("`\n");
         for(long id: plan.getAccepted()){
             status.append("<@").append(id).append(">").append(": accepted\n");
         }
