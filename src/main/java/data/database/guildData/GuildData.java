@@ -1,9 +1,11 @@
 package data.database.guildData;
 
 import lombok.*;
+import lombok.experimental.Accessors;
 
 import javax.persistence.*;
 
+@Accessors(chain = true)
 @Getter
 @Setter
 @AllArgsConstructor
@@ -31,4 +33,7 @@ public class GuildData {
 
     // devops bot stuff
     private Boolean devopsEnabled;
+
+    // devops bot stuff
+    private Boolean cardsEnabled;
 }

@@ -50,7 +50,7 @@ public class App {
 		}
 
 		// Stuff for SQL
-		props.setProperty("spring.datasource.url", "jdbc:sqlserver://zgamelogic.com;databaseName=" + config.getDatabaseName());
+		props.setProperty("spring.datasource.url", "jdbc:sqlserver://zgamelogic.com;databaseName=" + config.getDatabaseName() + ";encrypt=true;trustServerCertificate=true;");
 		props.setProperty("spring.datasource.username", config.getSqlUsername());
 		props.setProperty("spring.datasource.password", config.getSqlPassword());
 		props.setProperty("spring.datasource.driver-class-name", "com.microsoft.sqlserver.jdbc.SQLServerDriver");

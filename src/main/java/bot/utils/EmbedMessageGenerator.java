@@ -1,15 +1,120 @@
 package bot.utils;
 
+import data.database.cardData.cards.CardData;
+import data.database.cardData.cards.CardDataRepository;
+import data.database.cardData.player.PlayerCardData;
 import data.database.planData.Plan;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.User;
 
 import java.awt.*;
+import java.util.LinkedList;
+
+import static bot.listeners.CardBot.PAGE_SIZE;
 
 public abstract class EmbedMessageGenerator {
 
     private final static Color GENERAL_COLOR = new Color(99, 42, 129);
+    private final static Color CARD_COLOR = new Color(43, 97, 158);
+
+    public static MessageEmbed cardShopMessage(long userId, CardData card, int price){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(CARD_COLOR);
+        eb.setTitle(card.getName() + " for sale!");
+        eb.setDescription(card.toDiscordMessage(true));
+        eb.addField("Price", price + "", true);
+        eb.setFooter(userId + "");
+        return eb.build();
+    }
+
+    public static MessageEmbed cardPackOpen(String username, LinkedList<Long> newCards, LinkedList<Long> dupCards, CardDataRepository cards, int moneyMade){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(CARD_COLOR);
+        eb.setTitle("Card opening for " + username);
+        StringBuilder desc = new StringBuilder("New cards\n==========\n");
+        for(long id: newCards){
+            desc.append(cards.findById(id).get().toDiscordMessage(true)).append("\n");
+        }
+        desc.append("\nDuplicate cards\n===============\n");
+        for(long id: dupCards){
+            CardData card = cards.findById(id).get();
+            desc.append(card.toDiscordMessage(true)).append(" +").append(card.getSellback()).append(" pip\n");
+        }
+        eb.setDescription(desc.toString());
+        eb.addField("Money made", moneyMade + "", true);
+        if(!eb.isValidLength()){
+            eb = new EmbedBuilder();
+            eb.setColor(CARD_COLOR);
+            eb.setTitle("You did good kid");
+            eb.setDescription("You have so many cards in this opening that I cannot send the whole message. Could I send multiple? Yes. But I think we both know you don't care that much.");
+        }
+        return eb.build();
+    }
+
+    public static MessageEmbed cardPlayerStatus(String user, PlayerCardData player){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(CARD_COLOR);
+        eb.setTitle("Status for " + user);
+        StringBuilder desc = new StringBuilder();
+        for(String collection: player.getPacks().keySet()){
+            desc.append(collection).append(": ").append(player.getPacks().get(collection)).append("\n");
+        }
+        eb.setDescription(desc.toString());
+        eb.addField("Pips", player.getCurrency() + "", true);
+        StringBuilder progress = new StringBuilder("`");
+        for(int i = 0; i < 20; i++){
+            if(i < (20 * (player.getProgress() / 3600.0))){
+                progress.append("█");
+            } else {
+                progress.append(" ");
+            }
+        }
+        progress.append("`");
+        eb.addField("Free pack progress", progress.toString(), true);
+        return eb.build();
+    }
+
+    public static MessageEmbed overallCollectionView(String user, LinkedList<Long> deck, CardDataRepository cards){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(CARD_COLOR);
+        eb.setTitle(user + "'s collection stats");
+        StringBuilder desc = new StringBuilder();
+        for(String collection: cards.listCardCollections()){ // go through each collection
+            LinkedList<CardData> cardsInCollection = cards.findCardsByCollection(collection);
+            int total = cardsInCollection.size(); // get total number of cards in the collection
+            int userTotal = 0; // number of cards the user has in the collection
+            for(long cardId: deck){
+                if(cardsInCollection.contains(new CardData().setId(cardId))) userTotal++;
+            }
+            desc.append(collection).append(": ").append(userTotal).append("/").append(total).append("\n");
+        }
+        eb.setDescription(desc.toString());
+        return eb.build();
+    }
+
+    public static MessageEmbed specificCollectionView(User user, String collectionName, LinkedList<Long> deck, LinkedList<CardData> cardsInCollection, int page){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(CARD_COLOR);
+        eb.setTitle(user.getName() + "'s " + collectionName + " collection");
+        StringBuilder desc = new StringBuilder();
+        desc.append("<@").append(user.getId()).append(">\n");
+        int total = cardsInCollection.size(); // get total number of cards in the collection
+        int userTotal = 0; // number of cards the user has in the collection
+        int index = 0;
+        for(CardData card: cardsInCollection){
+            if(index >= page * PAGE_SIZE && index < (page + 1) * PAGE_SIZE) {
+                desc.append(card.toDiscordMessage(false)).append(": \t").append(deck.contains(card.getId()) ? "collected" : "not collected").append("\n");
+            }
+            index++;
+            if(deck.contains(card.getId())) userTotal++;
+        }
+        desc.append("Collected ").append(userTotal).append(" out of ").append(total).append(" cards in the collection");
+        eb.setDescription(desc.toString());
+        if(total > PAGE_SIZE) eb.setFooter("page " + (page + 1));
+        return eb.build();
+    }
 
     public static MessageEmbed welcomeMessage(String ownerName, String guildName){
         EmbedBuilder eb = new EmbedBuilder();
@@ -56,7 +161,7 @@ public abstract class EmbedMessageGenerator {
         }
         if(plan.getMaybes().size() > 0){
             StringBuilder maybes = new StringBuilder();
-            for(Long id: plan.getWaitlist()){
+            for(Long id: plan.getMaybes()){
                 maybes.append("<@").append(id).append(">").append("\n");
             }
             eb.addField("Maybes", maybes.toString(), true);
@@ -67,6 +172,7 @@ public abstract class EmbedMessageGenerator {
 
     public static MessageEmbed creatorMessage(Plan plan, Guild guild){
         EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(GENERAL_COLOR);
         eb.setTitle("Plan details for: " + plan.getTitle());
         eb.setDescription(plan.getNotes() + "\n" + plan.getLog());
         infoBody(plan, guild, eb);
@@ -76,16 +182,16 @@ public abstract class EmbedMessageGenerator {
 
     private static void infoBody(Plan plan, Guild guild, EmbedBuilder eb) {
         StringBuilder status = new StringBuilder();
-//        int accepted = plan.getAccepted().size();
-//        status.append("filled:`");
-//        for(int i = 1; i <= 20; i++){
-//            if(i < Math.round(20.0 / plan.getCount() * accepted) || plan.isFull()){
-//                status.append("█");
-//            } else {
-//                status.append(" ");
-//            }
-//        }
-//        status.append("`\n");
+        int accepted = plan.getAccepted().size();
+        status.append("filled:`");
+        for(int i = 1; i <= 20; i++){
+            if(i < 20.0 * (plan.getCount() / (double)accepted) || plan.isFull()){
+                status.append("█");
+            } else {
+                status.append(" ");
+            }
+        }
+        status.append("`\n");
         for(long id: plan.getAccepted()){
             status.append("<@").append(id).append(">").append(": accepted\n");
         }
