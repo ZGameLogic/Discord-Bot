@@ -44,6 +44,12 @@ public abstract class EmbedMessageGenerator {
         }
         eb.setDescription(desc.toString());
         eb.addField("Money made", moneyMade + "", true);
+        if(!eb.isValidLength()){
+            eb = new EmbedBuilder();
+            eb.setColor(CARD_COLOR);
+            eb.setTitle("You did good kid");
+            eb.setDescription("You have so many cards in this opening that I cannot send the whole message. Could I send multiple? Yes. But I think we both know you don't care that much.");
+        }
         return eb.build();
     }
 
@@ -57,17 +63,16 @@ public abstract class EmbedMessageGenerator {
         }
         eb.setDescription(desc.toString());
         eb.addField("Pips", player.getCurrency() + "", true);
-        String progress;
-        if(player.getProgress() >= 3600){
-            progress = "Ready to redeem";
-        } else if (player.getProgress() >= 3300){
-            progress = "Almost there";
-        } else if (player.getProgress() >= 1800){
-            progress = "Halfway there";
-        } else {
-            progress = "Not close";
+        StringBuilder progress = new StringBuilder("`");
+        for(int i = 0; i < 20; i++){
+            if(i < (20 * (player.getProgress() / 3600.0))){
+                progress.append("█");
+            } else {
+                progress.append(" ");
+            }
         }
-        eb.addField("Free pack progress", progress, true);
+        progress.append("`");
+        eb.addField("Free pack progress", progress.toString(), true);
         return eb.build();
     }
 
@@ -178,15 +183,15 @@ public abstract class EmbedMessageGenerator {
     private static void infoBody(Plan plan, Guild guild, EmbedBuilder eb) {
         StringBuilder status = new StringBuilder();
         int accepted = plan.getAccepted().size();
-//        status.append("filled:`");
-//        for(int i = 1; i <= 20; i++){
-//            if(i < 20.0 * plan.getCount() / accepted || plan.isFull()){
-//                status.append("█");
-//            } else {
-//                status.append(" ");
-//            }
-//        }
-//        status.append("`\n");
+        status.append("filled:`");
+        for(int i = 1; i <= 20; i++){
+            if(i < 20.0 * plan.getCount() / accepted || plan.isFull()){
+                status.append("█");
+            } else {
+                status.append(" ");
+            }
+        }
+        status.append("`\n");
         for(long id: plan.getAccepted()){
             status.append("<@").append(id).append(">").append(": accepted\n");
         }
