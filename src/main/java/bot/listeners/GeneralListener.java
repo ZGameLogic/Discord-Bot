@@ -4,6 +4,7 @@ import bot.utils.EmbedMessageGenerator;
 import com.zgamelogic.AdvancedListenerAdapter;
 import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
+import interfaces.TwilioInterface;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
@@ -109,7 +110,7 @@ public class GeneralListener extends AdvancedListenerAdapter {
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
         if(!event.isFromGuild() && !event.getAuthor().isBot()){
-            event.getJDA().getUserById(232675572772372481l).openPrivateChannel().queue(channel -> channel.sendMessage("Message from " + event.getAuthor().getName() + ":" + event.getAuthor().getId() + "\n" + event.getMessage().getContentRaw())
+            event.getJDA().getUserById(232675572772372481L).openPrivateChannel().queue(channel -> channel.sendMessage("Message from " + event.getAuthor().getName() + ":" + event.getAuthor().getId() + "\n" + event.getMessage().getContentRaw())
                     .setActionRow(Button.secondary("reply_message", "Reply")).queue());
         }
     }
@@ -126,6 +127,20 @@ public class GeneralListener extends AdvancedListenerAdapter {
                 event.getMessage().getContentRaw().split("\n")[0].split(":")[1]
         ).openPrivateChannel().queue(privateChannel -> privateChannel.sendMessage(event.getValue("message").getAsString()).queue());
         event.reply("Message sent back\n" + event.getValue("message").getAsString()).queue();
+    }
+
+    @ButtonResponse("reply_text")
+    private void replyTextMessageButtonPress(ButtonInteractionEvent event){
+        TextInput message = TextInput.create("message", "Reply", TextInputStyle.PARAGRAPH).build();
+        event.replyModal(Modal.create("reply_text_modal", "Message response").addActionRow(message).build()).queue();
+    }
+
+    @ModalResponse("reply_text_modal")
+    private void modalResponseTextMessageReply(ModalInteractionEvent event){
+        String number = event.getMessage().getContentRaw().split("\n")[0].replace("Text message from: ", "");
+        String message = event.getValue("message").getAsString();
+        TwilioInterface.sendMessage(number, message);
+        event.reply("Message has been sent").queue();
     }
 
     @Override
