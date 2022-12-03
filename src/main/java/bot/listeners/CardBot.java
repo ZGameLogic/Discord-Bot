@@ -367,8 +367,7 @@ public class CardBot extends AdvancedListenerAdapter {
 
     @Override
     public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
-        GuildData guildData = guildDataRepository.findById(event.getGuild().getIdLong()).get();
-        if(guildData.getDevopsEnabled() != null && guildData.getCardsEnabled()) {
+        try {
             if (event.getChannelLeft() != null) {
                 PlayerCardData pcd = playerCardDataRepository.findById(event.getMember().getIdLong()).get();
                 long seconds = (new Date().getTime() - pcd.getJoinedVoice().getTime()) / 1000;
@@ -384,6 +383,8 @@ public class CardBot extends AdvancedListenerAdapter {
                     playerCardDataRepository.save(pcd);
                 }
             }
+        } catch(NullPointerException e){
+
         }
     }
 
