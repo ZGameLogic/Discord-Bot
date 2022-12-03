@@ -137,8 +137,7 @@ public class GeneralListener extends AdvancedListenerAdapter {
 
     @ModalResponse("reply_text_modal")
     private void modalResponseTextMessageReply(ModalInteractionEvent event){
-        String number = event.getMessage().getContentRaw().split("\n")[0].replace("Text message from: ", "");
-        System.out.println(number);
+        String number = event.getMessage().getContentRaw().split("\n")[0].replace("Text message received from number: ", "");
         String message = event.getValue("message").getAsString();
         TwilioInterface.sendMessage(number, message);
         event.reply("Message has been sent").queue();
