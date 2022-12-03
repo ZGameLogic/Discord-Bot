@@ -185,7 +185,7 @@ public abstract class EmbedMessageGenerator {
         int accepted = plan.getAccepted().size();
         status.append("filled:`");
         for(int i = 1; i <= 20; i++){
-            if(i < 20.0 * plan.getCount() / accepted || plan.isFull()){
+            if(i < 20.0 * (plan.getCount() / (double)accepted) || plan.isFull()){
                 status.append("█");
             } else {
                 status.append(" ");
