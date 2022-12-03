@@ -8,7 +8,6 @@ import data.database.cardData.guild.GuildCardData;
 import data.database.cardData.guild.GuildCardDataRepository;
 import data.database.cardData.player.PlayerCardData;
 import data.database.cardData.player.PlayerCardDataRepository;
-import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
@@ -327,6 +326,8 @@ public class CardBot extends AdvancedListenerAdapter {
         event.deferReply().queue();
         long userId = event.getOption("user") != null ? event.getOption("user").getAsUser().getIdLong() : event.getUser().getIdLong();
         String username = event.getOption("user") != null ? event.getOption("user").getAsUser().getName() : event.getUser().getName();
+        User user = event.getOption("user") != null ? event.getOption("user").getAsUser() : event.getUser();
+        System.out.println(username);
         PlayerCardData player = playerCardDataRepository.findById(userId).get();
         OptionMapping collection = event.getOption("collection");
         if(collection != null){
@@ -336,10 +337,10 @@ public class CardBot extends AdvancedListenerAdapter {
             }
             LinkedList<CardData> cardsInCollection = cardDataRepository.findCardsByCollection(collection.getAsString());
             if(cardsInCollection.size() > PAGE_SIZE) {
-                event.getHook().sendMessageEmbeds(EmbedMessageGenerator.specificCollectionView(event.getUser(), collection.getAsString(), new LinkedList<>(player.getDeck()), cardsInCollection, 0))
+                event.getHook().sendMessageEmbeds(EmbedMessageGenerator.specificCollectionView(user, collection.getAsString(), new LinkedList<>(player.getDeck()), cardsInCollection, 0))
                         .addActionRow(Button.primary("cards_next_page", "Next page")).queue();
             } else {
-                event.getHook().sendMessageEmbeds(EmbedMessageGenerator.specificCollectionView(event.getUser(), collection.getAsString(), new LinkedList<>(player.getDeck()), cardsInCollection, 0)).queue();
+                event.getHook().sendMessageEmbeds(EmbedMessageGenerator.specificCollectionView(user, collection.getAsString(), new LinkedList<>(player.getDeck()), cardsInCollection, 0)).queue();
             }
         } else {
             event.getHook().sendMessageEmbeds(EmbedMessageGenerator.overallCollectionView(username, new LinkedList<>(player.getDeck()), cardDataRepository)).queue();
@@ -366,7 +367,7 @@ public class CardBot extends AdvancedListenerAdapter {
     }
 
     @Override
-    public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
+    public void onGuildVoiceUpdate(@NotNull GuildVoiceUpdateEvent event) {
         try {
             if (event.getChannelLeft() != null) {
                 PlayerCardData pcd = playerCardDataRepository.findById(event.getMember().getIdLong()).get();
@@ -383,7 +384,7 @@ public class CardBot extends AdvancedListenerAdapter {
                     playerCardDataRepository.save(pcd);
                 }
             }
-        } catch(NullPointerException e){
+        } catch(NullPointerException ignored){
 
         }
     }
@@ -425,7 +426,7 @@ public class CardBot extends AdvancedListenerAdapter {
                 edited = true;
             }
             if(player.getProgress() >= 3600){
-                player.setProgress(0l);
+                player.setProgress(0L);
                 player.addPack();
                 edited = true;
             }
