@@ -63,7 +63,7 @@ public abstract class EmbedMessageGenerator {
         }
         eb.setDescription(desc.toString());
         eb.addField("Pips", player.getCurrency() + "", true);
-        StringBuilder progress = new StringBuilder("`");
+        StringBuilder progress = new StringBuilder("|`");
         for(int i = 0; i < 20; i++){
             if(i < (20 * (player.getProgress() / 3600.0))){
                 progress.append("█");
@@ -71,7 +71,7 @@ public abstract class EmbedMessageGenerator {
                 progress.append(" ");
             }
         }
-        progress.append("`");
+        progress.append("`|");
         eb.addField("Free pack progress", progress.toString(), true);
         return eb.build();
     }
@@ -183,7 +183,7 @@ public abstract class EmbedMessageGenerator {
     private static void infoBody(Plan plan, Guild guild, EmbedBuilder eb) {
         StringBuilder status = new StringBuilder();
         int accepted = plan.getAccepted().size();
-        status.append("filled:`");
+        status.append("filled:❲`");
         for(int i = 0; i < 20; i++){
             if(i < 20.0 * ((double)accepted / plan.getCount()) || plan.isFull()){
                 status.append("█");
@@ -191,7 +191,7 @@ public abstract class EmbedMessageGenerator {
                 status.append(" ");
             }
         }
-        status.append("`\n");
+        status.append("`❳\n");
         for(long id: plan.getAccepted()){
             status.append("<@").append(id).append(">").append(": accepted\n");
         }
