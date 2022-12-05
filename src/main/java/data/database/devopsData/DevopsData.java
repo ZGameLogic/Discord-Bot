@@ -1,5 +1,6 @@
 package data.database.devopsData;
 
+import interfaces.atlassian.data.Server;
 import lombok.*;
 import lombok.experimental.Accessors;
 
@@ -28,4 +29,16 @@ public class DevopsData {
     private Long devopsRoleId;
     private Long devopsGeneralChatId, devopsGeneralTextId;
     private Long createBranchSlashId, createBugReportSlashId, createJiraIssueSlashId;
+
+    public Server getJiraServer(){
+        return new Server(jiraURL, jiraPAT);
+    }
+
+    public Server getBitbucketServer(){
+        return new Server(bitbucketURL, bitbucketPAT);
+    }
+
+    public Server getBambooServer(){
+        return new Server(bambooURL, bambooPAT);
+    }
 }

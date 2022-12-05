@@ -8,6 +8,7 @@ import data.database.guildData.GuildDataRepository;
 import interfaces.atlassian.BambooInterface;
 import interfaces.atlassian.BitbucketInterface;
 import interfaces.atlassian.JiraInterface;
+import interfaces.atlassian.data.Server;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Role;
@@ -141,7 +142,8 @@ public class DevopsBot extends AdvancedListenerAdapter {
         InteractionHook message = event.reply(
                 atlassianCheckMessage(jiraCheck, bambooCheck, bitbucketCheck, "PATs")
         ).setEphemeral(true).complete();
-        jiraCheck = JiraInterface.checkPAT(jira, dd.getJiraURL()) ? 1 : -1;
+        Server jiraServer = new Server(dd.getJiraURL(), jira);
+        jiraCheck = JiraInterface.checkPAT(jiraServer) ? 1 : -1;
         message.editOriginal(atlassianCheckMessage(jiraCheck, bambooCheck, bitbucketCheck, "PATs")).complete();
         bambooCheck = BambooInterface.checkPAT(bamboo, dd.getBambooURL()) ? 1 : -1;
         message.editOriginal(atlassianCheckMessage(jiraCheck, bambooCheck, bitbucketCheck, "PATs")).complete();

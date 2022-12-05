@@ -2,6 +2,7 @@ package interfaces.atlassian;
 
 import interfaces.atlassian.data.Server;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.http.HttpHeaders;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -13,24 +14,25 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import static interfaces.atlassian.Interfacer.makeGetRequest;
-
 @Slf4j
-public abstract class JiraInterface {
+public abstract class Interfacer {
 
-    public static boolean checkURL(String baseUrl){
+    protected static JSONObject makeGetRequest(Server server, String api) {
+        String url = server.getBaseUrl() + api;
         CloseableHttpClient httpclient = HttpClients.createDefault();
-        HttpGet httpget = new HttpGet(baseUrl);
+        HttpGet httpget = new HttpGet(url);
+        httpget.setHeader(HttpHeaders.AUTHORIZATION, "Bearer " + server.getPersonalAccessToken());
         try {
             HttpResponse httpresponse = httpclient.execute(httpget);
-            if(httpresponse.getStatusLine().getStatusCode() != 200) return false;
+            if (httpresponse.getStatusLine().getStatusCode() != 200) return null;
             BufferedReader in = new BufferedReader(new InputStreamReader(httpresponse.getEntity().getContent()));
-            for(int i = 0; i < 17; i++){
-                in.readLine();
-            }
-            return in.readLine().contains("JIRA");
+            return new JSONObject(in.readLine());
         } catch (IOException e) {
-            return false;
+            e.printStackTrace();
+            return null;
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return null;
         }
     }
 
