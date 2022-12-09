@@ -424,6 +424,9 @@ public class CardBot extends AdvancedListenerAdapter {
         if(bot != null){
             for(Guild guild: bot.getGuilds()){
                 for(VoiceChannel channel: guild.getVoiceChannels()){
+                    System.out.println(guild);
+                    System.out.println(guild.getAfkChannel());
+                    System.out.println(channel);
                     if(guild.getAfkChannel() != null || guild.getAfkChannel().getIdLong() != channel.getIdLong()){
                         for(Member member: channel.getMembers()){
                             PlayerCardData player = playerCardDataRepository.findById(member.getIdLong()).get();
