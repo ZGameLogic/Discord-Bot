@@ -9,11 +9,13 @@ import data.database.cardData.guild.GuildCardDataRepository;
 import data.database.cardData.player.PlayerCardData;
 import data.database.cardData.player.PlayerCardDataRepository;
 import data.database.guildData.GuildDataRepository;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.guild.member.GuildMemberJoinEvent;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
@@ -44,6 +46,8 @@ public class CardBot extends AdvancedListenerAdapter {
     private final PlayerCardDataRepository playerCardDataRepository;
     private final GuildDataRepository guildDataRepository;
 
+    private JDA bot;
+
     public CardBot(GuildDataRepository guildDataRepository, CardDataRepository cardDataRepository, GuildCardDataRepository guildCardDataRepository, PlayerCardDataRepository playerCardDataRepository) {
         this.cardDataRepository = cardDataRepository;
         this.guildCardDataRepository = guildCardDataRepository;
@@ -53,6 +57,7 @@ public class CardBot extends AdvancedListenerAdapter {
 
     @Override
     public void onReady(@NotNull ReadyEvent event) {
+        bot = event.getJDA();
         new Thread(() -> {
             List<PlayerCardData> newPlayers = new LinkedList<>();
             for(Guild guild: event.getJDA().getGuilds()){
@@ -416,6 +421,21 @@ public class CardBot extends AdvancedListenerAdapter {
     }
 
     public void tenMinuteTasks(){
+        if(bot != null){
+            for(Guild guild: bot.getGuilds()){
+                for(VoiceChannel channel: guild.getVoiceChannels()){
+                    if(guild.getAfkChannel().getIdLong() != channel.getIdLong()){
+                        for(Member member: channel.getMembers()){
+                            PlayerCardData player = playerCardDataRepository.findById(member.getIdLong()).get();
+                            if(player.getJoinedVoice() == null){
+                                player.setJoinedVoice(new Date());
+                                playerCardDataRepository.save(player);
+                            }
+                        }
+                    }
+                }
+            }
+        }
         LinkedList<PlayerCardData> updated = new LinkedList<>();
         for(PlayerCardData player: playerCardDataRepository.findAll()){
             boolean edited = false;
@@ -426,7 +446,7 @@ public class CardBot extends AdvancedListenerAdapter {
                 edited = true;
             }
             if(player.getProgress() >= 3600){
-                player.setProgress(0L);
+                player.removeProgress(3600);
                 player.addPack();
                 edited = true;
             }
