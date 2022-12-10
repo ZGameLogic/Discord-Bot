@@ -109,9 +109,9 @@ public class Bot {
 		}
 	}
 
-	@Scheduled(cron = "0 */10 * * * *")
-	private void tenMinuteTask() {
-		CB.tenMinuteTasks();
+	@Scheduled(cron = "0 */5 * * * *")
+	private void fiveMinuteTask() {
+		CB.fiveMinuteTasks();
 	}
 
 	@PostMapping("/api/cards")
