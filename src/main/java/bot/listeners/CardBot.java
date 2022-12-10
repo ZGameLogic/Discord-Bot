@@ -420,7 +420,7 @@ public class CardBot extends AdvancedListenerAdapter {
         return !cardDataRepository.listCardCollections().contains(collection);
     }
 
-    public void tenMinuteTasks(){
+    public void fiveMinuteTasks(){
         if(bot != null){
             for(Guild guild: bot.getGuilds()){
                 for(VoiceChannel channel: guild.getVoiceChannels()){
@@ -445,7 +445,7 @@ public class CardBot extends AdvancedListenerAdapter {
                 player.addProgress(seconds);
                 edited = true;
             }
-            if(player.getProgress() >= 3600){
+            while(player.getProgress() >= 3600){
                 player.removeProgress(3600);
                 player.addPack();
                 edited = true;
