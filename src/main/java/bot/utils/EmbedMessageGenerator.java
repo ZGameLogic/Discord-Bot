@@ -42,6 +42,13 @@ public abstract class EmbedMessageGenerator {
             CardData card = cards.findById(id).get();
             desc.append(card.toDiscordMessage(true)).append(" +").append(card.getSellback()).append(" pip\n");
         }
+        if(desc.length() >= 4096){
+            eb = new EmbedBuilder();
+            eb.setColor(CARD_COLOR);
+            eb.setTitle("You did good kid");
+            eb.setDescription("You have so many cards in this opening that I cannot send the whole message. Could I send multiple? Yes. But I think we both know you don't care that much.");
+            return eb.build();
+        }
         eb.setDescription(desc.toString());
         eb.addField("Money made", moneyMade + "", true);
         if(!eb.isValidLength()){
