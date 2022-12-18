@@ -31,8 +31,13 @@ import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.jetbrains.annotations.NotNull;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.OffsetDateTime;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Locale;
 
 @Slf4j
 public class PlannerBot extends AdvancedListenerAdapter {
@@ -137,15 +142,18 @@ public class PlannerBot extends AdvancedListenerAdapter {
 
     @SlashResponse("plan_event")
     private void planEventSlashCommand(SlashCommandInteractionEvent event){
-        TextInput time = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
-                .setPlaceholder("Today at 4:30pm").build();
+        TextInput notes = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
+                .setPlaceholder("Grinding the event").setRequired(false).build();
+        TextInput date = TextInput.create("date", "Date", TextInputStyle.SHORT)
+                .setPlaceholder("4/5 9:23am, Today at 4pm, 7:00pm").build();
         TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
                 .setPlaceholder("Hunt Showdown").build();
         TextInput count = TextInput.create("count", "Number of people (not including yourself)", TextInputStyle.SHORT)
                 .setPlaceholder("2").build();
         event.replyModal(Modal.create("plan_event_modal", "Details of meeting")
                 .addActionRow(name)
-                .addActionRow(time)
+                .addActionRow(date)
+                .addActionRow(notes)
                 .addActionRow(count)
                 .build())
                 .queue();
@@ -155,7 +163,13 @@ public class PlannerBot extends AdvancedListenerAdapter {
     private void editEventModal(ModalInteractionEvent event){
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         String notes = event.getValue("notes").getAsString();
+        String dateString = event.getValue("date").getAsString();
         String title = event.getValue("title").getAsString();
+        Date date = stringToDate(dateString, event.getTimeCreated());
+        if(date == null){
+            event.reply("Invalid date").setEphemeral(true).queue();
+            return;
+        }
         int count;
         try {
             count = Integer.parseInt(event.getValue("count").getAsString());
@@ -171,6 +185,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         plan.setCount(count);
         plan.setTitle(title);
         plan.setNotes(notes);
+        plan.setDate(date);
         plan.addToLog("Event details edited");
         updateMessages(plan, event.getJDA().getGuildById(plan.getGuildId()));
         planRepository.save(plan);
@@ -180,7 +195,13 @@ public class PlannerBot extends AdvancedListenerAdapter {
     @ModalResponse("plan_event_modal")
     private void planEventModalResponse(ModalInteractionEvent event){
         String notes = event.getValue("notes").getAsString();
+        String dateString = event.getValue("date").getAsString();
         String title = event.getValue("title").getAsString();
+        Date date = stringToDate(dateString, event.getTimeCreated());
+        if(date == null){
+            event.reply("Invalid date").setEphemeral(true).queue();
+            return;
+        }
         int count;
         try {
             count = Integer.parseInt(event.getValue("count").getAsString());
@@ -205,6 +226,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                     plan.setChannelId(guildData.getOne(event.getGuild().getIdLong()).getPlanChannelId());
                     plan.setGuildId(event.getGuild().getIdLong());
                     plan.setNotes(notes);
+                    plan.setDate(date);
                     plan.setAuthorId(event.getUser().getIdLong());
                     plan.setCount(finalCount);
                     plan.setId(event.getIdLong());
@@ -296,15 +318,22 @@ public class PlannerBot extends AdvancedListenerAdapter {
     @ButtonResponse("edit_event")
     private void editDetailsButtonEvent(ButtonInteraction event){
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-        TextInput time = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
-                .setValue(plan.getNotes()).build();
+        TextInput.Builder notesBuilder = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT).setRequired(false);
+        if(plan.getNotes() != null && !plan.getNotes().isEmpty()) notesBuilder.setValue(plan.getNotes());
+        TextInput notes = notesBuilder.build();
         TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
                 .setValue(plan.getTitle()).build();
         TextInput count = TextInput.create("count", "Number of people looking for", TextInputStyle.SHORT)
                 .setValue(plan.getCount() + "").build();
+        String pattern = "dd/M h:mma";
+        SimpleDateFormat formatter = new SimpleDateFormat(pattern, Locale.ENGLISH);
+        String dateString = formatter.format(plan.getDate());
+        TextInput date = TextInput.create("date", "Date", TextInputStyle.SHORT)
+                .setValue(dateString).build();
         event.replyModal(Modal.create("edit_event_modal", "Details of meeting")
                         .addActionRow(name)
-                        .addActionRow(time)
+                        .addActionRow(date)
+                        .addActionRow(notes)
                         .addActionRow(count)
                         .build())
                 .queue();
@@ -482,5 +511,25 @@ public class PlannerBot extends AdvancedListenerAdapter {
         } catch (Exception e){
             log.error("Error editing private message for event " + plan.getTitle(), e);
         }
+    }
+
+    private Date stringToDate(String dateString, OffsetDateTime created){
+        dateString = dateString.toUpperCase();
+        LinkedList<String> patterns = new LinkedList<>();
+        patterns.add("M/dd h:mma");
+        patterns.add("ha");
+        patterns.add("h:mma");
+        Date date = null;
+        for(String pattern: patterns){
+            SimpleDateFormat formatter = new SimpleDateFormat(pattern, Locale.ENGLISH);
+            try {
+                date = formatter.parse(dateString);
+                date = new Date(created.toInstant().toEpochMilli());
+                System.out.println(formatter.format(date));
+            } catch (ParseException ignored) {
+
+            }
+        }
+        return date;
     }
 }
