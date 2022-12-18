@@ -29,6 +29,7 @@ public class Plan {
 
     private String title;
     private String notes;
+    private Date date;
     @Column(columnDefinition = "varchar(max)")
     private String log;
     private Long authorId;
@@ -106,9 +107,7 @@ public class Plan {
         Comparator<User> dateComparator = Comparator.comparing(User::getWaitlist_time);
         waitlist.sort(dateComparator);
         LinkedList<Long> sortedIds =  new LinkedList<>();
-        waitlist.forEach(user -> {
-            sortedIds.add(user.getId());
-        });
+        waitlist.forEach(user -> sortedIds.add(user.getId()));
         return sortedIds;
     }
 

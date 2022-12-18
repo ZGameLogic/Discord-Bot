@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.utils.TimeFormat;
 
 import java.awt.*;
 import java.util.LinkedList;
@@ -148,6 +149,7 @@ public abstract class EmbedMessageGenerator {
         int count = plan.getCount();
         eb.setTitle(inviter + " has invited you to join them doing: " + plan.getTitle());
         String desc = inviter + " is looking for " + count + " people to join them for " + plan.getTitle() + " (" + plan.getInvitees().size() + " invited).\n" +
+                "The event is scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) + "\n" +
                 "For more details, visit the planning channel in the discord server: " + guild.getName() + "\n" + plan.getNotes();
         if(plan.getAccepted().size() >= count){
             desc += "\nWe are no longer looking for more members to join this event. Check back later in case someone drops out.\nYou can also waitlist yourself so if anyone does drop out, you will join the event.";
@@ -181,7 +183,8 @@ public abstract class EmbedMessageGenerator {
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(GENERAL_COLOR);
         eb.setTitle("Plan details for: " + plan.getTitle());
-        eb.setDescription(plan.getNotes() + "\n" + plan.getLog());
+        eb.setDescription("The event is scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) + "\n" +
+                plan.getNotes() + "\n" + plan.getLog());
         infoBody(plan, guild, eb);
         eb.setFooter(plan.getId() + "");
         return eb.build();
@@ -225,7 +228,8 @@ public abstract class EmbedMessageGenerator {
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(GENERAL_COLOR);
         eb.setTitle(plan.getTitle());
-        eb.setDescription(plan.getNotes());
+        eb.setDescription("The event is scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) + "\n" +
+                plan.getNotes());
         eb.setFooter(plan.getId() + "");
         eb.addField("Coordinator", guild.getJDA().getUserById(plan.getAuthorId()).getName(), true);
         eb.addField("People accepted", plan.getAccepted().size() + "/" + plan.getCount(), true);
