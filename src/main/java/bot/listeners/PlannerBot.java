@@ -31,8 +31,9 @@ import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Slf4j
 public class PlannerBot extends AdvancedListenerAdapter {
@@ -77,9 +78,9 @@ public class PlannerBot extends AdvancedListenerAdapter {
         guild.deleteCommandById(dbGuild.getCreatePlanCommandId()).queue();
         guild.getTextChannelById(dbGuild.getPlanChannelId()).delete().queue();
         dbGuild.setPlanEnabled(false);
-        dbGuild.setPlanChannelId(0l);
-        dbGuild.setCreatePlanCommandId(0l);
-        dbGuild.setTextCommandId(0l);
+        dbGuild.setPlanChannelId(0L);
+        dbGuild.setCreatePlanCommandId(0L);
+        dbGuild.setTextCommandId(0L);
         guildData.save(dbGuild);
     }
 
@@ -137,15 +138,18 @@ public class PlannerBot extends AdvancedListenerAdapter {
 
     @SlashResponse("plan_event")
     private void planEventSlashCommand(SlashCommandInteractionEvent event){
-        TextInput time = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
-                .setPlaceholder("Today at 4:30pm").build();
+        TextInput notes = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
+                .setPlaceholder("Grinding the event").setRequired(false).build();
+        TextInput date = TextInput.create("date", "Date", TextInputStyle.SHORT)
+                .setPlaceholder("4/5 9:23am, 7:00pm").build();
         TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
                 .setPlaceholder("Hunt Showdown").build();
         TextInput count = TextInput.create("count", "Number of people (not including yourself)", TextInputStyle.SHORT)
                 .setPlaceholder("2").build();
         event.replyModal(Modal.create("plan_event_modal", "Details of meeting")
                 .addActionRow(name)
-                .addActionRow(time)
+                .addActionRow(date)
+                .addActionRow(notes)
                 .addActionRow(count)
                 .build())
                 .queue();
@@ -155,7 +159,13 @@ public class PlannerBot extends AdvancedListenerAdapter {
     private void editEventModal(ModalInteractionEvent event){
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         String notes = event.getValue("notes").getAsString();
+        String dateString = event.getValue("date").getAsString();
         String title = event.getValue("title").getAsString();
+        Date date = stringToDate(dateString);
+        if(date == null){
+            event.reply("Invalid date").setEphemeral(true).queue();
+            return;
+        }
         int count;
         try {
             count = Integer.parseInt(event.getValue("count").getAsString());
@@ -171,6 +181,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         plan.setCount(count);
         plan.setTitle(title);
         plan.setNotes(notes);
+        plan.setDate(date);
         plan.addToLog("Event details edited");
         updateMessages(plan, event.getJDA().getGuildById(plan.getGuildId()));
         planRepository.save(plan);
@@ -180,7 +191,13 @@ public class PlannerBot extends AdvancedListenerAdapter {
     @ModalResponse("plan_event_modal")
     private void planEventModalResponse(ModalInteractionEvent event){
         String notes = event.getValue("notes").getAsString();
+        String dateString = event.getValue("date").getAsString();
         String title = event.getValue("title").getAsString();
+        Date date = stringToDate(dateString);
+        if(date == null){
+            event.reply("Invalid date").setEphemeral(true).queue();
+            return;
+        }
         int count;
         try {
             count = Integer.parseInt(event.getValue("count").getAsString());
@@ -205,6 +222,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                     plan.setChannelId(guildData.getOne(event.getGuild().getIdLong()).getPlanChannelId());
                     plan.setGuildId(event.getGuild().getIdLong());
                     plan.setNotes(notes);
+                    plan.setDate(date);
                     plan.setAuthorId(event.getUser().getIdLong());
                     plan.setCount(finalCount);
                     plan.setId(event.getIdLong());
@@ -296,15 +314,21 @@ public class PlannerBot extends AdvancedListenerAdapter {
     @ButtonResponse("edit_event")
     private void editDetailsButtonEvent(ButtonInteraction event){
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-        TextInput time = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
-                .setValue(plan.getNotes()).build();
+        TextInput.Builder notesBuilder = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT).setRequired(false);
+        if(plan.getNotes() != null && !plan.getNotes().isEmpty()) notesBuilder.setValue(plan.getNotes());
+        TextInput notes = notesBuilder.build();
         TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
                 .setValue(plan.getTitle()).build();
         TextInput count = TextInput.create("count", "Number of people looking for", TextInputStyle.SHORT)
                 .setValue(plan.getCount() + "").build();
+        SimpleDateFormat formatter = new SimpleDateFormat("M/dd h:mma", Locale.ENGLISH);
+        String dateString = formatter.format(plan.getDate());
+        TextInput date = TextInput.create("date", "Date", TextInputStyle.SHORT)
+                .setValue(dateString).build();
         event.replyModal(Modal.create("edit_event_modal", "Details of meeting")
                         .addActionRow(name)
-                        .addActionRow(time)
+                        .addActionRow(date)
+                        .addActionRow(notes)
                         .addActionRow(count)
                         .build())
                 .queue();
@@ -482,5 +506,27 @@ public class PlannerBot extends AdvancedListenerAdapter {
         } catch (Exception e){
             log.error("Error editing private message for event " + plan.getTitle(), e);
         }
+    }
+
+    private Date stringToDate(String dateString){
+        dateString = dateString.toUpperCase();
+        HashMap<String, Integer[]> patterns = new HashMap<>();
+        patterns.put("M/dd h:mma", new Integer[]{Calendar.MONTH, Calendar.DAY_OF_MONTH, Calendar.HOUR_OF_DAY, Calendar.MINUTE});
+        patterns.put("h:mma", new Integer[]{Calendar.HOUR_OF_DAY, Calendar.MINUTE});
+        for(String pattern: patterns.keySet()){
+            SimpleDateFormat formatter = new SimpleDateFormat(pattern, Locale.ENGLISH);
+            Calendar date = Calendar.getInstance();
+            Calendar formatted = Calendar.getInstance();
+            try {
+                formatted.setTime(formatter.parse(dateString));
+                for(int field: patterns.get(pattern)){
+                    date.set(field, formatted.get(field));
+                }
+                return date.getTime();
+            } catch(ParseException ignored){
+
+            }
+        }
+        return null;
     }
 }
