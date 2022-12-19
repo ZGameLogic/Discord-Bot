@@ -1,6 +1,7 @@
 package data.database.planData;
 
 import lombok.*;
+import net.dv8tion.jda.api.entities.Member;
 
 import javax.persistence.*;
 import java.text.SimpleDateFormat;
@@ -41,6 +42,10 @@ public class Plan {
 
     public void updateMessageIdForUser(long userId, long messageId){
         invitees.get(userId).setMessageId(messageId);
+    }
+
+    public void addUser(Member member){
+        invitees.put(member.getIdLong(), new User(member.getIdLong(), 0));
     }
 
     public void planWaitlist(long userId) {
