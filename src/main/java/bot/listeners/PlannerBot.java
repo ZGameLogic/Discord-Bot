@@ -17,6 +17,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -275,7 +276,8 @@ public class PlannerBot extends AdvancedListenerAdapter {
             }
         }
         try {
-            Message message = event.getGuild().getTextChannelById(gd.getPlanChannelId()).sendMessageEmbeds(EmbedMessageGenerator.guildPublicMessage(plan, event.getGuild())).complete();
+            Message message = event.getGuild().getTextChannelById(gd.getPlanChannelId()).sendMessageEmbeds(EmbedMessageGenerator.guildPublicMessage(plan, event.getGuild()))
+                    .addActionRow(Button.secondary("add_users", "Add users")).complete();
             plan.setMessageId(message.getIdLong());
             plan.addToLog("Added people to event");
             PrivateChannel channel = event.getGuild().getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().complete();
@@ -293,6 +295,53 @@ public class PlannerBot extends AdvancedListenerAdapter {
             log.error("Error sending creating event message reply", e);
         }
         event.getHook().setEphemeral(true).sendMessage("Event created in <#" + gd.getPlanChannelId() + ">").queue();
+    }
+
+    @ButtonResponse("add_users")
+    private void addUsersButton(ButtonInteractionEvent event){
+        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        GuildData gd = guildData.getOne(event.getGuild().getIdLong());
+        if(plan.getAuthorId() != event.getUser().getIdLong()){
+            event.reply("You are not the owner of this event").setEphemeral(true).queue();
+            return;
+        }
+        event.reply("Select people to add to the event. This cannot be changed. Plan id:" + plan.getId()).setActionRow(
+                        EntitySelectMenu.create("add_people", EntitySelectMenu.SelectTarget.USER)
+                                .setMinValues(1)
+                                .setMaxValues(25)
+                                .build())
+                .setEphemeral(true).queue();
+    }
+
+    @EntitySelectionResponse("add_people")
+    private void addPeopleResponse(EntitySelectInteractionEvent event){
+        event.deferReply().setEphemeral(true).queue();
+        long planId = Long.parseLong(event.getMessage().getContentRaw().split(":")[1]);
+        Plan plan = planRepository.getOne(planId);
+        LinkedList<Member> invitees = new LinkedList<>();
+        for(Member m : event.getMentions().getMembers()){
+            if(m.getUser().isBot()){
+                event.getHook().sendMessage("You cannot add bots to an event you are planning").setEphemeral(true).queue();
+                return;
+            }
+            if(m.getIdLong() == event.getUser().getIdLong()){
+                event.getHook().sendMessage("You cannot add yourself to an event you are planning").setEphemeral(true).queue();
+                return;
+            }
+            if(plan.getInvitees().containsKey(m.getIdLong())) continue;
+            invitees.add(m);
+        }
+        for(Member m: invitees){
+            Message message = m.getUser().openPrivateChannel().complete().sendMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, event.getGuild()))
+                    .addActionRow(Button.success("accept_event", "Accept"),
+                            Button.danger("deny_event", "Deny"),
+                            Button.primary("maybe_event", "Maybe"))
+                    .complete();
+            plan.addUser(m);
+            plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
+        }
+        planRepository.save(plan);
+        updateMessages(plan, event.getGuild());
     }
 
     @ModalResponse("send_message_modal")
