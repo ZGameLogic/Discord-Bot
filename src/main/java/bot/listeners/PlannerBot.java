@@ -33,11 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.time.OffsetDateTime;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Locale;
+import java.util.*;
 
 @Slf4j
 public class PlannerBot extends AdvancedListenerAdapter {
@@ -82,9 +78,9 @@ public class PlannerBot extends AdvancedListenerAdapter {
         guild.deleteCommandById(dbGuild.getCreatePlanCommandId()).queue();
         guild.getTextChannelById(dbGuild.getPlanChannelId()).delete().queue();
         dbGuild.setPlanEnabled(false);
-        dbGuild.setPlanChannelId(0l);
-        dbGuild.setCreatePlanCommandId(0l);
-        dbGuild.setTextCommandId(0l);
+        dbGuild.setPlanChannelId(0L);
+        dbGuild.setCreatePlanCommandId(0L);
+        dbGuild.setTextCommandId(0L);
         guildData.save(dbGuild);
     }
 
@@ -145,7 +141,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         TextInput notes = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
                 .setPlaceholder("Grinding the event").setRequired(false).build();
         TextInput date = TextInput.create("date", "Date", TextInputStyle.SHORT)
-                .setPlaceholder("4/5 9:23am, Today at 4pm, 7:00pm").build();
+                .setPlaceholder("4/5 9:23am, 7:00pm").build();
         TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
                 .setPlaceholder("Hunt Showdown").build();
         TextInput count = TextInput.create("count", "Number of people (not including yourself)", TextInputStyle.SHORT)
@@ -165,7 +161,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         String notes = event.getValue("notes").getAsString();
         String dateString = event.getValue("date").getAsString();
         String title = event.getValue("title").getAsString();
-        Date date = stringToDate(dateString, event.getTimeCreated());
+        Date date = stringToDate(dateString);
         if(date == null){
             event.reply("Invalid date").setEphemeral(true).queue();
             return;
@@ -197,7 +193,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         String notes = event.getValue("notes").getAsString();
         String dateString = event.getValue("date").getAsString();
         String title = event.getValue("title").getAsString();
-        Date date = stringToDate(dateString, event.getTimeCreated());
+        Date date = stringToDate(dateString);
         if(date == null){
             event.reply("Invalid date").setEphemeral(true).queue();
             return;
@@ -325,8 +321,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 .setValue(plan.getTitle()).build();
         TextInput count = TextInput.create("count", "Number of people looking for", TextInputStyle.SHORT)
                 .setValue(plan.getCount() + "").build();
-        String pattern = "dd/M h:mma";
-        SimpleDateFormat formatter = new SimpleDateFormat(pattern, Locale.ENGLISH);
+        SimpleDateFormat formatter = new SimpleDateFormat("M/dd h:mma", Locale.ENGLISH);
         String dateString = formatter.format(plan.getDate());
         TextInput date = TextInput.create("date", "Date", TextInputStyle.SHORT)
                 .setValue(dateString).build();
@@ -513,23 +508,25 @@ public class PlannerBot extends AdvancedListenerAdapter {
         }
     }
 
-    private Date stringToDate(String dateString, OffsetDateTime created){
+    private Date stringToDate(String dateString){
         dateString = dateString.toUpperCase();
-        LinkedList<String> patterns = new LinkedList<>();
-        patterns.add("M/dd h:mma");
-        patterns.add("ha");
-        patterns.add("h:mma");
-        Date date = null;
-        for(String pattern: patterns){
+        HashMap<String, Integer[]> patterns = new HashMap<>();
+        patterns.put("M/dd h:mma", new Integer[]{Calendar.MONTH, Calendar.DAY_OF_MONTH, Calendar.HOUR_OF_DAY, Calendar.MINUTE});
+        patterns.put("h:mma", new Integer[]{Calendar.HOUR_OF_DAY, Calendar.MINUTE});
+        for(String pattern: patterns.keySet()){
             SimpleDateFormat formatter = new SimpleDateFormat(pattern, Locale.ENGLISH);
+            Calendar date = Calendar.getInstance();
+            Calendar formatted = Calendar.getInstance();
             try {
-                date = formatter.parse(dateString);
-                date = new Date(created.toInstant().toEpochMilli());
-                System.out.println(formatter.format(date));
-            } catch (ParseException ignored) {
+                formatted.setTime(formatter.parse(dateString));
+                for(int field: patterns.get(pattern)){
+                    date.set(field, formatted.get(field));
+                }
+                return date.getTime();
+            } catch(ParseException ignored){
 
             }
         }
-        return date;
+        return null;
     }
 }
