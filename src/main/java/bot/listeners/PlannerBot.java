@@ -322,7 +322,12 @@ public class PlannerBot extends AdvancedListenerAdapter {
         TextInput count = TextInput.create("count", "Number of people looking for", TextInputStyle.SHORT)
                 .setValue(plan.getCount() + "").build();
         SimpleDateFormat formatter = new SimpleDateFormat("M/dd h:mma", Locale.ENGLISH);
-        String dateString = formatter.format(plan.getDate());
+        String dateString;
+        if(plan.getDate() != null) {
+            dateString = formatter.format(plan.getDate());
+        } else {
+            dateString = formatter.format(new Date());
+        }
         TextInput date = TextInput.create("date", "Date", TextInputStyle.SHORT)
                 .setValue(dateString).build();
         event.replyModal(Modal.create("edit_event_modal", "Details of meeting")
