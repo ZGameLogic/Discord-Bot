@@ -141,7 +141,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         TextInput notes = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
                 .setPlaceholder("Grinding the event").setRequired(false).build();
         TextInput date = TextInput.create("date", "Date", TextInputStyle.SHORT)
-                .setPlaceholder("4/5 9:23am, 7:00pm").build();
+                .setPlaceholder("4/5 9:23am or 7:00pm").build();
         TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
                 .setPlaceholder("Hunt Showdown").build();
         TextInput count = TextInput.create("count", "Number of people (not including yourself)", TextInputStyle.SHORT)
