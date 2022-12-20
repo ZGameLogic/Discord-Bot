@@ -337,6 +337,13 @@ public class PlannerBot extends AdvancedListenerAdapter {
                             Button.danger("deny_event", "Deny"),
                             Button.primary("maybe_event", "Maybe"))
                     .complete();
+            if(userData.existsById(m.getIdLong())){
+                TwilioInterface.sendMessage(
+                        userData.getOne(m.getIdLong()).getPhone_number() + "",
+                        event.getUser().getName() + " has invited you to " + plan.getTitle() + "." +
+                                " Reply to the invite on discord."
+                );
+            }
             plan.addUser(m);
             plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
         }
