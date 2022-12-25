@@ -332,7 +332,6 @@ public class CardBot extends AdvancedListenerAdapter {
         long userId = event.getOption("user") != null ? event.getOption("user").getAsUser().getIdLong() : event.getUser().getIdLong();
         String username = event.getOption("user") != null ? event.getOption("user").getAsUser().getName() : event.getUser().getName();
         User user = event.getOption("user") != null ? event.getOption("user").getAsUser() : event.getUser();
-        System.out.println(username);
         PlayerCardData player = playerCardDataRepository.findById(userId).get();
         OptionMapping collection = event.getOption("collection");
         if(collection != null){
