@@ -75,7 +75,8 @@ public class CardBot extends AdvancedListenerAdapter {
     @Override
     public void onGuildMemberJoin(GuildMemberJoinEvent event) {
         if(guildDataRepository.findById(event.getGuild().getIdLong()).get().getCardsEnabled()) {
-            playerCardDataRepository.save(new PlayerCardData(event.getUser().getIdLong()));
+            if(!playerCardDataRepository.existsById(event.getUser().getIdLong()))
+                playerCardDataRepository.save(new PlayerCardData(event.getUser().getIdLong()));
         }
     }
 
