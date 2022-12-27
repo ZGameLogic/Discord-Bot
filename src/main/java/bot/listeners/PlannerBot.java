@@ -212,7 +212,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         }
         int finalCount = count;
         event.reply("Select people to invite (Don't include yourself). This cannot be changed. Plan id:" + event.getIdLong()).setActionRow(
-                        EntitySelectMenu.create("People", EntitySelectMenu.SelectTarget.USER)
+                        EntitySelectMenu.create("People", EntitySelectMenu.SelectTarget.USER, EntitySelectMenu.SelectTarget.ROLE)
                                 .setMinValues(1)
                                 .setMaxValues(25)
                                 .build())
@@ -254,8 +254,15 @@ public class PlannerBot extends AdvancedListenerAdapter {
             }
             invitees.put(m.getIdLong(), new User(m.getIdLong(), 0));
         }
+        for(Member m: event.getGuild().getMembersWithRoles(event.getMentions().getRoles())){
+            if(m.getUser().isBot()) continue;
+            if(m.getIdLong() == event.getUser().getIdLong()) continue;
+            if(invitees.containsKey(m.getIdLong())) continue;
+            invitees.put(m.getIdLong(), new User(m.getIdLong(), 0));
+        }
         plan.setInvitees(invitees);
-        for(Member m : event.getMentions().getMembers()){
+        for(Long id: invitees.keySet()){
+            Member m = event.getGuild().getMemberById(id);
             try {
                 PrivateChannel pm = m.getUser().openPrivateChannel().complete();
                 Message message = pm.sendMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, event.getGuild()))
@@ -337,6 +344,13 @@ public class PlannerBot extends AdvancedListenerAdapter {
                             Button.danger("deny_event", "Deny"),
                             Button.primary("maybe_event", "Maybe"))
                     .complete();
+            if(userData.existsById(m.getIdLong())){
+                TwilioInterface.sendMessage(
+                        userData.getOne(m.getIdLong()).getPhone_number() + "",
+                        event.getUser().getName() + " has invited you to " + plan.getTitle() + "." +
+                                " Reply to the invite on discord."
+                );
+            }
             plan.addUser(m);
             plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
         }
