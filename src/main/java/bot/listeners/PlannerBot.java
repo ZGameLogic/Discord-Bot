@@ -13,6 +13,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -254,11 +255,14 @@ public class PlannerBot extends AdvancedListenerAdapter {
             }
             invitees.put(m.getIdLong(), new User(m.getIdLong(), 0));
         }
-        for(Member m: event.getGuild().getMembersWithRoles(event.getMentions().getRoles())){
-            if(m.getUser().isBot()) continue;
-            if(m.getIdLong() == event.getUser().getIdLong()) continue;
-            if(invitees.containsKey(m.getIdLong())) continue;
-            invitees.put(m.getIdLong(), new User(m.getIdLong(), 0));
+        for(Role r: event.getMentions().getRoles()){
+            if(r.getIdLong() == event.getGuild().getPublicRole().getIdLong()) continue;
+            for(Member m: event.getGuild().getMembersWithRoles(r)){
+                if(m.getUser().isBot()) continue;
+                if(m.getIdLong() == event.getUser().getIdLong()) continue;
+                if(invitees.containsKey(m.getIdLong())) continue;
+                invitees.put(m.getIdLong(), new User(m.getIdLong(), 0));
+            }
         }
         plan.setInvitees(invitees);
         for(Long id: invitees.keySet()){
