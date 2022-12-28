@@ -19,6 +19,7 @@ import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent;
+import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -84,6 +85,22 @@ public class PlannerBot extends AdvancedListenerAdapter {
         dbGuild.setCreatePlanCommandId(0L);
         dbGuild.setTextCommandId(0L);
         guildData.save(dbGuild);
+    }
+
+    @Override
+    public void onMessageReceived(MessageReceivedEvent event) {
+        if(event.getAuthor().getIdLong() == 232675572772372481l){
+            long eventId = Long.parseLong(event.getMessage().getContentRaw().replace("!", ""));
+            Plan plan = planRepository.getOne(eventId);
+            Guild guild = event.getJDA().getGuildById(plan.getGuildId());
+            plan.getInvitees().forEach((id, user) -> event.getJDA().openPrivateChannelById(id).queue(
+                    channel -> channel.retrieveMessageById(user.getMessageId()).queue(
+                            message -> message.delete().queue()
+                    )
+            ));
+            // delete from database
+            planRepository.deleteById(plan.getId());
+        }
     }
 
     @Override
