@@ -8,6 +8,7 @@ import data.database.cardData.cards.CardData;
 import data.database.cardData.cards.CardDataRepository;
 import data.database.cardData.guild.GuildCardDataRepository;
 import data.database.cardData.player.PlayerCardDataRepository;
+import data.database.curseforge.CurseforgeRepository;
 import data.database.devopsData.DevopsDataRepository;
 import data.database.guildData.GuildDataRepository;
 import data.database.planData.PlanRepository;
@@ -59,6 +60,8 @@ public class Bot {
 	private GuildCardDataRepository guildCardDataRepository;
 	@Autowired
 	private PlayerCardDataRepository playerCardDataRepository;
+	@Autowired
+	private CurseforgeRepository curseforgeRepository;
 
 	private final static String TITLE = "\r\n" +
 			"   ____  ___  _                   _   ___      _  ______  \r\n" + 
@@ -70,6 +73,7 @@ public class Bot {
 	
 	private final Logger logger = LoggerFactory.getLogger(Bot.class);
 	private CardBot CB;
+	private CurseForgeBot CFB;
 	private JDA bot;
 
 	@PostConstruct
@@ -93,7 +97,8 @@ public class Bot {
 		listeners.add(new DevopsBot(devopsDataRepository, guildData));
 		CB = new CardBot(guildData, cardDataRepository, guildCardDataRepository, playerCardDataRepository);
 		listeners.add(CB);
-
+		CFB = new CurseForgeBot(curseforgeRepository, guildData);
+		listeners.add(CFB);
 		// Add listeners
 		for(ListenerAdapter a : listeners){
 			bot.addEventListeners(a);
@@ -112,6 +117,7 @@ public class Bot {
 	@Scheduled(cron = "0 */5 * * * *")
 	private void fiveMinuteTask() {
 		CB.fiveMinuteTasks();
+		CFB.update();
 	}
 
 	@PostMapping("/api/cards")

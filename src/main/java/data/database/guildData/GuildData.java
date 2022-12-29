@@ -34,6 +34,10 @@ public class GuildData {
     // devops bot stuff
     private Boolean devopsEnabled;
 
-    // devops bot stuff
+    // cards bot stuff
     private Boolean cardsEnabled;
+
+    // CurseForge bot stuff
+    private Boolean curseforgeEnabled;
+    private Long curseforgeCommandId;
 }
