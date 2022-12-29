@@ -72,6 +72,11 @@ public class GeneralListener extends AdvancedListenerAdapter {
                     } else {
                         ics.add(Button.success("disable_cards", "Cards bot"));
                     }
+                    if(guild.getCurseforgeEnabled() == null || !guild.getCurseforgeEnabled()){
+                        ics.add(Button.danger("enable_curse", "Curseforge bot"));
+                    } else {
+                        ics.add(Button.success("disable_curse", "Curseforge bot"));
+                    }
                     ActionRow row = ActionRow.of(ics);
                     components.add(row);
                     message.editMessageComponents(components).queue();
