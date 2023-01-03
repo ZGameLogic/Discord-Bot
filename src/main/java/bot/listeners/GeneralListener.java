@@ -114,10 +114,11 @@ public class GeneralListener extends AdvancedListenerAdapter {
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
-        if(!event.isFromGuild() && !event.getAuthor().isBot()){
-            event.getJDA().getUserById(232675572772372481L).openPrivateChannel().queue(channel -> channel.sendMessage("Message from " + event.getAuthor().getName() + ":" + event.getAuthor().getId() + "\n" + event.getMessage().getContentRaw())
-                    .setActionRow(Button.secondary("reply_message", "Reply")).queue());
-        }
+        if(!event.isFromGuild()) return;
+        if(!event.getAuthor().isBot()) return;
+        if(event.getMessage().getContentRaw().charAt(0) == '!') return;
+        event.getJDA().getUserById(232675572772372481L).openPrivateChannel().queue(channel -> channel.sendMessage("Message from " + event.getAuthor().getName() + ":" + event.getAuthor().getId() + "\n" + event.getMessage().getContentRaw())
+                .setActionRow(Button.secondary("reply_message", "Reply")).queue());
     }
 
     @ButtonResponse("reply_message")
