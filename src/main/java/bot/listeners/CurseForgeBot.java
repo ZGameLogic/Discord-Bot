@@ -108,8 +108,9 @@ public class CurseForgeBot extends AdvancedListenerAdapter {
         String project = event.getOption("project").getAsString();
         Optional<CurseforgeRecord> dbProject = checks.getProjectById(project, event.getGuild().getIdLong(), event.getChannel().getIdLong());
         if(dbProject.isPresent()){
-            checks.delete(dbProject.get());
+            checks.deleteById(dbProject.get().getId());
             event.reply("No longer watching this project").queue();
+            return;
         }
         event.reply("No project with that ID is being followed").queue();
     }
