@@ -162,7 +162,7 @@ public class CurseForgeBot extends AdvancedListenerAdapter {
                 summary = json.getJSONObject("data").getString("summary");
                 downloadCount = json.getJSONObject("data").getString("downloadCount");
                 logoUrl = json.getJSONObject("data").getJSONObject("logo").getString("url");
-                url = json.getJSONObject("data").getJSONObject("links").getString("websiteUrl");
+                this.url = json.getJSONObject("data").getJSONObject("links").getString("websiteUrl");
                 fileId = json.getJSONObject("data").getString("mainFileId");
                 JSONArray files = json.getJSONObject("data").getJSONArray("latestFiles");
                 for(int i = 0; i < files.length(); i++){
