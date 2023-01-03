@@ -31,6 +31,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Date;
+import java.util.Optional;
 
 public class CurseForgeBot extends AdvancedListenerAdapter {
 
@@ -57,6 +58,8 @@ public class CurseForgeBot extends AdvancedListenerAdapter {
                 guild.upsertCommand(Commands.slash("curseforge", "Slash command for curseforge related things")
                         .addSubcommands(
                                 new SubcommandData("listen", "Listens to a project")
+                                        .addOption(OptionType.STRING, "project", "Project to watch", true),
+                                new SubcommandData("forget", "Stops listening to a project")
                                         .addOption(OptionType.STRING, "project", "Project to watch", true)
                         )
                 ).complete().getIdLong()
@@ -98,6 +101,17 @@ public class CurseForgeBot extends AdvancedListenerAdapter {
         cfr.setProjectVersionId(response.fileId);
         event.getHook().sendMessageEmbeds(EmbedMessageGenerator.curseforgeInitial(response)).queue();
         checks.save(cfr);
+    }
+
+    @SlashResponse(value = "curseforge", subCommandName = "forget")
+    private void forget(SlashCommandInteractionEvent event){
+        String project = event.getOption("project").getAsString();
+        Optional<CurseforgeRecord> dbProject = checks.getProjectById(project, event.getGuild().getIdLong(), event.getChannel().getIdLong());
+        if(dbProject.isPresent()){
+            checks.delete(dbProject.get());
+            event.reply("No longer watching this project").queue();
+        }
+        event.reply("No project with that ID is being followed").queue();
     }
 
     public void update(){
