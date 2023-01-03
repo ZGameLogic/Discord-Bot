@@ -31,6 +31,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Date;
+import java.util.LinkedList;
 import java.util.Optional;
 
 public class CurseForgeBot extends AdvancedListenerAdapter {
@@ -122,7 +123,7 @@ public class CurseForgeBot extends AdvancedListenerAdapter {
                 bot.getGuildById(check.getGuildId()).getTextChannelById(check.getChannelId()).sendMessageEmbeds(
                         EmbedMessageGenerator.curseforgeUpdate(current)
                 ).queue();
-                check.setProjectId(current.getFileId());
+                check.setProjectVersionId(current.getFileId());
             }
             check.setLastChecked(new Date());
             checks.save(check);
