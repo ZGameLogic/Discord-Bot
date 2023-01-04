@@ -124,6 +124,7 @@ public class CurseForgeBot extends AdvancedListenerAdapter {
                         EmbedMessageGenerator.curseforgeUpdate(current)
                 ).queue();
                 check.setProjectVersionId(current.getFileId());
+                check.setLastUpdated(new Date());
             }
             check.setLastChecked(new Date());
             checks.save(check);
@@ -140,9 +141,12 @@ public class CurseForgeBot extends AdvancedListenerAdapter {
         private String url;
         private String fileId;
         private String fileName;
+        private String serverFileUrl, serverFileName;
         private boolean valid;
 
         public CurseforgeProject(String project){
+            serverFileUrl = "";
+            serverFileName = "";
             String url = "https://api.curseforge.com/v1/mods/" + project;
             CloseableHttpClient httpclient = HttpClients.createDefault();
             HttpGet httpget = new HttpGet(url);
@@ -169,12 +173,34 @@ public class CurseForgeBot extends AdvancedListenerAdapter {
                     JSONObject file = files.getJSONObject(i);
                     if(file.getLong("id") == Long.parseLong(fileId)){
                         fileName = file.getString("displayName");
+                        if(file.has("serverPackFileId")){
+                            getServerFile(project, file.getString("serverPackFileId"));
+                        }
                         break;
                     }
                 }
             } catch (JSONException ignored) {
             }
             valid = true;
+        }
+
+        private void getServerFile(String project, String file) throws JSONException {
+            String url = "https://api.curseforge.com/v1/mods/" + project + "/files/" + file;
+            CloseableHttpClient httpclient = HttpClients.createDefault();
+            HttpGet httpget = new HttpGet(url);
+            httpget.setHeader("x-api-key", App.config.getCurseforgeApiToken());
+            JSONObject json;
+            try {
+                HttpResponse httpresponse = httpclient.execute(httpget);
+                if (httpresponse.getStatusLine().getStatusCode() != 200) return;
+                BufferedReader in = new BufferedReader(new InputStreamReader(httpresponse.getEntity().getContent()));
+                json = new JSONObject(in.readLine());
+            } catch (IOException | JSONException e) {
+                return;
+            }
+
+            serverFileName = json.getJSONObject("data").getString("displayName");
+            serverFileUrl = json.getJSONObject("data").getString("downloadUrl");
         }
     }
 }

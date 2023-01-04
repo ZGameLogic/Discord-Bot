@@ -37,6 +37,9 @@ public abstract class EmbedMessageGenerator {
         eb.setColor(CURSEFORGE_COLOR);
         eb.setTitle("File update for " + project.getName(), project.getUrl());
         eb.setDescription(project.getFileName());
+        if(!project.getServerFileName().equals("")){
+            eb.addField("Server file", project.getServerFileName() + "\n" + project.getServerFileUrl(), true);
+        }
         eb.setThumbnail(project.getLogoUrl());
         return eb.build();
     }
