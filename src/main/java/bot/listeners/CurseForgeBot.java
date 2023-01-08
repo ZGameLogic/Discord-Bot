@@ -61,7 +61,8 @@ public class CurseForgeBot extends AdvancedListenerAdapter {
                                 new SubcommandData("listen", "Listens to a project")
                                         .addOption(OptionType.STRING, "project", "Project to watch", true),
                                 new SubcommandData("forget", "Stops listening to a project")
-                                        .addOption(OptionType.STRING, "project", "Project to watch", true)
+                                        .addOption(OptionType.STRING, "project", "Project to watch", true),
+                                new SubcommandData("list", "Lists all the projects currently followed in this channel")
                         )
                 ).complete().getIdLong()
         );
@@ -83,6 +84,16 @@ public class CurseForgeBot extends AdvancedListenerAdapter {
         ActionRow row = event.getMessage().getActionRows().get(0);
         row.updateComponent("disable_curse", Button.danger("enable_curse", "Curseforge bot"));
         event.getHook().editOriginalComponents(row).queue();
+    }
+
+    @SlashResponse(value = "curseforge", subCommandName = "list")
+    private void list(SlashCommandInteractionEvent event){
+        event.deferReply().queue();
+        LinkedList<CurseforgeProject> projects = new LinkedList<>();
+        for(CurseforgeRecord record: checks.getProjectsByGuildAndChannel(event.getGuild().getIdLong(), event.getChannel().getIdLong())){
+            projects.add(new CurseforgeProject(record.getProjectId()));
+        }
+        event.getHook().sendMessageEmbeds(EmbedMessageGenerator.curseforgeList(projects)).queue();
     }
 
     @SlashResponse(value = "curseforge", subCommandName = "listen")
