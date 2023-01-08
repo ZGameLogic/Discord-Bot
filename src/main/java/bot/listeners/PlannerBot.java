@@ -37,6 +37,8 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static bot.utils.Helpers.stringToDate;
+
 @Slf4j
 public class PlannerBot extends AdvancedListenerAdapter {
 
@@ -578,27 +580,5 @@ public class PlannerBot extends AdvancedListenerAdapter {
         } catch (Exception e){
             log.error("Error editing private message for event " + plan.getTitle(), e);
         }
-    }
-
-    private Date stringToDate(String dateString){
-        dateString = dateString.toUpperCase();
-        HashMap<String, Integer[]> patterns = new HashMap<>();
-        patterns.put("M/dd h:mma", new Integer[]{Calendar.MONTH, Calendar.DAY_OF_MONTH, Calendar.HOUR_OF_DAY, Calendar.MINUTE});
-        patterns.put("h:mma", new Integer[]{Calendar.HOUR_OF_DAY, Calendar.MINUTE});
-        for(String pattern: patterns.keySet()){
-            SimpleDateFormat formatter = new SimpleDateFormat(pattern, Locale.ENGLISH);
-            Calendar date = Calendar.getInstance();
-            Calendar formatted = Calendar.getInstance();
-            try {
-                formatted.setTime(formatter.parse(dateString));
-                for(int field: patterns.get(pattern)){
-                    date.set(field, formatted.get(field));
-                }
-                return date.getTime();
-            } catch(ParseException ignored){
-
-            }
-        }
-        return null;
     }
 }
