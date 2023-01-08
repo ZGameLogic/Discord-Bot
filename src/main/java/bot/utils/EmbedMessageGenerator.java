@@ -22,6 +22,18 @@ public abstract class EmbedMessageGenerator {
     private final static Color CARD_COLOR = new Color(43, 97, 158);
     private final static Color CURSEFORGE_COLOR = new Color(239, 99, 54);
 
+    public static MessageEmbed curseforgeList(LinkedList<CurseForgeBot.CurseforgeProject> projects){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(CURSEFORGE_COLOR);
+        eb.setTitle("Total projects: " + projects.size());
+        StringBuilder desc = new StringBuilder();
+        for(CurseForgeBot.CurseforgeProject p: projects){
+            desc.append(p.getName()).append("\n");
+        }
+        eb.setDescription(desc.toString());
+        return eb.build();
+    }
+
     public static MessageEmbed curseforgeInitial(CurseForgeBot.CurseforgeProject project){
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(CURSEFORGE_COLOR);
