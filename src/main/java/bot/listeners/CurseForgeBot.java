@@ -130,7 +130,7 @@ public class CurseForgeBot extends AdvancedListenerAdapter {
     public void update(){
         for(CurseforgeRecord check: checks.findAll()){
             CurseforgeProject current = new CurseforgeProject(check.getProjectId());
-            if(!check.getProjectVersionId().equals(current.fileId)){
+            if(check.getProjectVersionId() == null || !check.getProjectVersionId().equals(current.fileId)){
                 bot.getGuildById(check.getGuildId()).getTextChannelById(check.getChannelId()).sendMessageEmbeds(
                         EmbedMessageGenerator.curseforgeUpdate(current)
                 ).queue();
