@@ -15,6 +15,10 @@ import data.database.planData.PlanRepository;
 import data.database.userData.UserDataRepository;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.apache.http.NameValuePair;
@@ -118,6 +122,30 @@ public class Bot {
 	private void fiveMinuteTask() {
 		CB.fiveMinuteTasks();
 		CFB.update();
+	}
+
+	@PostMapping("/api/message")
+	private String postMessage(@RequestBody String value) throws JSONException {
+		JSONObject json = new JSONObject(value);
+		if(!json.has("token")) return "Invalid token";
+		if(!json.getString("token").equals(App.config.getApiToken())) return "Invalid token";
+		boolean toGuild = json.getBoolean("to guild");
+		if(toGuild){
+			String guildId = json.getString("guild id");
+			String channelId = json.getString("channel id");
+			String message = json.getString("message");
+			Guild guild = bot.getGuildById(guildId);
+			TextChannel channel = guild.getTextChannelById(channelId);
+			channel.sendMessage(message).queue();
+			return "Message sent to " + guild.getName() + "/" + channel.getName();
+		} else {
+			String userId = json.getString("user id");
+			String message = json.getString("message");
+			User user = bot.getUserById(userId);
+			PrivateChannel channel = user.openPrivateChannel().complete();
+			channel.sendMessage(message).queue();
+			return "Message sent to " + user.getName();
+		}
 	}
 
 	@PostMapping("/api/cards")
