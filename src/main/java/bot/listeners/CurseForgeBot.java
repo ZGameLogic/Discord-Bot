@@ -138,7 +138,7 @@ public class CurseForgeBot extends AdvancedListenerAdapter {
                 ).queue();
                 check.setProjectVersionId(current.getFileId());
                 check.setLastUpdated(new Date());
-                log.info("Old file: " + check.getProjectVersionId() + "\tNew file: " + current.fileId);
+                log.info("Project: " + check.getProjectId() + "\tOld file: " + check.getProjectVersionId() + "\tNew file: " + current.fileId);
             }
             check.setLastChecked(new Date());
             checks.save(check);
