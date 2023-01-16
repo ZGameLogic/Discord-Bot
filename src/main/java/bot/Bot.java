@@ -96,6 +96,7 @@ public class Bot {
 		LinkedList<AdvancedListenerAdapter> listeners = new LinkedList<>();
 
 		listeners.add(new PartyBot(guildData));
+		listeners.add(new WordleBot());
 		listeners.add(new GeneralListener(guildData));
 		listeners.add(new PlannerBot(planRepository, userData, guildData));
 		listeners.add(new DevopsBot(devopsDataRepository, guildData));
