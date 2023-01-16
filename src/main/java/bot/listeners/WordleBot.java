@@ -17,9 +17,7 @@ public class WordleBot extends AdvancedListenerAdapter {
                     event.getMessage().reply("Nice work on getting Wordle:" + number + " in "
                     + guesses + (guesses == 1 ? " guess" : " guesses")).queue();
                 }
-            } catch (Exception ignored){
-                ignored.printStackTrace();
-            }
+            } catch (Exception ignored){}
         }
     }
 }
