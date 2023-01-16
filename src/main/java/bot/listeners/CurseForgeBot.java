@@ -9,6 +9,7 @@ import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
 import lombok.Getter;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -34,6 +35,7 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.Optional;
 
+@Slf4j
 public class CurseForgeBot extends AdvancedListenerAdapter {
 
     private final CurseforgeRepository checks;
@@ -136,6 +138,7 @@ public class CurseForgeBot extends AdvancedListenerAdapter {
                 ).queue();
                 check.setProjectVersionId(current.getFileId());
                 check.setLastUpdated(new Date());
+                log.info("Old file: " + check.getProjectVersionId() + "\tNew file: " + current.fileId);
             }
             check.setLastChecked(new Date());
             checks.save(check);
