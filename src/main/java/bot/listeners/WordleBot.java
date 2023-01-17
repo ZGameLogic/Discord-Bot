@@ -13,7 +13,7 @@ public class WordleBot extends AdvancedListenerAdapter {
                 int number = Integer.parseInt(line.split(" ")[0]);
                 line = line.replace(number + "", "").trim();
                 int guesses = Integer.parseInt(line.charAt(0) + "");
-                if(guesses <= 2){
+                if(guesses <= 3){
                     event.getMessage().reply("Nice work on getting Wordle:" + number + " in "
                     + guesses + (guesses == 1 ? " guess" : " guesses")).queue();
                 }
