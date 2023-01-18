@@ -8,7 +8,7 @@ public class DadBot extends AdvancedListenerAdapter {
     public void onMessageReceived(MessageReceivedEvent event) {
         if(!event.isFromGuild()) return;
         if(event.getAuthor().isBot()) return;
-        String message = event.getMessage().getContentRaw().toLowerCase().replaceAll("'", "");
+        String message = event.getMessage().getContentRaw().toLowerCase().replaceAll("'", "").replaceAll("’", "");
         if(message.startsWith("im ") || message.contains(" im ")){
             String[] messageArray = message.split(" ");
             String dad = "";
