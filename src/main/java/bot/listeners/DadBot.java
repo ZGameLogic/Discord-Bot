@@ -12,15 +12,21 @@ public class DadBot extends AdvancedListenerAdapter {
         if(message.startsWith("im ") || message.contains(" im ")){
             String[] messageArray = message.split(" ");
             String dad = "";
+            boolean adding = false;
             for(int i = 0; i < messageArray.length; i++){
-                if(messageArray[i].equals("im")){
-                    if(i < messageArray.length - 1){
-                        dad = messageArray[i+1];
+                if(adding){
+                    String word = messageArray[i];
+                    dad += word.replace(".", "") + " ";
+                    if(word.contains(".")){
                         break;
                     }
                 }
+                if(messageArray[i].equals("im")){
+                    adding = true;
+                }
             }
-            if(!dad.equals("")) event.getMessage().reply("Hi " + dad + ", I'm dad").queue();
+            dad = dad.trim();
+            if(!dad.equals("")) event.getMessage().reply("Hi " + dad + ", I'm Dad").queue();
         }
     }
 }
