@@ -52,4 +52,7 @@ public class ConfigLoader {
 
 	@Value("${curseforge.api.token}")
 	private String curseforgeApiToken;
+
+	@Value("${virustotal.api.token}")
+	private String virusTotalApiToken;
 }
