@@ -166,7 +166,13 @@ public class PlannerBot extends AdvancedListenerAdapter {
         String title = event.getValue("title").getAsString();
         Date date = stringToDate(dateString);
         if(date == null){
-            event.reply("Invalid date").setEphemeral(true).queue();
+            event.reply("Invalid date and time. Here are some examples of valid dates:\n" +
+                    "7:00pm\n" +
+                    "Today at 7:00pm\n" +
+                    "Tomorrow 6:00pm\n" +
+                    "3/20/2022 4:15pm\n" +
+                    "6/20 3:45pm\n" +
+                    "Wednesday at 4:00pm").setEphemeral(true).queue();
             return;
         }
         int count;
@@ -198,7 +204,13 @@ public class PlannerBot extends AdvancedListenerAdapter {
         String title = event.getValue("title").getAsString();
         Date date = stringToDate(dateString);
         if(date == null){
-            event.reply("Invalid date").setEphemeral(true).queue();
+            event.reply("Invalid date and time. Here are some examples of valid dates:\n" +
+                    "7:00pm\n" +
+                    "Today at 7:00pm\n" +
+                    "Tomorrow 6:00pm\n" +
+                    "3/20/2022 4:15pm\n" +
+                    "6/20 3:45pm\n" +
+                    "Wednesday at 4:00pm").setEphemeral(true).queue();
             return;
         }
         int count;
