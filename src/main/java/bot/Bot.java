@@ -98,7 +98,7 @@ public class Bot {
 
 		listeners.add(new PartyBot(guildData));
 		listeners.add(new WordleBot());
-		listeners.add(new DadBot());
+		// listeners.add(new DadBot());
 		// listeners.add(new VirusBot());
 		listeners.add(new GeneralListener(guildData));
 		listeners.add(new PlannerBot(planRepository, userData, guildData));
