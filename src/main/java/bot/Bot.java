@@ -128,6 +128,22 @@ public class Bot {
 		CFB.update();
 	}
 
+	@PostMapping("/api/verify/username")
+	private String verifyUsername(@RequestBody String value) throws JSONException {
+		return "";
+	}
+
+	@PostMapping("/api/verify/username")
+	private String verifyToken(@RequestBody String value) throws JSONException {
+		return "";
+	}
+
+	@PostMapping("/api/plan")
+	private String planEvent(@RequestBody String value) throws JSONException {
+		JSONObject json = new JSONObject(value);
+		return "";
+	}
+
 	@PostMapping("/api/message")
 	private String postMessage(@RequestBody String value) throws JSONException {
 		JSONObject json = new JSONObject(value);
