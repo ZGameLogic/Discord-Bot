@@ -12,6 +12,8 @@ import data.database.curseforge.CurseforgeRepository;
 import data.database.devopsData.DevopsDataRepository;
 import data.database.guildData.GuildDataRepository;
 import data.database.planData.PlanRepository;
+import data.database.userAuthData.AuthData;
+import data.database.userAuthData.AuthDataRepository;
 import data.database.userData.UserDataRepository;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
@@ -67,6 +69,8 @@ public class Bot {
 	private PlayerCardDataRepository playerCardDataRepository;
 	@Autowired
 	private CurseforgeRepository curseforgeRepository;
+	@Autowired
+	private AuthDataRepository authData;
 
 	private final static String TITLE = "\r\n" +
 			"   ____  ___  _                   _   ___      _  ______  \r\n" + 
@@ -130,17 +134,57 @@ public class Bot {
 
 	@PostMapping("/api/verify/username")
 	private String verifyUsername(@RequestBody String value) throws JSONException {
-		return "";
+		JSONObject json = new JSONObject(value);
+		AuthData ad = new AuthData();
+		JSONObject returnObject = new JSONObject();
+
+		ad.setUserId(json.getLong("userId"));
+		ad.generateToken();
+		User user = bot.getUserById(json.getLong("userId"));
+		if(user == null) {
+			returnObject.put("success", false);
+			returnObject.put("message", "No user by that ID exists.");
+			return returnObject.toString();
+		}
+		user.openPrivateChannel().queue(channel -> channel.sendMessage("A request has been received to sign into your discord account. Your identification token is: **" + ad.getToken() + "**. " +
+				"If you did not request this, please ignore this message.").queue());
+		returnObject.put("success", true);
+		returnObject.put("message", "User has been notified on discord.");
+		authData.save(ad);
+		return returnObject.toString();
 	}
 
-	@PostMapping("/api/verify/username")
+	@PostMapping("/api/verify/token")
 	private String verifyToken(@RequestBody String value) throws JSONException {
-		return "";
+		JSONObject json = new JSONObject(value);
+		AuthData ad = authData.getOne(Long.parseLong(json.getString("userId")));
+		if(ad == null){ // check if the user exists
+			if(ad.getToken() != -1) { // make sure they are waiting on a login token
+				JSONObject returnObject = new JSONObject();
+				returnObject.put("success", false);
+				returnObject.put("message", "No user with that user ID is waiting to validate a token");
+				return returnObject.toString();
+			}
+		}
+		if(ad.getToken() != json.getLong("token")){ // if the token doesn't match
+			JSONObject returnObject = new JSONObject();
+			returnObject.put("success", false);
+			returnObject.put("message", "That is the incorrect token");
+			return returnObject.toString();
+		}
+		ad.setToken(-1);
+		ad.generateValidationCode();
+		JSONObject returnObject = new JSONObject();
+		returnObject.put("success", true);
+		returnObject.put("validation code", ad.getValidationCode());
+		authData.save(ad);
+		return returnObject.toString();
 	}
 
 	@PostMapping("/api/plan")
 	private String planEvent(@RequestBody String value) throws JSONException {
 		JSONObject json = new JSONObject(value);
+		// TODO check validation code to make sure its good
 		return "";
 	}
 
