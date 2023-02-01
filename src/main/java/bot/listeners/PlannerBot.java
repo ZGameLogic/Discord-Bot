@@ -627,6 +627,10 @@ public class PlannerBot extends AdvancedListenerAdapter {
         plan.setGuildId(guildId);
         plan.setChannelId(guildData.getOne(guildId).getPlanChannelId());
         plan.setCount(count);
+        plan.setId(Math.abs(new Random().nextLong()));
+        while(planRepository.existsById(plan.getId())){
+            plan.setId(Math.abs(new Random().nextLong()));
+        }
         Guild guild = bot.getGuildById(guildId);
         HashMap<Long, User> invitees = new HashMap<>();
         for(Member m: guild.getMembersWithRoles(guild.getRoleById(roleId))){

@@ -188,7 +188,7 @@ public class Bot {
 		JSONObject json = new JSONObject(value);
 		String userId = json.getString("user id");
 		String validationCode = json.getString("validation code");
-		if(!authData.existsById(Long.parseLong(validationCode))) {
+		if(!authData.existsById(Long.parseLong(userId))) {
 			JSONObject returnObject = new JSONObject();
 			returnObject.put("success", false);
 			returnObject.put("message", "This user hasn't been verified yet");
