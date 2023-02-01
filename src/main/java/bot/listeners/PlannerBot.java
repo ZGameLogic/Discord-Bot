@@ -10,11 +10,13 @@ import data.database.planData.User;
 import data.database.userData.UserDataRepository;
 import interfaces.TwilioInterface;
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
+import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -32,6 +34,8 @@ import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -44,6 +48,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
     private final GuildDataRepository guildData;
     private final PlanRepository planRepository;
     private final UserDataRepository userData;
+    private JDA bot;
 
     public PlannerBot(PlanRepository planRepository, UserDataRepository userData, GuildDataRepository guildData) {
         this.planRepository = planRepository;
@@ -90,6 +95,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
     @Override
     public void onReady(@NotNull ReadyEvent event) {
         super.onReady(event);
+        bot = event.getJDA();
         for(Guild guild: event.getJDA().getGuilds()){
             guild.upsertCommand(
                     Commands.slash("plan_event", "Plan an event with friends")
@@ -591,5 +597,82 @@ public class PlannerBot extends AdvancedListenerAdapter {
         } catch (Exception e){
             log.error("Error editing private message for event " + plan.getTitle(), e);
         }
+    }
+
+    public String planEvent(JSONObject json) throws JSONException {
+        if(!json.has("guild id") || !json.has("title") || !json.has("date time") || !json.has("count") || !json.has("role id")){
+            JSONObject returnObject = new JSONObject();
+            returnObject.put("success", false);
+            returnObject.put("message", "Call doesnt contain all the information");
+            return returnObject.toString();
+        }
+        Date date = stringToDate(json.getString("date time"));
+        if(date == null){
+            JSONObject returnObject = new JSONObject();
+            returnObject.put("success", false);
+            returnObject.put("message", "Date is in an invalid format");
+            return returnObject.toString();
+        }
+        String title = json.getString("title");
+        int count = json.getInt("count");
+        String notes = json.has("notes") ? json.getString("notes") : "";
+        Long guildId = json.getLong("guild id");
+        Long roleId = json.getLong("role id");
+        Long userId = Long.parseLong(json.getString("user id"));
+        Plan plan = new Plan();
+        plan.setTitle(title);
+        plan.setNotes(notes);
+        plan.setDate(date);
+        plan.setAuthorId(userId);
+        plan.setGuildId(guildId);
+        plan.setChannelId(guildData.getOne(guildId).getPlanChannelId());
+        plan.setCount(count);
+        Guild guild = bot.getGuildById(guildId);
+        HashMap<Long, User> invitees = new HashMap<>();
+        for(Member m: guild.getMembersWithRoles(guild.getRoleById(roleId))){
+            if(m.getIdLong() != userId) invitees.put(m.getIdLong(), new User(m.getIdLong(), 0));
+        }
+        plan.setInvitees(invitees);
+        for(Long id: invitees.keySet()){
+            Member m = guild.getMemberById(id);
+            try {
+                PrivateChannel pm = m.getUser().openPrivateChannel().complete();
+                Message message = pm.sendMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild))
+                        .addActionRow(Button.success("accept_event", "Accept"),
+                                Button.danger("deny_event", "Deny"),
+                                Button.primary("maybe_event", "Maybe"))
+                        .complete();
+                plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
+                if(userData.existsById(m.getIdLong())){
+                    TwilioInterface.sendMessage(
+                            userData.getOne(m.getIdLong()).getPhone_number() + "",
+                            guild.getMemberById(userId).getUser().getName() + " has invited you to " + plan.getTitle() + "." +
+                                    " Reply to the invite on discord."
+                    );
+                }
+            } catch (Exception e){
+                log.error("Error sending message to member to create event", e);
+            }
+        }
+        Message message = guild.getTextChannelById(guildData.getOne(guildId).getPlanChannelId()).sendMessageEmbeds(EmbedMessageGenerator.guildPublicMessage(plan, guild))
+                .addActionRow(Button.secondary("add_users", "Add users")).complete();
+        plan.setMessageId(message.getIdLong());
+        plan.addToLog("Added people to event");
+        PrivateChannel channel = guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().complete();
+        Message m = channel.sendMessageEmbeds(EmbedMessageGenerator.creatorMessage(plan, guild)).complete();
+        m.editMessageComponents(
+                ActionRow.of(
+                        Button.secondary("send_message", "Send message"),
+                        Button.secondary("edit_event", "Edit details"),
+                        Button.danger("delete_event", "Delete event")
+                )
+        ).queue();
+        plan.setPrivateMessageId(m.getIdLong());
+        planRepository.save(plan);
+        planRepository.save(plan);
+        JSONObject re = new JSONObject();
+        re.put("success", true);
+        re.put("message", "Event has been created on discord");
+        return re.toString();
     }
 }
