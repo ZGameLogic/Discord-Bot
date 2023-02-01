@@ -83,6 +83,7 @@ public class Bot {
 	private final Logger logger = LoggerFactory.getLogger(Bot.class);
 	private CardBot CB;
 	private CurseForgeBot CFB;
+	private PlannerBot PB;
 	private JDA bot;
 
 	@PostConstruct
@@ -105,7 +106,8 @@ public class Bot {
 		listeners.add(new DadBot());
 		// listeners.add(new VirusBot());
 		listeners.add(new GeneralListener(guildData));
-		listeners.add(new PlannerBot(planRepository, userData, guildData));
+		PB = new PlannerBot(planRepository, userData, guildData);
+		listeners.add(PB);
 		listeners.add(new DevopsBot(devopsDataRepository, guildData));
 		CB = new CardBot(guildData, cardDataRepository, guildCardDataRepository, playerCardDataRepository);
 		listeners.add(CB);
@@ -173,7 +175,7 @@ public class Bot {
 			return returnObject.toString();
 		}
 		ad.setToken(-1);
-		ad.generateValidationCode();
+		if(ad.getValidationCode() == null) ad.generateValidationCode();
 		JSONObject returnObject = new JSONObject();
 		returnObject.put("success", true);
 		returnObject.put("validation code", ad.getValidationCode());
@@ -184,8 +186,22 @@ public class Bot {
 	@PostMapping("/api/plan")
 	private String planEvent(@RequestBody String value) throws JSONException {
 		JSONObject json = new JSONObject(value);
-		// TODO check validation code to make sure its good
-		return "";
+		String userId = json.getString("user id");
+		String validationCode = json.getString("validation code");
+		if(!authData.existsById(Long.parseLong(validationCode))) {
+			JSONObject returnObject = new JSONObject();
+			returnObject.put("success", false);
+			returnObject.put("message", "This user hasn't been verified yet");
+			return returnObject.toString();
+		}
+		AuthData data = authData.getOne(Long.parseLong(userId));
+		if(!data.getValidationCode().equals(validationCode)){
+			JSONObject returnObject = new JSONObject();
+			returnObject.put("success", false);
+			returnObject.put("message", "Incorrect validation token for user");
+			return returnObject.toString();
+		}
+		return PB.planEvent(json);
 	}
 
 	@PostMapping("/api/message")

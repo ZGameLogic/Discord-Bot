@@ -32,6 +32,8 @@ import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.jetbrains.annotations.NotNull;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -591,5 +593,29 @@ public class PlannerBot extends AdvancedListenerAdapter {
         } catch (Exception e){
             log.error("Error editing private message for event " + plan.getTitle(), e);
         }
+    }
+
+    public String planEvent(JSONObject json) throws JSONException {
+        if(!json.has("title") || !json.has("date time") || !json.has("count") || !json.has("role id")){
+            JSONObject returnObject = new JSONObject();
+            returnObject.put("success", false);
+            returnObject.put("message", "Call doesnt contain all the information");
+            return returnObject.toString();
+        }
+        Date date = stringToDate(json.getString("date time"));
+        if(date == null){
+            JSONObject returnObject = new JSONObject();
+            returnObject.put("success", false);
+            returnObject.put("message", "Date is in an invalid format");
+            return returnObject.toString();
+        }
+        String title = json.getString("title");
+        int count = json.getInt("count");
+        String notes = json.has("notes") ? json.getString("notes") : "";
+        Long roleId = json.getLong("role id");
+        // TODO create plan
+        // TODO message everyone
+        // TODO save the data
+        // TODO reply to the request
     }
 }
