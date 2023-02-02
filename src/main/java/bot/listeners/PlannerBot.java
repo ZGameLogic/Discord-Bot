@@ -16,7 +16,6 @@ import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
-import net.dv8tion.jda.api.events.guild.GuildReadyEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -616,9 +615,9 @@ public class PlannerBot extends AdvancedListenerAdapter {
         String title = json.getString("title");
         int count = json.getInt("count");
         String notes = json.has("notes") ? json.getString("notes") : "";
-        Long guildId = json.getLong("guild id");
-        Long roleId = json.getLong("role id");
-        Long userId = Long.parseLong(json.getString("user id"));
+        long guildId = json.getLong("guild id");
+        long roleId = json.getLong("role id");
+        long userId = Long.parseLong(json.getString("user id"));
         Plan plan = new Plan();
         plan.setTitle(title);
         plan.setNotes(notes);
@@ -627,6 +626,10 @@ public class PlannerBot extends AdvancedListenerAdapter {
         plan.setGuildId(guildId);
         plan.setChannelId(guildData.getOne(guildId).getPlanChannelId());
         plan.setCount(count);
+        plan.setId(Math.abs(new Random().nextLong()));
+        while(planRepository.existsById(plan.getId())){
+            plan.setId(Math.abs(new Random().nextLong()));
+        }
         Guild guild = bot.getGuildById(guildId);
         HashMap<Long, User> invitees = new HashMap<>();
         for(Member m: guild.getMembersWithRoles(guild.getRoleById(roleId))){
