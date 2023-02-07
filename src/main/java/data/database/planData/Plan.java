@@ -77,6 +77,7 @@ public class Plan {
     }
 
     public boolean isFull(){
+        if(count == -1) return false;
         return getAccepted().size() >= count;
     }
 
