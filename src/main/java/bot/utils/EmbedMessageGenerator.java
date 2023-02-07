@@ -184,7 +184,9 @@ public abstract class EmbedMessageGenerator {
         String inviter = guild.getJDA().getUserById(plan.getAuthorId()).getName();
         int count = plan.getCount();
         eb.setTitle(inviter + " has invited you to join them doing: " + plan.getTitle());
-        String desc = inviter + " is looking for " + count + " people to join them for " + plan.getTitle() + " (" + plan.getInvitees().size() + " invited).\n" +
+        String desc = inviter + " is looking for " +
+                (plan.getCount() == -1 ? "" : count) +
+                " people to join them for " + plan.getTitle() + " (" + plan.getInvitees().size() + " invited).\n" +
                 "The event is scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) + "\n" +
                 "For more details, visit the planning channel in the discord server: " + guild.getName() + "\n" + plan.getNotes();
         if(plan.getAccepted().size() >= count){
@@ -196,7 +198,7 @@ public abstract class EmbedMessageGenerator {
             attendees.append("<@").append(id).append(">").append("\n");
         }
         if(attendees.length() == 0) attendees = new StringBuilder("People who accept will show up here");
-        eb.addField("People accepted " + plan.getAccepted().size() + "/" + count, attendees.toString(), true);
+        eb.addField("People accepted " + plan.getAccepted().size() + (plan.getCount() != -1 ? "/" + plan.getCount() : ""), attendees.toString(), true);
         if(plan.getWaitlist().size() > 0){
             StringBuilder waitlistees = new StringBuilder();
             for(Long id: plan.getWaitlist()){
@@ -229,15 +231,17 @@ public abstract class EmbedMessageGenerator {
     private static void infoBody(Plan plan, Guild guild, EmbedBuilder eb) {
         StringBuilder status = new StringBuilder();
         int accepted = plan.getAccepted().size();
-        status.append("filled:|`");
-        for(int i = 0; i < 20; i++){
-            if(i < 20.0 * ((double)accepted / plan.getCount()) || plan.isFull()){
-                status.append("█");
-            } else {
-                status.append(" ");
+        if(plan.getCount() != -1) {
+            status.append("filled:|`");
+            for (int i = 0; i < 20; i++) {
+                if (i < 20.0 * ((double) accepted / plan.getCount()) || plan.isFull()) {
+                    status.append("█");
+                } else {
+                    status.append(" ");
+                }
             }
+            status.append("`|\n");
         }
-        status.append("`|\n");
         for(long id: plan.getAccepted()){
             status.append("<@").append(id).append(">").append(": accepted\n");
         }
@@ -268,7 +272,9 @@ public abstract class EmbedMessageGenerator {
                 plan.getNotes());
         eb.setFooter(plan.getId() + "");
         eb.addField("Coordinator", guild.getJDA().getUserById(plan.getAuthorId()).getName(), true);
-        eb.addField("People accepted", plan.getAccepted().size() + "/" + plan.getCount(), true);
+        eb.addField("People accepted", plan.getAccepted().size() +
+                        plan.getCount() != -1 ? "/" + plan.getCount() : ""
+                , true);
         infoBody(plan, guild, eb);
         return eb.build();
     }
