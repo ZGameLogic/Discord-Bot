@@ -49,9 +49,6 @@ public class GeneralListener extends AdvancedListenerAdapter {
             }
             for(GuildData guild: guildData.findAll()){
                 Guild g = event.getJDA().getGuildById(guild.getId());
-                try {
-                    g.deleteCommandById(guildData.getOne(g.getIdLong()).getCurseforgeCommandId()).queue();
-                } catch (Exception e){}
                 g.getTextChannelById(guild.getConfigChannelId()).retrieveMessageById(guild.getConfigMessageId()).queue(message -> {
                     LinkedList<LayoutComponent> components = new LinkedList<>();
                     LinkedList<ItemComponent> ics = new LinkedList<>();
