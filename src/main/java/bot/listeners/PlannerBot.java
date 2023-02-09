@@ -1,6 +1,7 @@
 package bot.listeners;
 
 import bot.utils.EmbedMessageGenerator;
+import bot.utils.Helpers;
 import com.zgamelogic.AdvancedListenerAdapter;
 import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
@@ -153,7 +154,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
                 .setPlaceholder("Hunt Showdown").build();
         TextInput count = TextInput.create("count", "Number of people (not including yourself)", TextInputStyle.SHORT)
-                .setPlaceholder("2").build();
+                .setPlaceholder("Leave empty for infinite").setRequired(false).build();
         event.replyModal(Modal.create("plan_event_modal", "Details of meeting")
                 .addActionRow(name)
                 .addActionRow(date)
@@ -171,23 +172,19 @@ public class PlannerBot extends AdvancedListenerAdapter {
         String title = event.getValue("title").getAsString();
         Date date = stringToDate(dateString);
         if(date == null){
-            event.reply("Invalid date and time. Here are some examples of valid dates:\n" +
-                    "7:00pm\n" +
-                    "Today at 7:00pm\n" +
-                    "Tomorrow 6:00pm\n" +
-                    "3/20/2022 4:15pm\n" +
-                    "6/20 3:45pm\n" +
-                    "Wednesday at 4:00pm").setEphemeral(true).queue();
+            event.reply(Helpers.STD_HELPER_MESSAGE).setEphemeral(true).queue();
             return;
         }
         int count;
         try {
-            count = Integer.parseInt(event.getValue("count").getAsString());
+            if(!event.getValue("count").getAsString().equals("")) {
+                count = Integer.parseInt(event.getValue("count").getAsString());
+            } else count = -1;
         } catch (NumberFormatException e){
             event.reply("Invalid number").setEphemeral(true).queue();
             return;
         }
-        if(count < 1){
+        if(count < 1 && count != -1){
             event.reply("Invalid number").setEphemeral(true).queue();
             return;
         }
@@ -220,12 +217,14 @@ public class PlannerBot extends AdvancedListenerAdapter {
         }
         int count;
         try {
-            count = Integer.parseInt(event.getValue("count").getAsString());
+            if(!event.getValue("count").getAsString().equals("")) {
+                count = Integer.parseInt(event.getValue("count").getAsString());
+            } else count = -1;
         } catch (NumberFormatException e){
             event.reply("Invalid number").setEphemeral(true).queue();
             return;
         }
-        if(count < 1){
+        if(count < 1 && count != -1){
             event.reply("Invalid number").setEphemeral(true).queue();
             return;
         }
@@ -405,7 +404,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
                 .setValue(plan.getTitle()).build();
         TextInput count = TextInput.create("count", "Number of people looking for", TextInputStyle.SHORT)
-                .setValue(plan.getCount() + "").build();
+                .setValue(plan.getCount() + "").setRequired(false).build();
         SimpleDateFormat formatter = new SimpleDateFormat("M/dd h:mma", Locale.ENGLISH);
         String dateString;
         if(plan.getDate() != null) {
