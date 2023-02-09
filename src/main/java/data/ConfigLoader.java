@@ -49,7 +49,4 @@ public class ConfigLoader {
 
 	@Value("${api.token}")
 	private String apiToken;
-
-	@Value("${curseforge.api.token}")
-	private String curseforgeApiToken;
 }
