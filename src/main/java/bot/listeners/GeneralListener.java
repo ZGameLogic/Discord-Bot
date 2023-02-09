@@ -49,6 +49,9 @@ public class GeneralListener extends AdvancedListenerAdapter {
             }
             for(GuildData guild: guildData.findAll()){
                 Guild g = event.getJDA().getGuildById(guild.getId());
+                try {
+                    g.deleteCommandById(guildData.getOne(g.getIdLong()).getCurseforgeCommandId()).queue();
+                } catch (Exception e){}
                 g.getTextChannelById(guild.getConfigChannelId()).retrieveMessageById(guild.getConfigMessageId()).queue(message -> {
                     LinkedList<LayoutComponent> components = new LinkedList<>();
                     LinkedList<ItemComponent> ics = new LinkedList<>();
@@ -71,11 +74,6 @@ public class GeneralListener extends AdvancedListenerAdapter {
                         ics.add(Button.danger("enable_cards", "Cards bot"));
                     } else {
                         ics.add(Button.success("disable_cards", "Cards bot"));
-                    }
-                    if(guild.getCurseforgeEnabled() == null || !guild.getCurseforgeEnabled()){
-                        ics.add(Button.danger("enable_curse", "Curseforge bot"));
-                    } else {
-                        ics.add(Button.success("disable_curse", "Curseforge bot"));
                     }
                     ActionRow row = ActionRow.of(ics);
                     components.add(row);
