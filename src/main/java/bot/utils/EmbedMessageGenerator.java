@@ -237,7 +237,7 @@ public abstract class EmbedMessageGenerator {
         eb.setFooter(plan.getId() + "");
         eb.addField("Coordinator", guild.getJDA().getUserById(plan.getAuthorId()).getName(), true);
         eb.addField("People accepted", plan.getAccepted().size() +
-                        plan.getCount() != -1 ? "/" + plan.getCount() : ""
+                        (plan.getCount() != -1 ? "/" + plan.getCount() : "")
                 , true);
         infoBody(plan, guild, eb);
         return eb.build();
