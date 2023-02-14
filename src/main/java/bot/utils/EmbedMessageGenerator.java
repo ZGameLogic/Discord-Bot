@@ -153,7 +153,7 @@ public abstract class EmbedMessageGenerator {
                 " people to join them for " + plan.getTitle() + " (" + plan.getInvitees().size() + " invited).\n" +
                 "The event is scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) + "\n" +
                 "For more details, visit the planning channel in the discord server: " + guild.getName() + "\n" + plan.getNotes();
-        if(plan.getAccepted().size() >= count){
+        if(plan.getAccepted().size() >= count && count != -1){
             desc += "\nWe are no longer looking for more members to join this event. Check back later in case someone drops out.\nYou can also waitlist yourself so if anyone does drop out, you will join the event.";
         }
         eb.setDescription(desc);
