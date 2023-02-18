@@ -8,7 +8,6 @@ import data.database.cardData.cards.CardData;
 import data.database.cardData.cards.CardDataRepository;
 import data.database.cardData.guild.GuildCardDataRepository;
 import data.database.cardData.player.PlayerCardDataRepository;
-import data.database.devopsData.DevopsDataRepository;
 import data.database.guildData.GuildDataRepository;
 import data.database.planData.PlanRepository;
 import data.database.userAuthData.AuthData;
@@ -59,8 +58,6 @@ public class Bot {
 	@Autowired
 	private UserDataRepository userData;
 	@Autowired
-	private DevopsDataRepository devopsDataRepository;
-	@Autowired
 	private CardDataRepository cardDataRepository;
 	@Autowired
 	private GuildCardDataRepository guildCardDataRepository;
@@ -104,7 +101,6 @@ public class Bot {
 		listeners.add(new GeneralListener(guildData));
 		PB = new PlannerBot(planRepository, userData, guildData);
 		listeners.add(PB);
-		listeners.add(new DevopsBot(devopsDataRepository, guildData));
 		CB = new CardBot(guildData, cardDataRepository, guildCardDataRepository, playerCardDataRepository);
 		listeners.add(CB);
 		// Add listeners
