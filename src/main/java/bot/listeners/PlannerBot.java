@@ -270,6 +270,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 event.getHook().sendMessage("You cannot add yourself to an event you are planning").setEphemeral(true).queue();
                 return;
             }
+            if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680l))) continue; //skip anyone with the no plan
             invitees.put(m.getIdLong(), new User(m.getIdLong(), 0));
         }
         for(Role r: event.getMentions().getRoles()){
@@ -278,6 +279,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 if(m.getUser().isBot()) continue;
                 if(m.getIdLong() == event.getUser().getIdLong()) continue;
                 if(invitees.containsKey(m.getIdLong())) continue;
+                if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680l))) continue; //skip anyone with the no plan
                 invitees.put(m.getIdLong(), new User(m.getIdLong(), 0));
             }
         }
@@ -357,6 +359,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 return;
             }
             if(plan.getInvitees().containsKey(m.getIdLong())) continue;
+            if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680l))) continue; //skip anyone with the no plan
             invitees.add(m);
         }
         for(Member m: invitees){
@@ -632,6 +635,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         Guild guild = bot.getGuildById(guildId);
         HashMap<Long, User> invitees = new HashMap<>();
         for(Member m: guild.getMembersWithRoles(guild.getRoleById(roleId))){
+            if(m.getRoles().contains(guild.getRoleById(1115409055184322680l))) continue; //skip anyone with the no plan
             if(m.getIdLong() != userId) invitees.put(m.getIdLong(), new User(m.getIdLong(), 0));
         }
         plan.setInvitees(invitees);
