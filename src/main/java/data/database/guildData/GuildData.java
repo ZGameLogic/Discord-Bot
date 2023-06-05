@@ -31,13 +31,6 @@ public class GuildData {
     private Long planChannelId;
     private Long createPlanCommandId, textCommandId;
 
-    // devops bot stuff
-    private Boolean devopsEnabled;
-
     // cards bot stuff
     private Boolean cardsEnabled;
-
-    // CurseForge bot stuff
-    private Boolean curseforgeEnabled;
-    private Long curseforgeCommandId;
 }

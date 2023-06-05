@@ -1,0 +1,42 @@
+[
+  {
+    "id": 0,
+    "inputs": [],
+    "output": [[0, 1]],
+    "building": 1,
+    "knowledge multiplier": 1.0,
+    "strength multiplier": 1.0,
+    "stamina multiplier": 1.0,
+    "magic multiplier": 1.0
+  },
+  {
+    "id": 1,
+    "inputs": [],
+    "output": [[1, 2], [2, 1]],
+    "building": 0,
+    "knowledge multiplier": 1.0,
+    "strength multiplier": 1.0,
+    "stamina multiplier": 1.0,
+    "magic multiplier": 1.0
+  },
+  {
+    "id": 2,
+    "inputs": [],
+    "output": [[3, 1], [4, 1]],
+    "building": 2,
+    "knowledge multiplier": 1.0,
+    "strength multiplier": 1.0,
+    "stamina multiplier": 1.0,
+    "magic multiplier": 1.0
+  },
+  {
+    "id": 3,
+    "inputs": [],
+    "output": [0, 1],
+    "building": 3,
+    "knowledge multiplier": 1.0,
+    "strength multiplier": 1.0,
+    "stamina multiplier": 1.0,
+    "magic multiplier": 1.0
+  }
+]

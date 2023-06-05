@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Wood",
+    "id": 0
+  },
+  {
+    "name": "Stone",
+    "id": 1
+  },
+  {
+    "name": "Metal",
+    "id": 2
+  },
+  {
+    "name": "Beef",
+    "id": 3
+  },
+  {
+    "name": "Chicken",
+    "id": 4
+  },
+  {
+    "name": "Crop",
+    "id": 5
+  },
+  {
+    "name": "Wood good",
+    "id": 6
+  },
+  {
+    "name": "Stone good",
+    "id": 7
+  },
+  {
+    "name": "Food",
+    "id": 8
+  }
+]

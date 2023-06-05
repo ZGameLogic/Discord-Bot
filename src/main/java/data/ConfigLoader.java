@@ -13,9 +13,6 @@ public class ConfigLoader {
 
 	@Value("${bot.token}")
 	private String botToken;
-
-	@Value("${shlongshot.id}")
-	private String shlongshotId;
 	
 	@Value("${keystore.password}")
 	private String keystorePassword;
