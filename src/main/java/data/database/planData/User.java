@@ -35,5 +35,6 @@ public class User {
     public User(Long id, Status userStatus) {
         this.id = id;
         this.userStatus = userStatus;
+        needFillIn = false;
     }
 }

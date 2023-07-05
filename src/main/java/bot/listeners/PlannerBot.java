@@ -9,7 +9,7 @@ import data.database.planData.Plan;
 import data.database.planData.PlanRepository;
 import data.database.planData.User;
 import data.database.userData.UserDataRepository;
-import data.intermediates.planData.PlanDecision;
+import bot.utils.PlanHelper;
 import interfaces.TwilioInterface;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
@@ -49,13 +49,11 @@ public class PlannerBot extends AdvancedListenerAdapter {
     private final PlanRepository planRepository;
     private final UserDataRepository userData;
     private JDA bot;
-    private HashMap<PlanDecision, ActionRow> decisionTree;
 
     public PlannerBot(PlanRepository planRepository, UserDataRepository userData, GuildDataRepository guildData) {
         this.planRepository = planRepository;
         this.userData = userData;
         this.guildData = guildData;
-        decisionTree = PlanDecision.decisionTree();
     }
 
     @ButtonResponse("enable_plan")
@@ -430,6 +428,24 @@ public class PlannerBot extends AdvancedListenerAdapter {
 
     @ButtonResponse("request_fill_in")
     private void requestFillIn(ButtonInteractionEvent event){
+        long userId = event.getUser().getIdLong();
+        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        plan.planRequestFillIned(userId);
+        plan.addToLog(event.getJDA().getUserById(userId).getName() + " requested a fill in for the event.");
+        // TODO waitlist shen
+        if(plan.getWaitlist().size() > 0){
+
+        }
+
+
+        planRepository.save(plan);
+        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
+        event.deferEdit().queue();
+        updateMessages(plan, guild);
+    }
+
+    @ButtonResponse("fill_in")
+    private void fillIn(ButtonInteractionEvent event){
 
     }
 
@@ -551,66 +567,12 @@ public class PlannerBot extends AdvancedListenerAdapter {
                     boolean needsFillIn = plan.isNeedFillIn();
                     User.Status userStatus = user.getUserStatus();
 
-                    ActionRow buttons = decisionTree.get(new PlanDecision(full, needsFillIn, userStatus));
+                    LinkedList<Button> buttons = PlanHelper.getButtons(full, needsFillIn, userStatus, user.getNeedFillIn());
                     if(buttons.isEmpty()){
                         message.editMessageComponents().queue();
                     } else {
-                        message.editMessageComponents(buttons).queue();
+                        message.editMessageComponents(ActionRow.of(buttons)).queue();
                     }
-
-//                    if(state == 1){ // if user accepted
-//                        message.editMessageComponents(
-//                                ActionRow.of(
-//                                        Button.danger("drop_out_event", "Drop out"),
-//                                        Button.secondary("request_fill_in", "Request fill in")
-//                                )
-//                        ).queue();
-//                    } else if(state == 4) { // if user filled in
-//                        message.editMessageComponents(
-//                                ActionRow.of(
-//                                        Button.danger("drop_out_event", "Drop out")
-//                                )
-//                        ).queue();
-//                    } else if(state == -1){ // if user declined
-//                        message.editMessageComponents().queue();
-//                    } else if(state == 0){ // if user unsure
-//                        if(full){
-//                            message.editMessageComponents(
-//                                    ActionRow.of(
-//                                            Button.secondary("waitlist_event", "Waitlist"),
-//                                            Button.danger("deny_event", "Deny")
-//                                    )
-//                            ).queue();
-//                        } else { // if not full and unsure still
-//                            message.editMessageComponents(
-//                                    ActionRow.of(
-//                                            Button.success("accept_event", "Accept"),
-//                                            Button.danger("deny_event", "Deny"),
-//                                            Button.primary("maybe_event", "Maybe")
-//                                    )
-//                            ).queue();
-//                        }
-//                    } else if(state == 3){ // if user maybe
-//                        if(full){ // if full
-//                            message.editMessageComponents(
-//                                    ActionRow.of(
-//                                            Button.secondary("waitlist_event", "Waitlist"),
-//                                            Button.danger("deny_event", "Deny")
-//                                    )
-//                            ).queue();
-//                        } else { // if not full and unsure still
-//                            message.editMessageComponents(
-//                                    ActionRow.of(
-//                                            Button.success("accept_event", "Accept"),
-//                                            Button.danger("deny_event", "Deny")
-//                                    )
-//                            ).queue();
-//                        }
-//                    } else if(state == 2){
-//                        if(full){
-//                            message.editMessageComponents().queue();
-//                        }
-//                    }
                 }));
             } catch (Exception e){
                 log.error("Error editing message to private member", e);
