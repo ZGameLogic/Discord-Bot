@@ -9,6 +9,7 @@ import data.database.planData.Plan;
 import data.database.planData.PlanRepository;
 import data.database.planData.User;
 import data.database.userData.UserDataRepository;
+import data.intermediates.planData.PlanDecision;
 import interfaces.TwilioInterface;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
@@ -34,13 +35,12 @@ import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.jetbrains.annotations.NotNull;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static bot.utils.Helpers.stringToDate;
+import static data.database.planData.User.Status.*;
 
 @Slf4j
 public class PlannerBot extends AdvancedListenerAdapter {
@@ -49,11 +49,13 @@ public class PlannerBot extends AdvancedListenerAdapter {
     private final PlanRepository planRepository;
     private final UserDataRepository userData;
     private JDA bot;
+    private HashMap<PlanDecision, ActionRow> decisionTree;
 
     public PlannerBot(PlanRepository planRepository, UserDataRepository userData, GuildDataRepository guildData) {
         this.planRepository = planRepository;
         this.userData = userData;
         this.guildData = guildData;
+        decisionTree = PlanDecision.decisionTree();
     }
 
     @ButtonResponse("enable_plan")
@@ -271,7 +273,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 return;
             }
             if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680l))) continue; //skip anyone with the no plan
-            invitees.put(m.getIdLong(), new User(m.getIdLong(), 0));
+            invitees.put(m.getIdLong(), new User(m.getIdLong(), DECIDING));
         }
         for(Role r: event.getMentions().getRoles()){
             if(r.getIdLong() == event.getGuild().getPublicRole().getIdLong()) continue;
@@ -280,7 +282,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 if(m.getIdLong() == event.getUser().getIdLong()) continue;
                 if(invitees.containsKey(m.getIdLong())) continue;
                 if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680l))) continue; //skip anyone with the no plan
-                invitees.put(m.getIdLong(), new User(m.getIdLong(), 0));
+                invitees.put(m.getIdLong(), new User(m.getIdLong(), DECIDING));
             }
         }
         plan.setInvitees(invitees);
@@ -426,6 +428,11 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 .queue();
     }
 
+    @ButtonResponse("request_fill_in")
+    private void requestFillIn(ButtonInteractionEvent event){
+
+    }
+
     @ButtonResponse("delete_event")
     private void deleteEvent(ButtonInteraction event){
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
@@ -527,8 +534,6 @@ public class PlannerBot extends AdvancedListenerAdapter {
     }
 
     private void updateMessages(Plan plan, Guild guild){
-        // Get the state of the plan
-        boolean full = plan.isFull();
         // update guild message
         try {
             guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.guildPublicMessage(plan, guild)).queue());
@@ -538,56 +543,74 @@ public class PlannerBot extends AdvancedListenerAdapter {
         // update private messages
         for(Long currentUserId: plan.getInvitees().keySet()){
             User user = plan.getInvitees().get(currentUserId);
-            int state = user.getStatus();
             try {
                 guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> channel.retrieveMessageById(user.getMessageId()).queue(message -> {
                     message.editMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild)).queue();
-                    if(state == 1){ // if user accepted
-                        message.editMessageComponents(
-                                ActionRow.of(
-                                        Button.danger("drop_out_event", "Drop out")
-                                )
-                        ).queue();
-                    } else if(state == -1){ // if user declined
+
+                    boolean full = plan.isFull();
+                    boolean needsFillIn = plan.isNeedFillIn();
+                    User.Status userStatus = user.getUserStatus();
+
+                    ActionRow buttons = decisionTree.get(new PlanDecision(full, needsFillIn, userStatus));
+                    if(buttons.isEmpty()){
                         message.editMessageComponents().queue();
-                    } else if(state == 0){
-                        if(full){
-                            message.editMessageComponents(
-                                    ActionRow.of(
-                                            Button.secondary("waitlist_event", "Waitlist"),
-                                            Button.danger("deny_event", "Deny")
-                                    )
-                            ).queue();
-                        } else { // if not full and unsure still
-                            message.editMessageComponents(
-                                    ActionRow.of(
-                                            Button.success("accept_event", "Accept"),
-                                            Button.danger("deny_event", "Deny"),
-                                            Button.primary("maybe_event", "Maybe")
-                                    )
-                            ).queue();
-                        }
-                    } else if(state == 3){
-                        if(full){
-                            message.editMessageComponents(
-                                    ActionRow.of(
-                                            Button.secondary("waitlist_event", "Waitlist"),
-                                            Button.danger("deny_event", "Deny")
-                                    )
-                            ).queue();
-                        } else { // if not full and unsure still
-                            message.editMessageComponents(
-                                    ActionRow.of(
-                                            Button.success("accept_event", "Accept"),
-                                            Button.danger("deny_event", "Deny")
-                                    )
-                            ).queue();
-                        }
-                    } else if(state == 2){
-                        if(full){
-                            message.editMessageComponents().queue();
-                        }
+                    } else {
+                        message.editMessageComponents(buttons).queue();
                     }
+
+//                    if(state == 1){ // if user accepted
+//                        message.editMessageComponents(
+//                                ActionRow.of(
+//                                        Button.danger("drop_out_event", "Drop out"),
+//                                        Button.secondary("request_fill_in", "Request fill in")
+//                                )
+//                        ).queue();
+//                    } else if(state == 4) { // if user filled in
+//                        message.editMessageComponents(
+//                                ActionRow.of(
+//                                        Button.danger("drop_out_event", "Drop out")
+//                                )
+//                        ).queue();
+//                    } else if(state == -1){ // if user declined
+//                        message.editMessageComponents().queue();
+//                    } else if(state == 0){ // if user unsure
+//                        if(full){
+//                            message.editMessageComponents(
+//                                    ActionRow.of(
+//                                            Button.secondary("waitlist_event", "Waitlist"),
+//                                            Button.danger("deny_event", "Deny")
+//                                    )
+//                            ).queue();
+//                        } else { // if not full and unsure still
+//                            message.editMessageComponents(
+//                                    ActionRow.of(
+//                                            Button.success("accept_event", "Accept"),
+//                                            Button.danger("deny_event", "Deny"),
+//                                            Button.primary("maybe_event", "Maybe")
+//                                    )
+//                            ).queue();
+//                        }
+//                    } else if(state == 3){ // if user maybe
+//                        if(full){ // if full
+//                            message.editMessageComponents(
+//                                    ActionRow.of(
+//                                            Button.secondary("waitlist_event", "Waitlist"),
+//                                            Button.danger("deny_event", "Deny")
+//                                    )
+//                            ).queue();
+//                        } else { // if not full and unsure still
+//                            message.editMessageComponents(
+//                                    ActionRow.of(
+//                                            Button.success("accept_event", "Accept"),
+//                                            Button.danger("deny_event", "Deny")
+//                                    )
+//                            ).queue();
+//                        }
+//                    } else if(state == 2){
+//                        if(full){
+//                            message.editMessageComponents().queue();
+//                        }
+//                    }
                 }));
             } catch (Exception e){
                 log.error("Error editing message to private member", e);
@@ -598,87 +621,5 @@ public class PlannerBot extends AdvancedListenerAdapter {
         } catch (Exception e){
             log.error("Error editing private message for event " + plan.getTitle(), e);
         }
-    }
-
-    public String planEvent(JSONObject json) throws JSONException {
-        if(!json.has("guild id") || !json.has("title") || !json.has("date time") || !json.has("count") || !json.has("role id")){
-            JSONObject returnObject = new JSONObject();
-            returnObject.put("success", false);
-            returnObject.put("message", "Call doesnt contain all the information");
-            return returnObject.toString();
-        }
-        Date date = stringToDate(json.getString("date time"));
-        if(date == null){
-            JSONObject returnObject = new JSONObject();
-            returnObject.put("success", false);
-            returnObject.put("message", "Date is in an invalid format");
-            return returnObject.toString();
-        }
-        String title = json.getString("title");
-        int count = json.getInt("count");
-        String notes = json.has("notes") ? json.getString("notes") : "";
-        long guildId = json.getLong("guild id");
-        long roleId = json.getLong("role id");
-        long userId = Long.parseLong(json.getString("user id"));
-        Plan plan = new Plan();
-        plan.setTitle(title);
-        plan.setNotes(notes);
-        plan.setDate(date);
-        plan.setAuthorId(userId);
-        plan.setGuildId(guildId);
-        plan.setChannelId(guildData.getOne(guildId).getPlanChannelId());
-        plan.setCount(count);
-        plan.setId(Math.abs(new Random().nextLong()));
-        while(planRepository.existsById(plan.getId())){
-            plan.setId(Math.abs(new Random().nextLong()));
-        }
-        Guild guild = bot.getGuildById(guildId);
-        HashMap<Long, User> invitees = new HashMap<>();
-        for(Member m: guild.getMembersWithRoles(guild.getRoleById(roleId))){
-            if(m.getRoles().contains(guild.getRoleById(1115409055184322680l))) continue; //skip anyone with the no plan
-            if(m.getIdLong() != userId) invitees.put(m.getIdLong(), new User(m.getIdLong(), 0));
-        }
-        plan.setInvitees(invitees);
-        for(Long id: invitees.keySet()){
-            Member m = guild.getMemberById(id);
-            try {
-                PrivateChannel pm = m.getUser().openPrivateChannel().complete();
-                Message message = pm.sendMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild))
-                        .addActionRow(Button.success("accept_event", "Accept"),
-                                Button.danger("deny_event", "Deny"),
-                                Button.primary("maybe_event", "Maybe"))
-                        .complete();
-                plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
-                if(userData.existsById(m.getIdLong())){
-                    TwilioInterface.sendMessage(
-                            userData.getOne(m.getIdLong()).getPhone_number() + "",
-                            guild.getMemberById(userId).getUser().getName() + " has invited you to " + plan.getTitle() + "." +
-                                    " Reply to the invite on discord."
-                    );
-                }
-            } catch (Exception e){
-                log.error("Error sending message to member to create event", e);
-            }
-        }
-        Message message = guild.getTextChannelById(guildData.getOne(guildId).getPlanChannelId()).sendMessageEmbeds(EmbedMessageGenerator.guildPublicMessage(plan, guild))
-                .addActionRow(Button.secondary("add_users", "Add users")).complete();
-        plan.setMessageId(message.getIdLong());
-        plan.addToLog("Added people to event");
-        PrivateChannel channel = guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().complete();
-        Message m = channel.sendMessageEmbeds(EmbedMessageGenerator.creatorMessage(plan, guild)).complete();
-        m.editMessageComponents(
-                ActionRow.of(
-                        Button.secondary("send_message", "Send message"),
-                        Button.secondary("edit_event", "Edit details"),
-                        Button.danger("delete_event", "Delete event")
-                )
-        ).queue();
-        plan.setPrivateMessageId(m.getIdLong());
-        planRepository.save(plan);
-        planRepository.save(plan);
-        JSONObject re = new JSONObject();
-        re.put("success", true);
-        re.put("message", "Event has been created on discord");
-        return re.toString();
     }
 }

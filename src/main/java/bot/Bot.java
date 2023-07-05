@@ -172,27 +172,6 @@ public class Bot {
 		return returnObject.toString();
 	}
 
-	@PostMapping("/api/plan")
-	private String planEvent(@RequestBody String value) throws JSONException {
-		JSONObject json = new JSONObject(value);
-		String userId = json.getString("user id");
-		String validationCode = json.getString("validation code");
-		if(!authData.existsById(Long.parseLong(userId))) {
-			JSONObject returnObject = new JSONObject();
-			returnObject.put("success", false);
-			returnObject.put("message", "This user hasn't been verified yet");
-			return returnObject.toString();
-		}
-		AuthData data = authData.getOne(Long.parseLong(userId));
-		if(!data.getValidationCode().equals(validationCode)){
-			JSONObject returnObject = new JSONObject();
-			returnObject.put("success", false);
-			returnObject.put("message", "Incorrect validation token for user");
-			return returnObject.toString();
-		}
-		return PB.planEvent(json);
-	}
-
 	@PostMapping("/api/message")
 	private String postMessage(@RequestBody String value) throws JSONException {
 		JSONObject json = new JSONObject(value);
