@@ -7,7 +7,6 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.TimeFormat;
-import org.assertj.core.util.Strings;
 
 import java.util.LinkedList;
 
@@ -15,8 +14,15 @@ import static bot.utils.EmbedMessageGenerator.GENERAL_COLOR;
 
 public abstract class PlanHelper {
 
-    public static void getHostMessage(Plan plan){
-
+    public static MessageEmbed getHostMessage(Plan plan, Guild guild){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(GENERAL_COLOR);
+        eb.setTitle("Plan details for: " + plan.getTitle());
+        eb.setDescription("The event is scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) + "\n" +
+                plan.getNotes() + "\n" + plan.getLog());
+        infoBody(plan, guild, eb);
+        eb.setFooter(String.valueOf(plan.getId()));
+        return eb.build();
     }
 
     public static MessageEmbed getPlanChannelMessage(Plan plan, Guild guild){
@@ -25,7 +31,7 @@ public abstract class PlanHelper {
         eb.setTitle(plan.getTitle());
         eb.setDescription("The event is scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) + "\n" +
                 plan.getNotes());
-        eb.setFooter(plan.getId() + "");
+        eb.setFooter(String.valueOf(plan.getId()));
         eb.addField("Coordinator", guild.getJDA().getUserById(plan.getAuthorId()).getName(), true);
         eb.addField("People accepted", plan.getAccepted().size() +
                         (plan.getCount() != -1 ? "/" + plan.getCount() : "")
@@ -57,7 +63,7 @@ public abstract class PlanHelper {
             attendees.append("<@").append(id).append(">");
             if(plan.requestedFillIn(id)){
                 if(plan.getFillInedList().size() > filledInIndex){
-                    attendees.append(" -> (<@" + plan.getFillInedList().get(filledInIndex++) + ">)");
+                    attendees.append(" -> (<@").append(plan.getFillInedList().get(filledInIndex++)).append(">)");
                 } else {
                     attendees.append(" (Requested fill-in)");
                 }
@@ -80,7 +86,7 @@ public abstract class PlanHelper {
             }
             eb.addField("Maybes", maybes.toString(), true);
         }
-        eb.setFooter(plan.getId() + "");
+        eb.setFooter(String.valueOf(plan.getId()));
         return eb.build();
     }
 
@@ -103,7 +109,7 @@ public abstract class PlanHelper {
             status.append("<@").append(id).append(">").append(": accepted");
             if(plan.requestedFillIn(id)){
                 if(plan.getFillInedList().size() > filledInIndex){
-                    status.append(" -> (<@" + plan.getFillInedList().get(filledInIndex++) + ">)");
+                    status.append(" -> (<@").append(plan.getFillInedList().get(filledInIndex++)).append(">)");
                 } else {
                     status.append(" (Requested fill-in)");
                 }
@@ -174,7 +180,7 @@ public abstract class PlanHelper {
                 break;
             case WAITLISTED:
             case FILLINED:
-                neededButtons.add(deny);
+                neededButtons.add(dropout);
                 break;
             case DECLINED:
                 break;

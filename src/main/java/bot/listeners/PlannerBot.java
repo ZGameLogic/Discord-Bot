@@ -1,6 +1,5 @@
 package bot.listeners;
 
-import bot.utils.EmbedMessageGenerator;
 import bot.utils.Helpers;
 import bot.utils.PlanHelper;
 import com.zgamelogic.AdvancedListenerAdapter;
@@ -297,7 +296,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
                 if(userData.existsById(m.getIdLong())){
                     TwilioInterface.sendMessage(
-                            userData.getOne(m.getIdLong()).getPhone_number() + "",
+                            String.valueOf(userData.getOne(m.getIdLong()).getPhone_number()),
                             event.getUser().getName() + " has invited you to " + plan.getTitle() + "." +
                                     " Reply to the invite on discord."
                     );
@@ -311,7 +310,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                     .addActionRow(Button.secondary("add_users", "Add users")).complete();
             plan.setMessageId(message.getIdLong());
             PrivateChannel channel = event.getGuild().getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().complete();
-            Message m = channel.sendMessageEmbeds(EmbedMessageGenerator.creatorMessage(plan, event.getGuild())).complete();
+            Message m = channel.sendMessageEmbeds(PlanHelper.getHostMessage(plan, event.getGuild())).complete();
             m.editMessageComponents(
                     ActionRow.of(
                             Button.secondary("send_message", "Send message"),
@@ -370,7 +369,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                     .complete();
             if(userData.existsById(m.getIdLong())){
                 TwilioInterface.sendMessage(
-                        userData.getOne(m.getIdLong()).getPhone_number() + "",
+                        String.valueOf(userData.getOne(m.getIdLong()).getPhone_number()),
                         event.getUser().getName() + " has invited you to " + plan.getTitle() + "." +
                                 " Reply to the invite on discord."
                 );
@@ -407,7 +406,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
                 .setValue(plan.getTitle()).build();
         TextInput count = TextInput.create("count", "Number of people looking for", TextInputStyle.SHORT)
-                .setValue(plan.getCount() + "").setRequired(false).build();
+                .setValue(String.valueOf(plan.getCount())).setRequired(false).build();
         SimpleDateFormat formatter = new SimpleDateFormat("M/dd h:mma", Locale.ENGLISH);
         String dateString;
         if(plan.getDate() != null) {
@@ -505,25 +504,69 @@ public class PlannerBot extends AdvancedListenerAdapter {
     private void updateEvent(PlanEvent planEvent, ButtonInteractionEvent buttonEvent){
         buttonEvent.deferEdit().queue();
         Plan plan = planRepository.getOne(Long.parseLong(buttonEvent.getMessage().getEmbeds().get(0).getFooter().getText()));
+        String title = plan.getTitle();
         Guild guild = buttonEvent.getJDA().getGuildById(plan.getGuildId());
         LinkedList<PlanEvent> processedEvents = plan.processEvents(planEvent);
-        // TODO send messages about the processed events
+        // send messages about the processed events
         for(PlanEvent event: processedEvents){
             switch(event.getEvent()){
                 case USER_MOVED_FILLIN_TO_ACCEPTED:
+                    guild.getMemberById(event.getUid()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage("A member has dropped out of: " + title + " . You are now moved from filled in to accepted.").queue());
                     break;
                 case USER_MOVED_WAITLIST_TO_ACCEPTED:
+                    guild.getMemberById(event.getUid()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage("A member has dropped out of " + title + " . You are now moved from waitlisted to accepted.").queue());
                     break;
                 case USER_MOVED_WAITLIST_TO_FILL_IN:
+                    guild.getMemberById(event.getUid()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage("A member has requested a fill in for event " + title + " . You are now moved from waitlisted to a fill-in spot.").queue());
                     break;
                 case EVENT_CREATED_FROM_WAITLIST:
+                    createNewPlanFromWaitlist(plan, guild, buttonEvent.getIdLong());
                     break;
             }
         }
 
-
         updateMessages(plan, guild);
         planRepository.save(plan);
+    }
+
+    private void createNewPlanFromWaitlist(Plan plan, Guild guild, long planId) {
+        Plan newPlan = plan.createPlanFromWaitlist();
+        newPlan.setId(planId);
+        for(Long id: newPlan.getInvitees().keySet()){
+            Member m = guild.getMemberById(id);
+            try {
+                PrivateChannel pm = m.getUser().openPrivateChannel().complete();
+                Message message = pm.sendMessageEmbeds(PlanHelper.getPlanPrivateMessage(plan, guild))
+                        .complete();
+                newPlan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
+                if(userData.existsById(m.getIdLong())){
+                    TwilioInterface.sendMessage(
+                            String.valueOf(userData.getOne(m.getIdLong()).getPhone_number()),
+                            "The waitlist for the plan: " + newPlan.getTitle() + " is big enough for a new plan to be created. " +
+                                    "Since you were waitlisted on the original plan, you have been automatically added ot the new one."
+                    );
+                }
+            } catch (Exception e){
+                log.error("Error sending message to member to create event", e);
+            }
+        }
+        try {
+            Message message = guild.getTextChannelById(newPlan.getChannelId()).sendMessageEmbeds(getPlanChannelMessage(newPlan, guild))
+                    .addActionRow(Button.secondary("add_users", "Add users")).complete();
+            newPlan.setMessageId(message.getIdLong());
+            PrivateChannel channel = guild.getMemberById(newPlan.getAuthorId()).getUser().openPrivateChannel().complete();
+            Message m = channel.sendMessageEmbeds(PlanHelper.getHostMessage(newPlan, guild)).complete();
+            m.editMessageComponents(
+                    ActionRow.of(
+                            Button.secondary("send_message", "Send message"),
+                            Button.secondary("edit_event", "Edit details"),
+                            Button.danger("delete_event", "Delete event")
+                    )
+            ).queue();
+            newPlan.setPrivateMessageId(m.getIdLong());
+        } catch (Exception ignored) {}
+        updateMessages(newPlan, guild);
+        planRepository.save(newPlan);
     }
 
     private void updateMessages(Plan plan, Guild guild){
@@ -558,7 +601,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
             }
         }
         try {
-            guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.retrieveMessageById(plan.getPrivateMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.creatorMessage(plan, guild)).queue()));
+            guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.retrieveMessageById(plan.getPrivateMessageId()).queue(message -> message.editMessageEmbeds(PlanHelper.getHostMessage(plan, guild)).queue()));
         } catch (Exception e){
             log.error("Error editing private message for event " + plan.getTitle(), e);
         }
