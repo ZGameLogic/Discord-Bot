@@ -2,6 +2,7 @@ package bot.listeners;
 
 import bot.utils.EmbedMessageGenerator;
 import bot.utils.Helpers;
+import bot.utils.PlanHelper;
 import com.zgamelogic.AdvancedListenerAdapter;
 import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
@@ -9,7 +10,7 @@ import data.database.planData.Plan;
 import data.database.planData.PlanRepository;
 import data.database.planData.User;
 import data.database.userData.UserDataRepository;
-import bot.utils.PlanHelper;
+import data.intermediates.planData.PlanEvent;
 import interfaces.TwilioInterface;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
@@ -40,7 +41,9 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static bot.utils.Helpers.stringToDate;
+import static bot.utils.PlanHelper.getPlanChannelMessage;
 import static data.database.planData.User.Status.*;
+import static data.intermediates.planData.PlanEvent.Event.*;
 
 @Slf4j
 public class PlannerBot extends AdvancedListenerAdapter {
@@ -193,7 +196,6 @@ public class PlannerBot extends AdvancedListenerAdapter {
         plan.setTitle(title);
         plan.setNotes(notes);
         plan.setDate(date);
-        plan.addToLog("Event details edited");
         updateMessages(plan, event.getJDA().getGuildById(plan.getGuildId()));
         planRepository.save(plan);
         event.reply("Plan details have been edited").setEphemeral(true).queue();
@@ -245,7 +247,6 @@ public class PlannerBot extends AdvancedListenerAdapter {
                     plan.setAuthorId(event.getUser().getIdLong());
                     plan.setCount(finalCount);
                     plan.setId(event.getIdLong());
-                    plan.addToLog("Created event");
                     planRepository.save(plan);
                 });
     }
@@ -288,7 +289,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
             Member m = event.getGuild().getMemberById(id);
             try {
                 PrivateChannel pm = m.getUser().openPrivateChannel().complete();
-                Message message = pm.sendMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, event.getGuild()))
+                Message message = pm.sendMessageEmbeds(PlanHelper.getPlanPrivateMessage(plan, event.getGuild()))
                         .addActionRow(Button.success("accept_event", "Accept"),
                                 Button.danger("deny_event", "Deny"),
                                 Button.primary("maybe_event", "Maybe"))
@@ -306,10 +307,9 @@ public class PlannerBot extends AdvancedListenerAdapter {
             }
         }
         try {
-            Message message = event.getGuild().getTextChannelById(gd.getPlanChannelId()).sendMessageEmbeds(EmbedMessageGenerator.guildPublicMessage(plan, event.getGuild()))
+            Message message = event.getGuild().getTextChannelById(gd.getPlanChannelId()).sendMessageEmbeds(getPlanChannelMessage(plan, event.getGuild()))
                     .addActionRow(Button.secondary("add_users", "Add users")).complete();
             plan.setMessageId(message.getIdLong());
-            plan.addToLog("Added people to event");
             PrivateChannel channel = event.getGuild().getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().complete();
             Message m = channel.sendMessageEmbeds(EmbedMessageGenerator.creatorMessage(plan, event.getGuild())).complete();
             m.editMessageComponents(
@@ -363,7 +363,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
             invitees.add(m);
         }
         for(Member m: invitees){
-            Message message = m.getUser().openPrivateChannel().complete().sendMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, event.getGuild()))
+            Message message = m.getUser().openPrivateChannel().complete().sendMessageEmbeds(PlanHelper.getPlanPrivateMessage(plan, event.getGuild()))
                     .addActionRow(Button.success("accept_event", "Accept"),
                             Button.danger("deny_event", "Deny"),
                             Button.primary("maybe_event", "Maybe"))
@@ -426,29 +426,6 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 .queue();
     }
 
-    @ButtonResponse("request_fill_in")
-    private void requestFillIn(ButtonInteractionEvent event){
-        long userId = event.getUser().getIdLong();
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-        plan.planRequestFillIned(userId);
-        plan.addToLog(event.getJDA().getUserById(userId).getName() + " requested a fill in for the event.");
-        // TODO waitlist shen
-        if(plan.getWaitlist().size() > 0){
-
-        }
-
-
-        planRepository.save(plan);
-        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
-        event.deferEdit().queue();
-        updateMessages(plan, guild);
-    }
-
-    @ButtonResponse("fill_in")
-    private void fillIn(ButtonInteractionEvent event){
-
-    }
-
     @ButtonResponse("delete_event")
     private void deleteEvent(ButtonInteraction event){
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
@@ -471,88 +448,90 @@ public class PlannerBot extends AdvancedListenerAdapter {
         planRepository.deleteById(plan.getId());
     }
 
+    @ButtonResponse("request_fill_in")
+    private void requestFillIn(ButtonInteractionEvent event){
+        long userId = event.getUser().getIdLong();
+        PlanEvent planEvent = new PlanEvent(USER_REGISTERED_FOR_FILL_IN, userId);
+        updateEvent(planEvent, event);
+    }
+
+    @ButtonResponse("fill_in")
+    private void fillIn(ButtonInteractionEvent event){
+        long userId = event.getUser().getIdLong();
+        PlanEvent planEvent = new PlanEvent(USER_FILLINED, userId);
+        updateEvent(planEvent, event);
+    }
+
     @ButtonResponse("drop_out_event")
-    private void dropOutEvent(ButtonInteraction event){
+    private void dropOutEvent(ButtonInteractionEvent event){
         event.editButton(Button.danger("confirm_drop_out_event", "Confirm Dropout")).queue();
     }
 
     @ButtonResponse("confirm_drop_out_event")
-    private void confirmDropOutEvent(ButtonInteraction event){
+    private void confirmDropOutEvent(ButtonInteractionEvent event){
         long userId = event.getUser().getIdLong();
-        event.getMessage().editMessageComponents().queue();
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
-        plan.planDropOut(userId);
-        plan.addToLog(event.getJDA().getUserById(userId).getName() + " dropped out");
-        guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage(event.getUser().getName() + " has dropped out of " + plan.getTitle()).queue());
-        event.deferEdit().queue();
-        // Check to see if anyone is on the waitlist
-        if(plan.getWaitlist().size() > 0){
-            LinkedList<Long> waitlist = plan.getWaitlist();
-            long waitlistId = waitlist.removeFirst();
-            plan.planAccepted(waitlistId);
-            plan.addToLog(event.getJDA().getUserById(waitlistId).getName() + " has been moved from waitlist");
-            guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage(event.getJDA().getUserById(waitlistId).getName() + " accepted " + plan.getTitle()).queue());
-            guild.getMemberById(waitlistId).getUser().openPrivateChannel().queue(channel -> channel.sendMessage("You got moved off the waitlist and accepted " + plan.getTitle()).queue());
-        }
-        planRepository.save(plan);
-        updateMessages(plan, guild);
+        PlanEvent planEvent = new PlanEvent(USER_DROPPED_OUT, userId);
+        updateEvent(planEvent, event);
     }
 
     @ButtonResponse("accept_event")
-    private void acceptEvent(ButtonInteraction event){
+    private void acceptEvent(ButtonInteractionEvent event){
         long userId = event.getUser().getIdLong();
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-        plan.planAccepted(userId);
-        plan.addToLog(event.getJDA().getUserById(userId).getName() + " accepted");
-        planRepository.save(plan);
-        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
-        guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage(event.getUser().getName() + " has accepted to join " + plan.getTitle()).queue());
-        event.deferEdit().queue();
-        updateMessages(plan, guild);
+        PlanEvent planEvent = new PlanEvent(USER_ACCEPTED, userId);
+        updateEvent(planEvent, event);
     }
 
     @ButtonResponse("waitlist_event")
-    private void waitlistEvent(ButtonInteraction event){
+    private void waitlistEvent(ButtonInteractionEvent event){
         long userId = event.getUser().getIdLong();
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-        plan.planWaitlist(userId);
-        plan.addToLog(event.getJDA().getUserById(userId).getName() + " was added to waitlist");
-        event.reply("Added to the waitlist. You will be notified if someone drops out").setEphemeral(true).queue();
-        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
-        updateMessages(plan, guild);
-        planRepository.save(plan);
+        PlanEvent planEvent = new PlanEvent(USER_WAITLISTED, userId);
+        updateEvent(planEvent, event);
     }
 
     @ButtonResponse("deny_event")
-    private void denyEvent(ButtonInteraction event){
+    private void denyEvent(ButtonInteractionEvent event){
         long userId = event.getUser().getIdLong();
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-        plan.planDeclined(userId);
-        plan.addToLog(event.getJDA().getUserById(userId).getName() + " declined");
-        planRepository.save(plan);
-        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
-        guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage(event.getUser().getName() + " has declined to join " + plan.getTitle()).queue());
-        event.deferEdit().queue();
-        updateMessages(plan, guild);
+        PlanEvent planEvent = new PlanEvent(USER_DECLINED, userId);
+        updateEvent(planEvent, event);
     }
 
     @ButtonResponse("maybe_event")
-    private void maybeEvent(ButtonInteractionEvent event){
+    private void maybeEvent(ButtonInteractionEvent event) {
         long userId = event.getUser().getIdLong();
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-        plan.planMaybed(userId);
-        plan.addToLog(event.getJDA().getUserById(userId).getName() + " maybed");
-        planRepository.save(plan);
-        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
-        event.deferEdit().queue();
+        PlanEvent planEvent = new PlanEvent(USER_MAYBED, userId);
+        updateEvent(planEvent, event);
+    }
+
+    private void updateEvent(PlanEvent planEvent, ButtonInteractionEvent buttonEvent){
+        buttonEvent.deferEdit().queue();
+        Plan plan = planRepository.getOne(Long.parseLong(buttonEvent.getMessage().getEmbeds().get(0).getFooter().getText()));
+        Guild guild = buttonEvent.getJDA().getGuildById(plan.getGuildId());
+        LinkedList<PlanEvent> processedEvents = plan.processEvents(planEvent);
+        // TODO send messages about the processed events
+        for(PlanEvent event: processedEvents){
+            switch(event.getEvent()){
+                case USER_MOVED_FILLIN_TO_ACCEPTED:
+                    break;
+                case USER_MOVED_WAITLIST_TO_ACCEPTED:
+                    break;
+                case USER_MOVED_WAITLIST_TO_FILL_IN:
+                    break;
+                case EVENT_CREATED_FROM_WAITLIST:
+                    break;
+            }
+        }
+
+
         updateMessages(plan, guild);
+        planRepository.save(plan);
     }
 
     private void updateMessages(Plan plan, Guild guild){
         // update guild message
         try {
-            guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> message.editMessageEmbeds(EmbedMessageGenerator.guildPublicMessage(plan, guild)).queue());
+            guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(
+                        message -> message.editMessageEmbeds(getPlanChannelMessage(plan, guild)
+                    ).queue());
         } catch (Exception e){
             log.error("Error editing public guild message for event " + plan.getTitle(), e);
         }
@@ -561,7 +540,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
             User user = plan.getInvitees().get(currentUserId);
             try {
                 guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> channel.retrieveMessageById(user.getMessageId()).queue(message -> {
-                    message.editMessageEmbeds(EmbedMessageGenerator.singleInvite(plan, guild)).queue();
+                    message.editMessageEmbeds(PlanHelper.getPlanPrivateMessage(plan, guild)).queue();
 
                     boolean full = plan.isFull();
                     boolean needsFillIn = plan.isNeedFillIn();
