@@ -8,7 +8,6 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
-import net.dv8tion.jda.api.utils.TimeFormat;
 
 import java.awt.*;
 import java.util.LinkedList;
@@ -135,17 +134,6 @@ public abstract class EmbedMessageGenerator {
                 "Green means its enabled, and red means its disabled. " +
                 "Everything is disabled by default. As features for the bot are released, expect them " +
                 "to appear under this message as a button.");
-        return eb.build();
-    }
-
-    public static MessageEmbed creatorMessage(Plan plan, Guild guild){
-        EmbedBuilder eb = new EmbedBuilder();
-        eb.setColor(GENERAL_COLOR);
-        eb.setTitle("Plan details for: " + plan.getTitle());
-        eb.setDescription("The event is scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) + "\n" +
-                plan.getNotes() + "\n" + plan.getLog());
-        infoBody(plan, guild, eb);
-        eb.setFooter(plan.getId() + "");
         return eb.build();
     }
 

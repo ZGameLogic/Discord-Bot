@@ -2,9 +2,11 @@ package data.intermediates.planData;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
 @AllArgsConstructor
+@ToString
 public class PlanEvent {
     public enum Event {
         USER_ACCEPTED,

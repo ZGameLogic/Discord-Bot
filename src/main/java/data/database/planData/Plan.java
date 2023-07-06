@@ -102,7 +102,7 @@ public class Plan {
         }
 
         // check to see if the event has enough people wait listed to make another event
-        if(getWaitlist().size() >= count + 1){
+        if(getWaitlist().size() >= count + 1 && count != -1){
             subsequentEvents.add(new PlanEvent(PlanEvent.Event.EVENT_CREATED_FROM_WAITLIST, 0L));
         }
 
@@ -110,8 +110,27 @@ public class Plan {
     }
 
     public Plan createPlanFromWaitlist(){
-        List<Long> players = getWaitlist().subList(0, count);
-        // TODO create event with new people
+        Plan newPlan = new Plan();
+        newPlan.setCount(count);
+        newPlan.setTitle(title);
+        newPlan.setNotes(notes + "\nPlan created from previous plan due to large waitlist.");
+        newPlan.setDate(date);
+        newPlan.setGuildId(guildId);
+        newPlan.setChannelId(channelId);
+        newPlan.addToLog("Plan created from previous plan due to large waitlist.");
+        HashMap<Long, User> waitlistUsers = new HashMap<>();
+        for (int i = 0; i < count + 1; i++) {
+            User user = invitees.get(getWaitlist().removeFirst());
+            planDeclined(user.getId());
+            if(i == 0){
+                newPlan.setAuthorId(user.getId());
+            } else {
+                waitlistUsers.put(user.getId(), new User(user.getId(), ACCEPTED));
+            }
+        }
+        newPlan.setInvitees(waitlistUsers);
+
+        return newPlan;
     }
 
     private void planWaitlist(long userId) {
