@@ -19,7 +19,7 @@ public abstract class PlanHelper {
         eb.setColor(GENERAL_COLOR);
         eb.setTitle("Plan details for: " + plan.getTitle());
         eb.setDescription("The event is scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) + "\n" +
-                plan.getNotes() + "\n" + plan.getLog());
+                plan.getNotes() + "\n" + plan.getLog() != null ? plan.getLog() : "");
         infoBody(plan, guild, eb);
         eb.setFooter(String.valueOf(plan.getId()));
         return eb.build();
