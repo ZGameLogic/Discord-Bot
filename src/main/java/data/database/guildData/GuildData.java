@@ -40,4 +40,8 @@ public class GuildData {
     // CurseForge bot stuff
     private Boolean curseforgeEnabled;
     private Long curseforgeCommandId;
+
+    // Hunt stuff
+    private Boolean huntEnabled;
+    private Long randomizerSummonId;
 }
