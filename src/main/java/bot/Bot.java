@@ -9,6 +9,8 @@ import data.database.cardData.cards.CardDataRepository;
 import data.database.cardData.guild.GuildCardDataRepository;
 import data.database.cardData.player.PlayerCardDataRepository;
 import data.database.guildData.GuildDataRepository;
+import data.database.huntData.gun.HuntGunRepository;
+import data.database.huntData.item.HuntItemRepository;
 import data.database.planData.PlanRepository;
 import data.database.userAuthData.AuthData;
 import data.database.userAuthData.AuthDataRepository;
@@ -65,6 +67,10 @@ public class Bot {
 	private PlayerCardDataRepository playerCardDataRepository;
 	@Autowired
 	private AuthDataRepository authData;
+	@Autowired
+	private HuntItemRepository huntItemRepository;
+	@Autowired
+	private HuntGunRepository huntGunRepository;
 
 	private final static String TITLE = "\r\n" +
 			"   ____  ___  _                   _   ___      _  ______  \r\n" + 
@@ -103,6 +109,7 @@ public class Bot {
 		listeners.add(PB);
 		CB = new CardBot(guildData, cardDataRepository, guildCardDataRepository, playerCardDataRepository);
 		listeners.add(CB);
+		listeners.add(new HuntShowdownBot(guildData, huntGunRepository, huntItemRepository));
 		// Add listeners
 		for(ListenerAdapter a : listeners){
 			bot.addEventListeners(a);
