@@ -56,16 +56,22 @@ public abstract class HuntHelper {
 
         if(specialAmmo){
             for(int i = 0; i < primary.getSpecialAmmoCount(); i++){
-                Collections.shuffle(primary.getAmmoTypes());
-                primaryAmmo.add(primary.getAmmoTypes().get(0));
+                LinkedList<AmmoType> ammoPool =
+                        !primary.hasSecondaryAmmo() ? primary.getAmmoTypes() :
+                                (i == 0 ? primary.primaryAmmo() : primary.secondaryAmmo());
+                Collections.shuffle(ammoPool);
+                primaryAmmo.add(ammoPool.get(0));
             }
             for(int i = 0; i < secondary.getSpecialAmmoCount(); i++){
-                Collections.shuffle(secondary.getAmmoTypes());
-                secondaryAmmo.add(secondary.getAmmoTypes().get(0));
+                LinkedList<AmmoType> ammoPool =
+                        !secondary.hasSecondaryAmmo() ? secondary.getAmmoTypes() :
+                                (i == 0 ? secondary.primaryAmmo() : secondary.secondaryAmmo());
+                Collections.shuffle(ammoPool);
+                secondaryAmmo.add(ammoPool.get(0));
             }
         } else {
             for(int i = 0; i < primary.getSpecialAmmoCount(); i++){
-                primaryAmmo.add(primary.getDefaultAmmo());
+                primaryAmmo.add(!primary.hasSecondaryAmmo() ? primary.getDefaultAmmo() : (i == 0 ? primary.getDefaultAmmo(false) : primary.getDefaultAmmo(true)));
             }
             for(int i = 0; i < secondary.getSpecialAmmoCount(); i++){
                 secondaryAmmo.add(secondary.getDefaultAmmo());

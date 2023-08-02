@@ -15,5 +15,6 @@ public class AmmoType {
     private String name;
     private String asset;
     private boolean special;
+    private boolean secondarySlotOnly;
 
 }
