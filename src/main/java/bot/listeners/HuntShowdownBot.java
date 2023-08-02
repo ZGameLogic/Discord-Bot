@@ -99,11 +99,11 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
         // huntItemRepository.findItemsByType(HuntItem.Type.TOOL.name()).forEach(tool -> System.out.println(tool.getName()));
 
 //        LinkedList<AmmoType> ammos = new LinkedList<>();
-//        ammos.add(new AmmoType("Poison", "poison.png"));
-//        ammos.add(new AmmoType("Full Metal Jacket", "fmj.png"));
+//        ammos.add(new AmmoType("Poison", "poison.png", true, false));
+//        ammos.add(new AmmoType("Full Metal Jacket", "fmj.png", true, false));
+//        ammos.add(new AmmoType("Long Ammo", "long.png", false, false));
 //        HuntGun gun = new HuntGun("Test gun 1", HuntGun.Slot.LARGE, ammos, 1, false, "placeholder.png");
 //        huntGunRepository.save(gun);
-//        event.reply("We added it to the database").queue();
         event.deferEdit().queue();
     }
 

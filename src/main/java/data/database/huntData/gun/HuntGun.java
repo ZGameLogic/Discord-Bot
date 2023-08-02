@@ -3,6 +3,8 @@ package data.database.huntData.gun;
 import lombok.*;
 
 import javax.persistence.*;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 
@@ -29,7 +31,7 @@ public class HuntGun {
     @Column
     @CollectionTable(name = "hunt_ammo_types", joinColumns = @JoinColumn(name = "ammo_types"))
     @ElementCollection
-    private List<AmmoType> ammoTypes;
+    private LinkedList<AmmoType> ammoTypes;
 
     @Column(columnDefinition = "integer default 1")
     private int specialAmmoCount;
@@ -52,5 +54,35 @@ public class HuntGun {
             }
         }
         return ammoTypes.get(0);
+    }
+
+    public AmmoType getDefaultAmmo(boolean secondary){
+        for(AmmoType type: ammoTypes){
+            if(!type.isSpecial() && type.isSecondarySlotOnly() == secondary){
+                return type;
+            }
+        }
+        return ammoTypes.get(0);
+    }
+
+    public boolean hasSecondaryAmmo(){
+        for(AmmoType type: ammoTypes){
+            if(type.isSecondarySlotOnly()) return true;
+        }
+        return false;
+    }
+
+    public LinkedList<AmmoType> primaryAmmo(){
+        LinkedList<AmmoType> primaryAmmo = new LinkedList<>();
+        Collections.copy(primaryAmmo, ammoTypes);
+        primaryAmmo.removeIf(AmmoType::isSecondarySlotOnly);
+        return primaryAmmo;
+    }
+
+    public LinkedList<AmmoType> secondaryAmmo(){
+        LinkedList<AmmoType> secondaryAmmo = new LinkedList<>();
+        Collections.copy(secondaryAmmo, ammoTypes);
+        secondaryAmmo.removeIf(ammoType -> !ammoType.isSecondarySlotOnly());
+        return secondaryAmmo;
     }
 }
