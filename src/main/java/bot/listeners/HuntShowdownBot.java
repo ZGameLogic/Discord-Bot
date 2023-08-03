@@ -8,7 +8,9 @@ import data.database.huntData.gun.HuntGun;
 import data.database.huntData.gun.HuntGunRepository;
 import data.database.huntData.item.HuntItem;
 import data.database.huntData.item.HuntItemRepository;
+import data.intermediates.hunt.HuntLoadout;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -85,25 +87,29 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
                 case "disable_medkit_melee": medkitMelee = true; break;
             }
         }
-
-        System.out.println(generateLoadout(
+        // TODO create picture
+        // TODO upload picture
+        Message message = event.getMessage();
+        HuntLoadout loadout = generateLoadout(
                 dualWielding,
                 quartermaster,
                 specialAmmo,
                 medkitMelee,
                 huntItemRepository,
                 huntGunRepository
-        ));
-
+        );
+        message.editMessageEmbeds(
+                loadoutMessage(loadout, "", message.getEmbeds().get(0))
+        ).queue();
 
         // huntItemRepository.findItemsByType(HuntItem.Type.TOOL.name()).forEach(tool -> System.out.println(tool.getName()));
 
 //        LinkedList<AmmoType> ammos = new LinkedList<>();
-//        ammos.add(new AmmoType("Poison", "poison.png"));
-//        ammos.add(new AmmoType("Full Metal Jacket", "fmj.png"));
+//        ammos.add(new AmmoType("Poison", "poison.png", true, false));
+//        ammos.add(new AmmoType("Full Metal Jacket", "fmj.png", true, false));
+//        ammos.add(new AmmoType("Long Ammo", "long.png", false, false));
 //        HuntGun gun = new HuntGun("Test gun 1", HuntGun.Slot.LARGE, ammos, 1, false, "placeholder.png");
 //        huntGunRepository.save(gun);
-//        event.reply("We added it to the database").queue();
         event.deferEdit().queue();
     }
 
