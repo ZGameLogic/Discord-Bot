@@ -31,7 +31,7 @@ public class HuntGun {
     @Column
     @CollectionTable(name = "hunt_ammo_types", joinColumns = @JoinColumn(name = "ammo_types"))
     @ElementCollection
-    private LinkedList<AmmoType> ammoTypes;
+    private List<AmmoType> ammoTypes;
 
     @Column(columnDefinition = "integer default 1")
     private int specialAmmoCount;
@@ -84,5 +84,13 @@ public class HuntGun {
         Collections.copy(secondaryAmmo, ammoTypes);
         secondaryAmmo.removeIf(ammoType -> !ammoType.isSecondarySlotOnly());
         return secondaryAmmo;
+    }
+
+    public LinkedList<AmmoType> getAmmoTypes(){
+        return new LinkedList<>(ammoTypes);
+    }
+
+    public String propperName(){
+        return dualWieldable && slot == Slot.MEDIUM ? "Dual " + name : name;
     }
 }

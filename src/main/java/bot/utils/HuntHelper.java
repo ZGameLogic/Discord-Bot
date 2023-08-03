@@ -27,6 +27,14 @@ public abstract class HuntHelper {
         return eb.build();
     }
 
+    public static MessageEmbed loadoutMessage(HuntLoadout loadout, String imageURL, MessageEmbed original){
+        EmbedBuilder eb = new EmbedBuilder(original);
+        // TODO add image URL
+        eb.clearFields();
+        eb.addField("Loadout", loadout.toString(), false);
+        return eb.build();
+    }
+
     public static HuntLoadout generateLoadout(boolean dualWield, boolean quartermaster, boolean specialAmmo, boolean medkitMelee, HuntItemRepository huntItemRepository, HuntGunRepository huntGunRepository){
         // guns
         int gunBudget = quartermaster ? 5 : 4;
@@ -105,7 +113,7 @@ public abstract class HuntHelper {
             consumables.add(allConsumables.getFirst());
         }
 
-        return new HuntLoadout(primary, secondary, null, null, tools, consumables);
+        return new HuntLoadout(primary, secondary, primaryAmmo, secondaryAmmo, tools, consumables);
     }
 
 }
