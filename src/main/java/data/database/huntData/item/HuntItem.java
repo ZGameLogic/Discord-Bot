@@ -10,7 +10,6 @@ import javax.persistence.*;
 
 @Getter
 @NoArgsConstructor
-@ToString
 @Entity
 @Table(name = "hunt_items")
 @EqualsAndHashCode
@@ -29,4 +28,6 @@ public class HuntItem {
     @Enumerated(EnumType.STRING)
     private Type type;
     private String asset;
+
+    public String toString(){ return name; }
 }

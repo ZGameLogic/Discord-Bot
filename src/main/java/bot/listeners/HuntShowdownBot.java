@@ -8,7 +8,9 @@ import data.database.huntData.gun.HuntGun;
 import data.database.huntData.gun.HuntGunRepository;
 import data.database.huntData.item.HuntItem;
 import data.database.huntData.item.HuntItemRepository;
+import data.intermediates.hunt.HuntLoadout;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -85,16 +87,20 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
                 case "disable_medkit_melee": medkitMelee = true; break;
             }
         }
-
-        System.out.println(generateLoadout(
+        // TODO create picture
+        // TODO upload picture
+        Message message = event.getMessage();
+        HuntLoadout loadout = generateLoadout(
                 dualWielding,
                 quartermaster,
                 specialAmmo,
                 medkitMelee,
                 huntItemRepository,
                 huntGunRepository
-        ));
-
+        );
+        message.editMessageEmbeds(
+                loadoutMessage(loadout, "", message.getEmbeds().get(0))
+        ).queue();
 
         // huntItemRepository.findItemsByType(HuntItem.Type.TOOL.name()).forEach(tool -> System.out.println(tool.getName()));
 

@@ -3,6 +3,7 @@ package data.database.huntData.gun;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import javax.persistence.Embeddable;
 
@@ -16,5 +17,7 @@ public class AmmoType {
     private String asset;
     private boolean special;
     private boolean secondarySlotOnly;
+
+    public String toString(){ return name; }
 
 }
