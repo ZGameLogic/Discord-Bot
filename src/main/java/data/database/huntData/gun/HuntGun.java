@@ -39,14 +39,6 @@ public class HuntGun {
 
     private String asset;
 
-    public String getAsset(){
-        if(dualWieldable){
-            int index = slot == Slot.MEDIUM ? 1 : 0;
-            return asset.split(",")[index].replace(" ", "");
-        }
-        return asset;
-    }
-
     public AmmoType getDefaultAmmo(){
         for(AmmoType type: ammoTypes){
             if(!type.isSpecial()){
