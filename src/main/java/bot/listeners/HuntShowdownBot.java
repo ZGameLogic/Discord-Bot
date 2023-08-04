@@ -94,28 +94,17 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
             }
         }
 
-//        for(HuntGun gun: huntGunRepository.findAll()){
-//            try {
-//                if(gun.getAsset() != null){
-//                    ImageIO.read(HuntShowdownBot.class.getClassLoader().getResourceAsStream("assets/HuntShowdown/" + gun.getAsset()));
-//                } else {
-//                    System.out.println("Asset is null for " + gun.getName());
-//                }
-//            } catch(Exception e) {
-//                System.out.println("Unable to load asset for " + gun.getName() + "\n\t" + gun.getAsset());
-//            }
-//            for(AmmoType ammo: gun.getAmmoTypes()){
-//                try {
-//                    if(ammo.getAsset() != null) {
-//                        ImageIO.read(HuntShowdownBot.class.getClassLoader().getResourceAsStream("assets/HuntShowdown/" + ammo.getAsset()));
-//                    } else {
-//                        System.out.println("Asset is null for " + ammo.getName());
-//                    }
-//                } catch(Exception e) {
-//                    System.out.println("Unable to load asset for " + ammo.getName() + "\n\t" + ammo.getAsset());
-//                }
-//            }
-//        }
+        for(HuntItem item: huntItemRepository.findAll()){
+            try {
+                if(item.getAsset() != null){
+                    ImageIO.read(HuntShowdownBot.class.getClassLoader().getResourceAsStream("assets/HuntShowdown/" + item.getAsset()));
+                } else {
+                    System.out.println("Asset is null for " + item.getName());
+                }
+            } catch(Exception e) {
+                System.out.println("Unable to load asset for " + item.getName() + "\n\t" + item.getAsset());
+            }
+        }
 
         Message message = event.getMessage();
         HuntLoadout loadout = generateLoadout(
@@ -143,21 +132,6 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
         }
         event.deferEdit().queue();
     }
-
-    //    private void spawnDungeon() {
-//        GameConfigValues config = data.getGameConfig().loadSerialized();
-//        TextChannel dungeonsTC = guild.getTextChannelById(config.getChannelIds().get("dungeons"));
-//        Emoji activate = guild.getEmojiById(config.getIconIds().get("Activate"));
-//        Dungeon dungeon = DungeonGenerator.GenerateRandomDungeon();
-//        DungeonGenerator.saveDungeon(dungeon);
-//        File dungeonPhoto = new File("arena\\dungeon photos\\dungeon.png");
-//        logger.info("\tSpawned dungeon");
-//        Message message = dungeonsTC.sendFiles(FileUpload.fromData(dungeonPhoto)).setEmbeds(EmbedMessageGenerator.generate(dungeon)).complete();
-//        dungeon.setId(message.getId());
-//        message.addReaction(activate).queue();
-//        data.saveData(dungeon);
-//        dungeonPhoto.renameTo(new File("arena\\dungeon photos\\" + dungeon.getId() + ".png"));
-//    }
 
     @ButtonResponse("disable_dual")
     private void disableDualWielding(ButtonInteractionEvent event){

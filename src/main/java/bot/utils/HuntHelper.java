@@ -103,7 +103,7 @@ public abstract class HuntHelper {
         // tools
         LinkedList<HuntItem> tools = new LinkedList<>();
         if(medkitMelee){
-            tools.add(huntItemRepository.findById("Medkit").get());
+            tools.add(huntItemRepository.findById("First Aid Kit").get());
             LinkedList<HuntItem> melee = huntItemRepository.findItemsByType(HuntItem.Type.MELEE.name());
             Collections.shuffle(melee);
             tools.add(melee.getFirst());
@@ -166,6 +166,22 @@ public abstract class HuntHelper {
                 pane.drawImage(ammoImage, xOffset, 120, null);
                 xOffset += 60;
             }
+
+            xOffset = 10;
+            for(HuntItem item: loadout.getTools()){
+                BufferedImage ammoImage = ImageIO.read(HuntHelper.class.getClassLoader().getResourceAsStream("assets/HuntShowdown/" + item.getAsset()));
+                pane.drawImage(ammoImage, xOffset, 230, null);
+                xOffset += 95;
+            }
+
+            xOffset = 10;
+            for(HuntItem item: loadout.getConsumables()){
+                BufferedImage ammoImage = ImageIO.read(HuntHelper.class.getClassLoader().getResourceAsStream("assets/HuntShowdown/" + item.getAsset()));
+                pane.drawImage(ammoImage, xOffset, 340, null);
+                xOffset += 95;
+            }
+
+
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
