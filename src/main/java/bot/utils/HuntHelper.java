@@ -10,9 +10,14 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 
+import javax.imageio.ImageIO;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedList;
+import java.util.Random;
 
 public abstract class HuntHelper {
     private final static Color HUNT_COLOR = new Color(0, 0, 0);
@@ -30,6 +35,7 @@ public abstract class HuntHelper {
     public static MessageEmbed loadoutMessage(HuntLoadout loadout, String imageURL, MessageEmbed original){
         EmbedBuilder eb = new EmbedBuilder(original);
         // TODO add image URL
+        eb.setImage(imageURL);
         eb.clearFields();
         eb.addField("Loadout", loadout.toString(), false);
         return eb.build();
@@ -69,7 +75,7 @@ public abstract class HuntHelper {
                             !primary.hasSecondaryAmmo() ? primary.getAmmoTypes() :
                                     (i == 0 ? primary.primaryAmmo() : primary.secondaryAmmo());
                     Collections.shuffle(ammoPool);
-                    primaryAmmo.add(ammoPool.get(0));
+                    if(!ammoPool.isEmpty()) primaryAmmo.add(ammoPool.get(0));
                 }
             }
             if(secondary.getSpecialAmmoCount() != 0) {
@@ -78,7 +84,7 @@ public abstract class HuntHelper {
                             !secondary.hasSecondaryAmmo() ? secondary.getAmmoTypes() :
                                     (i == 0 ? secondary.primaryAmmo() : secondary.secondaryAmmo());
                     Collections.shuffle(ammoPool);
-                    secondaryAmmo.add(ammoPool.get(0));
+                    if(!ammoPool.isEmpty()) secondaryAmmo.add(ammoPool.get(0));
                 }
             }
         } else {
@@ -124,23 +130,50 @@ public abstract class HuntHelper {
         return new HuntLoadout(primary, secondary, primaryAmmo, secondaryAmmo, tools, consumables);
     }
 
+    public static BufferedImage generatePhoto(HuntLoadout loadout){
+        final int width = 500;
+        final int height = 600;
+        // Constructs a BufferedImage of one of the predefined image types.
+        BufferedImage bufferedImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+
+        // Create a graphics which can be used to draw into the buffered image
+        Graphics2D pane = bufferedImage.createGraphics();
+
+        try {
+            // background
+            int num = new Random().nextInt(3) + 1;
+            BufferedImage background = ImageIO.read(HuntHelper.class.getClassLoader().getResourceAsStream("assets/HuntShowdown/background" + num + ".png"));
+            pane.drawImage(background, 0, 0, null);
+
+            BufferedImage primary = ImageIO.read(HuntHelper.class.getClassLoader().getResourceAsStream("assets/HuntShowdown/" + loadout.getPrimary().getAsset()));
+            pane.drawImage(primary, 10, 10, null);
+            int xOffset = primary.getWidth() + 20;
+            for(AmmoType ammo: loadout.getPrimaryAmmo()){
+                BufferedImage ammoImage = ImageIO.read(HuntHelper.class.getClassLoader().getResourceAsStream("assets/HuntShowdown/" + ammo.getAsset()));
+                pane.drawImage(ammoImage, xOffset, 10, null);
+                xOffset += 60;
+            }
+
+            BufferedImage secondary = ImageIO.read(HuntHelper.class.getClassLoader().getResourceAsStream("assets/HuntShowdown/" + loadout.getSecondary().getAsset()));
+            pane.drawImage(secondary, 10, 120, null);
+            xOffset = secondary.getWidth() + 20;
+            if(loadout.getSecondary().isDualWieldable() && loadout.getSecondary().getSlot() == HuntGun.Slot.MEDIUM){
+                pane.drawImage(secondary, xOffset, 120, null);
+                xOffset += secondary.getWidth() + 10;
+            }
+            for(AmmoType ammo: loadout.getSecondaryAmmo()){
+                BufferedImage ammoImage = ImageIO.read(HuntHelper.class.getClassLoader().getResourceAsStream("assets/HuntShowdown/" + ammo.getAsset()));
+                pane.drawImage(ammoImage, xOffset, 120, null);
+                xOffset += 60;
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return bufferedImage;
+    }
+
 }
-
-
-//    private void spawnDungeon() {
-//        GameConfigValues config = data.getGameConfig().loadSerialized();
-//        TextChannel dungeonsTC = guild.getTextChannelById(config.getChannelIds().get("dungeons"));
-//        Emoji activate = guild.getEmojiById(config.getIconIds().get("Activate"));
-//        Dungeon dungeon = DungeonGenerator.GenerateRandomDungeon();
-//        DungeonGenerator.saveDungeon(dungeon);
-//        File dungeonPhoto = new File("arena\\dungeon photos\\dungeon.png");
-//        logger.info("\tSpawned dungeon");
-//        Message message = dungeonsTC.sendFiles(FileUpload.fromData(dungeonPhoto)).setEmbeds(EmbedMessageGenerator.generate(dungeon)).complete();
-//        dungeon.setId(message.getId());
-//        message.addReaction(activate).queue();
-//        data.saveData(dungeon);
-//        dungeonPhoto.renameTo(new File("arena\\dungeon photos\\" + dungeon.getId() + ".png"));
-//    }
 
 //    public static File saveDungeon(Dungeon dungeon) {
 //        int[][] map = dungeon.getMap();
