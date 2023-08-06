@@ -49,4 +49,7 @@ public class ConfigLoader {
 
 	@Value("${api.token}")
 	private String apiToken;
+
+	@Value("${loadout.chat.id}")
+	private String loadoutChatId;
 }

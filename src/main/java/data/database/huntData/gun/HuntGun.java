@@ -39,21 +39,18 @@ public class HuntGun {
 
     private String asset;
 
-    public String getAsset(){
-        if(dualWieldable){
-            int index = slot == Slot.MEDIUM ? 1 : 0;
-            return asset.split(",")[index].replace(" ", "");
-        }
-        return asset;
-    }
-
     public AmmoType getDefaultAmmo(){
         for(AmmoType type: ammoTypes){
             if(!type.isSpecial()){
                 return type;
             }
         }
-        return ammoTypes.get(0);
+        try {
+            return ammoTypes.get(0);
+        } catch (Exception e){
+            System.out.println("error getting default ammo for " + name);
+            throw e;
+        }
     }
 
     public AmmoType getDefaultAmmo(boolean secondary){
@@ -74,7 +71,11 @@ public class HuntGun {
 
     public LinkedList<AmmoType> primaryAmmo(){
         LinkedList<AmmoType> primaryAmmo = new LinkedList<>();
-        Collections.copy(primaryAmmo, ammoTypes);
+        try {
+            Collections.copy(primaryAmmo, ammoTypes);
+        } catch(IndexOutOfBoundsException e){
+            System.out.println("Index out of bounds for primary ammo for " + name);
+        }
         primaryAmmo.removeIf(AmmoType::isSecondarySlotOnly);
         return primaryAmmo;
     }
