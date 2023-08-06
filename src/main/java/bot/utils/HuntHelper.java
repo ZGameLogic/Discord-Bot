@@ -139,7 +139,7 @@ public abstract class HuntHelper {
         Graphics2D pane = bufferedImage.createGraphics();
 
         // background
-        int num = new Random().nextInt(3) + 1;
+        int num = new Random().nextInt(11) + 1;
         BufferedImage background = getAsset("background" + num + ".png");
         pane.drawImage(background, 0, 0, null);
 
