@@ -4,12 +4,11 @@ import application.App;
 import com.zgamelogic.AdvancedListenerAdapter;
 import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
-import data.database.huntData.gun.AmmoType;
-import data.database.huntData.gun.HuntGun;
 import data.database.huntData.gun.HuntGunRepository;
 import data.database.huntData.item.HuntItem;
 import data.database.huntData.item.HuntItemRepository;
 import data.intermediates.hunt.HuntLoadout;
+import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -23,11 +22,11 @@ import net.dv8tion.jda.api.utils.FileUpload;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
-import java.util.LinkedList;
 import java.util.Random;
 
 import static bot.utils.HuntHelper.*;
 
+@Slf4j
 public class HuntShowdownBot extends AdvancedListenerAdapter {
 
     private final GuildDataRepository guildData;
