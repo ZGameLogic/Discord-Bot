@@ -44,14 +44,14 @@ public abstract class HuntHelper {
         // guns
         int gunBudget = quartermaster ? 5 : 4;
         // secondary fist
-        LinkedList<HuntGun> mediumSmallGuns = huntGunRepository.findAllMediumAndSmallGuns();
+        LinkedList<HuntGun> gunPool = quartermaster ? huntGunRepository.findAllMediumGuns() : huntGunRepository.findAllMediumAndSmallGuns();
         if(dualWield){ // add duals if the user wants them in
             LinkedList<HuntGun> duals = huntGunRepository.findAllDuals();
             duals.forEach(gun -> gun.setSlot(HuntGun.Slot.MEDIUM));
-            mediumSmallGuns.addAll(duals);
+            gunPool.addAll(duals);
         }
-        Collections.shuffle(mediumSmallGuns);
-        HuntGun secondary = mediumSmallGuns.getFirst();
+        Collections.shuffle(gunPool);
+        HuntGun secondary = gunPool.getFirst();
 
         gunBudget -= secondary.getSlot() == HuntGun.Slot.MEDIUM ? 2 : 1;
         // primary second
