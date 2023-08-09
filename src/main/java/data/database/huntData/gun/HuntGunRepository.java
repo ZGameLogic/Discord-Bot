@@ -10,6 +10,9 @@ public interface HuntGunRepository extends JpaRepository<HuntGun, String> {
     @Query(value = "SELECT * FROM hunt_guns g WHERE g.slot != 'LARGE'", nativeQuery = true)
     LinkedList<HuntGun> findAllMediumAndSmallGuns();
 
+    @Query(value = "SELECT * FROM hunt_guns g WHERE g.slot = 'MEDIUM'", nativeQuery = true)
+    LinkedList<HuntGun> findAllMediumGuns();
+
     @Query(value = "SELECT * FROM hunt_guns g WHERE g.slot = 'LARGE'", nativeQuery = true)
     LinkedList<HuntGun> findAllLargeGuns();
 
