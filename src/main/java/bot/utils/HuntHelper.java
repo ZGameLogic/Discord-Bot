@@ -55,7 +55,7 @@ public abstract class HuntHelper {
 
         gunBudget -= secondary.getSlot() == HuntGun.Slot.MEDIUM ? 2 : 1;
         // primary second
-        LinkedList<HuntGun> primaryPool = gunBudget == 3 ? huntGunRepository.findAllLargeGuns() : huntGunRepository.findAllMediumAndSmallGuns();
+        LinkedList<HuntGun> primaryPool = gunBudget >= 3 ? huntGunRepository.findAllLargeGuns() : huntGunRepository.findAllMediumAndSmallGuns();
         if(dualWield && gunBudget != 3){// add duals if the user wants them in
             LinkedList<HuntGun> duals = huntGunRepository.findAllDuals();
             duals.forEach(gun -> gun.setSlot(HuntGun.Slot.MEDIUM));
