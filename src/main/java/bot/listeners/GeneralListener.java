@@ -72,6 +72,11 @@ public class GeneralListener extends AdvancedListenerAdapter {
                     } else {
                         ics.add(Button.success("disable_hunt", "Hunt bot"));
                     }
+                    if(guild.getGeneratorEnabled() == null || !guild.getGeneratorEnabled()){
+                        ics.add(Button.danger("enable_generator", "Generator bot"));
+                    } else {
+                        ics.add(Button.success("disable_generator", "Generator bot"));
+                    }
                     ActionRow row = ActionRow.of(ics);
                     components.add(row);
                     message.editMessageComponents(components).queue();
