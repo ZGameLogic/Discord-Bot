@@ -33,7 +33,6 @@ public abstract class HuntHelper {
 
     public static MessageEmbed loadoutMessage(HuntLoadout loadout, String imageURL, MessageEmbed original){
         EmbedBuilder eb = new EmbedBuilder(original);
-        // TODO add image URL
         eb.setImage(imageURL);
         eb.clearFields();
         eb.addField("Loadout", loadout.toString(), false);
@@ -55,7 +54,7 @@ public abstract class HuntHelper {
 
         gunBudget -= secondary.getSlot() == HuntGun.Slot.MEDIUM ? 2 : 1;
         // primary second
-        LinkedList<HuntGun> primaryPool = gunBudget >= 3 ? huntGunRepository.findAllLargeGuns() : huntGunRepository.findAllMediumAndSmallGuns();
+        LinkedList<HuntGun> primaryPool = gunBudget == 3 ? huntGunRepository.findAllLargeGuns() : huntGunRepository.findAllMediumGuns();
         if(dualWield && gunBudget != 3){// add duals if the user wants them in
             LinkedList<HuntGun> duals = huntGunRepository.findAllDuals();
             duals.forEach(gun -> gun.setSlot(HuntGun.Slot.MEDIUM));
@@ -146,6 +145,10 @@ public abstract class HuntHelper {
         BufferedImage primary = getAsset(loadout.getPrimary().getAsset());
         pane.drawImage(primary, 10, 10, null);
         int xOffset = primary.getWidth() + 20;
+        if(loadout.getSecondary().isDualWieldable() && loadout.getSecondary().getSlot() == HuntGun.Slot.MEDIUM){
+            pane.drawImage(primary, xOffset, 10, null);
+            xOffset += primary.getWidth() + 10;
+        }
         for(AmmoType ammo: loadout.getPrimaryAmmo()){
             BufferedImage ammoImage = getAsset(ammo.getAsset());
             pane.drawImage(ammoImage, xOffset, 10, null);
