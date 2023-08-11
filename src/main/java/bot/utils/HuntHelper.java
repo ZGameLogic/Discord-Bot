@@ -145,7 +145,7 @@ public abstract class HuntHelper {
         BufferedImage primary = getAsset(loadout.getPrimary().getAsset());
         pane.drawImage(primary, 10, 10, null);
         int xOffset = primary.getWidth() + 20;
-        if(loadout.getSecondary().isDualWieldable() && loadout.getSecondary().getSlot() == HuntGun.Slot.MEDIUM){
+        if(loadout.getPrimary().isDualWieldable() && loadout.getPrimary().getSlot() == HuntGun.Slot.MEDIUM){
             pane.drawImage(primary, xOffset, 10, null);
             xOffset += primary.getWidth() + 10;
         }
