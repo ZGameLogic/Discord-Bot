@@ -44,4 +44,8 @@ public class GuildData {
     // Hunt stuff
     private Boolean huntEnabled;
     private Long randomizerSummonId;
+
+    // Generator stuff
+    private Boolean generatorEnabled;
+    private Long generateDungeonCommandId;
 }
