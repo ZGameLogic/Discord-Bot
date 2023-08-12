@@ -70,19 +70,13 @@ public class HuntGun {
     }
 
     public LinkedList<AmmoType> primaryAmmo(){
-        LinkedList<AmmoType> primaryAmmo = new LinkedList<>();
-        try {
-            Collections.copy(primaryAmmo, ammoTypes);
-        } catch(IndexOutOfBoundsException e){
-            System.out.println("Index out of bounds for primary ammo for " + name);
-        }
+        LinkedList<AmmoType> primaryAmmo = new LinkedList<>(ammoTypes);
         primaryAmmo.removeIf(AmmoType::isSecondarySlotOnly);
         return primaryAmmo;
     }
 
     public LinkedList<AmmoType> secondaryAmmo(){
-        LinkedList<AmmoType> secondaryAmmo = new LinkedList<>();
-        Collections.copy(secondaryAmmo, ammoTypes);
+        LinkedList<AmmoType> secondaryAmmo = new LinkedList<>(ammoTypes);
         secondaryAmmo.removeIf(ammoType -> !ammoType.isSecondarySlotOnly());
         return secondaryAmmo;
     }
