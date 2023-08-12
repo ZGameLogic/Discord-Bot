@@ -84,7 +84,7 @@ public class Triangle {
     }
 
     public List<Vertex> getVertexes(){
-        LinkedList<Vertex> vertexes = new LinkedList<>(Arrays.asList(new Vertex[]{v1, v2, v3}));
+        LinkedList<Vertex> vertexes = new LinkedList<>(Arrays.asList(v1, v2, v3));
         Collections.sort(vertexes);
         return vertexes;
     }
