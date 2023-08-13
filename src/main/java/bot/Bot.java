@@ -58,8 +58,7 @@ public class Bot {
 			"  / /\\ \\|   \\(_)___ __ ___ _ _ __| | | _ ) ___| |_\\ \\ \\ \\ \r\n" + 
 			" < <  > > |) | (_-</ _/ _ \\ '_/ _` | | _ \\/ _ \\  _|> > > >\r\n" + 
 			"  \\_\\/_/|___/|_/__/\\__\\___/_| \\__,_| |___/\\___/\\__/_/_/_/ \r\n" + 
-			"  v3.0.0\tBen Shabowski\r\n" +
-			"";
+			"  v3.0.0\tBen Shabowski\r\n";
 
 	private final CardBot CB;
 	private final JDA bot;
