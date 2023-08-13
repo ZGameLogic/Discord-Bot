@@ -87,7 +87,7 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
             try {
                 event.getJDA()
                         .getGuildById(randomizerData.getGuildId())
-                        .getTextChannelById(randomizerData.getChannelId())
+                        .getChannelById(GuildMessageChannel.class, randomizerData.getChannelId())
                         .deleteMessageById(randomizerData.getMessageId()).queue();
                 huntRandomizerRepository.delete(randomizerData);
             } catch (Exception ignored){}
