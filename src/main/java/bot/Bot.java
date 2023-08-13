@@ -1,7 +1,5 @@
 package bot;
 
-import javax.annotation.PostConstruct;
-
 import bot.listeners.*;
 import com.zgamelogic.AdvancedListenerAdapter;
 import data.database.cardData.cards.CardData;
@@ -29,8 +27,6 @@ import org.apache.http.client.utils.URLEncodedUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -54,26 +50,8 @@ import java.util.*;
 @RestController
 public class Bot {
 
-	@Autowired
-	private GuildDataRepository guildData;
-	@Autowired
-	private PlanRepository planRepository;
-	@Autowired
-	private UserDataRepository userData;
-	@Autowired
-	private CardDataRepository cardDataRepository;
-	@Autowired
-	private GuildCardDataRepository guildCardDataRepository;
-	@Autowired
-	private PlayerCardDataRepository playerCardDataRepository;
-	@Autowired
-	private AuthDataRepository authData;
-	@Autowired
-	private HuntItemRepository huntItemRepository;
-	@Autowired
-	private HuntGunRepository huntGunRepository;
-	@Autowired
-	private HuntRandomizerRepository huntRandomizerRepository;
+	private final CardDataRepository cardDataRepository;
+	private final AuthDataRepository authData;
 
 	private final static String TITLE = "\r\n" +
 			"   ____  ___  _                   _   ___      _  ______  \r\n" + 
@@ -82,17 +60,18 @@ public class Bot {
 			"  \\_\\/_/|___/|_/__/\\__\\___/_| \\__,_| |___/\\___/\\__/_/_/_/ \r\n" + 
 			"  v3.0.0\tBen Shabowski\r\n" +
 			"";
-	
-	private final Logger logger = LoggerFactory.getLogger(Bot.class);
-	private CardBot CB;
-	private PlannerBot PB;
-	private JDA bot;
 
-	@PostConstruct
-	public void start() {
+	private final CardBot CB;
+	private final JDA bot;
+
+	@Autowired
+	public Bot(GuildDataRepository guildData, PlanRepository planRepository, UserDataRepository userData, CardDataRepository cardDataRepository, GuildCardDataRepository guildCardDataRepository, PlayerCardDataRepository playerCardDataRepository, AuthDataRepository authData, HuntItemRepository huntItemRepository, HuntGunRepository huntGunRepository, HuntRandomizerRepository huntRandomizerRepository) {
+		this.cardDataRepository = cardDataRepository;
+		this.authData = authData;
+
 		ConfigLoader config = App.config;
 		System.out.println(TITLE);
-		
+
 		// Create bot
 		JDABuilder bot = JDABuilder.createDefault(config.getBotToken());
 		bot.enableIntents(GatewayIntent.GUILD_PRESENCES, GatewayIntent.MESSAGE_CONTENT);
@@ -109,7 +88,7 @@ public class Bot {
 		listeners.add(new GeneratorBot(guildData));
 		// listeners.add(new VirusBot());
 		listeners.add(new GeneralListener(guildData));
-		PB = new PlannerBot(planRepository, userData, guildData);
+		PlannerBot PB = new PlannerBot(planRepository, userData, guildData);
 		listeners.add(PB);
 		CB = new CardBot(guildData, cardDataRepository, guildCardDataRepository, playerCardDataRepository);
 		listeners.add(CB);
@@ -120,12 +99,12 @@ public class Bot {
 		}
 
 		this.bot = bot.build();
-		
+
 		// Login
 		try {
 			this.bot.awaitReady();
 		} catch (InterruptedException e) {
-			logger.error("Unable to launch bot");
+			log.error("Unable to launch bot");
 		}
 	}
 
