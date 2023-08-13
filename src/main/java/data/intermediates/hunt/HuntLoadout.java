@@ -31,14 +31,12 @@ public class HuntLoadout {
     }
 
     public String toString(){
-        StringBuilder string = new StringBuilder();
-        string.append(primary.propperName()).append(": ");
-        string.append(String.join(" | ", convertToStringArray(primaryAmmo))).append("\n");
-        string.append(secondary.propperName()).append(": ");
-        string.append(String.join(" | ", convertToStringArray(secondaryAmmo))).append("\n");
-        string.append(String.join(", ", convertToStringArrayT(tools))).append("\n");
-        string.append(String.join(", ", convertToStringArrayT(consumables))).append("\n");
-        return string.toString();
+        return primary.propperName() + ": " +
+                String.join(" | ", convertToStringArray(primaryAmmo)) + "\n" +
+                secondary.propperName() + ": " +
+                String.join(" | ", convertToStringArray(secondaryAmmo)) + "\n" +
+                String.join(", ", convertToStringArrayT(tools)) + "\n" +
+                String.join(", ", convertToStringArrayT(consumables)) + "\n";
     }
 
     public LinkedList<String> convertToStringArray(LinkedList<AmmoType> stuff){
@@ -56,9 +54,9 @@ public class HuntLoadout {
     public String[] convertToSlashCommandOptions(){
         LinkedList<String> options = new LinkedList<>();
         options.add(primary.getName());
-        primaryAmmo.forEach(ammo -> options.add(primary.getName() + " " + ammo.getName()));
+        if(primaryAmmo != null) primaryAmmo.forEach(ammo -> options.add(primary.getName() + " " + ammo.getName()));
         options.add(secondary.getName());
-        secondaryAmmo.forEach(ammo -> options.add(secondary.getName() + " " + ammo.getName()));
+        if(secondaryAmmo != null) secondaryAmmo.forEach(ammo -> options.add(secondary.getName() + " " + ammo.getName()));
         tools.forEach(tool -> options.add(tool.getName()));
         consumables.forEach(cons -> options.add(cons.getName()));
         return options.toArray(new String[0]);
@@ -85,7 +83,6 @@ public class HuntLoadout {
 
         for(AmmoType type: primaryAmmo) if(type.getName().equals(strippedItem)) {
             primaryAmmo.set(primaryAmmo.indexOf(type), null);
-            return;
         }
 
         if(secondary.getName().equals(item)){
@@ -95,17 +92,14 @@ public class HuntLoadout {
 
         for(AmmoType type: secondaryAmmo) if(type.getName().equals(strippedItem)){
             secondaryAmmo.set(secondaryAmmo.indexOf(type), null);
-            return;
         }
 
         for(HuntItem tool: tools) if(tool.getName().equals(item)) {
             tools.set(tools.indexOf(tool), null);
-            return;
         }
 
         for(HuntItem cons: consumables) if(cons.getName().equals(item)){
             consumables.set(consumables.indexOf(cons), null);
-            return;
         }
     }
 }

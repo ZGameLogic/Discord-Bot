@@ -67,14 +67,14 @@ public abstract class HuntHelper {
         LinkedList<AmmoType> primaryAmmo = new LinkedList<>();
         if(primary.split(":").length > 1){
             for(String ammoName: primary.split(":")[1].split("\\|")){
-                primaryAmmo.add(primaryGun.getAmmoTypeFromString(ammoName.trim()));
+                if(ammoName != null && !ammoName.trim().isEmpty()) primaryAmmo.add(primaryGun.getAmmoTypeFromString(ammoName.trim()));
             }
         }
 
         LinkedList<AmmoType> secondaryAmmo = new LinkedList<>();
         if(secondary.split(":").length > 1){
             for(String ammoName: secondary.split(":")[1].split("\\|")){
-                secondaryAmmo.add(secondaryGun.getAmmoTypeFromString(ammoName.trim()));
+                if(ammoName != null && !ammoName.trim().isEmpty()) secondaryAmmo.add(secondaryGun.getAmmoTypeFromString(ammoName.trim()));
             }
         }
 
@@ -103,9 +103,14 @@ public abstract class HuntHelper {
 
         // guns
         int gunBudget = quartermaster ? 5 : 4;
+        if(loadout.getPrimary() != null){
+            gunBudget -= loadout.getPrimary().getSlot() == HuntGun.Slot.MEDIUM ? 2 : loadout.getPrimary().getSlot() == HuntGun.Slot.SMALL ? 1 : 3;
+        }
         // secondary fist
         while(loadout.getSecondary() == null) {
-            LinkedList<HuntGun> gunPool = quartermaster ? huntGunRepository.findAllMediumGuns() : huntGunRepository.findAllMediumAndSmallGuns();
+            LinkedList<HuntGun> gunPool = gunBudget >= 2 ?
+                    huntGunRepository.findAllMediumGuns()
+                    : huntGunRepository.findAllSmallGuns();
             if (dualWield) { // add duals if the user wants them in
                 LinkedList<HuntGun> duals = huntGunRepository.findAllDuals();
                 duals.forEach(gun -> gun.setSlot(HuntGun.Slot.MEDIUM));
