@@ -39,6 +39,180 @@ public abstract class HuntHelper {
         return eb.build();
     }
 
+    public static HuntLoadout getLoadoutFromEmbed(MessageEmbed message, HuntGunRepository gunRepository, HuntItemRepository itemRepository) {
+        String loadout = message.getFields().get(0).getValue();
+        String primary = loadout.split("\n")[0];
+        String secondary = loadout.split("\n")[1];
+        String tools = loadout.split("\n")[2];
+        String consumables = loadout.split("\n")[3];
+
+        HuntGun primaryGun;
+        String gun = primary.split(":")[0];
+        if(gun.contains("Dual ")) {
+            primaryGun = gunRepository.getOne(primary.split(":")[0].replace("Dual ", ""));
+            primaryGun.setSlot(HuntGun.Slot.MEDIUM);
+        } else {
+            primaryGun = gunRepository.getOne(primary.split(":")[0]);
+        }
+
+        HuntGun secondaryGun;
+        gun = secondary.split(":")[0];
+        if(gun.contains("Dual ")) {
+            secondaryGun = gunRepository.getOne(secondary.split(":")[0].replace("Dual ", ""));
+            secondaryGun.setSlot(HuntGun.Slot.MEDIUM);
+        } else {
+            secondaryGun = gunRepository.getOne(secondary.split(":")[0]);
+        }
+
+        LinkedList<AmmoType> primaryAmmo = new LinkedList<>();
+        if(primary.split(":").length > 1){
+            for(String ammoName: primary.split(":")[1].split("\\|")){
+                primaryAmmo.add(primaryGun.getAmmoTypeFromString(ammoName.trim()));
+            }
+        }
+
+        LinkedList<AmmoType> secondaryAmmo = new LinkedList<>();
+        if(secondary.split(":").length > 1){
+            for(String ammoName: secondary.split(":")[1].split("\\|")){
+                secondaryAmmo.add(secondaryGun.getAmmoTypeFromString(ammoName.trim()));
+            }
+        }
+
+        LinkedList<HuntItem> toolsList = new LinkedList<>();
+        for(String tool: tools.split(",")){
+            itemRepository.findById(tool.trim()).ifPresent(toolsList::add);
+        }
+
+        LinkedList<HuntItem> consumablesList = new LinkedList<>();
+        for(String consumable: consumables.split(",")){
+            itemRepository.findById(consumable.trim()).ifPresent(consumablesList::add);
+        }
+
+        HuntLoadout huntLoadout = new HuntLoadout();
+        huntLoadout.setPrimary(primaryGun);
+        huntLoadout.setPrimaryAmmo(primaryAmmo);
+        huntLoadout.setSecondary(secondaryGun);
+        huntLoadout.setSecondaryAmmo(secondaryAmmo);
+        huntLoadout.setTools(toolsList);
+        huntLoadout.setConsumables(consumablesList);
+
+        return huntLoadout;
+    }
+
+    public static HuntLoadout generateLoadout(HuntLoadout loadout, String item, boolean dualWield, boolean quartermaster, boolean specialAmmo, boolean medkitMelee, HuntItemRepository huntItemRepository, HuntGunRepository huntGunRepository){
+
+        // guns
+        int gunBudget = quartermaster ? 5 : 4;
+        // secondary fist
+        while(loadout.getSecondary() == null) {
+            LinkedList<HuntGun> gunPool = quartermaster ? huntGunRepository.findAllMediumGuns() : huntGunRepository.findAllMediumAndSmallGuns();
+            if (dualWield) { // add duals if the user wants them in
+                LinkedList<HuntGun> duals = huntGunRepository.findAllDuals();
+                duals.forEach(gun -> gun.setSlot(HuntGun.Slot.MEDIUM));
+                gunPool.addAll(duals);
+            }
+            Collections.shuffle(gunPool);
+            HuntGun gun = gunPool.getFirst();
+            if(!gun.getName().equals(item)){
+                loadout.setSecondary(gun);
+                LinkedList<AmmoType> ammos = new LinkedList<>();
+                for (int i = 0; i < gun.getSpecialAmmoCount() ; i++) ammos.add(null);
+                loadout.setSecondaryAmmo(ammos);
+            }
+        }
+        gunBudget -= loadout.getSecondary().getSlot() == HuntGun.Slot.MEDIUM ? 2 : 1;
+        // primary second
+        while(loadout.getPrimary() == null) {
+            LinkedList<HuntGun> primaryPool = gunBudget == 3 ? huntGunRepository.findAllLargeGuns() : huntGunRepository.findAllMediumGuns();
+            if (dualWield && gunBudget != 3) {// add duals if the user wants them in
+                LinkedList<HuntGun> duals = huntGunRepository.findAllDuals();
+                duals.forEach(gun -> gun.setSlot(HuntGun.Slot.MEDIUM));
+                primaryPool.addAll(duals);
+            }
+            Collections.shuffle(primaryPool);
+            HuntGun gun = primaryPool.getFirst();
+            if(!gun.getName().equals(item)){
+                loadout.setPrimary(gun);
+                LinkedList<AmmoType> ammos = new LinkedList<>();
+                for (int i = 0; i < gun.getSpecialAmmoCount() ; i++) ammos.add(null);
+                loadout.setPrimaryAmmo(ammos);
+            }
+        }
+
+        item = item.replace(loadout.getPrimary().getName(), "").replace(loadout.getSecondary().getName(), "").trim();
+
+        // primary ammo types
+        while(loadout.getPrimaryAmmo().contains(null)){
+            AmmoType ammo = null;
+            int i = loadout.getPrimaryAmmo().indexOf(null);
+            if(specialAmmo){
+                    LinkedList<AmmoType> ammoPool =
+                            !loadout.getPrimary().hasSecondaryAmmo() ? loadout.getPrimary().getAmmoTypes() :
+                                    (i == 0 ? loadout.getPrimary().primaryAmmo() : loadout.getPrimary().secondaryAmmo());
+                    Collections.shuffle(ammoPool);
+                    if(!ammoPool.isEmpty()) ammo = ammoPool.get(0);
+            } else {
+                    ammo = !loadout.getPrimary().hasSecondaryAmmo() ? loadout.getPrimary().getDefaultAmmo() : (i == 0 ? loadout.getPrimary().getDefaultAmmo(false) : loadout.getPrimary().getDefaultAmmo(true));
+            }
+            if (ammo != null && (!ammo.getName().equals(item) || !specialAmmo)) {
+                loadout.getPrimaryAmmo().set(loadout.getPrimaryAmmo().indexOf(null), ammo);
+            }
+        }
+
+        // secondary ammo types
+        while(loadout.getSecondaryAmmo().contains(null)) {
+            AmmoType ammo = null;
+            int i = loadout.getPrimaryAmmo().indexOf(null);
+            if (specialAmmo) {
+                LinkedList<AmmoType> ammoPool =
+                        !loadout.getSecondary().hasSecondaryAmmo() ? loadout.getSecondary().getAmmoTypes() :
+                                (i == 0 ? loadout.getSecondary().primaryAmmo() : loadout.getSecondary().secondaryAmmo());
+                Collections.shuffle(ammoPool);
+                if (!ammoPool.isEmpty()) ammo = ammoPool.get(0);
+            } else {
+                ammo = loadout.getSecondary().getDefaultAmmo();
+            }
+            if (ammo != null && (!ammo.getName().equals(item) || !specialAmmo)) {
+                loadout.getSecondaryAmmo().set(loadout.getSecondaryAmmo().indexOf(null), ammo);
+            }
+        }
+
+        // tools
+        while(loadout.getTools().contains(null)){
+            LinkedList<HuntItem> tools = new LinkedList<>();
+            if(medkitMelee){
+                if(loadout.getTools().indexOf(null) == 0){
+                    tools.add(huntItemRepository.findById("First Aid Kit").get());
+                } else if(loadout.getTools().indexOf(null) == 1){
+                    tools.addAll(huntItemRepository.findItemsByType(HuntItem.Type.MELEE.name()));
+                } else {
+                    tools.addAll(huntItemRepository.findAllTools());
+                }
+            } else {
+                tools.addAll(huntItemRepository.findAllTools());
+            }
+            Collections.shuffle(tools);
+            HuntItem tool = tools.getFirst();
+            if(!loadout.getTools().contains(tool) && (!tool.getName().equals(item) || tool.getName().equals("First Aid Kit"))) loadout.getTools().set(loadout.getTools().indexOf(null), tool);
+        }
+        // consumables
+        while(loadout.getConsumables().contains(null)){
+            LinkedList<HuntItem> consumables = new LinkedList<>();
+
+            if(medkitMelee){
+                consumables.addAll(huntItemRepository.findItemsByType(HuntItem.Type.HEALING.name()));
+            } else {
+                consumables.addAll(huntItemRepository.findAllConsumables());
+            }
+
+            Collections.shuffle(consumables);
+            HuntItem consumable = consumables.getFirst();
+            if(!consumable.getName().equals(item)) loadout.getConsumables().set(loadout.getConsumables().indexOf(null), consumable);
+        }
+
+        return loadout;
+    }
+
     public static HuntLoadout generateLoadout(boolean dualWield, boolean quartermaster, boolean specialAmmo, boolean medkitMelee, HuntItemRepository huntItemRepository, HuntGunRepository huntGunRepository){
         // guns
         int gunBudget = quartermaster ? 5 : 4;
