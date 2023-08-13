@@ -3,7 +3,6 @@ package data.database.huntData.gun;
 import lombok.*;
 
 import javax.persistence.*;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -79,6 +78,15 @@ public class HuntGun {
         LinkedList<AmmoType> secondaryAmmo = new LinkedList<>(ammoTypes);
         secondaryAmmo.removeIf(ammoType -> !ammoType.isSecondarySlotOnly());
         return secondaryAmmo;
+    }
+
+    public AmmoType getAmmoTypeFromString(String ammoType){
+        for(AmmoType ammo: ammoTypes){
+            if(ammo.getName().equals(ammoType)){
+                return ammo;
+            }
+        }
+        return null;
     }
 
     public LinkedList<AmmoType> getAmmoTypes(){

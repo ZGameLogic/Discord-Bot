@@ -5,14 +5,18 @@ import com.zgamelogic.AdvancedListenerAdapter;
 import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
 import data.database.huntData.gun.HuntGunRepository;
-import data.database.huntData.item.HuntItem;
 import data.database.huntData.item.HuntItemRepository;
+import data.database.huntData.randomizer.HuntRandomizerRepository;
+import data.database.huntData.randomizer.RandomizerData;
 import data.intermediates.hunt.HuntLoadout;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.interactions.commands.Command;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
@@ -22,7 +26,10 @@ import net.dv8tion.jda.api.utils.FileUpload;
 import javax.imageio.ImageIO;
 import java.io.File;
 import java.io.IOException;
+import java.util.Optional;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static bot.utils.HuntHelper.*;
 
@@ -32,11 +39,13 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
     private final GuildDataRepository guildData;
     private final HuntGunRepository huntGunRepository;
     private final HuntItemRepository huntItemRepository;
+    private final HuntRandomizerRepository huntRandomizerRepository;
 
-    public HuntShowdownBot(GuildDataRepository guildData, HuntGunRepository huntGunRepository, HuntItemRepository huntItemRepository) {
+    public HuntShowdownBot(GuildDataRepository guildData, HuntGunRepository huntGunRepository, HuntItemRepository huntItemRepository, HuntRandomizerRepository huntRandomizerRepository) {
         this.guildData = guildData;
         this.huntGunRepository = huntGunRepository;
         this.huntItemRepository = huntItemRepository;
+        this.huntRandomizerRepository = huntRandomizerRepository;
     }
 
     @ButtonResponse("enable_hunt")
@@ -46,7 +55,9 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
         long randomizerCommandId = guild.upsertCommand(
                 Commands.slash("hunt", "Hunt Showdown commands")
                         .addSubcommands(
-                                new SubcommandData("randomizer", "Summons the randomizer")
+                                new SubcommandData("randomizer", "Summons the randomizer"),
+                                new SubcommandData("reroll", "Reroll a weapon, tool, or consumable you don't have")
+                                        .addOption(OptionType.STRING, "item", "Weapon, tool, or consumable to re-roll", true, true)
                         )
         ).complete().getIdLong();
         GuildData dbGuild = guildData.getOne(guild.getIdLong());
@@ -67,6 +78,18 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
 
     @SlashResponse(value = "hunt", subCommandName = "randomizer")
     private void summonRandomizer(SlashCommandInteractionEvent event){
+        String uid = event.getUser().getId();
+        Optional<RandomizerData> oldRando = huntRandomizerRepository.getByUserId(uid);
+        oldRando.ifPresent(randomizerData -> {
+            try {
+                event.getJDA()
+                        .getGuildById(randomizerData.getGuildId())
+                        .getTextChannelById(randomizerData.getChannelId())
+                        .deleteMessageById(randomizerData.getMessageId()).queue();
+                huntRandomizerRepository.delete(randomizerData);
+            } catch (Exception ignored){}
+        });
+
         event.replyEmbeds(initialMessage(event.getUser()))
                 .addActionRow(
                         Button.primary("randomize", "Randomize"),
@@ -74,7 +97,123 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
                         Button.danger("enable_quarter", "Quartermaster"),
                         Button.success("disable_special", "Special Ammo"),
                         Button.success("disable_medkit_melee", "Healing & Melee")
+                ).queue(interactionHook -> {
+                    interactionHook.retrieveOriginal().queue(message -> {
+                        huntRandomizerRepository.save(new RandomizerData(
+                                message.getIdLong(),
+                                event.getUser().getIdLong(),
+                                message.getChannel().getIdLong(),
+                                message.getGuild().getIdLong()
+                        ));
+                    });
+                });
+    }
+
+    @AutoCompleteResponse(slashCommandId = "hunt", slashSubCommandId = "reroll", focusedOption = "item")
+    private void rerollItemAutoCompleteResponse(CommandAutoCompleteInteractionEvent event){
+        String userId = event.getUser().getId();
+        huntRandomizerRepository.getByUserId(userId).ifPresent(randomizerData -> {
+            Message message = event.getJDA()
+                    .getGuildById(randomizerData.getGuildId())
+                    .getTextChannelById(randomizerData.getChannelId())
+                    .retrieveMessageById(randomizerData.getMessageId())
+                    .complete();
+            HuntLoadout loadout = null;
+            try {
+                loadout = getLoadoutFromEmbed(
+                        message.getEmbeds().get(0),
+                        huntGunRepository,
+                        huntItemRepository
+                );
+            } catch (Exception e){
+                event.replyChoices().queue();
+                return;
+            }
+            event.replyChoices(
+                    Stream.of(loadout.convertToSlashCommandOptions())
+                            .filter(word -> word.toLowerCase().startsWith(event.getFocusedOption().getValue().toLowerCase()))
+                            .map(word -> new Command.Choice(word, word))
+                            .collect(Collectors.toList())
+            ).queue();
+        });
+
+        if(!huntRandomizerRepository.getByUserId(userId).isPresent()){
+            event.replyChoices().queue();
+        }
+    }
+
+    @SlashResponse(value = "hunt", subCommandName = "reroll")
+    private void rerollSlashCommand(SlashCommandInteractionEvent event){
+        if(event.getOption("item") == null) {
+            event.reply("no item was given to reroll").setEphemeral(true).queue();
+        }
+        huntRandomizerRepository.getByUserId(event.getUser().getId()).ifPresent(randomizerData -> {
+            String item = event.getOption("item").getAsString();
+            Message message = event.getJDA()
+                    .getGuildById(randomizerData.getGuildId())
+                    .getTextChannelById(randomizerData.getChannelId())
+                    .retrieveMessageById(randomizerData.getMessageId())
+                    .complete();
+            HuntLoadout loadout = null;
+            try {
+                loadout = getLoadoutFromEmbed(
+                        message.getEmbeds().get(0),
+                        huntGunRepository,
+                        huntItemRepository
+                );
+            } catch (Exception e){
+                event.reply("Unable to read loadout. Have you rolled yet?").setEphemeral(true).queue();
+                return;
+            }
+            if(!loadout.hasItem(item)){
+                event.reply("Your loadout does not contain this item").setEphemeral(true).queue();
+                return;
+            }
+            loadout.removeItemFromLoadout(item);
+
+            boolean dualWielding = false;
+            boolean quartermaster = false;
+            boolean specialAmmo = false;
+            boolean medkitMelee = false;
+            for(ItemComponent button: message.getActionRows().get(0).getComponents()){
+                switch(((Button) button).getId()){
+                    case "disable_dual": dualWielding = true; break;
+                    case "disable_quarter": quartermaster = true; break;
+                    case "disable_special": specialAmmo = true; break;
+                    case "disable_medkit_melee": medkitMelee = true; break;
+                }
+            }
+
+            loadout = generateLoadout(
+                    loadout,
+                    item,
+                    dualWielding,
+                    quartermaster,
+                    specialAmmo,
+                    medkitMelee,
+                    huntItemRepository,
+                    huntGunRepository
+            );
+
+            // create picture
+            try {
+                File tempFile = new File(new Random().nextInt() + ".png");
+                ImageIO.write(generatePhoto(loadout), "png", tempFile);
+                // upload picture
+                Message photoMessage = message.getGuild().getTextChannelById(App.config.getLoadoutChatId()).sendFiles(FileUpload.fromData(tempFile)).complete();
+                String loadoutUrl = photoMessage.getAttachments().get(0).getUrl();
+                message.editMessageEmbeds(
+                        loadoutMessage(loadout, loadoutUrl, message.getEmbeds().get(0))
                 ).queue();
+                tempFile.delete();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            event.reply("rerolled " + item + " from previous loadout").setEphemeral(true).queue();
+        });
+        if(!huntRandomizerRepository.getByUserId(event.getUser().getId()).isPresent()){
+            event.reply("Cannot find hunt randomizor message for you").setEphemeral(true).queue();
+        }
     }
 
     @ButtonResponse("randomize")
@@ -90,18 +229,6 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
                 case "disable_quarter": quartermaster = true; break;
                 case "disable_special": specialAmmo = true; break;
                 case "disable_medkit_melee": medkitMelee = true; break;
-            }
-        }
-
-        for(HuntItem item: huntItemRepository.findAll()){
-            try {
-                if(item.getAsset() != null){
-                    ImageIO.read(HuntShowdownBot.class.getClassLoader().getResourceAsStream("assets/HuntShowdown/" + item.getAsset()));
-                } else {
-                    System.out.println("Asset is null for " + item.getName());
-                }
-            } catch(Exception e) {
-                System.out.println("Unable to load asset for " + item.getName() + "\n\t" + item.getAsset());
             }
         }
 

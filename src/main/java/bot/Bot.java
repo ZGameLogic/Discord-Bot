@@ -11,6 +11,7 @@ import data.database.cardData.player.PlayerCardDataRepository;
 import data.database.guildData.GuildDataRepository;
 import data.database.huntData.gun.HuntGunRepository;
 import data.database.huntData.item.HuntItemRepository;
+import data.database.huntData.randomizer.HuntRandomizerRepository;
 import data.database.planData.PlanRepository;
 import data.database.userAuthData.AuthData;
 import data.database.userAuthData.AuthDataRepository;
@@ -71,6 +72,8 @@ public class Bot {
 	private HuntItemRepository huntItemRepository;
 	@Autowired
 	private HuntGunRepository huntGunRepository;
+	@Autowired
+	private HuntRandomizerRepository huntRandomizerRepository;
 
 	private final static String TITLE = "\r\n" +
 			"   ____  ___  _                   _   ___      _  ______  \r\n" + 
@@ -110,7 +113,7 @@ public class Bot {
 		listeners.add(PB);
 		CB = new CardBot(guildData, cardDataRepository, guildCardDataRepository, playerCardDataRepository);
 		listeners.add(CB);
-		listeners.add(new HuntShowdownBot(guildData, huntGunRepository, huntItemRepository));
+		listeners.add(new HuntShowdownBot(guildData, huntGunRepository, huntItemRepository, huntRandomizerRepository));
 		// Add listeners
 		for(ListenerAdapter a : listeners){
 			bot.addEventListeners(a);
