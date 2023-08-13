@@ -12,6 +12,9 @@ import data.intermediates.hunt.HuntLoadout;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -115,7 +118,7 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
         huntRandomizerRepository.getByUserId(userId).ifPresent(randomizerData -> {
             Message message = event.getJDA()
                     .getGuildById(randomizerData.getGuildId())
-                    .getTextChannelById(randomizerData.getChannelId())
+                    .getChannelById(GuildMessageChannel.class, randomizerData.getChannelId())
                     .retrieveMessageById(randomizerData.getMessageId())
                     .complete();
             HuntLoadout loadout = null;
@@ -151,7 +154,7 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
             String item = event.getOption("item").getAsString();
             Message message = event.getJDA()
                     .getGuildById(randomizerData.getGuildId())
-                    .getTextChannelById(randomizerData.getChannelId())
+                    .getChannelById(GuildMessageChannel.class, randomizerData.getChannelId())
                     .retrieveMessageById(randomizerData.getMessageId())
                     .complete();
             HuntLoadout loadout = null;
