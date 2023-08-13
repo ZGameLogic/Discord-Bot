@@ -18,4 +18,7 @@ public interface HuntGunRepository extends JpaRepository<HuntGun, String> {
 
     @Query(value = "SELECT * FROM hunt_guns g WHERE g.dual_wieldable = 'true'", nativeQuery = true)
     LinkedList<HuntGun> findAllDuals();
+
+    @Query(value = "SELECT * FROM hunt_guns g WHERE g.slot = 'SMALL'", nativeQuery = true)
+    LinkedList<HuntGun> findAllSmallGuns();
 }
