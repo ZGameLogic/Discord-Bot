@@ -3,7 +3,7 @@ package data.database.guildData;
 import lombok.*;
 import lombok.experimental.Accessors;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 @Accessors(chain = true)
 @Getter

@@ -2,7 +2,7 @@ package data.database.huntData.gun;
 
 import lombok.*;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.LinkedList;
 import java.util.List;
 

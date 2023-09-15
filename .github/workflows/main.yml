@@ -1,0 +1,26 @@
+name: Discord Bot
+
+on:
+  push:
+    branches: [master]
+
+jobs:
+  Build:
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: build project
+        run: mvn clean install
+  Deploy:
+    runs-on: self-hosted
+    needs: Build
+    steps:
+      - name: Stop service
+        run: net stop Discord
+      - name: Remove old jar
+        run: del C:\Users\Ben\Desktop\services\Discord\Discord.jar
+      - name: Deploy jar
+        run: move C:\Users\Ben\Desktop\actions-runner\_work\Discord\Discord\target\Discord-*.jar C:\Users\Ben\Desktop\services\Discord\Discord.jar
+      - name: Start service
+        run: net start Discord

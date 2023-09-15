@@ -4,7 +4,7 @@ import data.intermediates.planData.PlanEvent;
 import lombok.*;
 import net.dv8tion.jda.api.entities.Member;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
