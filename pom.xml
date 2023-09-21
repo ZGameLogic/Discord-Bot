@@ -39,7 +39,7 @@
 		<repository>
 			<id>zgamelogic</id>
 			<name>zgamelogic</name>
-			<url>https://zgamelogic.com/maven</url>
+			<url>https://zgamelogic.com:2006/maven</url>
 		</repository>
 	</repositories>
 
