@@ -44,7 +44,6 @@
 	</repositories>
 
 	<dependencies>
-
 		<dependency>
 			<groupId>com.zgamelogic</groupId>
 			<artifactId>Advanced-Listener-Adapter</artifactId>
