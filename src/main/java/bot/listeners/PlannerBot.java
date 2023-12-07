@@ -429,6 +429,17 @@ public class PlannerBot extends AdvancedListenerAdapter {
     private void deleteEvent(ButtonInteraction event){
         Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         Guild guild = event.getJDA().getGuildById(plan.getGuildId());
+        // let the people know
+        plan.getAccepted().forEach(acceptedUser ->
+            guild.getJDA().openPrivateChannelById(acceptedUser).queue(privateChannel -> {
+                privateChannel.sendMessage("Event: " + plan.getTitle() + " has been canceled and deleted.").queue();
+            })
+        );
+        plan.getMaybes().forEach(acceptedUser ->
+                guild.getJDA().openPrivateChannelById(acceptedUser).queue(privateChannel -> {
+                    privateChannel.sendMessage("Event: " + plan.getTitle() + " has been canceled and deleted.").queue();
+                })
+        );
         // delete guild message
         guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> message.delete().queue());
         // delete coordinator message

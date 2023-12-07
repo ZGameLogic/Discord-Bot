@@ -67,7 +67,18 @@ public class Bot {
 	private final JDA bot;
 
 	@Autowired
-	public Bot(GuildDataRepository guildData, PlanRepository planRepository, UserDataRepository userData, CardDataRepository cardDataRepository, GuildCardDataRepository guildCardDataRepository, PlayerCardDataRepository playerCardDataRepository, AuthDataRepository authData, HuntItemRepository huntItemRepository, HuntGunRepository huntGunRepository, HuntRandomizerRepository huntRandomizerRepository) {
+	public Bot(
+			GuildDataRepository guildData,
+			PlanRepository planRepository,
+			UserDataRepository userData,
+			CardDataRepository cardDataRepository,
+			GuildCardDataRepository guildCardDataRepository,
+			PlayerCardDataRepository playerCardDataRepository,
+			AuthDataRepository authData,
+			HuntItemRepository huntItemRepository,
+			HuntGunRepository huntGunRepository,
+			HuntRandomizerRepository huntRandomizerRepository
+	) {
 		this.cardDataRepository = cardDataRepository;
 		this.authData = authData;
 
