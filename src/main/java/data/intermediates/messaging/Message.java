@@ -1,9 +1,7 @@
 package data.intermediates.messaging;
 
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.ToString;
 
 import java.util.LinkedList;
 
@@ -12,5 +10,6 @@ import java.util.LinkedList;
 public class Message {
     private String message;
     private Long guildId;
+    private String channelId;
     private LinkedList<String> mentionIds;
 }
