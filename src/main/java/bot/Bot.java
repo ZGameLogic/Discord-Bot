@@ -1,6 +1,7 @@
 package bot;
 
 import bot.listeners.*;
+import bot.utils.EmbedMessageGenerator;
 import com.zgamelogic.AdvancedListenerAdapter;
 import data.database.cardData.cards.CardData;
 import data.database.cardData.cards.CardDataRepository;
@@ -14,6 +15,7 @@ import data.database.planData.PlanRepository;
 import data.database.userAuthData.AuthData;
 import data.database.userAuthData.AuthDataRepository;
 import data.database.userData.UserDataRepository;
+import data.intermediates.messaging.Message;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
@@ -28,6 +30,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -173,6 +176,22 @@ public class Bot {
 		returnObject.put("validation code", ad.getValidationCode());
 		authData.save(ad);
 		return returnObject.toString();
+	}
+
+	@SuppressWarnings("rawtypes")
+	@PostMapping("message")
+	private ResponseEntity sendMessage(@RequestBody Message message){
+		try {
+			log.info(message.toString());
+			log.info(bot.getGuildById(message.getGuildId()).getName());
+			bot.getGuildById(message.getGuildId())
+					.getDefaultChannel().asTextChannel().sendMessage(
+							EmbedMessageGenerator.message(message)
+					).queue();
+			return ResponseEntity.status(200).build();
+		} catch (Exception ignored){
+			return ResponseEntity.badRequest().build();
+		}
 	}
 
 	@PostMapping("/api/message")
