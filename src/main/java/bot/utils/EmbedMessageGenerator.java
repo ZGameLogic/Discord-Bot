@@ -8,6 +8,8 @@ import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import net.dv8tion.jda.api.utils.messages.MessageCreateData;
 
 import java.awt.*;
 import java.util.LinkedList;
@@ -18,6 +20,18 @@ public abstract class EmbedMessageGenerator {
 
     public final static Color GENERAL_COLOR = new Color(99, 42, 129);
     private final static Color CARD_COLOR = new Color(43, 97, 158);
+
+    public static MessageCreateData message(data.intermediates.messaging.Message message) {
+        MessageCreateBuilder mcb = new MessageCreateBuilder();
+        StringBuilder content = new StringBuilder();
+        message.getMentionIds().forEach(id -> {
+            content.append("<@&").append(id).append(">\n");
+        });
+        content.append(message.getMessage());
+        return mcb.mentionRoles(message.getMentionIds())
+                .addContent(content.toString())
+                .build();
+    }
 
     public static MessageEmbed cardShopMessage(long userId, CardData card, int price){
         EmbedBuilder eb = new EmbedBuilder();
