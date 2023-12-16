@@ -185,7 +185,7 @@ public class Bot {
 			log.info(message.toString());
 			log.info(bot.getGuildById(message.getGuildId()).getName());
 			bot.getGuildById(message.getGuildId())
-					.getDefaultChannel().asTextChannel().sendMessage(
+					.getTextChannelById(message.getChannelId()).sendMessage(
 							EmbedMessageGenerator.message(message)
 					).queue();
 			return ResponseEntity.status(200).build();
