@@ -179,7 +179,7 @@ public class Bot {
 	}
 
 	@SuppressWarnings("rawtypes")
-	@PostMapping("message")
+	@PostMapping("/message")
 	private ResponseEntity sendMessage(@RequestBody Message message){
 		try {
 			log.info(message.toString());
