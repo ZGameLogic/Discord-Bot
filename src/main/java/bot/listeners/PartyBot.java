@@ -42,8 +42,8 @@ public class PartyBot extends AdvancedListenerAdapter {
         chatroomNames.add("Cell Block");
         chatroomNames.add("Wooded Cabin");
         chatroomNames.add("Celestial Cloud");
-        chatroomNames.add("Back Ally");
-        chatroomNames.add("Windswept mountain");
+        chatroomNames.add("Back Alley");
+        chatroomNames.add("Windswept Mountain");
     }
 
     @ButtonResponse("enable_party")
