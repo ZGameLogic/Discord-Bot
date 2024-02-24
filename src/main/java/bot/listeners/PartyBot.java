@@ -41,9 +41,27 @@ public class PartyBot extends AdvancedListenerAdapter {
         chatroomNames.add("Compound");
         chatroomNames.add("Cell Block");
         chatroomNames.add("Wooded Cabin");
+        chatroomNames.add("Wooden Cabin");
         chatroomNames.add("Celestial Cloud");
         chatroomNames.add("Back Alley");
         chatroomNames.add("Windswept Mountain");
+        chatroomNames.add("Moonlit Oasis");
+        chatroomNames.add("Secret Garden");
+        chatroomNames.add("Neon Nights");
+        chatroomNames.add("Starship Lounge");
+        chatroomNames.add("Enchanted Forest");
+        chatroomNames.add("Pixel Palace");
+        chatroomNames.add("Galactic Hub");
+        chatroomNames.add("Sunset Haven");
+        chatroomNames.add("Sapphire Springs");
+        chatroomNames.add("Echoing Caverns");
+        chatroomNames.add("Serenity Cove");
+        chatroomNames.add("Whispering Pines");
+        chatroomNames.add("Crystal Clear");
+        chatroomNames.add("Aurora Borealis");
+        chatroomNames.add("Mystic Manor");
+        chatroomNames.add("Eternal Flame");
+        chatroomNames.add("Tranquil Waters");
     }
 
     @ButtonResponse("enable_party")
