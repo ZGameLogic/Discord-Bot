@@ -1,6 +1,7 @@
 package bot.listeners;
 
-import com.zgamelogic.AdvancedListenerAdapter;
+import com.zgamelogic.annotations.DiscordController;
+import com.zgamelogic.annotations.DiscordMapping;
 import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
 import net.dv8tion.jda.api.entities.Guild;
@@ -17,7 +18,7 @@ import net.dv8tion.jda.api.events.session.SessionResumeEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -25,12 +26,14 @@ import java.util.List;
 /**
  * Party bot stuff
  */
-public class PartyBot extends AdvancedListenerAdapter {
+@DiscordController
+public class PartyBot  {
 
     private final GuildDataRepository guildData;
     // Linked List of names to hold chatroom names
     private final LinkedList<String> chatroomNames;
 
+    @Autowired
     public PartyBot(GuildDataRepository guildData){
         this.guildData = guildData;
         chatroomNames = new LinkedList<>();
@@ -64,7 +67,7 @@ public class PartyBot extends AdvancedListenerAdapter {
         chatroomNames.add("Tranquil Waters");
     }
 
-    @ButtonResponse("enable_party")
+    @DiscordMapping(Id = "enable_party")
     private void enableParty(ButtonInteractionEvent event){
         event.editButton(Button.success("disable_party", "Party Bot")).queue();
         // edit the discord
@@ -97,7 +100,7 @@ public class PartyBot extends AdvancedListenerAdapter {
         guildData.save(savedGuild);
     }
 
-    @ButtonResponse("disable_party")
+    @DiscordMapping(Id = "disable_party")
     private void disableParty(ButtonInteractionEvent event){
         event.editButton(Button.danger("enable_party", "Party Bot")).queue();
         // edit the discord
@@ -112,15 +115,15 @@ public class PartyBot extends AdvancedListenerAdapter {
 
         // edit the database
         savedGuild.setChatroomEnabled(false);
-        savedGuild.setPartyCategory(0l);
-        savedGuild.setCreateChatId(0l);
-        savedGuild.setAfkChannelId(0l);
-        savedGuild.setRenameCommandId(0l);
-        savedGuild.setLimitCommandId(0l);
+        savedGuild.setPartyCategory(0L);
+        savedGuild.setCreateChatId(0L);
+        savedGuild.setAfkChannelId(0L);
+        savedGuild.setRenameCommandId(0L);
+        savedGuild.setLimitCommandId(0L);
         guildData.save(savedGuild);
     }
 
-    @SlashResponse("rename-chatroom")
+    @DiscordMapping(Id = "rename-chatroom")
     private void renameChatroom(SlashCommandInteractionEvent event){
         try {
             // get voice channel the user is in
@@ -141,7 +144,7 @@ public class PartyBot extends AdvancedListenerAdapter {
         }
     }
 
-    @SlashResponse("limit")
+    @DiscordMapping(Id = "limit")
     private void limit(SlashCommandInteractionEvent event){
         try {
             // get voice channel the user is in
@@ -165,9 +168,9 @@ public class PartyBot extends AdvancedListenerAdapter {
     /**
      * Login event
      */
-    @Override
-    public void onReady(@NotNull ReadyEvent event) {
-        super.onReady(event);
+    @DiscordMapping
+    public void ready(ReadyEvent event) {
+
         new Thread(() -> {
             for(GuildData data : guildData.findAll()){
                 if(data.getChatroomEnabled()){
@@ -177,8 +180,8 @@ public class PartyBot extends AdvancedListenerAdapter {
         }, "PartyBot Startup").start();
     }
 
-    @Override
-    public void onSessionResume(@NotNull SessionResumeEvent event) {
+    @DiscordMapping
+    public void sessionResume(SessionResumeEvent event) {
         for(GuildData data : guildData.findAll()){
             if(data.getChatroomEnabled()){
                 checkCreateChatroom(event.getJDA().getGuildById(data.getId()));
@@ -186,7 +189,7 @@ public class PartyBot extends AdvancedListenerAdapter {
         }
     }
 
-    @Override
+    @DiscordMapping
     public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
         if(guildData.findById(event.getGuild().getIdLong()).get().getChatroomEnabled()) {
             if (event.getChannelJoined() != null && event.getChannelLeft() != null) {
@@ -241,10 +244,10 @@ public class PartyBot extends AdvancedListenerAdapter {
     private void checkCreateChatroom(Guild guild) {
         GuildData savedGuild = guildData.findById(guild.getIdLong()).get();
         List<Member> members = guild.getVoiceChannelById(savedGuild.getCreateChatId()).getMembers();
-        if (members.size() > 0) {
+        if (!members.isEmpty()) {
             int number = 1;
             String chatroomName = chatroomNames.get((int) (Math.random() * chatroomNames.size()));
-            while (guild.getVoiceChannelsByName(chatroomName + " " + number, true).size() > 0) {
+            while (!guild.getVoiceChannelsByName(chatroomName + " " + number, true).isEmpty()) {
                 number++;
             }
             VoiceChannel newChannel = guild.createVoiceChannel(chatroomName + " " + number)

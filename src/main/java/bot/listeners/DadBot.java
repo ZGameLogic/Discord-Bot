@@ -1,13 +1,16 @@
 package bot.listeners;
 
-import com.zgamelogic.AdvancedListenerAdapter;
+import com.zgamelogic.annotations.DiscordController;
+import com.zgamelogic.annotations.DiscordMapping;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
-public class DadBot extends AdvancedListenerAdapter {
-    @Override
-    public void onMessageReceived(MessageReceivedEvent event) {
+@DiscordController
+public class DadBot {
+
+    @DiscordMapping
+    public void messageReceived(MessageReceivedEvent event) {
         if(!event.isFromGuild()) return;
-        if(event.getAuthor().getIdLong() != 102923614344482816l) return;
+        if(event.getAuthor().getIdLong() != 102923614344482816L) return;
         String message = event.getMessage().getContentRaw().toLowerCase().replaceAll("'", "").replaceAll("’", "");
         if(message.startsWith("im ") || message.contains(" im ")){
             String[] messageArray = message.split(" ");
