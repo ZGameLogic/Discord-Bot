@@ -31,5 +31,15 @@ public class DadBot {
             dad = dad.trim();
             if(!dad.equals("")) event.getMessage().reply("Hi " + dad + ", I'm Dad").queue();
         }
+        if(event.getAuthor().getIdLong() == 195174230281814016L){
+            if(event.getMessage().getContentRaw().contains("...")){
+                try {
+                    int meme = new Random().nextInt(1, 16);
+                    event.getChannel().sendFiles(FileUpload.fromData(new ClassPathResource("assets/Amrit/amritmeme0" + meme + ".jpg").getFile())).queue();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        }
     }
 }
