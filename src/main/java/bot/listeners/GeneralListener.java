@@ -7,6 +7,7 @@ import com.zgamelogic.annotations.DiscordMapping;
 import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
 import data.intermediates.messaging.Message;
+import org.springframework.web.bind.annotation.RestController;
 import services.TwilioService;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
@@ -43,6 +44,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 
 @DiscordController
+@RestController
 @Slf4j
 public class GeneralListener {
 
