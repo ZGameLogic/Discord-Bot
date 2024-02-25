@@ -1,6 +1,5 @@
 package bot.listeners;
 
-import application.App;
 import bot.utils.EmbedMessageGenerator;
 import com.zgamelogic.annotations.Bot;
 import com.zgamelogic.annotations.DiscordController;
@@ -168,7 +167,6 @@ public class CardBot {
 
     @DiscordMapping(Id = "cards", SubId = "sell", FocusedOption = "collection")
     private void sellCollectionAutocomplete(CommandAutoCompleteInteractionEvent event){
-        Set<String> collections = new HashSet<>();
         String[] words = cardDataRepository.listCardCollectionsById(
                 playerCardDataRepository.findById(event.getUser().getIdLong()).get().getDeck()
         ).toArray(new String[0]);

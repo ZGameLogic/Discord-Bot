@@ -1,7 +1,6 @@
 package bot.utils.dungeon;
 import bot.utils.dungeon.data.Node;
 import bot.utils.dungeon.data.Room;
-import bot.utils.dungeon.data.graph.Edge;
 import bot.utils.dungeon.data.graph.Graph;
 import bot.utils.dungeon.data.graph.Vertex;
 import bot.utils.dungeon.data.Dungeon;
@@ -11,8 +10,6 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.time.Clock;
-import java.time.Duration;
 import java.util.*;
 import java.util.List;
 
@@ -35,21 +32,11 @@ public abstract class DungeonGenerator {
         List<Vertex> roomCenters;
 
         rooms = new LinkedList<>();
-        int dungeonRoomCount;
-        switch(size){
-            case LARGE:
-                dungeonRoomCount = 30;
-                break;
-            case MEDIUM:
-                dungeonRoomCount = 20;
-                break;
-            case SMALL:
-                dungeonRoomCount = 10;
-                break;
-            default:
-                dungeonRoomCount = 5;
-                break;
-        }
+        int dungeonRoomCount = switch (size) {
+            case LARGE -> 30;
+            case MEDIUM -> 20;
+            case SMALL -> 10;
+        };
 
         map = new int[dungeonRoomCount * 2][dungeonRoomCount * 2];
 
@@ -64,7 +51,6 @@ public abstract class DungeonGenerator {
 
         Graph graph = new Graph(roomCenters,dungeonRoomCount * 2, dungeonRoomCount * 2);
 
-        List<Edge> edges = graph.getMinimumSpanningTree();
         for(int[] path : graph.getHallways()){
             for(int[] foundPath : pathFind(path, map)){
                 if(map[foundPath[0]][foundPath[1]] == 0) {
@@ -75,9 +61,6 @@ public abstract class DungeonGenerator {
 
         cleanUpDoors(rooms, map);
 
-        Clock c = Clock.systemUTC();
-        c = Clock.offset(c, Duration.ofDays(6 / 2));
-        Date departs = new Date(c.millis());
         return new Dungeon(map, size);
     }
 
@@ -200,7 +183,7 @@ public abstract class DungeonGenerator {
         // switch back to black
         pane.setColor(Color.black);
 
-        BufferedImage tileSet = null;
+        BufferedImage tileSet;
         try {
             tileSet = ImageIO.read(DungeonGenerator.class.getClassLoader().getResourceAsStream("assets/Dungeons/tileset.png"));
         } catch (IOException e) {
@@ -241,7 +224,7 @@ public abstract class DungeonGenerator {
                     case 2: // door
                         if(!topWall && !bottomWall && rightWall || leftWall){
                             tileSetOffset = 11;
-                        } else if(topWall || bottomWall && !rightWall && !leftWall){
+                        } else if(topWall || bottomWall && !rightWall){
                             tileSetOffset = 12;
                         }
                         tileSetBackground = 2;
@@ -253,13 +236,13 @@ public abstract class DungeonGenerator {
                         } else if(topWall && bottomWall && !rightWall && !leftWall){
                             tileSetOffset = 1;
                             tileSetBackground = 0;
-                        } else if (!topWall && !bottomWall && rightWall && !leftWall){
+                        } else if (!topWall && !bottomWall && rightWall){
                             tileSetOffset = 2;
                             tileSetBackground = 0;
                         } else if (!topWall && bottomWall && !rightWall && !leftWall){
                             tileSetOffset = 3;
                             tileSetBackground = 0;
-                        } else if (!topWall && !bottomWall && !rightWall && leftWall){
+                        } else if (!topWall && !bottomWall && leftWall){
                             tileSetOffset = 4;
                             tileSetBackground = 0;
                         } else if (topWall && !bottomWall && !rightWall && !leftWall){
@@ -268,16 +251,16 @@ public abstract class DungeonGenerator {
                         } else if (!topWall && bottomWall && rightWall && !leftWall){
                             tileSetOffset = 6;
                             tileSetBackground = 0;
-                        } else if (!topWall && bottomWall && !rightWall && leftWall){
+                        } else if (!topWall && bottomWall && !rightWall){
                             tileSetOffset = 7;
                             tileSetBackground = 0;
-                        } else if (topWall && !bottomWall && !rightWall && leftWall){
+                        } else if (topWall && !bottomWall && !rightWall){
                             tileSetOffset = 8;
                             tileSetBackground = 0;
-                        } else if (topWall && !bottomWall && rightWall && !leftWall){
+                        } else if (topWall && !bottomWall && !leftWall){
                             tileSetOffset = 9;
                             tileSetBackground = 0;
-                        } else if (!topWall && !bottomWall && !rightWall && !leftWall){
+                        } else if (!topWall && !bottomWall){
                             tileSetOffset = 10;
                             tileSetBackground = 0;
                         }
@@ -287,23 +270,23 @@ public abstract class DungeonGenerator {
 
                         if(topPath && rightPath && bottomPath && leftPath){ // all path
                             tileSetOffset = 17;
-                        } else if(topPath && rightPath && bottomPath && !leftPath) { // no path left
+                        } else if(topPath && rightPath && bottomPath) { // no path left
                             tileSetOffset = 18;
                         } else if(topPath && !rightPath && bottomPath && leftPath) { // no path right
                             tileSetOffset = 20;
                         } else if(!topPath && rightPath && bottomPath && leftPath) { // no path top
                             tileSetOffset = 19;
-                        } else if(topPath && rightPath && !bottomPath && leftPath) { // no path bottom
+                        } else if(topPath && rightPath && leftPath) { // no path bottom
                             tileSetOffset = 21;
-                        } else if(topPath && !rightPath && bottomPath && !leftPath) { // no path left or right
+                        } else if(topPath && !rightPath && bottomPath) { // no path left or right
                             tileSetOffset = 1;
                         } else if(!topPath && rightPath && !bottomPath && leftPath) { // no path bottom or top
                             tileSetOffset = 0;
-                        } else if(topPath && rightPath && !bottomPath && !leftPath) { // no path bottom or left
+                        } else if(topPath && rightPath) { // no path bottom or left
                             tileSetOffset = 9;
-                        } else if(topPath && !rightPath && !bottomPath && leftPath) { // no path bottom or right
+                        } else if(topPath && leftPath) { // no path bottom or right
                             tileSetOffset = 8;
-                        } else if(!topPath && rightPath && bottomPath && !leftPath) { // no path top or left
+                        } else if(!topPath && rightPath && bottomPath) { // no path top or left
                             tileSetOffset = 6;
                         } else if(!topPath && !rightPath && bottomPath && leftPath) { // no path top or right
                             tileSetOffset = 7;
@@ -431,17 +414,15 @@ public abstract class DungeonGenerator {
     }
 
     private static int getCost(int tileType){
-        switch (tileType){
-            case 1: // room floor tile
-            case 2: // door tile
-                return 1;
-            case 0: // empty tile
-                return 10;
-            case 4: // existing hallway
-                return 1;
-            default:
-                return 1000000;
-        }
+        return switch (tileType) { // room floor tile
+            case 1, 2 -> // door tile
+                    1;
+            case 0 -> // empty tile
+                    10;
+            case 4 -> // existing hallway
+                    1;
+            default -> 1000000;
+        };
     }
 
 

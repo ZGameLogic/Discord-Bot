@@ -44,7 +44,7 @@ public class GeneratorBot {
                                         .addOption(OptionType.STRING, "size", "Size of the dungeon", false, true)
                         )
         ).complete().getIdLong();
-        GuildData dbGuild = guildData.getOne(guild.getIdLong());
+        GuildData dbGuild = guildData.getReferenceById(guild.getIdLong());
         dbGuild.setGeneratorEnabled(true);
         dbGuild.setGenerateDungeonCommandId(dungeonCommandId);
         guildData.save(dbGuild);
@@ -54,7 +54,7 @@ public class GeneratorBot {
     private void disableGenerator(ButtonInteractionEvent event){
         event.editButton(Button.danger("enable_generator", "Generator bot")).queue();
         Guild guild = event.getGuild();
-        GuildData dbGuild = guildData.getOne(guild.getIdLong());
+        GuildData dbGuild = guildData.getReferenceById(guild.getIdLong());
         dbGuild.setGeneratorEnabled(false);
         guild.deleteCommandById(dbGuild.getGenerateDungeonCommandId()).queue();
         dbGuild.setGenerateDungeonCommandId(null);
