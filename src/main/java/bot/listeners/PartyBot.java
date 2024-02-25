@@ -105,7 +105,7 @@ public class PartyBot  {
         event.editButton(Button.danger("enable_party", "Party Bot")).queue();
         // edit the discord
         Guild guild = event.getGuild();
-        GuildData savedGuild = guildData.getOne(event.getGuild().getIdLong());
+        GuildData savedGuild = guildData.getReferenceById(event.getGuild().getIdLong());
         // commands
         guild.deleteCommandById(savedGuild.getLimitCommandId()).queue();
         guild.deleteCommandById(savedGuild.getRenameCommandId()).queue();
@@ -193,12 +193,12 @@ public class PartyBot  {
     public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
         if(guildData.findById(event.getGuild().getIdLong()).get().getChatroomEnabled()) {
             if (event.getChannelJoined() != null && event.getChannelLeft() != null) {
-                playerLeft(event.getChannelLeft(), event.getMember(), event.getGuild());
-                playerJoined(event.getChannelJoined(), event.getMember(), event.getGuild());
+                playerLeft(event.getChannelLeft(), event.getGuild());
+                playerJoined(event.getChannelJoined(), event.getGuild());
             } else if (event.getChannelJoined() != null) {
-                playerJoined(event.getChannelJoined(), event.getMember(), event.getGuild());
+                playerJoined(event.getChannelJoined(), event.getGuild());
             } else if (event.getChannelLeft() != null) {
-                playerLeft(event.getChannelLeft(), event.getMember(), event.getGuild());
+                playerLeft(event.getChannelLeft(), event.getGuild());
             }
         }
     }
@@ -208,16 +208,15 @@ public class PartyBot  {
      * category
      *
      * @param channelLeft The channel the user left
-     * @param member      the user that left
      * @param guild       the guild that the user left from
      */
-    private void playerLeft(AudioChannel channelLeft, Member member, Guild guild) {
+    private void playerLeft(AudioChannel channelLeft, Guild guild) {
         GuildData savedGuild = guildData.findById(guild.getIdLong()).get();
         VoiceChannel channel = guild.getVoiceChannelById(channelLeft.getIdLong());
         if (channel.getParentCategoryIdLong() == savedGuild.getPartyCategory()) {
             if (channel.getIdLong() != savedGuild.getCreateChatId() && channel.getIdLong() != savedGuild.getAfkChannelId()) {
                 // We get here if the channel left in is the chatroom categories
-                if (channel.getMembers().size() == 0) {
+                if (channel.getMembers().isEmpty()) {
                     channel.delete().queue();
                 }
             }
@@ -228,10 +227,9 @@ public class PartyBot  {
      * If the user joins the create channel, create a room and move them to it
      *
      * @param channelJoined the channel the user joined
-     * @param member        the user
      * @param guild         the guild that this took place in
      */
-    private void playerJoined(AudioChannel channelJoined, Member member, Guild guild) {
+    private void playerJoined(AudioChannel channelJoined, Guild guild) {
         VoiceChannel channel = guild.getVoiceChannelById(channelJoined.getIdLong());
         GuildData savedGuild = guildData.findById(guild.getIdLong()).get();
         if (channel.getParentCategoryIdLong() == savedGuild.getPartyCategory()) {

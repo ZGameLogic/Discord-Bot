@@ -20,7 +20,7 @@ public abstract class PlanHelper {
         eb.setTitle("Plan details for: " + plan.getTitle());
         eb.setDescription("The event is scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) + "\n" +
                 plan.getNotes() + "\n" + plan.getLog() != null ? plan.getLog() : "");
-        infoBody(plan, guild, eb);
+        infoBody(plan, eb);
         eb.setFooter(String.valueOf(plan.getId()));
         return eb.build();
     }
@@ -36,7 +36,7 @@ public abstract class PlanHelper {
         eb.addField("People accepted", plan.getAccepted().size() +
                         (plan.getCount() != -1 ? "/" + plan.getCount() : "")
                 , true);
-        infoBody(plan, guild, eb);
+        infoBody(plan, eb);
         return eb.build();
     }
 
@@ -70,16 +70,16 @@ public abstract class PlanHelper {
             }
             attendees.append("\n");
         }
-        if(attendees.length() == 0) attendees = new StringBuilder("People who accept will show up here");
+        if(attendees.isEmpty()) attendees = new StringBuilder("People who accept will show up here");
         eb.addField("People accepted " + plan.getAccepted().size() + (plan.getCount() != -1 ? "/" + plan.getCount() : ""), attendees.toString(), true);
-        if(plan.getWaitlist().size() > 0){
+        if(!plan.getWaitlist().isEmpty()){
             StringBuilder waitlistees = new StringBuilder();
             for(Long id: plan.getWaitlist()){
                 waitlistees.append("<@").append(id).append(">").append("\n");
             }
             eb.addField("Wait list", waitlistees.toString(), true);
         }
-        if(plan.getMaybes().size() > 0){
+        if(!plan.getMaybes().isEmpty()){
             StringBuilder maybes = new StringBuilder();
             for(Long id: plan.getMaybes()){
                 maybes.append("<@").append(id).append(">").append("\n");
@@ -90,7 +90,7 @@ public abstract class PlanHelper {
         return eb.build();
     }
 
-    private static void infoBody(Plan plan, Guild guild, EmbedBuilder eb) {
+    private static void infoBody(Plan plan, EmbedBuilder eb) {
         StringBuilder status = new StringBuilder();
         int accepted = plan.getAccepted().size();
         if(plan.getCount() != -1) {

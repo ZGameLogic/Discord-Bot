@@ -29,8 +29,6 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.buttons.ButtonInteraction;
-import net.dv8tion.jda.api.interactions.components.selections.EntitySelectInteraction;
 import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
@@ -82,7 +80,7 @@ public class PlannerBot {
                         )
         ).complete().getIdLong();
         long eventsChannel = guild.createTextChannel("plans").setTopic("This is a channel for planned events").complete().getIdLong();
-        GuildData dbGuild = guildData.getOne(guild.getIdLong());
+        GuildData dbGuild = guildData.getReferenceById(guild.getIdLong());
         dbGuild.setPlanEnabled(true);
         dbGuild.setPlanChannelId(eventsChannel);
         dbGuild.setCreatePlanCommandId(planEventId);
@@ -94,7 +92,7 @@ public class PlannerBot {
     private void disablePlan(ButtonInteractionEvent event){
         event.editButton(Button.danger("enable_plan", "Plan bot")).queue();
         Guild guild = event.getGuild();
-        GuildData dbGuild = guildData.getOne(guild.getIdLong());
+        GuildData dbGuild = guildData.getReferenceById(guild.getIdLong());
         guild.deleteCommandById(dbGuild.getCreatePlanCommandId()).queue();
         guild.getTextChannelById(dbGuild.getPlanChannelId()).delete().queue();
         dbGuild.setPlanEnabled(false);
@@ -177,7 +175,7 @@ public class PlannerBot {
 
     @DiscordMapping(Id = "edit_event_modal")
     private void editEventModal(ModalInteractionEvent event){
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         String notes = event.getValue("notes").getAsString();
         String dateString = event.getValue("date").getAsString();
         String title = event.getValue("title").getAsString();
@@ -188,7 +186,7 @@ public class PlannerBot {
         }
         int count;
         try {
-            if(!event.getValue("count").getAsString().equals("")) {
+            if(!event.getValue("count").getAsString().isEmpty()) {
                 count = Integer.parseInt(event.getValue("count").getAsString());
             } else count = -1;
         } catch (NumberFormatException e){
@@ -199,7 +197,6 @@ public class PlannerBot {
             event.reply("Invalid number").setEphemeral(true).queue();
             return;
         }
-        int finalCount = count;
         plan.setCount(count);
         plan.setTitle(title);
         plan.setNotes(notes);
@@ -216,18 +213,19 @@ public class PlannerBot {
         String title = event.getValue("title").getAsString();
         Date date = stringToDate(dateString);
         if(date == null){
-            event.reply("Invalid date and time. Here are some examples of valid dates:\n" +
-                    "7:00pm\n" +
-                    "Today at 7:00pm\n" +
-                    "Tomorrow 6:00pm\n" +
-                    "3/20/2022 4:15pm\n" +
-                    "6/20 3:45pm\n" +
-                    "Wednesday at 4:00pm").setEphemeral(true).queue();
+            event.reply("""
+                    Invalid date and time. Here are some examples of valid dates:
+                    7:00pm
+                    Today at 7:00pm
+                    Tomorrow 6:00pm
+                    3/20/2022 4:15pm
+                    6/20 3:45pm
+                    Wednesday at 4:00pm""").setEphemeral(true).queue();
             return;
         }
         int count;
         try {
-            if(!event.getValue("count").getAsString().equals("")) {
+            if(!event.getValue("count").getAsString().isEmpty()) {
                 count = Integer.parseInt(event.getValue("count").getAsString());
             } else count = -1;
         } catch (NumberFormatException e){
@@ -248,7 +246,7 @@ public class PlannerBot {
                 .queue(message -> {
                     Plan plan = new Plan();
                     plan.setTitle(title);
-                    plan.setChannelId(guildData.getOne(event.getGuild().getIdLong()).getPlanChannelId());
+                    plan.setChannelId(guildData.getReferenceById(event.getGuild().getIdLong()).getPlanChannelId());
                     plan.setGuildId(event.getGuild().getIdLong());
                     plan.setNotes(notes);
                     plan.setDate(date);
@@ -263,8 +261,8 @@ public class PlannerBot {
     private void planPeople(EntitySelectInteractionEvent event){
         event.deferReply().setEphemeral(true).queue();
         long planId = Long.parseLong(event.getMessage().getContentRaw().split(":")[1]);
-        Plan plan = planRepository.getOne(planId);
-        GuildData gd = guildData.getOne(event.getGuild().getIdLong());
+        Plan plan = planRepository.getReferenceById(planId);
+        GuildData gd = guildData.getReferenceById(event.getGuild().getIdLong());
         if(!plan.getInvitees().isEmpty()){
             event.getHook().sendMessage("You already set the people for this event. You can dismiss this message").setEphemeral(true).queue();
             return;
@@ -279,7 +277,7 @@ public class PlannerBot {
                 event.getHook().sendMessage("You cannot add yourself to an event you are planning").setEphemeral(true).queue();
                 return;
             }
-            if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680l))) continue; //skip anyone with the no plan
+            if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680L))) continue; //skip anyone with the no plan
             invitees.put(m.getIdLong(), new User(m.getIdLong(), DECIDING));
         }
         for(Role r: event.getMentions().getRoles()){
@@ -288,7 +286,7 @@ public class PlannerBot {
                 if(m.getUser().isBot()) continue;
                 if(m.getIdLong() == event.getUser().getIdLong()) continue;
                 if(invitees.containsKey(m.getIdLong())) continue;
-                if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680l))) continue; //skip anyone with the no plan
+                if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680L))) continue; //skip anyone with the no plan
                 invitees.put(m.getIdLong(), new User(m.getIdLong(), DECIDING));
             }
         }
@@ -305,7 +303,7 @@ public class PlannerBot {
                 plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
                 if(userData.existsById(m.getIdLong())){
                     twilioService.sendMessage(
-                            String.valueOf(userData.getOne(m.getIdLong()).getPhone_number()),
+                            String.valueOf(userData.getReferenceById(m.getIdLong()).getPhone_number()),
                             event.getUser().getName() + " has invited you to " + plan.getTitle() + "." +
                                     " Reply to the invite on discord."
                     );
@@ -337,8 +335,7 @@ public class PlannerBot {
 
     @DiscordMapping(Id = "add_users")
     private void addUsersButton(ButtonInteractionEvent event){
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-        GuildData gd = guildData.getOne(event.getGuild().getIdLong());
+        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         if(plan.getAuthorId() != event.getUser().getIdLong()){
             event.reply("You are not the owner of this event").setEphemeral(true).queue();
             return;
@@ -355,7 +352,7 @@ public class PlannerBot {
     private void addPeopleResponse(EntitySelectInteractionEvent event){
         event.deferReply().setEphemeral(true).queue();
         long planId = Long.parseLong(event.getMessage().getContentRaw().split(":")[1]);
-        Plan plan = planRepository.getOne(planId);
+        Plan plan = planRepository.getReferenceById(planId);
         LinkedList<Member> invitees = new LinkedList<>();
         for(Member m : event.getMentions().getMembers()){
             if(m.getUser().isBot()){
@@ -367,7 +364,7 @@ public class PlannerBot {
                 return;
             }
             if(plan.getInvitees().containsKey(m.getIdLong())) continue;
-            if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680l))) continue; //skip anyone with the no plan
+            if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680L))) continue; //skip anyone with the no plan
             invitees.add(m);
         }
         for(Member m: invitees){
@@ -378,7 +375,7 @@ public class PlannerBot {
                     .complete();
             if(userData.existsById(m.getIdLong())){
                 twilioService.sendMessage(
-                        String.valueOf(userData.getOne(m.getIdLong()).getPhone_number()),
+                        String.valueOf(userData.getReferenceById(m.getIdLong()).getPhone_number()),
                         event.getUser().getName() + " has invited you to " + plan.getTitle() + "." +
                                 " Reply to the invite on discord."
                 );
@@ -392,7 +389,7 @@ public class PlannerBot {
 
     @DiscordMapping(Id = "send_message_modal")
     private void sendMessageModal(ModalInteractionEvent event){
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         String message = event.getValue("message").getAsString();
         plan.getAccepted().forEach(id -> event.getJDA().openPrivateChannelById(id).queue(
                 channel -> channel.sendMessage("A message in regards to the plans made for: " + plan.getTitle() + "\n" + message).queue()
@@ -408,7 +405,7 @@ public class PlannerBot {
 
     @DiscordMapping(Id = "edit_event")
     private void editDetailsButtonEvent(ButtonInteractionEvent event){
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         TextInput.Builder notesBuilder = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT).setRequired(false);
         if(plan.getNotes() != null && !plan.getNotes().isEmpty()) notesBuilder.setValue(plan.getNotes());
         TextInput notes = notesBuilder.build();
@@ -436,7 +433,7 @@ public class PlannerBot {
 
     @DiscordMapping(Id = "delete_event")
     private void deleteEvent(ButtonInteractionEvent event){
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         Guild guild = event.getJDA().getGuildById(plan.getGuildId());
         // let the people know
         plan.getAccepted().forEach(acceptedUser ->
@@ -537,7 +534,7 @@ public class PlannerBot {
 
     private void updateEvent(PlanEvent planEvent, ButtonInteractionEvent buttonEvent){
         buttonEvent.deferEdit().queue();
-        Plan plan = planRepository.getOne(Long.parseLong(buttonEvent.getMessage().getEmbeds().get(0).getFooter().getText()));
+        Plan plan = planRepository.getReferenceById(Long.parseLong(buttonEvent.getMessage().getEmbeds().get(0).getFooter().getText()));
         String title = plan.getTitle();
         Guild guild = buttonEvent.getJDA().getGuildById(plan.getGuildId());
         LinkedList<PlanEvent> processedEvents = plan.processEvents(planEvent);
@@ -575,7 +572,7 @@ public class PlannerBot {
                 newPlan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
                 if(userData.existsById(m.getIdLong())){
                     twilioService.sendMessage(
-                            String.valueOf(userData.getOne(m.getIdLong()).getPhone_number()),
+                            String.valueOf(userData.getReferenceById(m.getIdLong()).getPhone_number()),
                             "The waitlist for the plan: " + newPlan.getTitle() + " is big enough for a new plan to be created. " +
                                     "Since you were waitlisted on the original plan, you have been automatically added ot the new one."
                     );

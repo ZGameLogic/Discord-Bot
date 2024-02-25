@@ -18,22 +18,21 @@ public class DadBot {
             String message = event.getMessage().getContentRaw().toLowerCase().replaceAll("'", "").replaceAll("’", "");
             if(message.startsWith("im ") || message.contains(" im ")){
                 String[] messageArray = message.split(" ");
-                String dad = "";
+                StringBuilder dad = new StringBuilder();
                 boolean adding = false;
-                for(int i = 0; i < messageArray.length; i++){
-                    if(adding){
-                        String word = messageArray[i];
-                        dad += word.replace(".", "") + " ";
-                        if(word.contains(".")){
+                for (String s : messageArray) {
+                    if (adding) {
+                        dad.append(s.replace(".", "")).append(" ");
+                        if (s.contains(".")) {
                             break;
                         }
                     }
-                    if(messageArray[i].equals("im")){
+                    if (s.equals("im")) {
                         adding = true;
                     }
                 }
-                dad = dad.trim();
-                if(!dad.equals("")) event.getMessage().reply("Hi " + dad + ", I'm Dad").queue();
+                dad = new StringBuilder(dad.toString().trim());
+                if(!dad.toString().isEmpty()) event.getMessage().reply("Hi " + dad + ", I'm Dad").queue();
             }
         }
         if(event.getAuthor().getIdLong() == 195174230281814016L){ // Amrit's stuff

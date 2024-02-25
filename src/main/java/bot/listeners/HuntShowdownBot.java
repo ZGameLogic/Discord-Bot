@@ -68,7 +68,7 @@ public class HuntShowdownBot {
                                         .addOption(OptionType.STRING, "item", "Weapon, tool, or consumable to re-roll", true, true)
                         )
         ).complete().getIdLong();
-        GuildData dbGuild = guildData.getOne(guild.getIdLong());
+        GuildData dbGuild = guildData.getReferenceById(guild.getIdLong());
         dbGuild.setHuntEnabled(true);
         dbGuild.setRandomizerSummonId(randomizerCommandId);
         guildData.save(dbGuild);
@@ -78,7 +78,7 @@ public class HuntShowdownBot {
     private void disableHunt(ButtonInteractionEvent event){
         event.editButton(Button.danger("enable_hunt", "Hunt bot")).queue();
         Guild guild = event.getGuild();
-        GuildData dbGuild = guildData.getOne(guild.getIdLong());
+        GuildData dbGuild = guildData.getReferenceById(guild.getIdLong());
         guild.deleteCommandById(dbGuild.getRandomizerSummonId()).queue();
         dbGuild.setHuntEnabled(false);
         guildData.save(dbGuild);
@@ -145,7 +145,7 @@ public class HuntShowdownBot {
             ).queue();
         });
 
-        if(!huntRandomizerRepository.getByUserId(userId).isPresent()){
+        if(huntRandomizerRepository.getByUserId(userId).isEmpty()){
             event.replyChoices().queue();
         }
     }
@@ -219,7 +219,7 @@ public class HuntShowdownBot {
             }
             event.reply("rerolled " + item + " from previous loadout").setEphemeral(true).queue();
         });
-        if(!huntRandomizerRepository.getByUserId(event.getUser().getId()).isPresent()){
+        if(huntRandomizerRepository.getByUserId(event.getUser().getId()).isEmpty()){
             event.reply("Cannot find hunt randomizor message for you").setEphemeral(true).queue();
         }
     }

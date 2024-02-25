@@ -32,8 +32,6 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -179,7 +177,7 @@ public class GeneralListener {
     }
 
     @PostMapping("/message")
-    private ResponseEntity sendMessage(@RequestBody Message message){
+    private ResponseEntity<?> sendMessage(@RequestBody Message message){
         try {
             log.info(message.toString());
             log.info(bot.getGuildById(message.getGuildId()).getName());
