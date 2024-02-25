@@ -11,6 +11,7 @@ import data.database.planData.PlanRepository;
 import data.database.planData.User;
 import data.database.userData.UserDataRepository;
 import data.intermediates.planData.PlanEvent;
+import org.springframework.web.bind.annotation.RestController;
 import services.TwilioService;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
@@ -51,6 +52,7 @@ import static data.intermediates.planData.PlanEvent.Event.*;
 
 @Slf4j
 @DiscordController
+@RestController
 public class PlannerBot {
 
     private final GuildDataRepository guildData;
