@@ -1,7 +1,7 @@
 package bot.listeners;
 
-import application.App;
-import com.zgamelogic.AdvancedListenerAdapter;
+import com.zgamelogic.annotations.DiscordController;
+import com.zgamelogic.annotations.DiscordMapping;
 import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
 import data.database.huntData.gun.HuntGunRepository;
@@ -12,8 +12,6 @@ import data.intermediates.hunt.HuntLoadout;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -25,6 +23,8 @@ import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.FileUpload;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -37,13 +37,18 @@ import java.util.stream.Stream;
 import static bot.utils.HuntHelper.*;
 
 @Slf4j
-public class HuntShowdownBot extends AdvancedListenerAdapter {
+@DiscordController
+public class HuntShowdownBot {
 
     private final GuildDataRepository guildData;
     private final HuntGunRepository huntGunRepository;
     private final HuntItemRepository huntItemRepository;
     private final HuntRandomizerRepository huntRandomizerRepository;
 
+    @Value("${loadout.chat.id}")
+    private long loadoutChatId;
+
+    @Autowired
     public HuntShowdownBot(GuildDataRepository guildData, HuntGunRepository huntGunRepository, HuntItemRepository huntItemRepository, HuntRandomizerRepository huntRandomizerRepository) {
         this.guildData = guildData;
         this.huntGunRepository = huntGunRepository;
@@ -51,7 +56,7 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
         this.huntRandomizerRepository = huntRandomizerRepository;
     }
 
-    @ButtonResponse("enable_hunt")
+    @DiscordMapping(Id = "enable_hunt")
     private void enableHunt(ButtonInteractionEvent event){
         event.editButton(Button.success("disable_hunt", "Hunt bot")).queue();
         Guild guild = event.getGuild();
@@ -63,23 +68,23 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
                                         .addOption(OptionType.STRING, "item", "Weapon, tool, or consumable to re-roll", true, true)
                         )
         ).complete().getIdLong();
-        GuildData dbGuild = guildData.getOne(guild.getIdLong());
+        GuildData dbGuild = guildData.getReferenceById(guild.getIdLong());
         dbGuild.setHuntEnabled(true);
         dbGuild.setRandomizerSummonId(randomizerCommandId);
         guildData.save(dbGuild);
     }
 
-    @ButtonResponse("disable_hunt")
+    @DiscordMapping(Id = "disable_hunt")
     private void disableHunt(ButtonInteractionEvent event){
         event.editButton(Button.danger("enable_hunt", "Hunt bot")).queue();
         Guild guild = event.getGuild();
-        GuildData dbGuild = guildData.getOne(guild.getIdLong());
+        GuildData dbGuild = guildData.getReferenceById(guild.getIdLong());
         guild.deleteCommandById(dbGuild.getRandomizerSummonId()).queue();
         dbGuild.setHuntEnabled(false);
         guildData.save(dbGuild);
     }
 
-    @SlashResponse(value = "hunt", subCommandName = "randomizer")
+    @DiscordMapping(Id = "hunt", SubId = "randomizer")
     private void summonRandomizer(SlashCommandInteractionEvent event){
         String uid = event.getUser().getId();
         Optional<RandomizerData> oldRando = huntRandomizerRepository.getByUserId(uid);
@@ -112,7 +117,7 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
                 });
     }
 
-    @AutoCompleteResponse(slashCommandId = "hunt", slashSubCommandId = "reroll", focusedOption = "item")
+    @DiscordMapping(Id = "hunt", SubId = "reroll", FocusedOption = "item")
     private void rerollItemAutoCompleteResponse(CommandAutoCompleteInteractionEvent event){
         String userId = event.getUser().getId();
         huntRandomizerRepository.getByUserId(userId).ifPresent(randomizerData -> {
@@ -140,12 +145,12 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
             ).queue();
         });
 
-        if(!huntRandomizerRepository.getByUserId(userId).isPresent()){
+        if(huntRandomizerRepository.getByUserId(userId).isEmpty()){
             event.replyChoices().queue();
         }
     }
 
-    @SlashResponse(value = "hunt", subCommandName = "reroll")
+    @DiscordMapping(Id = "hunt", SubId = "reroll")
     private void rerollSlashCommand(SlashCommandInteractionEvent event){
         if(event.getOption("item") == null) {
             event.reply("no item was given to reroll").setEphemeral(true).queue();
@@ -203,7 +208,7 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
                 File tempFile = new File(new Random().nextInt() + ".png");
                 ImageIO.write(generatePhoto(loadout), "png", tempFile);
                 // upload picture
-                Message photoMessage = message.getGuild().getTextChannelById(App.config.getLoadoutChatId()).sendFiles(FileUpload.fromData(tempFile)).complete();
+                Message photoMessage = message.getGuild().getTextChannelById(loadoutChatId).sendFiles(FileUpload.fromData(tempFile)).complete();
                 String loadoutUrl = photoMessage.getAttachments().get(0).getUrl();
                 message.editMessageEmbeds(
                         loadoutMessage(loadout, loadoutUrl, message.getEmbeds().get(0))
@@ -214,12 +219,12 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
             }
             event.reply("rerolled " + item + " from previous loadout").setEphemeral(true).queue();
         });
-        if(!huntRandomizerRepository.getByUserId(event.getUser().getId()).isPresent()){
+        if(huntRandomizerRepository.getByUserId(event.getUser().getId()).isEmpty()){
             event.reply("Cannot find hunt randomizor message for you").setEphemeral(true).queue();
         }
     }
 
-    @ButtonResponse("randomize")
+    @DiscordMapping(Id = "randomize")
     private void randomize(ButtonInteractionEvent event){
         if(preflight(event)) return;
         boolean dualWielding = false;
@@ -250,7 +255,7 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
             File tempFile = new File(new Random().nextInt() + ".png");
             ImageIO.write(generatePhoto(loadout), "png", tempFile);
             // upload picture
-            Message photoMessage = message.getGuild().getTextChannelById(App.config.getLoadoutChatId()).sendFiles(FileUpload.fromData(tempFile)).complete();
+            Message photoMessage = message.getGuild().getTextChannelById(loadoutChatId).sendFiles(FileUpload.fromData(tempFile)).complete();
             String loadoutUrl = photoMessage.getAttachments().get(0).getUrl();
             message.editMessageEmbeds(
                     loadoutMessage(loadout, loadoutUrl, message.getEmbeds().get(0))
@@ -262,49 +267,49 @@ public class HuntShowdownBot extends AdvancedListenerAdapter {
         event.deferEdit().queue();
     }
 
-    @ButtonResponse("disable_dual")
+    @DiscordMapping(Id = "disable_dual")
     private void disableDualWielding(ButtonInteractionEvent event){
         if(preflight(event)) return;
         event.editButton(Button.danger("enable_dual", "Dual Wielding")).queue();
     }
 
-    @ButtonResponse("disable_quarter")
+    @DiscordMapping(Id = "disable_quarter")
     private void disableQuartermaster(ButtonInteractionEvent event){
         if(preflight(event)) return;
         event.editButton(Button.danger("enable_quarter", "Quartermaster")).queue();
     }
 
-    @ButtonResponse("disable_special")
+    @DiscordMapping(Id = "disable_special")
     private void disableSpecialAmmo(ButtonInteractionEvent event){
         if(preflight(event)) return;
         event.editButton(Button.danger("enable_special", "Special Ammo")).queue();
     }
 
-    @ButtonResponse("disable_medkit_melee")
+    @DiscordMapping(Id = "disable_medkit_melee")
     private void disableMedkitMelee(ButtonInteractionEvent event){
         if(preflight(event)) return;
         event.editButton(Button.danger("enable_medkit_melee", "Healing & Melee")).queue();
     }
 
-    @ButtonResponse("enable_dual")
+    @DiscordMapping(Id = "enable_dual")
     private void enableDualWielding(ButtonInteractionEvent event){
         if(preflight(event)) return;
         event.editButton(Button.success("disable_dual", "Dual Wielding")).queue();
     }
 
-    @ButtonResponse("enable_quarter")
+    @DiscordMapping(Id = "enable_quarter")
     private void enableQuartermaster(ButtonInteractionEvent event){
         if(preflight(event)) return;
         event.editButton(Button.success("disable_quarter", "Quartermaster")).queue();
     }
 
-    @ButtonResponse("enable_special")
+    @DiscordMapping(Id = "enable_special")
     private void enableSpecialAmmo(ButtonInteractionEvent event){
         if(preflight(event)) return;
         event.editButton(Button.success("disable_special", "Special Ammo")).queue();
     }
 
-    @ButtonResponse("enable_medkit_melee")
+    @DiscordMapping(Id = "enable_medkit_melee")
     private void enableMedkitMelee(ButtonInteractionEvent event){
         if(preflight(event)) return;
         event.editButton(Button.success("disable_medkit_melee", "Healing & Melee")).queue();

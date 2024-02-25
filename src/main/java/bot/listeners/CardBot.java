@@ -1,7 +1,9 @@
 package bot.listeners;
 
 import bot.utils.EmbedMessageGenerator;
-import com.zgamelogic.AdvancedListenerAdapter;
+import com.zgamelogic.annotations.Bot;
+import com.zgamelogic.annotations.DiscordController;
+import com.zgamelogic.annotations.DiscordMapping;
 import data.database.cardData.cards.CardData;
 import data.database.cardData.cards.CardDataRepository;
 import data.database.cardData.guild.GuildCardData;
@@ -31,13 +33,21 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import org.jetbrains.annotations.NotNull;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class CardBot extends AdvancedListenerAdapter {
+@DiscordController
+public class CardBot {
 
     public static final int PAGE_SIZE = 20;
 
@@ -46,8 +56,13 @@ public class CardBot extends AdvancedListenerAdapter {
     private final PlayerCardDataRepository playerCardDataRepository;
     private final GuildDataRepository guildDataRepository;
 
+    @Bot
     private JDA bot;
 
+    @Value("${api.token}")
+    private String apiToken;
+
+    @Autowired
     public CardBot(GuildDataRepository guildDataRepository, CardDataRepository cardDataRepository, GuildCardDataRepository guildCardDataRepository, PlayerCardDataRepository playerCardDataRepository) {
         this.cardDataRepository = cardDataRepository;
         this.guildCardDataRepository = guildCardDataRepository;
@@ -55,9 +70,8 @@ public class CardBot extends AdvancedListenerAdapter {
         this.guildDataRepository = guildDataRepository;
     }
 
-    @Override
-    public void onReady(@NotNull ReadyEvent event) {
-        bot = event.getJDA();
+    @DiscordMapping
+    public void ready(ReadyEvent event) {
         new Thread(() -> {
             List<PlayerCardData> newPlayers = new LinkedList<>();
             for(Guild guild: event.getJDA().getGuilds()){
@@ -72,7 +86,7 @@ public class CardBot extends AdvancedListenerAdapter {
         }, "Card bot ready thread").start();
     }
 
-    @Override
+    @DiscordMapping
     public void onGuildMemberJoin(GuildMemberJoinEvent event) {
         if(guildDataRepository.findById(event.getGuild().getIdLong()).get().getCardsEnabled()) {
             if(!playerCardDataRepository.existsById(event.getUser().getIdLong()))
@@ -80,7 +94,7 @@ public class CardBot extends AdvancedListenerAdapter {
         }
     }
 
-    @ButtonResponse("enable_cards")
+    @DiscordMapping(Id = "enable_cards")
     private void enableCards(ButtonInteractionEvent event){
         event.deferEdit().queue();
         GuildCardData data = new GuildCardData();
@@ -121,7 +135,7 @@ public class CardBot extends AdvancedListenerAdapter {
         event.getHook().editOriginalComponents(row).queue();
     }
 
-    @ButtonResponse("disable_cards")
+    @DiscordMapping(Id = "disable_cards")
     private void disableCards(ButtonInteractionEvent event){
         event.editButton(Button.danger("enable_cards", "Cards bot")).queue();
         guildDataRepository.save(guildDataRepository.findById(event.getGuild().getIdLong()).get().setCardsEnabled(false));
@@ -131,7 +145,7 @@ public class CardBot extends AdvancedListenerAdapter {
         guildCardDataRepository.delete(guildData);
     }
 
-    @AutoCompleteResponse(slashCommandId = "cards", slashSubCommandId = "collection", focusedOption = "collection")
+    @DiscordMapping(Id = "cards", SubId = "collection", FocusedOption = "collection")
     private void collectionAutocomplete(CommandAutoCompleteInteractionEvent event){
         String[] words = cardDataRepository.listCardCollections().toArray(new String[0]);
         List<Command.Choice> options = Stream.of(words)
@@ -141,7 +155,7 @@ public class CardBot extends AdvancedListenerAdapter {
         event.replyChoices(options).queue();
     }
 
-    @AutoCompleteResponse(slashCommandId = "cards", slashSubCommandId = "buy_pack", focusedOption = "collection")
+    @DiscordMapping(Id = "cards", SubId = "buy_pack", FocusedOption = "collection")
     private void collectionBuyAutocomplete(CommandAutoCompleteInteractionEvent event){
         String[] words = cardDataRepository.listCardCollections().toArray(new String[0]);
         List<Command.Choice> options = Stream.of(words)
@@ -151,9 +165,8 @@ public class CardBot extends AdvancedListenerAdapter {
         event.replyChoices(options).queue();
     }
 
-    @AutoCompleteResponse(slashCommandId = "cards", slashSubCommandId = "sell", focusedOption = "collection")
+    @DiscordMapping(Id = "cards", SubId = "sell", FocusedOption = "collection")
     private void sellCollectionAutocomplete(CommandAutoCompleteInteractionEvent event){
-        Set<String> collections = new HashSet<>();
         String[] words = cardDataRepository.listCardCollectionsById(
                 playerCardDataRepository.findById(event.getUser().getIdLong()).get().getDeck()
         ).toArray(new String[0]);
@@ -164,7 +177,7 @@ public class CardBot extends AdvancedListenerAdapter {
         event.replyChoices(options).queue();
     }
 
-    @AutoCompleteResponse(slashCommandId = "cards", slashSubCommandId = "sell", focusedOption = "name")
+    @DiscordMapping(Id = "cards", SubId = "sell", FocusedOption = "name")
     private void sellNameAutocomplete(CommandAutoCompleteInteractionEvent event){
         String collection = event.getOption("collection") == null ? "" : event.getOption("collection").getAsString();
         Set<String> names = new HashSet<>(cardDataRepository.findByCollectionAndIds(
@@ -179,7 +192,7 @@ public class CardBot extends AdvancedListenerAdapter {
         event.replyChoices(options).queue();
     }
 
-    @SlashResponse(value = "cards", subCommandName = "sell")
+    @DiscordMapping(Id = "cards", SubId = "sell")
     private void sellSlashCommand(SlashCommandInteractionEvent event){
         event.deferReply().queue();
         Guild guild = event.getGuild();
@@ -189,7 +202,7 @@ public class CardBot extends AdvancedListenerAdapter {
                 event.getOption("collection").getAsString(),
                 event.getOption("name").getAsString()
         );
-        if(results.size() == 0){
+        if(results.isEmpty()){
             event.getHook().setEphemeral(true).sendMessage("That card does not exist").queue();
             return;
         }
@@ -210,7 +223,7 @@ public class CardBot extends AdvancedListenerAdapter {
         playerCardDataRepository.save(player);
     }
 
-    @ButtonResponse("purchase_card")
+    @DiscordMapping(Id = "purchase_card")
     private void purchaseCard(ButtonInteractionEvent event){
         long cardId = Long.parseLong(event.getMessage().getEmbeds().get(0).getDescription().split("__")[1]);
         long userId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
@@ -234,7 +247,7 @@ public class CardBot extends AdvancedListenerAdapter {
         playerCardDataRepository.save(seller);
     }
 
-    @SlashResponse(value = "cards", subCommandName = "open_packs")
+    @DiscordMapping(Id = "cards", SubId = "open_packs")
     private void openPacks(SlashCommandInteractionEvent event){
         event.deferReply().queue();
         PlayerCardData player = playerCardDataRepository.findById(event.getUser().getIdLong()).get();
@@ -284,14 +297,14 @@ public class CardBot extends AdvancedListenerAdapter {
         )).queue();
     }
 
-    @SlashResponse(value = "cards", subCommandName = "status")
+    @DiscordMapping(Id = "cards", SubId = "status")
     private void statusSlashCommand(SlashCommandInteractionEvent event){
         event.replyEmbeds(
                 EmbedMessageGenerator.cardPlayerStatus(event.getUser().getName(), playerCardDataRepository.findById(event.getUser().getIdLong()).get())
         ).queue();
     }
 
-    @SlashResponse(value = "cards", subCommandName = "buy_pack")
+    @DiscordMapping(Id = "cards", SubId = "buy_pack")
     private void buyPackSlashCommand(SlashCommandInteractionEvent event){
         if(event.getOption("count").getAsInt() <= 0) { // need a positive number of packs
             event.reply("You can't buy negative packs").setEphemeral(true).queue();
@@ -327,7 +340,7 @@ public class CardBot extends AdvancedListenerAdapter {
         }
     }
 
-    @SlashResponse(value = "cards", subCommandName = "collection")
+    @DiscordMapping(Id = "cards", SubId = "collection")
     private void collectionSlashCommand(SlashCommandInteractionEvent event){
         event.deferReply().queue();
         long userId = event.getOption("user") != null ? event.getOption("user").getAsUser().getIdLong() : event.getUser().getIdLong();
@@ -352,7 +365,7 @@ public class CardBot extends AdvancedListenerAdapter {
         }
     }
 
-    @ButtonResponse("cards_next_page")
+    @DiscordMapping(Id = "cards_next_page")
     private void nextPage(ButtonInteractionEvent event){
         String title = event.getMessage().getEmbeds().get(0).getTitle();
         String username = title.split(" ")[0].replace("'s", "");
@@ -371,8 +384,8 @@ public class CardBot extends AdvancedListenerAdapter {
 
     }
 
-    @Override
-    public void onGuildVoiceUpdate(@NotNull GuildVoiceUpdateEvent event) {
+    @DiscordMapping
+    public void guildVoidUpdate(GuildVoiceUpdateEvent event) {
         try {
             if (event.getChannelLeft() != null) {
                 PlayerCardData pcd = playerCardDataRepository.findById(event.getMember().getIdLong()).get();
@@ -394,8 +407,8 @@ public class CardBot extends AdvancedListenerAdapter {
         }
     }
 
-    @Override
-    public void onGenericMessageReaction(GenericMessageReactionEvent event) {
+    @DiscordMapping
+    public void genericMessageReaction(GenericMessageReactionEvent event) {
         if(!event.isFromGuild()) return;
         if(event.getUser().isBot()) return;
         PlayerCardData pcd = playerCardDataRepository.findById(event.getMember().getIdLong()).get();
@@ -407,8 +420,8 @@ public class CardBot extends AdvancedListenerAdapter {
         playerCardDataRepository.save(pcd);
     }
 
-    @Override
-    public void onMessageReceived(MessageReceivedEvent event) {
+    @DiscordMapping
+    public void messageReceived(MessageReceivedEvent event) {
         if(!event.isFromGuild()) return;
         if(event.getAuthor().isBot()) return;
         PlayerCardData pcd = playerCardDataRepository.findById(event.getAuthor().getIdLong()).get();
@@ -416,11 +429,41 @@ public class CardBot extends AdvancedListenerAdapter {
         playerCardDataRepository.save(pcd);
     }
 
+    @PostMapping("/api/cards")
+    private void addCards(@RequestBody String value) throws JSONException {
+        JSONObject json = new JSONObject(value);
+        if(!json.has("token")) return;
+        if(!json.getString("token").equals(apiToken)) return;
+        int index = json.getInt("id start");
+        String collection = json.getString("collection");
+        LinkedList<CardData> newCards = new LinkedList<>();
+        JSONArray jsonCards = json.getJSONArray("cards");
+        for(int i = 0; i < jsonCards.length(); i++){
+            JSONObject card = jsonCards.getJSONObject(i);
+            CardData newCard = new CardData();
+            newCard.setId(index + i);
+            newCard.setName(card.getString("name"));
+            newCard.setCollection(collection);
+            if(card.has("rarity")){
+                newCard.setRarity(card.getInt("rarity"));
+            } else {
+                newCard.setRarity(new Random().nextInt(10) + 1);
+            }
+            newCards.add(newCard);
+        }
+        cardDataRepository.saveAll(newCards);
+    }
+
+    @Scheduled(cron = "0 */5 * * * *")
+    private void fiveMinuteTask() {
+        fiveMinuteTasks();
+    }
+
     private boolean collectionDoesntExists(String collection){
         return !cardDataRepository.listCardCollections().contains(collection);
     }
 
-    public void fiveMinuteTasks(){
+    private void fiveMinuteTasks(){
         if(bot != null){
             for(Guild guild: bot.getGuilds()){
                 for(VoiceChannel channel: guild.getVoiceChannels()){

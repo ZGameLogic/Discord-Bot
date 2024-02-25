@@ -2,7 +2,8 @@ package bot.listeners;
 
 import bot.utils.Helpers;
 import bot.utils.PlanHelper;
-import com.zgamelogic.AdvancedListenerAdapter;
+import com.zgamelogic.annotations.DiscordController;
+import com.zgamelogic.annotations.DiscordMapping;
 import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
 import data.database.planData.Plan;
@@ -10,7 +11,7 @@ import data.database.planData.PlanRepository;
 import data.database.planData.User;
 import data.database.userData.UserDataRepository;
 import data.intermediates.planData.PlanEvent;
-import interfaces.TwilioInterface;
+import services.TwilioService;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
@@ -28,14 +29,18 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.buttons.ButtonInteraction;
-import net.dv8tion.jda.api.interactions.components.selections.EntitySelectInteraction;
 import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
-import org.jetbrains.annotations.NotNull;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -45,20 +50,23 @@ import static data.database.planData.User.Status.*;
 import static data.intermediates.planData.PlanEvent.Event.*;
 
 @Slf4j
-public class PlannerBot extends AdvancedListenerAdapter {
+@DiscordController
+public class PlannerBot {
 
     private final GuildDataRepository guildData;
     private final PlanRepository planRepository;
     private final UserDataRepository userData;
+    private final TwilioService twilioService;
     private JDA bot;
 
-    public PlannerBot(PlanRepository planRepository, UserDataRepository userData, GuildDataRepository guildData) {
+    public PlannerBot(PlanRepository planRepository, UserDataRepository userData, GuildDataRepository guildData, TwilioService twilioService) {
         this.planRepository = planRepository;
         this.userData = userData;
         this.guildData = guildData;
+        this.twilioService = twilioService;
     }
 
-    @ButtonResponse("enable_plan")
+    @DiscordMapping(Id = "enable_plan")
     private void enablePlan(ButtonInteractionEvent event){
         event.editButton(Button.success("disable_plan", "Plan bot")).queue();
         Guild guild = event.getGuild();
@@ -72,7 +80,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                         )
         ).complete().getIdLong();
         long eventsChannel = guild.createTextChannel("plans").setTopic("This is a channel for planned events").complete().getIdLong();
-        GuildData dbGuild = guildData.getOne(guild.getIdLong());
+        GuildData dbGuild = guildData.getReferenceById(guild.getIdLong());
         dbGuild.setPlanEnabled(true);
         dbGuild.setPlanChannelId(eventsChannel);
         dbGuild.setCreatePlanCommandId(planEventId);
@@ -80,11 +88,11 @@ public class PlannerBot extends AdvancedListenerAdapter {
         guildData.save(dbGuild);
     }
 
-    @ButtonResponse("disable_plan")
+    @DiscordMapping(Id = "disable_plan")
     private void disablePlan(ButtonInteractionEvent event){
         event.editButton(Button.danger("enable_plan", "Plan bot")).queue();
         Guild guild = event.getGuild();
-        GuildData dbGuild = guildData.getOne(guild.getIdLong());
+        GuildData dbGuild = guildData.getReferenceById(guild.getIdLong());
         guild.deleteCommandById(dbGuild.getCreatePlanCommandId()).queue();
         guild.getTextChannelById(dbGuild.getPlanChannelId()).delete().queue();
         dbGuild.setPlanEnabled(false);
@@ -94,9 +102,8 @@ public class PlannerBot extends AdvancedListenerAdapter {
         guildData.save(dbGuild);
     }
 
-    @Override
-    public void onReady(@NotNull ReadyEvent event) {
-        super.onReady(event);
+    @DiscordMapping
+    public void ready(ReadyEvent event) {
         bot = event.getJDA();
         for(Guild guild: event.getJDA().getGuilds()){
             guild.upsertCommand(
@@ -113,7 +120,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         }
     }
 
-    @SlashResponse(value = "text_notifications", subCommandName = "enable")
+    @DiscordMapping(Id = "text_notifications", SubId = "enable")
     private void enableTextSlash(SlashCommandInteractionEvent event){
         String formatted = event.getOption("number").getAsString()
                 .replace("(", "")
@@ -139,7 +146,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         event.reply("Text notifications for plans enabled").setEphemeral(true).queue();
     }
 
-    @SlashResponse(value = "text_notifications", subCommandName = "disable")
+    @DiscordMapping(Id = "text_notifications", SubId = "disable")
     private void disableTextSlash(SlashCommandInteractionEvent event){
         if(userData.existsById(event.getUser().getIdLong())){
             userData.deleteById(event.getUser().getIdLong());
@@ -147,7 +154,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         event.reply("Text messaging disabled").setEphemeral(true).queue();
     }
 
-    @SlashResponse("plan_event")
+    @DiscordMapping(Id = "plan_event")
     private void planEventSlashCommand(SlashCommandInteractionEvent event){
         TextInput notes = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
                 .setPlaceholder("Grinding the event").setRequired(false).build();
@@ -166,9 +173,9 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 .queue();
     }
 
-    @ModalResponse("edit_event_modal")
+    @DiscordMapping(Id = "edit_event_modal")
     private void editEventModal(ModalInteractionEvent event){
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         String notes = event.getValue("notes").getAsString();
         String dateString = event.getValue("date").getAsString();
         String title = event.getValue("title").getAsString();
@@ -179,7 +186,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
         }
         int count;
         try {
-            if(!event.getValue("count").getAsString().equals("")) {
+            if(!event.getValue("count").getAsString().isEmpty()) {
                 count = Integer.parseInt(event.getValue("count").getAsString());
             } else count = -1;
         } catch (NumberFormatException e){
@@ -190,7 +197,6 @@ public class PlannerBot extends AdvancedListenerAdapter {
             event.reply("Invalid number").setEphemeral(true).queue();
             return;
         }
-        int finalCount = count;
         plan.setCount(count);
         plan.setTitle(title);
         plan.setNotes(notes);
@@ -200,25 +206,26 @@ public class PlannerBot extends AdvancedListenerAdapter {
         event.reply("Plan details have been edited").setEphemeral(true).queue();
     }
 
-    @ModalResponse("plan_event_modal")
+    @DiscordMapping(Id = "plan_event_modal")
     private void planEventModalResponse(ModalInteractionEvent event){
         String notes = event.getValue("notes").getAsString();
         String dateString = event.getValue("date").getAsString();
         String title = event.getValue("title").getAsString();
         Date date = stringToDate(dateString);
         if(date == null){
-            event.reply("Invalid date and time. Here are some examples of valid dates:\n" +
-                    "7:00pm\n" +
-                    "Today at 7:00pm\n" +
-                    "Tomorrow 6:00pm\n" +
-                    "3/20/2022 4:15pm\n" +
-                    "6/20 3:45pm\n" +
-                    "Wednesday at 4:00pm").setEphemeral(true).queue();
+            event.reply("""
+                    Invalid date and time. Here are some examples of valid dates:
+                    7:00pm
+                    Today at 7:00pm
+                    Tomorrow 6:00pm
+                    3/20/2022 4:15pm
+                    6/20 3:45pm
+                    Wednesday at 4:00pm""").setEphemeral(true).queue();
             return;
         }
         int count;
         try {
-            if(!event.getValue("count").getAsString().equals("")) {
+            if(!event.getValue("count").getAsString().isEmpty()) {
                 count = Integer.parseInt(event.getValue("count").getAsString());
             } else count = -1;
         } catch (NumberFormatException e){
@@ -239,7 +246,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 .queue(message -> {
                     Plan plan = new Plan();
                     plan.setTitle(title);
-                    plan.setChannelId(guildData.getOne(event.getGuild().getIdLong()).getPlanChannelId());
+                    plan.setChannelId(guildData.getReferenceById(event.getGuild().getIdLong()).getPlanChannelId());
                     plan.setGuildId(event.getGuild().getIdLong());
                     plan.setNotes(notes);
                     plan.setDate(date);
@@ -250,12 +257,12 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 });
     }
 
-    @EntitySelectionResponse("People")
-    private void planPeople(EntitySelectInteraction event){
+    @DiscordMapping(Id = "People")
+    private void planPeople(EntitySelectInteractionEvent event){
         event.deferReply().setEphemeral(true).queue();
         long planId = Long.parseLong(event.getMessage().getContentRaw().split(":")[1]);
-        Plan plan = planRepository.getOne(planId);
-        GuildData gd = guildData.getOne(event.getGuild().getIdLong());
+        Plan plan = planRepository.getReferenceById(planId);
+        GuildData gd = guildData.getReferenceById(event.getGuild().getIdLong());
         if(!plan.getInvitees().isEmpty()){
             event.getHook().sendMessage("You already set the people for this event. You can dismiss this message").setEphemeral(true).queue();
             return;
@@ -270,7 +277,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 event.getHook().sendMessage("You cannot add yourself to an event you are planning").setEphemeral(true).queue();
                 return;
             }
-            if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680l))) continue; //skip anyone with the no plan
+            if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680L))) continue; //skip anyone with the no plan
             invitees.put(m.getIdLong(), new User(m.getIdLong(), DECIDING));
         }
         for(Role r: event.getMentions().getRoles()){
@@ -279,7 +286,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 if(m.getUser().isBot()) continue;
                 if(m.getIdLong() == event.getUser().getIdLong()) continue;
                 if(invitees.containsKey(m.getIdLong())) continue;
-                if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680l))) continue; //skip anyone with the no plan
+                if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680L))) continue; //skip anyone with the no plan
                 invitees.put(m.getIdLong(), new User(m.getIdLong(), DECIDING));
             }
         }
@@ -295,8 +302,8 @@ public class PlannerBot extends AdvancedListenerAdapter {
                         .complete();
                 plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
                 if(userData.existsById(m.getIdLong())){
-                    TwilioInterface.sendMessage(
-                            String.valueOf(userData.getOne(m.getIdLong()).getPhone_number()),
+                    twilioService.sendMessage(
+                            String.valueOf(userData.getReferenceById(m.getIdLong()).getPhone_number()),
                             event.getUser().getName() + " has invited you to " + plan.getTitle() + "." +
                                     " Reply to the invite on discord."
                     );
@@ -326,10 +333,9 @@ public class PlannerBot extends AdvancedListenerAdapter {
         event.getHook().setEphemeral(true).sendMessage("Event created in <#" + gd.getPlanChannelId() + ">").queue();
     }
 
-    @ButtonResponse("add_users")
+    @DiscordMapping(Id = "add_users")
     private void addUsersButton(ButtonInteractionEvent event){
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-        GuildData gd = guildData.getOne(event.getGuild().getIdLong());
+        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         if(plan.getAuthorId() != event.getUser().getIdLong()){
             event.reply("You are not the owner of this event").setEphemeral(true).queue();
             return;
@@ -342,11 +348,11 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 .setEphemeral(true).queue();
     }
 
-    @EntitySelectionResponse("add_people")
+    @DiscordMapping(Id = "add_people")
     private void addPeopleResponse(EntitySelectInteractionEvent event){
         event.deferReply().setEphemeral(true).queue();
         long planId = Long.parseLong(event.getMessage().getContentRaw().split(":")[1]);
-        Plan plan = planRepository.getOne(planId);
+        Plan plan = planRepository.getReferenceById(planId);
         LinkedList<Member> invitees = new LinkedList<>();
         for(Member m : event.getMentions().getMembers()){
             if(m.getUser().isBot()){
@@ -358,7 +364,7 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 return;
             }
             if(plan.getInvitees().containsKey(m.getIdLong())) continue;
-            if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680l))) continue; //skip anyone with the no plan
+            if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680L))) continue; //skip anyone with the no plan
             invitees.add(m);
         }
         for(Member m: invitees){
@@ -368,8 +374,8 @@ public class PlannerBot extends AdvancedListenerAdapter {
                             Button.primary("maybe_event", "Maybe"))
                     .complete();
             if(userData.existsById(m.getIdLong())){
-                TwilioInterface.sendMessage(
-                        String.valueOf(userData.getOne(m.getIdLong()).getPhone_number()),
+                twilioService.sendMessage(
+                        String.valueOf(userData.getReferenceById(m.getIdLong()).getPhone_number()),
                         event.getUser().getName() + " has invited you to " + plan.getTitle() + "." +
                                 " Reply to the invite on discord."
                 );
@@ -381,9 +387,9 @@ public class PlannerBot extends AdvancedListenerAdapter {
         updateMessages(plan, event.getGuild());
     }
 
-    @ModalResponse("send_message_modal")
+    @DiscordMapping(Id = "send_message_modal")
     private void sendMessageModal(ModalInteractionEvent event){
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         String message = event.getValue("message").getAsString();
         plan.getAccepted().forEach(id -> event.getJDA().openPrivateChannelById(id).queue(
                 channel -> channel.sendMessage("A message in regards to the plans made for: " + plan.getTitle() + "\n" + message).queue()
@@ -391,15 +397,15 @@ public class PlannerBot extends AdvancedListenerAdapter {
         event.reply("Message sent to all accepted people").setEphemeral(true).queue();
     }
 
-    @ButtonResponse("send_message")
-    private void sendMessageEvent(ButtonInteraction event){
+    @DiscordMapping(Id = "send_message")
+    private void sendMessageEvent(ButtonInteractionEvent event){
         TextInput message = TextInput.create("message", "Message to be sent to accepted users", TextInputStyle.PARAGRAPH).build();
         event.replyModal(Modal.create("send_message_modal", "Send message").addActionRow(message) .build()) .queue();
     }
 
-    @ButtonResponse("edit_event")
-    private void editDetailsButtonEvent(ButtonInteraction event){
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+    @DiscordMapping(Id = "edit_event")
+    private void editDetailsButtonEvent(ButtonInteractionEvent event){
+        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         TextInput.Builder notesBuilder = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT).setRequired(false);
         if(plan.getNotes() != null && !plan.getNotes().isEmpty()) notesBuilder.setValue(plan.getNotes());
         TextInput notes = notesBuilder.build();
@@ -425,9 +431,9 @@ public class PlannerBot extends AdvancedListenerAdapter {
                 .queue();
     }
 
-    @ButtonResponse("delete_event")
-    private void deleteEvent(ButtonInteraction event){
-        Plan plan = planRepository.getOne(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+    @DiscordMapping(Id = "delete_event")
+    private void deleteEvent(ButtonInteractionEvent event){
+        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         Guild guild = event.getJDA().getGuildById(plan.getGuildId());
         // let the people know
         plan.getAccepted().forEach(acceptedUser ->
@@ -458,63 +464,77 @@ public class PlannerBot extends AdvancedListenerAdapter {
         planRepository.deleteById(plan.getId());
     }
 
-    @ButtonResponse("request_fill_in")
+    @DiscordMapping(Id = "request_fill_in")
     private void requestFillIn(ButtonInteractionEvent event){
         long userId = event.getUser().getIdLong();
         PlanEvent planEvent = new PlanEvent(USER_REGISTERED_FOR_FILL_IN, userId);
         updateEvent(planEvent, event);
     }
 
-    @ButtonResponse("fill_in")
+    @DiscordMapping(Id = "fill_in")
     private void fillIn(ButtonInteractionEvent event){
         long userId = event.getUser().getIdLong();
         PlanEvent planEvent = new PlanEvent(USER_FILLINED, userId);
         updateEvent(planEvent, event);
     }
 
-    @ButtonResponse("drop_out_event")
+    @DiscordMapping(Id = "drop_out_event")
     private void dropOutEvent(ButtonInteractionEvent event){
         event.editButton(Button.danger("confirm_drop_out_event", "Confirm Dropout")).queue();
     }
 
-    @ButtonResponse("confirm_drop_out_event")
+    @DiscordMapping(Id = "confirm_drop_out_event")
     private void confirmDropOutEvent(ButtonInteractionEvent event){
         long userId = event.getUser().getIdLong();
         PlanEvent planEvent = new PlanEvent(USER_DROPPED_OUT, userId);
         updateEvent(planEvent, event);
     }
 
-    @ButtonResponse("accept_event")
+    @DiscordMapping(Id = "accept_event")
     private void acceptEvent(ButtonInteractionEvent event){
         long userId = event.getUser().getIdLong();
         PlanEvent planEvent = new PlanEvent(USER_ACCEPTED, userId);
         updateEvent(planEvent, event);
     }
 
-    @ButtonResponse("waitlist_event")
+    @DiscordMapping(Id = "waitlist_event")
     private void waitlistEvent(ButtonInteractionEvent event){
         long userId = event.getUser().getIdLong();
         PlanEvent planEvent = new PlanEvent(USER_WAITLISTED, userId);
         updateEvent(planEvent, event);
     }
 
-    @ButtonResponse("deny_event")
+    @DiscordMapping(Id = "deny_event")
     private void denyEvent(ButtonInteractionEvent event){
         long userId = event.getUser().getIdLong();
         PlanEvent planEvent = new PlanEvent(USER_DECLINED, userId);
         updateEvent(planEvent, event);
     }
 
-    @ButtonResponse("maybe_event")
+    @DiscordMapping(Id = "maybe_event")
     private void maybeEvent(ButtonInteractionEvent event) {
         long userId = event.getUser().getIdLong();
         PlanEvent planEvent = new PlanEvent(USER_MAYBED, userId);
         updateEvent(planEvent, event);
     }
 
+    @PostMapping(value = "/sms")
+    private void receiveMessage(@RequestBody String body) throws URISyntaxException {
+        List<NameValuePair> params = URLEncodedUtils.parse(new URI("?" + body), StandardCharsets.UTF_8);
+        Map<String, String> mapped = new HashMap<>();
+        for (NameValuePair param : params) {
+            mapped.put(param.getName(), param.getValue());
+        }
+        bot.getUserById(232675572772372481L).openPrivateChannel().queue(privateChannel -> privateChannel.sendMessage("Text message received from number: " + mapped.get("From") + "\n" +
+                        "Body: " + mapped.get("Body"))
+                .addActionRow(Button.primary("reply_text", "respond")).queue());
+        log.info("Text message from: " + mapped.get("From"));
+        log.info("Body: " + mapped.get("Body"));
+    }
+
     private void updateEvent(PlanEvent planEvent, ButtonInteractionEvent buttonEvent){
         buttonEvent.deferEdit().queue();
-        Plan plan = planRepository.getOne(Long.parseLong(buttonEvent.getMessage().getEmbeds().get(0).getFooter().getText()));
+        Plan plan = planRepository.getReferenceById(Long.parseLong(buttonEvent.getMessage().getEmbeds().get(0).getFooter().getText()));
         String title = plan.getTitle();
         Guild guild = buttonEvent.getJDA().getGuildById(plan.getGuildId());
         LinkedList<PlanEvent> processedEvents = plan.processEvents(planEvent);
@@ -551,8 +571,8 @@ public class PlannerBot extends AdvancedListenerAdapter {
                         .complete();
                 newPlan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
                 if(userData.existsById(m.getIdLong())){
-                    TwilioInterface.sendMessage(
-                            String.valueOf(userData.getOne(m.getIdLong()).getPhone_number()),
+                    twilioService.sendMessage(
+                            String.valueOf(userData.getReferenceById(m.getIdLong()).getPhone_number()),
                             "The waitlist for the plan: " + newPlan.getTitle() + " is big enough for a new plan to be created. " +
                                     "Since you were waitlisted on the original plan, you have been automatically added ot the new one."
                     );

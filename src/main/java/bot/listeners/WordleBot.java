@@ -1,12 +1,14 @@
 package bot.listeners;
 
-import com.zgamelogic.AdvancedListenerAdapter;
+import com.zgamelogic.annotations.DiscordController;
+import com.zgamelogic.annotations.DiscordMapping;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
-public class WordleBot extends AdvancedListenerAdapter {
+@DiscordController
+public class WordleBot {
 
-    @Override
-    public void onMessageReceived(MessageReceivedEvent event) {
+    @DiscordMapping
+    public void messageReceived(MessageReceivedEvent event) {
         if(event.getMessage().getContentRaw().startsWith("Wordle ")){
             try {
                 String line = event.getMessage().getContentRaw().replace("Wordle ", "").split("\n")[0];

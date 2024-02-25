@@ -1,12 +1,20 @@
 package bot.listeners;
 
 import bot.utils.EmbedMessageGenerator;
-import com.zgamelogic.AdvancedListenerAdapter;
+import com.zgamelogic.annotations.Bot;
+import com.zgamelogic.annotations.DiscordController;
+import com.zgamelogic.annotations.DiscordMapping;
 import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
-import interfaces.TwilioInterface;
+import data.intermediates.messaging.Message;
+import services.TwilioService;
+import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
 import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.api.events.guild.UnavailableGuildLeaveEvent;
@@ -22,24 +30,39 @@ import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 
 import java.util.Collections;
 import java.util.LinkedList;
 
-public class GeneralListener extends AdvancedListenerAdapter {
+@DiscordController
+@Slf4j
+public class GeneralListener {
 
-    private final Logger logger = LoggerFactory.getLogger(GeneralListener.class);
     private final GuildDataRepository guildData;
+    private final TwilioService twilioService;
 
-    public GeneralListener(GuildDataRepository guildData){
+    @Bot
+    private JDA bot;
+
+    @Value("${api.token}")
+    private String apiToken;
+
+    @Autowired
+    public GeneralListener(GuildDataRepository guildData, TwilioService twilioService){
         this.guildData = guildData;
+        this.twilioService = twilioService;
     }
 
-    @Override
-    public void onReady(@NotNull ReadyEvent event) {
-        super.onReady(event);
+    @DiscordMapping
+    public void ready(@NotNull ReadyEvent event) {
         new Thread(()-> {
             //update guilds
             for(Guild guild : event.getJDA().getGuilds()){
@@ -85,13 +108,12 @@ public class GeneralListener extends AdvancedListenerAdapter {
         }, "Guild Checking Thread").start();
     }
 
-    @Override
+    @DiscordMapping
     public void onGuildJoin(GuildJoinEvent event) {
         welcomeBot(event.getGuild());
     }
 
-    @SuppressWarnings("OptionalGetWithoutIsPresent")
-    @Override
+    @DiscordMapping
     public void onGuildLeave(GuildLeaveEvent event) {
         Guild guild = event.getGuild();
         try {
@@ -107,12 +129,12 @@ public class GeneralListener extends AdvancedListenerAdapter {
             }
             guild.getTextChannelById(savedGuild.getConfigChannelId()).delete().queue();
         } catch (Exception e){
-            logger.warn("Unable to delete guild data. Was removed too quickly.");
+            log.warn("Unable to delete guild data. Was removed too quickly.");
         }
         guildData.deleteById(event.getGuild().getIdLong());
     }
 
-    @Override
+    @DiscordMapping
     public void onMessageReceived(MessageReceivedEvent event) {
         if(event.isFromGuild()) return;
         if(event.getAuthor().isBot()) return;
@@ -121,13 +143,13 @@ public class GeneralListener extends AdvancedListenerAdapter {
                 .setActionRow(Button.secondary("reply_message", "Reply")).queue());
     }
 
-    @ButtonResponse("reply_message")
+    @DiscordMapping(Id = "reply_message")
     private void replyMessageButtonPresses(ButtonInteractionEvent event){
         TextInput message = TextInput.create("message", "Reply", TextInputStyle.PARAGRAPH).build();
         event.replyModal(Modal.create("reply_message_modal", "Message response").addActionRow(message).build()).queue();
     }
 
-    @ModalResponse("reply_message_modal")
+    @DiscordMapping(Id = "reply_message_modal")
     private void modalResponseMessageReply(ModalInteractionEvent event){
         event.getJDA().getUserById(
                 event.getMessage().getContentRaw().split("\n")[0].split(":")[1]
@@ -135,23 +157,67 @@ public class GeneralListener extends AdvancedListenerAdapter {
         event.reply("Message sent back\n" + event.getValue("message").getAsString()).queue();
     }
 
-    @ButtonResponse("reply_text")
+    @DiscordMapping(Id = "reply_text")
     private void replyTextMessageButtonPress(ButtonInteractionEvent event){
         TextInput message = TextInput.create("message", "Reply", TextInputStyle.PARAGRAPH).build();
         event.replyModal(Modal.create("reply_text_modal", "Message response").addActionRow(message).build()).queue();
     }
 
-    @ModalResponse("reply_text_modal")
+    @DiscordMapping(Id = "reply_text_modal")
     private void modalResponseTextMessageReply(ModalInteractionEvent event){
         String number = event.getMessage().getContentRaw().split("\n")[0].replace("Text message received from number: ", "");
         String message = event.getValue("message").getAsString();
-        TwilioInterface.sendMessage(number, message);
+        twilioService.sendMessage(number, message);
         event.reply("Message has been sent").queue();
     }
 
-    @Override
+    @DiscordMapping
     public void onUnavailableGuildLeave(UnavailableGuildLeaveEvent event) {
         guildData.deleteById(event.getGuildIdLong());
+    }
+
+    @PostMapping("/message")
+    private ResponseEntity<?> sendMessage(@RequestBody Message message){
+        try {
+            log.info(message.toString());
+            log.info(bot.getGuildById(message.getGuildId()).getName());
+            bot.getGuildById(message.getGuildId())
+                    .getTextChannelById(message.getChannelId()).sendMessage(
+                            EmbedMessageGenerator.message(message)
+                    ).queue();
+            return ResponseEntity.status(200).build();
+        } catch (Exception ignored){
+            return ResponseEntity.badRequest().build();
+        }
+    }
+
+    @PostMapping("/api/message")
+    private String postMessage(@RequestBody String value) throws JSONException {
+        JSONObject json = new JSONObject(value);
+        if(!json.has("token")) return "Invalid token";
+        if(!json.getString("token").equals(apiToken)) return "Invalid token";
+        boolean toGuild = json.getBoolean("to guild");
+        if(toGuild){
+            String guildId = json.getString("guild id");
+            String channelId = json.getString("channel id");
+            String message = json.getString("message");
+            Guild guild = bot.getGuildById(guildId);
+            TextChannel channel = guild.getTextChannelById(channelId);
+            channel.sendMessage(message).queue();
+            return "Message sent to " + guild.getName() + "/" + channel.getName();
+        } else {
+            String userId = json.getString("user id");
+            String message = json.getString("message");
+            User user = bot.getUserById(userId);
+            PrivateChannel channel = user.openPrivateChannel().complete();
+            channel.sendMessage(message).queue();
+            return "Message sent to " + user.getName();
+        }
+    }
+
+    @GetMapping("health")
+    private String healthCheck(){
+        return "Healthy";
     }
 
     private void welcomeBot(Guild guild) {
