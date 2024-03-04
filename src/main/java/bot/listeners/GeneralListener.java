@@ -6,9 +6,7 @@ import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
 import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
-import data.database.onlineData.StatusRepository;
 import data.intermediates.messaging.Message;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.RestController;
 import services.TwilioService;
 import lombok.extern.slf4j.Slf4j;
@@ -51,7 +49,6 @@ import java.util.LinkedList;
 public class GeneralListener {
 
     private final GuildDataRepository guildData;
-    private final StatusRepository statusRepository;
     private final TwilioService twilioService;
 
     @Bot
@@ -64,9 +61,8 @@ public class GeneralListener {
     private long discordGuild;
 
     @Autowired
-    public GeneralListener(GuildDataRepository guildData, StatusRepository statusRepository, TwilioService twilioService){
+    public GeneralListener(GuildDataRepository guildData, TwilioService twilioService){
         this.guildData = guildData;
-        this.statusRepository = statusRepository;
         this.twilioService = twilioService;
     }
 
@@ -227,13 +223,6 @@ public class GeneralListener {
     @GetMapping("health")
     private String healthCheck(){
         return "Healthy";
-    }
-
-    @Scheduled(cron = "0 * * * * *")
-    private void minuteTasks(){
-        bot.getGuildById(discordGuild).getMembers().forEach(member -> {
-            System.out.println(member.getEffectiveName() + "\t" + member.getOnlineStatus().name());
-        });
     }
 
     private void welcomeBot(Guild guild) {
