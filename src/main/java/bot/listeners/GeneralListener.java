@@ -57,6 +57,9 @@ public class GeneralListener {
     @Value("${api.token}")
     private String apiToken;
 
+    @Value("${discord.guild}")
+    private long discordGuild;
+
     @Autowired
     public GeneralListener(GuildDataRepository guildData, TwilioService twilioService){
         this.guildData = guildData;

@@ -65,6 +65,46 @@ public class PartyBot  {
         chatroomNames.add("Mystic Manor");
         chatroomNames.add("Eternal Flame");
         chatroomNames.add("Tranquil Waters");
+        chatroomNames.add("Twilight Terrace");
+        chatroomNames.add("Ocean's Horizon");
+        chatroomNames.add("Mystic Meadows");
+        chatroomNames.add("Desert Mirage");
+        chatroomNames.add("Velvet Valley");
+        chatroomNames.add("Cosmic Crossing");
+        chatroomNames.add("Polar Paradise");
+        chatroomNames.add("Hidden Hollow");
+        chatroomNames.add("Thundering Tundra");
+        chatroomNames.add("Shimmering Shore");
+        chatroomNames.add("Luminous Lagoon");
+        chatroomNames.add("Dreamy Dale");
+        chatroomNames.add("Frosty Fjord");
+        chatroomNames.add("Skyline Sanctuary");
+        chatroomNames.add("Vibrant Vista");
+        chatroomNames.add("Ember Enclave");
+        chatroomNames.add("Silver Sands");
+        chatroomNames.add("Dazzling Depths");
+        chatroomNames.add("Midnight Meadow");
+        chatroomNames.add("Sunset Shore");
+        chatroomNames.add("Mountain Retreat");
+        chatroomNames.add("Ocean View");
+        chatroomNames.add("Forest Hideaway");
+        chatroomNames.add("River Bend");
+        chatroomNames.add("Seaside Escape");
+        chatroomNames.add("Desert Oasis");
+        chatroomNames.add("Lakeside Lodge");
+        chatroomNames.add("Sky High");
+        chatroomNames.add("Arctic Edge");
+        chatroomNames.add("Tropical Paradise");
+        chatroomNames.add("Urban Jungle");
+        chatroomNames.add("Countryside Corner");
+        chatroomNames.add("Deep Blue");
+        chatroomNames.add("Golden Fields");
+        chatroomNames.add("Mystical Ruins");
+        chatroomNames.add("Northern Lights");
+        chatroomNames.add("Sandy Beach");
+        chatroomNames.add("Rainforest Canopy");
+        chatroomNames.add("Volcanic Valley");
+
     }
 
     @DiscordMapping(Id = "enable_party")
