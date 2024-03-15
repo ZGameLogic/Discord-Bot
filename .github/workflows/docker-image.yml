@@ -44,4 +44,4 @@ jobs:
     needs: build
     steps:
       - name: Rolling update
-        run: sudo kubectl rollout restart deployment discord bot
+        run: sudo kubectl rollout restart deployment discord-bot
