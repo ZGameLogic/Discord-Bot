@@ -39,9 +39,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-#  Kubernetes:
-#    runs-on: PiServer
-#    needs: build
-#    steps:
-#      - name: Rolling update
-#        run: sudo kubectl rollout restart deployment discord bot
+  Kubernetes:
+    runs-on: PiServer
+    needs: build
+    steps:
+      - name: Rolling update
+        run: sudo kubectl rollout restart deployment discord-bot
