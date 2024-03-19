@@ -53,7 +53,6 @@ public class QuoteBot {
                 fontHeight = pane.getFontMetrics().getHeight();
                 formattedQuote = getQuoteLines(pane, quote, 240);
             }
-            log.info("Font used: {}", font);
             drawQuoteLines(
                     pane,
                     formattedQuote,
@@ -113,7 +112,7 @@ public class QuoteBot {
 
     private Font loadCustomFont(String name, float size) {
         try {
-            InputStream is = QuoteBot.class.getClassLoader().getResourceAsStream("/assets/fonts/" + name + ".ttf");
+            InputStream is = QuoteBot.class.getResourceAsStream("/assets/fonts/" + name + "-Regular.ttf");
             Font customFont = Font.createFont(Font.TRUETYPE_FONT, is).deriveFont(size);
             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
             ge.registerFont(customFont);
@@ -125,8 +124,14 @@ public class QuoteBot {
     }
 
     private String randomFont(){
-        File fontsDir = new File(QuoteBot.class.getClassLoader().getResource("/assets/fonts/").getPath());
-        List<String> names = Arrays.stream(fontsDir.listFiles()).map(font -> font.getName().replace(".ttf", "")).toList();
+        List<String> names = List.of(
+                "Baskervville",
+                "Lato",
+                "Milonga",
+                "Spirax",
+                "Tangerine",
+                "Yellowtail"
+        );
         return names.get(new Random().nextInt(0, names.size()));
     }
 
