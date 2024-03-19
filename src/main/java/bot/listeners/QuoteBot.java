@@ -78,7 +78,7 @@ public class QuoteBot {
         FontMetrics fm = g.getFontMetrics();
 
         List<String> lines = new ArrayList<>();
-        String[] words = text.split(" ");
+        String[] words = text.split("\\s+");
         StringBuilder currentLine = new StringBuilder(words[0]);
 
         for (int i = 1; i < words.length; i++) {
