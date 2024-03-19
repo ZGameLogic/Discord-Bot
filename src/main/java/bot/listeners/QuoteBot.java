@@ -113,7 +113,7 @@ public class QuoteBot {
 
     private Font loadCustomFont(String name, float size) {
         try {
-            InputStream is = QuoteBot.class.getResourceAsStream("/assets/fonts/" + name + ".ttf");
+            InputStream is = QuoteBot.class.getClassLoader().getResourceAsStream("/assets/fonts/" + name + ".ttf");
             Font customFont = Font.createFont(Font.TRUETYPE_FONT, is).deriveFont(size);
             GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
             ge.registerFont(customFont);
@@ -125,7 +125,7 @@ public class QuoteBot {
     }
 
     private String randomFont(){
-        File fontsDir = new File(QuoteBot.class.getResource("/assets/fonts/").getPath());
+        File fontsDir = new File(QuoteBot.class.getClassLoader().getResource("/assets/fonts/").getPath());
         List<String> names = Arrays.stream(fontsDir.listFiles()).map(font -> font.getName().replace(".ttf", "")).toList();
         return names.get(new Random().nextInt(0, names.size()));
     }
