@@ -24,7 +24,7 @@ public class QuoteBot {
 
     @DiscordMapping(Id = "Quote")
     private void userQuoted(MessageContextInteractionEvent event){
-        event.deferReply().queue();
+        event.deferReply().complete();
         User user = event.getTarget().getAuthor();
         String quote = event.getTarget().getContentDisplay().replaceAll("[^\\x00-\\x7F]", "").trim();
         if(quote.isEmpty()){
