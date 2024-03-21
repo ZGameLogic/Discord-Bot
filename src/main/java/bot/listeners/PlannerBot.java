@@ -103,7 +103,7 @@ public class PlannerBot {
         Guild guild = event.getGuild();
         GuildData dbGuild = guildData.getReferenceById(guild.getIdLong());
         guild.deleteCommandById(dbGuild.getCreatePlanCommandId()).queue();
-//        guild.getTextChannelById(dbGuild.getPlanChannelId()).delete().queue();
+        guild.getTextChannelById(dbGuild.getPlanChannelId()).delete().queue();
         dbGuild.setPlanEnabled(false);
         dbGuild.setPlanChannelId(0L);
         dbGuild.setCreatePlanCommandId(0L);
