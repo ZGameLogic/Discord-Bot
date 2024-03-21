@@ -1,7 +1,9 @@
 package bot.listeners;
 
+import bot.utils.EmbedMessageGenerator;
 import bot.utils.Helpers;
 import bot.utils.PlanHelper;
+import com.zgamelogic.annotations.Bot;
 import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
 import data.database.guildData.GuildData;
@@ -24,7 +26,6 @@ import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent;
-import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
@@ -59,6 +60,8 @@ public class PlannerBot {
     private final PlanRepository planRepository;
     private final UserDataRepository userData;
     private final TwilioService twilioService;
+
+    @Bot
     private JDA bot;
 
     public PlannerBot(PlanRepository planRepository, UserDataRepository userData, GuildDataRepository guildData, TwilioService twilioService) {
@@ -72,7 +75,11 @@ public class PlannerBot {
     private void enablePlan(ButtonInteractionEvent event){
         event.editButton(Button.success("disable_plan", "Plan bot")).queue();
         Guild guild = event.getGuild();
-        long planEventId = guild.upsertCommand(Commands.slash("plan_event", "Plan an event with friends")).complete().getIdLong();
+        long planEventId = guild.upsertCommand(
+                Commands.slash("plan", "Plan things")
+                        .addSubcommands(new SubcommandData("help", "Description of how this works"))
+                        .addSubcommands(new SubcommandData("event", "Plan an event with friends"))
+        ).complete().getIdLong();
         long textCommandId = guild.upsertCommand(
                 Commands.slash("text_notifications", "Enable or disable text message notifications")
                         .addSubcommands(
@@ -96,30 +103,12 @@ public class PlannerBot {
         Guild guild = event.getGuild();
         GuildData dbGuild = guildData.getReferenceById(guild.getIdLong());
         guild.deleteCommandById(dbGuild.getCreatePlanCommandId()).queue();
-        guild.getTextChannelById(dbGuild.getPlanChannelId()).delete().queue();
+//        guild.getTextChannelById(dbGuild.getPlanChannelId()).delete().queue();
         dbGuild.setPlanEnabled(false);
         dbGuild.setPlanChannelId(0L);
         dbGuild.setCreatePlanCommandId(0L);
         dbGuild.setTextCommandId(0L);
         guildData.save(dbGuild);
-    }
-
-    @DiscordMapping
-    public void ready(ReadyEvent event) {
-        bot = event.getJDA();
-        for(Guild guild: event.getJDA().getGuilds()){
-            guild.upsertCommand(
-                    Commands.slash("plan_event", "Plan an event with friends")
-            ).queue();
-            guild.upsertCommand(
-                    Commands.slash("text_notifications", "Enable or disable text message notifications")
-                            .addSubcommands(
-                                    new SubcommandData("enable", "Enables text messaging")
-                                            .addOption(OptionType.STRING, "number", "your phone number. EX: 16301112222", true),
-                                    new SubcommandData("disable", "Disables text messaging")
-                            )
-            ).queue();
-        }
     }
 
     @DiscordMapping(Id = "text_notifications", SubId = "enable")
@@ -156,7 +145,12 @@ public class PlannerBot {
         event.reply("Text messaging disabled").setEphemeral(true).queue();
     }
 
-    @DiscordMapping(Id = "plan_event")
+    @DiscordMapping(Id = "plan", SubId = "help")
+    private void planHelpCommand(SlashCommandInteractionEvent event){
+        event.replyEmbeds(EmbedMessageGenerator.plannerHelperMessage()).setEphemeral(true).queue();
+    }
+
+    @DiscordMapping(Id = "plan", SubId = "event")
     private void planEventSlashCommand(SlashCommandInteractionEvent event){
         TextInput notes = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
                 .setPlaceholder("Grinding the event").setRequired(false).build();

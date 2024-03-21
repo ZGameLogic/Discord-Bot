@@ -21,6 +21,24 @@ public abstract class EmbedMessageGenerator {
     public final static Color GENERAL_COLOR = new Color(99, 42, 129);
     private final static Color CARD_COLOR = new Color(43, 97, 158);
 
+    public static MessageEmbed plannerHelperMessage(){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(GENERAL_COLOR);
+        eb.setTitle("Plan bot helper message");
+        eb.setDescription("""
+                After inputting the `/plan event` command, you will be presented with a form.
+                **Title**: This is the title of your event, name it whatever you would like.
+                **Date and Time**: This is when you would like the event to take place. If you are not sure what this should look like, go ahead and try. If it does not work, shlongbot will tell you valid dates and times you can enter in.
+                **Notes**: This is extra event information that does not fit in the title.
+                **Number of people**: This is the number of people you are looking to join you in the event. __Do not include yourself in this count__.
+                
+                After sending in that modal, a new message will appear. Here you can choose who you are inviting to your event. You can also invite a role, and have the bot send an invite to everyone in that role.
+                After sending the selection in, you will get PMed about the event details. If you want to edit anything about the event you can do so with the buttons bellow it.
+                If you missed someone when sending out invites, you can invite people after the fact with the plan in the plans channel of your discord server.""");
+
+        return eb.build();
+    }
+
     public static MessageCreateData message(data.intermediates.messaging.Message message) {
         MessageCreateBuilder mcb = new MessageCreateBuilder();
         StringBuilder content = new StringBuilder();

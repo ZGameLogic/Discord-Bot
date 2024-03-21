@@ -17,7 +17,10 @@ public abstract class Helpers {
             3/20/2024 4:15pm
             6/20 3:45pm
             9pm
-            Wednesday at 4pm""";
+            Wednesday at 4pm
+            0930
+            Thursday at 15:45
+            """;
 
     public static Date stringToDate(String dateString){
         dateString = dateString.toUpperCase().replace("TODAY ", "").replace("AT ", "").replace(",", "");
