@@ -25,8 +25,9 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 /**
  * Party bot stuff
@@ -36,83 +37,142 @@ import java.util.List;
 public class PartyBot  {
 
     private final GuildDataRepository guildData;
-    // Linked List of names to hold chatroom names
-    private final LinkedList<String> chatroomNames;
+    private final HashMap<String, LinkedList<String>> chatroomNames;
 
     @Bot
     private JDA bot;
 
     @Autowired
     public PartyBot(GuildDataRepository guildData){
+        chatroomNames = new HashMap<>();
         this.guildData = guildData;
-        chatroomNames = new LinkedList<>();
-        chatroomNames.add("Chatroom");
-        chatroomNames.add("Hangout");
-        chatroomNames.add("Chillin");
-        chatroomNames.add("Roomchat");
-        chatroomNames.add("Compound");
-        chatroomNames.add("Cell Block");
-        chatroomNames.add("Wooded Cabin");
-        chatroomNames.add("Wooden Cabin");
-        chatroomNames.add("Celestial Cloud");
-        chatroomNames.add("Back Alley");
-        chatroomNames.add("Windswept Mountain");
-        chatroomNames.add("Moonlit Oasis");
-        chatroomNames.add("Secret Garden");
-        chatroomNames.add("Neon Nights");
-        chatroomNames.add("Starship Lounge");
-        chatroomNames.add("Enchanted Forest");
-        chatroomNames.add("Pixel Palace");
-        chatroomNames.add("Galactic Hub");
-        chatroomNames.add("Sunset Haven");
-        chatroomNames.add("Sapphire Springs");
-        chatroomNames.add("Echoing Caverns");
-        chatroomNames.add("Serenity Cove");
-        chatroomNames.add("Whispering Pines");
-        chatroomNames.add("Crystal Clear");
-        chatroomNames.add("Aurora Borealis");
-        chatroomNames.add("Mystic Manor");
-        chatroomNames.add("Eternal Flame");
-        chatroomNames.add("Tranquil Waters");
-        chatroomNames.add("Twilight Terrace");
-        chatroomNames.add("Ocean's Horizon");
-        chatroomNames.add("Mystic Meadows");
-        chatroomNames.add("Desert Mirage");
-        chatroomNames.add("Velvet Valley");
-        chatroomNames.add("Cosmic Crossing");
-        chatroomNames.add("Polar Paradise");
-        chatroomNames.add("Hidden Hollow");
-        chatroomNames.add("Thundering Tundra");
-        chatroomNames.add("Shimmering Shore");
-        chatroomNames.add("Luminous Lagoon");
-        chatroomNames.add("Dreamy Dale");
-        chatroomNames.add("Frosty Fjord");
-        chatroomNames.add("Skyline Sanctuary");
-        chatroomNames.add("Vibrant Vista");
-        chatroomNames.add("Ember Enclave");
-        chatroomNames.add("Silver Sands");
-        chatroomNames.add("Dazzling Depths");
-        chatroomNames.add("Midnight Meadow");
-        chatroomNames.add("Sunset Shore");
-        chatroomNames.add("Mountain Retreat");
-        chatroomNames.add("Ocean View");
-        chatroomNames.add("Forest Hideaway");
-        chatroomNames.add("River Bend");
-        chatroomNames.add("Seaside Escape");
-        chatroomNames.add("Desert Oasis");
-        chatroomNames.add("Lakeside Lodge");
-        chatroomNames.add("Sky High");
-        chatroomNames.add("Arctic Edge");
-        chatroomNames.add("Tropical Paradise");
-        chatroomNames.add("Urban Jungle");
-        chatroomNames.add("Countryside Corner");
-        chatroomNames.add("Deep Blue");
-        chatroomNames.add("Golden Fields");
-        chatroomNames.add("Mystical Ruins");
-        chatroomNames.add("Northern Lights");
-        chatroomNames.add("Sandy Beach");
-        chatroomNames.add("Rainforest Canopy");
-        chatroomNames.add("Volcanic Valley");
+        LinkedList<String> minecraft = new LinkedList<>();
+        minecraft.add("Plains");
+        minecraft.add("Forest");
+        minecraft.add("Birch Forest");
+        minecraft.add("Dark Forest");
+        minecraft.add("Jungle");
+        minecraft.add("Taiga");
+        minecraft.add("Snowy Tundra");
+        minecraft.add("Snowy Taiga");
+        minecraft.add("Savanna");
+        minecraft.add("Desert");
+        minecraft.add("Mesa");
+        minecraft.add("Badlands");
+        minecraft.add("Swamp");
+        minecraft.add("Mushroom Fields");
+        minecraft.add("Ocean");
+        minecraft.add("Deep Ocean");
+        minecraft.add("Cold Ocean");
+        minecraft.add("Frozen Ocean");
+        minecraft.add("Mountain");
+        minecraft.add("Wooded Mountain");
+        minecraft.add("Basalt Deltas");
+        minecraft.add("Crimson Forest");
+        minecraft.add("Warped Forest");
+        minecraft.add("Nether Wastes");
+        minecraft.add("Soul Sand Valley");
+        minecraft.add("End Highlands");
+        minecraft.add("End Midlands");
+        minecraft.add("End Barrens");
+        minecraft.add("The End");
+        chatroomNames.put("Minecraft", minecraft);
+        LinkedList<String> sot = new LinkedList<>();
+        sot.add("Ancient Spire Outpost");
+        sot.add("Cannon Cove");
+        sot.add("Chicken Isle");
+        sot.add("Crooks Hollow");
+        sot.add("Devils Ridge");
+        sot.add("Discovery Ridge");
+        sot.add("Fools Lagoon");
+        sot.add("Golden Sands Outpost");
+        sot.add("Krakens Fall");
+        sot.add("Lone Cove");
+        sot.add("Lookout Point");
+        sot.add("Marauders Arch");
+        sot.add("Mermaids Hideaway");
+        sot.add("Molten Sands Fortress");
+        sot.add("Old Faithful Isle");
+        sot.add("Plunder Outpost");
+        sot.add("Plunder Valley");
+        sot.add("Sanctuary Outpost");
+        sot.add("Shipwreck Bay");
+        sot.add("Smugglers Bay");
+        sot.add("Snake Island");
+        sot.add("The Crooked Masts");
+        sot.add("The Sunken Grove");
+        sot.add("Thieves Haven");
+        sot.add("Wanderers Refuge");
+        chatroomNames.put("Sea of Thieves", sot);
+        LinkedList<String> general = new LinkedList<>();
+        general.add("Chatroom");
+        general.add("Hangout");
+        general.add("Chillin");
+        general.add("Roomchat");
+        general.add("Compound");
+        general.add("Cell Block");
+        general.add("Wooded Cabin");
+        general.add("Wooden Cabin");
+        general.add("Celestial Cloud");
+        general.add("Back Alley");
+        general.add("Windswept Mountain");
+        general.add("Moonlit Oasis");
+        general.add("Secret Garden");
+        general.add("Neon Nights");
+        general.add("Starship Lounge");
+        general.add("Enchanted Forest");
+        general.add("Pixel Palace");
+        general.add("Galactic Hub");
+        general.add("Sunset Haven");
+        general.add("Sapphire Springs");
+        general.add("Echoing Caverns");
+        general.add("Serenity Cove");
+        general.add("Whispering Pines");
+        general.add("Crystal Clear");
+        general.add("Aurora Borealis");
+        general.add("Mystic Manor");
+        general.add("Eternal Flame");
+        general.add("Tranquil Waters");
+        general.add("Twilight Terrace");
+        general.add("Ocean's Horizon");
+        general.add("Mystic Meadows");
+        general.add("Desert Mirage");
+        general.add("Velvet Valley");
+        general.add("Cosmic Crossing");
+        general.add("Polar Paradise");
+        general.add("Hidden Hollow");
+        general.add("Thundering Tundra");
+        general.add("Shimmering Shore");
+        general.add("Luminous Lagoon");
+        general.add("Dreamy Dale");
+        general.add("Frosty Fjord");
+        general.add("Skyline Sanctuary");
+        general.add("Vibrant Vista");
+        general.add("Ember Enclave");
+        general.add("Silver Sands");
+        general.add("Dazzling Depths");
+        general.add("Midnight Meadow");
+        general.add("Sunset Shore");
+        general.add("Mountain Retreat");
+        general.add("Ocean View");
+        general.add("Forest Hideaway");
+        general.add("River Bend");
+        general.add("Seaside Escape");
+        general.add("Desert Oasis");
+        general.add("Lakeside Lodge");
+        general.add("Sky High");
+        general.add("Arctic Edge");
+        general.add("Tropical Paradise");
+        general.add("Urban Jungle");
+        general.add("Countryside Corner");
+        general.add("Deep Blue");
+        general.add("Golden Fields");
+        general.add("Mystical Ruins");
+        general.add("Northern Lights");
+        general.add("Sandy Beach");
+        general.add("Rainforest Canopy");
+        general.add("Volcanic Valley");
+        chatroomNames.put("general", general);
     }
 
     @DiscordMapping(Id = "enable_party")
@@ -289,36 +349,65 @@ public class PartyBot  {
         List<Member> members = guild.getVoiceChannelById(savedGuild.getCreateChatId()).getMembers();
         if (!members.isEmpty()) {
             int number = 1;
+            List<String> chatroomNames = this.chatroomNames.get("general");
             String chatroomName = chatroomNames.get((int) (Math.random() * chatroomNames.size()));
             while (!guild.getVoiceChannelsByName(chatroomName + " " + number, true).isEmpty()) {
                 number++;
             }
             VoiceChannel newChannel = guild.createVoiceChannel(chatroomName + " " + number)
                     .setParent(guild.getCategoryById(savedGuild.getPartyCategory())).complete();
+            newChannel.modifyStatus("general").queue();
             for (Member member : members) {
                 guild.moveVoiceMember(member, newChannel).queue();
             }
         }
     }
 
-//    @Scheduled(cron = "0 */5 * * * *")
-    @Scheduled(cron = "*/5 * * * * *")
+    @Scheduled(cron = "0 */5 * * * *")
     private void renameChatroom(){
-        log.info("Running rename");
         guildData.findByChatroomEnabledTrue().forEach(guild -> {
             long partyCatId = guild.getPartyCategory();
             long guildId = guild.getId();
             long afkChannelId = guild.getAfkChannelId();
             long createChannelId = guild.getCreateChatId();
             bot.getGuildById(guildId).getCategoryById(partyCatId)
-                    .getVoiceChannels()
-                    .stream()
-                    .filter(channel -> channel.getIdLong() != afkChannelId && channel.getIdLong() != createChannelId)
-                    .forEach(channel -> {
-                        channel.getMembers().forEach(member -> {
-                            member.getActivities().stream().filter(activity -> activity.getType() == Activity.ActivityType.PLAYING).forEach(a -> System.out.println(a.getName()));
-                        });
+                .getVoiceChannels()
+                .stream()
+                .filter(channel -> channel.getIdLong() != afkChannelId && channel.getIdLong() != createChannelId)
+                .forEach(channel -> {
+                    String game = getChatroomGame(channel);
+                    if(channel.getStatus().equals(game)) return; // if the status is already the game, return
+                    channel.modifyStatus(game).queue(); // set the status equal to the game
+                    String channelCurrentName = channel.getName().replaceAll("\\d+", "").trim();
+                    if(chatroomNames.entrySet().stream().noneMatch(entry -> entry.getValue().contains(channelCurrentName))) return; // if the chatroom name was edited, and is not in the map, return
+                    game = chatroomNames.containsKey(game) ? game : "general";
+                    if(chatroomNames.get(game).contains(channelCurrentName)) return; // if the chatroom is already in the category it was about to switch to, return
+                    List<String> newChatNames = this.chatroomNames.get(this.chatroomNames.containsKey(game) ? game : "general");
+                    channel.getManager().setName(newChatNames.get(ThreadLocalRandom.current().nextInt(0, newChatNames.size()))).queue();
             });
         });
+    }
+
+    private String getChatroomGame(VoiceChannel channel){
+        Map<String, Long> games = channel.getMembers().stream()
+                .flatMap(member -> member.getActivities().stream())
+                .filter(activity -> activity.getType() == Activity.ActivityType.PLAYING)
+                .collect(Collectors.groupingBy(Activity::getName, Collectors.counting()));
+        return games.entrySet().stream().min((entry1, entry2) -> {
+                    int valueCompare = entry2.getValue().compareTo(entry1.getValue());
+                    if (valueCompare == 0) {
+                        boolean isFirstKeyInChatroomNames = chatroomNames.containsKey(entry1.getKey());
+                        boolean isSecondKeyInChatroomNames = chatroomNames.containsKey(entry2.getKey());
+                        if (isFirstKeyInChatroomNames && !isSecondKeyInChatroomNames) {
+                            return -1;
+                        } else if (!isFirstKeyInChatroomNames && isSecondKeyInChatroomNames) {
+                            return 1;
+                        }
+                        return 0;
+                    }
+                    return valueCompare;
+                })
+                .map(Map.Entry::getKey)
+                .orElse("general");
     }
 }
