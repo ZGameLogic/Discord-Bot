@@ -18,10 +18,10 @@ public class TwilioService {
 
     public void sendMessage(String to, String message){
         Twilio.init(twilioSID, twilioToken);
-        Message.creator(
-                new PhoneNumber(to),
-                new PhoneNumber(twilioNumber),
-                message
-        ).create();
+//        Message.creator(
+//                new PhoneNumber(to),
+//                new PhoneNumber(twilioNumber),
+//                message
+//        ).create();
     }
 }
