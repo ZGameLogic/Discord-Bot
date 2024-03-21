@@ -9,14 +9,15 @@ import java.util.Locale;
 
 public abstract class Helpers {
 
-    public static final String STD_HELPER_MESSAGE = "Invalid date and time. Here are some examples of valid dates:\n" +
-            "7:00pm\n" +
-            "Today at 7:00pm\n" +
-            "Tomorrow 6pm\n" +
-            "3/20/2024 4:15pm\n" +
-            "6/20 3:45pm\n" +
-            "9pm\n" +
-            "Wednesday at 4pm";
+    public static final String STD_HELPER_MESSAGE = """
+            Invalid date and time. Here are some examples of valid dates:
+            7:00pm
+            Today at 7:00pm
+            Tomorrow 6pm
+            3/20/2024 4:15pm
+            6/20 3:45pm
+            9pm
+            Wednesday at 4pm""";
 
     public static Date stringToDate(String dateString){
         dateString = dateString.toUpperCase().replace("TODAY ", "").replace("AT ", "").replace(",", "");
