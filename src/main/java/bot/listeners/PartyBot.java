@@ -1,9 +1,13 @@
 package bot.listeners;
 
+import com.zgamelogic.annotations.Bot;
 import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
 import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
+import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.entities.Activity;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.Channel;
@@ -19,6 +23,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -27,11 +32,15 @@ import java.util.List;
  * Party bot stuff
  */
 @DiscordController
+@Slf4j
 public class PartyBot  {
 
     private final GuildDataRepository guildData;
     // Linked List of names to hold chatroom names
     private final LinkedList<String> chatroomNames;
+
+    @Bot
+    private JDA bot;
 
     @Autowired
     public PartyBot(GuildDataRepository guildData){
@@ -104,7 +113,6 @@ public class PartyBot  {
         chatroomNames.add("Sandy Beach");
         chatroomNames.add("Rainforest Canopy");
         chatroomNames.add("Volcanic Valley");
-
     }
 
     @DiscordMapping(Id = "enable_party")
@@ -210,13 +218,10 @@ public class PartyBot  {
      */
     @DiscordMapping
     public void ready(ReadyEvent event) {
-
         new Thread(() -> {
-            for(GuildData data : guildData.findAll()){
-                if(data.getChatroomEnabled()){
-                    checkCreateChatroom(event.getJDA().getGuildById(data.getId()));
-                }
-            }
+            guildData.findByChatroomEnabledTrue().forEach(data ->
+                    checkCreateChatroom(event.getJDA().getGuildById(data.getId()))
+            );
         }, "PartyBot Startup").start();
     }
 
@@ -294,5 +299,26 @@ public class PartyBot  {
                 guild.moveVoiceMember(member, newChannel).queue();
             }
         }
+    }
+
+//    @Scheduled(cron = "0 */5 * * * *")
+    @Scheduled(cron = "*/5 * * * * *")
+    private void renameChatroom(){
+        log.info("Running rename");
+        guildData.findByChatroomEnabledTrue().forEach(guild -> {
+            long partyCatId = guild.getPartyCategory();
+            long guildId = guild.getId();
+            long afkChannelId = guild.getAfkChannelId();
+            long createChannelId = guild.getCreateChatId();
+            bot.getGuildById(guildId).getCategoryById(partyCatId)
+                    .getVoiceChannels()
+                    .stream()
+                    .filter(channel -> channel.getIdLong() != afkChannelId && channel.getIdLong() != createChannelId)
+                    .forEach(channel -> {
+                        channel.getMembers().forEach(member -> {
+                            member.getActivities().stream().filter(activity -> activity.getType() == Activity.ActivityType.PLAYING).forEach(a -> System.out.println(a.getName()));
+                        });
+            });
+        });
     }
 }
