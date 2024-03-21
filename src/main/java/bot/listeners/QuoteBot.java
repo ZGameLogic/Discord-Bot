@@ -24,13 +24,13 @@ public class QuoteBot {
 
     @DiscordMapping(Id = "Quote")
     private void userQuoted(MessageContextInteractionEvent event){
-        event.deferReply().complete();
         User user = event.getTarget().getAuthor();
         String quote = event.getTarget().getContentDisplay().replaceAll("[^\\x00-\\x7F]", "").trim();
         if(quote.isEmpty()){
-            event.getHook().sendMessage("Nothing seems to be quotable here").setEphemeral(true).queue();
+            event.reply("Nothing seems to be quotable here").setEphemeral(true).queue();
             return;
         }
+        event.deferReply().complete();
         try {
             BufferedImage avatar = ImageIO.read(new URL(user.getEffectiveAvatarUrl()));
             BufferedImage bufferedImage = new BufferedImage(381, 127, BufferedImage.TYPE_INT_RGB);
