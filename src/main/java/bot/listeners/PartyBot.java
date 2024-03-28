@@ -213,11 +213,10 @@ public class PartyBot  {
         if (!members.isEmpty()) {
             namesRepository.findRandom().ifPresent(chatroomName -> {
                 String name = chatroomName.getName();
-                int number = 1;
-                while (!guild.getVoiceChannelsByName(name + " " + number, true).isEmpty()) {
-                    number++;
+                while (!guild.getVoiceChannelsByName(name, true).isEmpty()) {
+                    name = chatroomName.getName();
                 }
-                VoiceChannel newChannel = guild.createVoiceChannel(name + " " + number)
+                VoiceChannel newChannel = guild.createVoiceChannel(name)
                         .setParent(guild.getCategoryById(savedGuild.getPartyCategory())).complete();
                 newChannel.modifyStatus(chatroomName.getGame()).queue();
                 for (Member member : members) {
