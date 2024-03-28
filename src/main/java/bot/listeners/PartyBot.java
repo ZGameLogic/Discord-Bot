@@ -219,7 +219,7 @@ public class PartyBot  {
                 }
                 VoiceChannel newChannel = guild.createVoiceChannel(name + " " + number)
                         .setParent(guild.getCategoryById(savedGuild.getPartyCategory())).complete();
-                newChannel.modifyStatus("general").queue();
+                newChannel.modifyStatus(chatroomName.getGame()).queue();
                 for (Member member : members) {
                     guild.moveVoiceMember(member, newChannel).queue();
                 }
