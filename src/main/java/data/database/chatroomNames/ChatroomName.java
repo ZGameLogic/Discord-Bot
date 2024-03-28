@@ -13,4 +13,5 @@ import lombok.NoArgsConstructor;
 public class ChatroomName {
     @Id
     private String name;
+    private String game;
 }
