@@ -212,11 +212,12 @@ public class PartyBot  {
         List<Member> members = guild.getVoiceChannelById(savedGuild.getCreateChatId()).getMembers();
         if (!members.isEmpty()) {
             namesRepository.findRandom().ifPresent(chatroomName -> {
+                String name = chatroomName.getName();
                 int number = 1;
-                while (!guild.getVoiceChannelsByName(chatroomName + " " + number, true).isEmpty()) {
+                while (!guild.getVoiceChannelsByName(name + " " + number, true).isEmpty()) {
                     number++;
                 }
-                VoiceChannel newChannel = guild.createVoiceChannel(chatroomName + " " + number)
+                VoiceChannel newChannel = guild.createVoiceChannel(name + " " + number)
                         .setParent(guild.getCategoryById(savedGuild.getPartyCategory())).complete();
                 newChannel.modifyStatus("general").queue();
                 for (Member member : members) {
