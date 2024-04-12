@@ -11,4 +11,3 @@ spec:
       targetPort: 2000
       nodePort: 30020
   type: NodePort
-  
