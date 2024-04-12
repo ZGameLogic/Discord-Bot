@@ -105,6 +105,7 @@ public class PartyBot  {
                 try {
                     // rename the channel and set valid command to true
                     voice.getManager().setName(event.getOption("name").getAsString()).queue();
+                    event.getGuild().getVoiceChannelById(voice.getIdLong()).modifyStatus("").queue();
                     event.reply("Channel name updated").setEphemeral(true).queue();
                 } catch (IllegalArgumentException e1) {
                     event.reply("Channel name not updated").setEphemeral(true).queue();
