@@ -100,7 +100,6 @@
 			<version>12.4.2.jre11</version>
 		</dependency>
 
-
 		<dependency>
 			<groupId>com.twilio.sdk</groupId>
 			<artifactId>twilio</artifactId>
@@ -115,6 +114,12 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-jdbc</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>com.joestelmach</groupId>
+			<artifactId>natty</artifactId>
+			<version>0.13</version>
 		</dependency>
 	</dependencies>
 
