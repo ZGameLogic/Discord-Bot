@@ -6,6 +6,10 @@ import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
 import data.database.guildData.GuildDataRepository;
 import data.intermediates.messaging.Message;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
+import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.RestController;
 import services.TwilioService;
 import lombok.extern.slf4j.Slf4j;
@@ -45,10 +49,20 @@ public class GeneralListener {
     @Value("${api.token}")
     private String apiToken;
 
+    @Bean
+    private CommandData generalCommands(){
+        return Commands.slash("pray", "Pray to our lord and savior: Shlongbot");
+    }
+
     @Autowired
     public GeneralListener(GuildDataRepository guildData, TwilioService twilioService){
         this.guildData = guildData;
         this.twilioService = twilioService;
+    }
+
+    @DiscordMapping(Id = "pray")
+    private void praySlashCommand(SlashCommandInteractionEvent event){
+        event.reply("Thank you, my child.").queue();
     }
 
     @DiscordMapping
