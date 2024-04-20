@@ -2,15 +2,12 @@ package bot.listeners;
 
 import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
-import data.database.guildData.GuildData;
-import data.database.guildData.GuildDataRepository;
 import data.database.huntData.gun.HuntGunRepository;
 import data.database.huntData.item.HuntItemRepository;
 import data.database.huntData.randomizer.HuntRandomizerRepository;
 import data.database.huntData.randomizer.RandomizerData;
 import data.intermediates.hunt.HuntLoadout;
 import lombok.extern.slf4j.Slf4j;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.middleman.GuildMessageChannel;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
@@ -18,6 +15,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.ItemComponent;
@@ -25,6 +23,7 @@ import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 
 import javax.imageio.ImageIO;
 import java.io.File;
@@ -40,7 +39,6 @@ import static bot.utils.HuntHelper.*;
 @DiscordController
 public class HuntShowdownBot {
 
-    private final GuildDataRepository guildData;
     private final HuntGunRepository huntGunRepository;
     private final HuntItemRepository huntItemRepository;
     private final HuntRandomizerRepository huntRandomizerRepository;
@@ -49,39 +47,20 @@ public class HuntShowdownBot {
     private long loadoutChatId;
 
     @Autowired
-    public HuntShowdownBot(GuildDataRepository guildData, HuntGunRepository huntGunRepository, HuntItemRepository huntItemRepository, HuntRandomizerRepository huntRandomizerRepository) {
-        this.guildData = guildData;
+    public HuntShowdownBot(HuntGunRepository huntGunRepository, HuntItemRepository huntItemRepository, HuntRandomizerRepository huntRandomizerRepository) {
         this.huntGunRepository = huntGunRepository;
         this.huntItemRepository = huntItemRepository;
         this.huntRandomizerRepository = huntRandomizerRepository;
     }
 
-    @DiscordMapping(Id = "enable_hunt")
-    private void enableHunt(ButtonInteractionEvent event){
-        event.editButton(Button.success("disable_hunt", "Hunt bot")).queue();
-        Guild guild = event.getGuild();
-        long randomizerCommandId = guild.upsertCommand(
-                Commands.slash("hunt", "Hunt Showdown commands")
-                        .addSubcommands(
-                                new SubcommandData("randomizer", "Summons the randomizer"),
-                                new SubcommandData("reroll", "Reroll a weapon, tool, or consumable you don't have")
-                                        .addOption(OptionType.STRING, "item", "Weapon, tool, or consumable to re-roll", true, true)
-                        )
-        ).complete().getIdLong();
-        GuildData dbGuild = guildData.getReferenceById(guild.getIdLong());
-        dbGuild.setHuntEnabled(true);
-        dbGuild.setRandomizerSummonId(randomizerCommandId);
-        guildData.save(dbGuild);
-    }
-
-    @DiscordMapping(Id = "disable_hunt")
-    private void disableHunt(ButtonInteractionEvent event){
-        event.editButton(Button.danger("enable_hunt", "Hunt bot")).queue();
-        Guild guild = event.getGuild();
-        GuildData dbGuild = guildData.getReferenceById(guild.getIdLong());
-        guild.deleteCommandById(dbGuild.getRandomizerSummonId()).queue();
-        dbGuild.setHuntEnabled(false);
-        guildData.save(dbGuild);
+    @Bean
+    private CommandData huntCommand(){
+        return Commands.slash("hunt", "Hunt Showdown commands")
+            .addSubcommands(
+                    new SubcommandData("randomizer", "Summons the randomizer"),
+                    new SubcommandData("reroll", "Reroll a weapon, tool, or consumable you don't have")
+                            .addOption(OptionType.STRING, "item", "Weapon, tool, or consumable to re-roll", true, true)
+            );
     }
 
     @DiscordMapping(Id = "hunt", SubId = "randomizer")

@@ -8,19 +8,17 @@ import data.database.guildData.GuildDataRepository;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.channel.Channel;
-import net.dv8tion.jda.api.entities.channel.concrete.Category;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.events.session.SessionResumeEvent;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 
 import java.util.*;
 
@@ -40,60 +38,14 @@ public class PartyBot  {
         this.guildData = guildData;
     }
 
-    @DiscordMapping(Id = "enable_party")
-    private void enableParty(ButtonInteractionEvent event){
-        event.editButton(Button.success("disable_party", "Party Bot")).queue();
-        // edit the discord
-        Guild guild = event.getGuild();
-        // commands
-        long renameChatroomId = guild.upsertCommand(Commands.slash("rename-chatroom", "Renames chatroom to a new name")
-                .addOption(OptionType.STRING, "name", "Chatroom name", true)).complete().getIdLong();
-        long limitId = guild.upsertCommand(Commands.slash("limit", "Limits the amount of people who can enter a chatroom")
-                .addOption(OptionType.INTEGER, "count", "Number of people allowed in the chatroom", true)).complete().getIdLong();
-        // voice channel shenanigans
-        Category cat = guild.createCategory("Voice channels").complete();
-        VoiceChannel afk = guild.getAfkChannel();
-        if(afk == null){
-            afk = guild.createVoiceChannel("AFK", cat).complete();
-            guild.getManager().setAfkChannel(afk).queue();
-            guild.getManager().setAfkTimeout(Guild.Timeout.SECONDS_300).queue();
-        } else {
-            afk.getManager().setParent(cat).queue();
-        }
-        Channel createChat = guild.createVoiceChannel("Create chatroom", cat).complete();
-
-        // edit the database
-        GuildData savedGuild = guildData.findById(event.getGuild().getIdLong()).get();
-        savedGuild.setChatroomEnabled(true);
-        savedGuild.setPartyCategory(cat.getIdLong());
-        savedGuild.setCreateChatId(createChat.getIdLong());
-        savedGuild.setAfkChannelId(afk.getIdLong());
-        savedGuild.setRenameCommandId(renameChatroomId);
-        savedGuild.setLimitCommandId(limitId);
-        guildData.save(savedGuild);
-    }
-
-    @DiscordMapping(Id = "disable_party")
-    private void disableParty(ButtonInteractionEvent event){
-        event.editButton(Button.danger("enable_party", "Party Bot")).queue();
-        // edit the discord
-        Guild guild = event.getGuild();
-        GuildData savedGuild = guildData.getReferenceById(event.getGuild().getIdLong());
-        // commands
-        guild.deleteCommandById(savedGuild.getLimitCommandId()).queue();
-        guild.deleteCommandById(savedGuild.getRenameCommandId()).queue();
-        // voice channel shenanigans
-        guild.getVoiceChannelById(savedGuild.getCreateChatId()).delete().queue();
-        guild.getCategoryById(savedGuild.getPartyCategory()).delete().queue();
-
-        // edit the database
-        savedGuild.setChatroomEnabled(false);
-        savedGuild.setPartyCategory(0L);
-        savedGuild.setCreateChatId(0L);
-        savedGuild.setAfkChannelId(0L);
-        savedGuild.setRenameCommandId(0L);
-        savedGuild.setLimitCommandId(0L);
-        guildData.save(savedGuild);
+    @Bean
+    private List<CommandData> partyCommands(){
+        return List.of(
+                Commands.slash("rename-chatroom", "Renames chatroom to a new name")
+                        .addOption(OptionType.STRING, "name", "Chatroom name", true),
+                Commands.slash("limit", "Limits the amount of people who can enter a chatroom")
+                        .addOption(OptionType.INTEGER, "count", "Number of people allowed in the chatroom", true)
+        );
     }
 
     @DiscordMapping(Id = "rename-chatroom")

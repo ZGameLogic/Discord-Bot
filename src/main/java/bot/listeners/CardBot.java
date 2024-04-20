@@ -6,13 +6,11 @@ import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
 import data.database.cardData.cards.CardData;
 import data.database.cardData.cards.CardDataRepository;
-import data.database.cardData.guild.GuildCardData;
 import data.database.cardData.guild.GuildCardDataRepository;
 import data.database.cardData.player.PlayerCardData;
 import data.database.cardData.player.PlayerCardDataRepository;
 import data.database.guildData.GuildDataRepository;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
@@ -29,15 +27,16 @@ import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionMapping;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -96,55 +95,23 @@ public class CardBot {
         }
     }
 
-    @DiscordMapping(Id = "enable_cards")
-    private void enableCards(ButtonInteractionEvent event){
-        event.deferEdit().queue();
-        GuildCardData data = new GuildCardData();
-        Guild guild = event.getGuild();
-        data.setId(guild.getIdLong());
-        data.setSlashCommandId(
-          guild.upsertCommand(Commands.slash("cards", "Slash command for card bot")
-                  .addSubcommands(
-                          new SubcommandData("collection", "View your entire collection completion")
-                                  .addOption(OptionType.STRING, "collection", "Specific collection data", false, true)
-                                  .addOption(OptionType.USER, "user", "Specific user data", false),
-                          new SubcommandData("sell", "Sell a specific card you own")
-                                  .addOption(OptionType.STRING,"collection", "Specific collection", true, true)
-                                  .addOption(OptionType.STRING, "name", "Specific card name", true, true)
-                                  .addOption(OptionType.INTEGER, "price", "Price for card", true),
-                          new SubcommandData("buy_pack", "Buy a number of packs. 100 pips each.")
-                                  .addOption(OptionType.INTEGER, "count", "Number of packs you want to buy", true)
-                                  .addOption(OptionType.STRING, "collection", "Specific collection of cards. 250 pips each.", false, true),
-                          new SubcommandData("status", "View how many unopened packs you have and your pip count"),
-                          new SubcommandData("open_packs", "Opens all the packs that you have")
-                  )
-          ).complete().getIdLong()
-        );
-        data.setShopTextChannelId(
-                guild
-                        .createTextChannel("card shop")
-                        .setTopic("A shop for all things cards")
-                        .addRolePermissionOverride(
-                                event.getGuild().getPublicRole().getIdLong(),
-                                new LinkedList<>(Collections.singletonList(Permission.VIEW_CHANNEL)),
-                                new LinkedList<>(Collections.singletonList(Permission.MESSAGE_SEND))
-                        )
-                .complete().getIdLong());
-        guildCardDataRepository.save(data);
-        guildDataRepository.save(guildDataRepository.findById(event.getGuild().getIdLong()).get().setCardsEnabled(true));
-        ActionRow row = event.getMessage().getActionRows().get(0);
-        row.updateComponent("enable_cards", Button.success("disable_cards", "Cards bot"));
-        event.getHook().editOriginalComponents(row).queue();
-    }
-
-    @DiscordMapping(Id = "disable_cards")
-    private void disableCards(ButtonInteractionEvent event){
-        event.editButton(Button.danger("enable_cards", "Cards bot")).queue();
-        guildDataRepository.save(guildDataRepository.findById(event.getGuild().getIdLong()).get().setCardsEnabled(false));
-        GuildCardData guildData = guildCardDataRepository.findById(event.getGuild().getIdLong()).get();
-        event.getGuild().retrieveCommandById(guildData.getSlashCommandId()).queue(command -> command.delete().queue());
-        event.getGuild().getTextChannelById(guildData.getShopTextChannelId()).delete().queue();
-        guildCardDataRepository.delete(guildData);
+    @Bean
+    private CommandData cardCommands(){
+        return Commands.slash("cards", "Slash command for card bot")
+                .addSubcommands(
+                        new SubcommandData("collection", "View your entire collection completion")
+                                .addOption(OptionType.STRING, "collection", "Specific collection data", false, true)
+                                .addOption(OptionType.USER, "user", "Specific user data", false),
+                        new SubcommandData("sell", "Sell a specific card you own")
+                                .addOption(OptionType.STRING,"collection", "Specific collection", true, true)
+                                .addOption(OptionType.STRING, "name", "Specific card name", true, true)
+                                .addOption(OptionType.INTEGER, "price", "Price for card", true),
+                        new SubcommandData("buy_pack", "Buy a number of packs. 100 pips each.")
+                                .addOption(OptionType.INTEGER, "count", "Number of packs you want to buy", true)
+                                .addOption(OptionType.STRING, "collection", "Specific collection of cards. 250 pips each.", false, true),
+                        new SubcommandData("status", "View how many unopened packs you have and your pip count"),
+                        new SubcommandData("open_packs", "Opens all the packs that you have")
+                );
     }
 
     @DiscordMapping(Id = "cards", SubId = "collection", FocusedOption = "collection")
