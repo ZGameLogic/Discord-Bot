@@ -4,33 +4,24 @@ import bot.utils.EmbedMessageGenerator;
 import com.zgamelogic.annotations.Bot;
 import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
-import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
 import data.intermediates.messaging.Message;
 import org.springframework.web.bind.annotation.RestController;
 import services.TwilioService;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.entities.channel.concrete.PrivateChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
-import net.dv8tion.jda.api.events.guild.GuildJoinEvent;
-import net.dv8tion.jda.api.events.guild.GuildLeaveEvent;
 import net.dv8tion.jda.api.events.guild.UnavailableGuildLeaveEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.events.session.ReadyEvent;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.ItemComponent;
-import net.dv8tion.jda.api.interactions.components.LayoutComponent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
-import org.jetbrains.annotations.NotNull;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,9 +30,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-
-import java.util.Collections;
-import java.util.LinkedList;
 
 @DiscordController
 @RestController
@@ -57,86 +45,10 @@ public class GeneralListener {
     @Value("${api.token}")
     private String apiToken;
 
-    @Value("${discord.guild}")
-    private long discordGuild;
-
     @Autowired
     public GeneralListener(GuildDataRepository guildData, TwilioService twilioService){
         this.guildData = guildData;
         this.twilioService = twilioService;
-    }
-
-    @DiscordMapping
-    public void ready(@NotNull ReadyEvent event) {
-        new Thread(()-> {
-            //update guilds
-            for(Guild guild : event.getJDA().getGuilds()){
-                if(!guildData.existsById(guild.getIdLong())){
-                    welcomeBot(guild);
-                }
-            }
-            for(GuildData guild: guildData.findAll()){
-                Guild g = event.getJDA().getGuildById(guild.getId());
-                g.getTextChannelById(guild.getConfigChannelId()).retrieveMessageById(guild.getConfigMessageId()).queue(message -> {
-                    LinkedList<LayoutComponent> components = new LinkedList<>();
-                    LinkedList<ItemComponent> ics = new LinkedList<>();
-                    if(guild.getChatroomEnabled() == null || !guild.getChatroomEnabled()){
-                        ics.add(Button.danger("enable_party", "Party Bot"));
-                    } else {
-                        ics.add(Button.success("disable_party", "Party Bot"));
-                    }
-                    if(guild.getPlanEnabled() == null || !guild.getPlanEnabled()){
-                        ics.add(Button.danger("enable_plan", "Plan bot"));
-                    } else {
-                        ics.add(Button.success("disable_plan", "Plan bot"));
-                    }
-                    if(guild.getCardsEnabled() == null || !guild.getCardsEnabled()){
-                        ics.add(Button.danger("enable_cards", "Cards bot"));
-                    } else {
-                        ics.add(Button.success("disable_cards", "Cards bot"));
-                    }
-                    if(guild.getHuntEnabled() == null || !guild.getHuntEnabled()){
-                        ics.add(Button.danger("enable_hunt", "Hunt bot"));
-                    } else {
-                        ics.add(Button.success("disable_hunt", "Hunt bot"));
-                    }
-                    if(guild.getGeneratorEnabled() == null || !guild.getGeneratorEnabled()){
-                        ics.add(Button.danger("enable_generator", "Generator bot"));
-                    } else {
-                        ics.add(Button.success("disable_generator", "Generator bot"));
-                    }
-                    ActionRow row = ActionRow.of(ics);
-                    components.add(row);
-                    message.editMessageComponents(components).queue();
-                });
-            }
-        }, "Guild Checking Thread").start();
-    }
-
-    @DiscordMapping
-    public void onGuildJoin(GuildJoinEvent event) {
-        welcomeBot(event.getGuild());
-    }
-
-    @DiscordMapping
-    public void onGuildLeave(GuildLeaveEvent event) {
-        Guild guild = event.getGuild();
-        try {
-            // edit the discord
-            GuildData savedGuild = guildData.findById(event.getGuild().getIdLong()).get();
-            if(savedGuild.getChatroomEnabled()) {
-                // commands
-                guild.deleteCommandById(savedGuild.getLimitCommandId()).queue();
-                guild.deleteCommandById(savedGuild.getRenameCommandId()).queue();
-                // voice channel shenanigans
-                guild.getVoiceChannelById(savedGuild.getCreateChatId()).delete().queue();
-                guild.getCategoryById(savedGuild.getPartyCategory()).delete().queue();
-            }
-            guild.getTextChannelById(savedGuild.getConfigChannelId()).delete().queue();
-        } catch (Exception e){
-            log.warn("Unable to delete guild data. Was removed too quickly.");
-        }
-        guildData.deleteById(event.getGuild().getIdLong());
     }
 
     @DiscordMapping
@@ -223,24 +135,5 @@ public class GeneralListener {
     @GetMapping("health")
     private String healthCheck(){
         return "Healthy";
-    }
-
-    private void welcomeBot(Guild guild) {
-        guild.createTextChannel("shlongbot")
-                .addRolePermissionOverride(guild.getPublicRole().getIdLong(),
-                        new LinkedList<>(),
-                        new LinkedList<>(Collections.singletonList(Permission.VIEW_CHANNEL)
-                        ))
-                .setTopic("This is a channel made by shlongbot")
-                .queue(textChannel -> textChannel.sendMessageEmbeds(EmbedMessageGenerator.welcomeMessage(guild.getOwner().getEffectiveName(), guild.getName()))
-                        .queue(message -> {
-                            GuildData newGuild = new GuildData();
-                            newGuild.setId(guild.getIdLong());
-                            newGuild.setConfigChannelId(textChannel.getIdLong());
-                            newGuild.setChatroomEnabled(false);
-                            newGuild.setPlanEnabled(false);
-                            newGuild.setConfigMessageId(message.getIdLong());
-                            guildData.save(newGuild);
-                        }));
     }
 }

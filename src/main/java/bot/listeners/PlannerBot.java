@@ -13,6 +13,8 @@ import data.database.planData.PlanRepository;
 import data.database.planData.User;
 import data.database.userData.UserDataRepository;
 import data.intermediates.planData.PlanEvent;
+import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.RestController;
 import services.TwilioService;
 import lombok.extern.slf4j.Slf4j;
@@ -71,70 +73,18 @@ public class PlannerBot {
         this.twilioService = twilioService;
     }
 
-    @DiscordMapping(Id = "enable_plan")
-    private void enablePlan(ButtonInteractionEvent event){
-        event.editButton(Button.success("disable_plan", "Plan bot")).queue();
-        Guild guild = event.getGuild();
-        long planEventId = guild.upsertCommand(
+    @Bean
+    private List<CommandData> plannerCommands(){
+        return List.of(
                 Commands.slash("plan", "Plan things")
                         .addSubcommands(new SubcommandData("help", "Description of how this works"))
-                        .addSubcommands(new SubcommandData("event", "Plan an event with friends"))
-        ).complete().getIdLong();
-        long textCommandId = guild.upsertCommand(
+                        .addSubcommands(new SubcommandData("event", "Plan an event with friends")),
                 Commands.slash("text_notifications", "Enable or disable text message notifications")
                         .addSubcommands(
                                 new SubcommandData("enable", "Enables text messaging")
                                         .addOption(OptionType.STRING, "number", "your phone number. EX: 16301112222", true),
-                                new SubcommandData("disable", "Disables text messaging")
-                        )
-        ).complete().getIdLong();
-        long eventsChannel = guild.createTextChannel("plans").setTopic("This is a channel for planned events").complete().getIdLong();
-        GuildData dbGuild = guildData.getReferenceById(guild.getIdLong());
-        dbGuild.setPlanEnabled(true);
-        dbGuild.setPlanChannelId(eventsChannel);
-        dbGuild.setCreatePlanCommandId(planEventId);
-        dbGuild.setTextCommandId(textCommandId);
-        guildData.save(dbGuild);
-    }
-
-    @DiscordMapping(Id = "disable_plan")
-    private void disablePlan(ButtonInteractionEvent event){
-        event.editButton(Button.danger("enable_plan", "Plan bot")).queue();
-        Guild guild = event.getGuild();
-        GuildData dbGuild = guildData.getReferenceById(guild.getIdLong());
-        guild.deleteCommandById(dbGuild.getCreatePlanCommandId()).queue();
-        guild.getTextChannelById(dbGuild.getPlanChannelId()).delete().queue();
-        dbGuild.setPlanEnabled(false);
-        dbGuild.setPlanChannelId(0L);
-        dbGuild.setCreatePlanCommandId(0L);
-        dbGuild.setTextCommandId(0L);
-        guildData.save(dbGuild);
-    }
-
-    @DiscordMapping(Id = "text_notifications", SubId = "enable")
-    private void enableTextSlash(SlashCommandInteractionEvent event){
-        String formatted = event.getOption("number").getAsString()
-                .replace("(", "")
-                .replace(")", "")
-                .replace("-", "")
-                .replace(" ", "")
-                .replace("+", "");
-        if(formatted.length() < 10) {
-            event.reply("Phone number is too short").queue();
-            return;
-        }
-        try {
-            Long number = Long.parseLong(formatted);
-            data.database.userData.User user = new data.database.userData.User(
-                    event.getUser().getIdLong(),
-                    number,
-                    event.getUser().getName()
-            );
-            userData.save(user);
-        } catch (NumberFormatException e){
-            event.reply("Invalid phone number").queue();
-        }
-        event.reply("Text notifications for plans enabled").setEphemeral(true).queue();
+                                new SubcommandData("disable", "Disables text messaging"))
+        );
     }
 
     @DiscordMapping(Id = "text_notifications", SubId = "disable")
