@@ -171,7 +171,7 @@ public class PartyBot  {
                 }
                 VoiceChannel newChannel = guild.createVoiceChannel(name)
                         .setParent(guild.getCategoryById(savedGuild.getPartyCategory())).complete();
-                newChannel.modifyStatus(chatroomName.getGame()).queue();
+                newChannel.sendMessage(String.format("This chatroom name comes from the game: %s", chatroomName.getGame())).queue();
                 for (Member member : members) {
                     guild.moveVoiceMember(member, newChannel).queue();
                 }
