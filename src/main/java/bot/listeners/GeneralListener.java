@@ -49,20 +49,10 @@ public class GeneralListener {
     @Value("${api.token}")
     private String apiToken;
 
-    @Bean
-    private CommandData generalCommands(){
-        return Commands.slash("pray", "Pray to our lord and savior: Shlongbot");
-    }
-
     @Autowired
     public GeneralListener(GuildDataRepository guildData, TwilioService twilioService){
         this.guildData = guildData;
         this.twilioService = twilioService;
-    }
-
-    @DiscordMapping(Id = "pray")
-    private void praySlashCommand(SlashCommandInteractionEvent event){
-        event.reply("Thank you, my child.").queue();
     }
 
     @DiscordMapping
