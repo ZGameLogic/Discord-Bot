@@ -32,6 +32,11 @@ public class ReligionBot {
         event.reply("Raise your spirits high! For in the realm of shlongbot, joy is never far.").queue();
     }
 
+    @DiscordMapping(Id = "desecrate")
+    private void desecrateSlashCommand(SlashCommandInteractionEvent event){
+        event.reply("Thou hast chosen to walk the path of chaos, yet fear not, for shlongbot oversees all in mischief and mirth alike!").queue();
+    }
+
 
     @Bean
     private List<CommandData> religionSlashCommands(){
@@ -39,7 +44,8 @@ public class ReligionBot {
                 Commands.slash("pray", "Pray to our lord and savior: Shlongbot"),
                 Commands.slash("worship", "Worship our lord and savior: Shlongbot"),
                 Commands.slash("cry", "Cry to our lord and savior: Shlongbot"),
-                Commands.slash("cheer", "Cheer to our lord and savior: Shlongbot")
+                Commands.slash("cheer", "Cheer to our lord and savior: Shlongbot"),
+                Commands.slash("desecrate", "Desecrate our lord and savior: Shlongbot")
         );
     }
 }
