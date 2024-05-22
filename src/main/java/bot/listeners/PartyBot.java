@@ -1,11 +1,13 @@
 package bot.listeners;
 
+import com.zgamelogic.annotations.Bot;
 import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
 import data.database.chatroomNames.ChatroomNamesRepository;
 import data.database.guildData.GuildData;
 import data.database.guildData.GuildDataRepository;
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
@@ -19,6 +21,7 @@ import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.Scheduled;
 
 import java.util.*;
 
@@ -31,6 +34,9 @@ public class PartyBot  {
 
     private final GuildDataRepository guildData;
     private final ChatroomNamesRepository namesRepository;
+
+    @Bot
+    private JDA bot;
 
     @Autowired
     public PartyBot(GuildDataRepository guildData, ChatroomNamesRepository namesRepository){
@@ -108,6 +114,7 @@ public class PartyBot  {
                 checkCreateChatroom(event.getJDA().getGuildById(data.getId()));
             }
         }
+        checkForEmptyChannels();
     }
 
     @DiscordMapping
@@ -121,6 +128,21 @@ public class PartyBot  {
             } else if (event.getChannelLeft() != null) {
                 playerLeft(event.getChannelLeft(), event.getGuild());
             }
+        }
+    }
+
+    @Scheduled(cron = "0 */5 * * * *")
+    private void checkForEmptyChannels(){
+        for(GuildData data : guildData.findAll()){
+            if(!data.getChatroomEnabled()) continue;
+            List<Long> ignore = List.of(data.getAfkChannelId(), data.getCreateChatId());
+            List<VoiceChannel> channels = bot.getGuildById(data.getId()).getCategoryById(data.getPartyCategory())
+                    .getVoiceChannels()
+                    .stream()
+                    .filter(channel -> !ignore.contains(channel.getIdLong())) // ignore ignored channel
+                    .filter(channel -> channel.getMembers().isEmpty()) // only get channels with no members
+                    .toList();
+            channels.forEach(channel -> channel.delete().queue());
         }
     }
 
