@@ -20,7 +20,7 @@ import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import com.zgamelogic.services.TwilioService;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
@@ -44,8 +44,6 @@ import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -97,8 +95,12 @@ public class PlannerBot {
         );
     }
 
-    @PostMapping("api/plan")
-    private void createPlan(@RequestBody CreatePlanData planData){
+    @PostMapping("api/plans")
+    private void createPlan(
+            @RequestHeader("user-token") String userToken,
+            @RequestBody CreatePlanData planData
+    ){
+        System.out.println(userToken);
         System.out.println(planData);
     }
 
@@ -107,6 +109,11 @@ public class PlannerBot {
         return bot.getGuildById(guildId).getMembers().stream().map(user ->
                 new DiscordUserData(user.getEffectiveName(), user.getUser().getAvatarId(), user.getIdLong())
         ).toList();
+    }
+
+    @GetMapping("api/plans/{userId}")
+    private void getUserPlans(@PathVariable String userId){
+
     }
 
     @DiscordMapping(Id = "text_notifications", SubId = "disable")
