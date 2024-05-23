@@ -6,12 +6,14 @@ import com.zgamelogic.bot.utils.PlanHelper;
 import com.zgamelogic.annotations.Bot;
 import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
+import com.zgamelogic.data.database.authData.AuthDataRepository;
 import com.zgamelogic.data.database.guildData.GuildData;
 import com.zgamelogic.data.database.guildData.GuildDataRepository;
 import com.zgamelogic.data.database.planData.Plan;
 import com.zgamelogic.data.database.planData.PlanRepository;
 import com.zgamelogic.data.database.planData.User;
 import com.zgamelogic.data.database.userData.UserDataRepository;
+import com.zgamelogic.data.intermediates.planData.CreatePlanData;
 import com.zgamelogic.data.intermediates.planData.PlanEvent;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import org.springframework.context.annotation.Bean;
@@ -60,16 +62,18 @@ public class PlannerBot {
 
     private final GuildDataRepository guildData;
     private final PlanRepository planRepository;
+    private final AuthDataRepository authDataRepository;
     private final UserDataRepository userData;
     private final TwilioService twilioService;
 
     @Bot
     private JDA bot;
 
-    public PlannerBot(PlanRepository planRepository, UserDataRepository userData, GuildDataRepository guildData, TwilioService twilioService) {
+    public PlannerBot(PlanRepository planRepository, UserDataRepository userData, GuildDataRepository guildData, AuthDataRepository authDataRepository, TwilioService twilioService) {
         this.planRepository = planRepository;
         this.userData = userData;
         this.guildData = guildData;
+        this.authDataRepository = authDataRepository;
         this.twilioService = twilioService;
     }
 
@@ -85,6 +89,11 @@ public class PlannerBot {
                                         .addOption(OptionType.STRING, "number", "your phone number. EX: 16301112222", true),
                                 new SubcommandData("disable", "Disables text messaging"))
         );
+    }
+
+    @PostMapping("api/plan")
+    private void createPlan(@RequestBody CreatePlanData planData){
+        System.out.println(planData);
     }
 
     @DiscordMapping(Id = "text_notifications", SubId = "disable")
