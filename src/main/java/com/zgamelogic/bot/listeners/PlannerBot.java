@@ -14,9 +14,12 @@ import com.zgamelogic.data.database.planData.PlanRepository;
 import com.zgamelogic.data.database.planData.User;
 import com.zgamelogic.data.database.userData.UserDataRepository;
 import com.zgamelogic.data.intermediates.planData.CreatePlanData;
+import com.zgamelogic.data.intermediates.planData.DiscordUserData;
 import com.zgamelogic.data.intermediates.planData.PlanEvent;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import com.zgamelogic.services.TwilioService;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +63,9 @@ import static com.zgamelogic.data.intermediates.planData.PlanEvent.Event.*;
 @RestController
 public class PlannerBot {
 
+    @Value("${discord.guild}")
+    private String guildId;
+
     private final GuildDataRepository guildData;
     private final PlanRepository planRepository;
     private final AuthDataRepository authDataRepository;
@@ -94,6 +100,13 @@ public class PlannerBot {
     @PostMapping("api/plan")
     private void createPlan(@RequestBody CreatePlanData planData){
         System.out.println(planData);
+    }
+
+    @GetMapping("api/plan/users")
+    private List<DiscordUserData> getUsers(){
+        return bot.getGuildById(guildId).getMembers().stream().map(user ->
+                new DiscordUserData(user.getEffectiveName(), user.getUser().getAvatarId(), user.getIdLong())
+        ).toList();
     }
 
     @DiscordMapping(Id = "text_notifications", SubId = "disable")
