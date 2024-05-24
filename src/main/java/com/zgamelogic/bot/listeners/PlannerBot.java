@@ -16,6 +16,7 @@ import com.zgamelogic.data.database.userData.UserDataRepository;
 import com.zgamelogic.data.intermediates.planData.CreatePlanData;
 import com.zgamelogic.data.intermediates.planData.DiscordUserData;
 import com.zgamelogic.data.intermediates.planData.PlanEvent;
+import com.zgamelogic.services.PlanService;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -69,16 +70,18 @@ public class PlannerBot {
     private final AuthDataRepository authDataRepository;
     private final UserDataRepository userData;
     private final TwilioService twilioService;
+    private final PlanService planService;
 
     @Bot
     private JDA bot;
 
-    public PlannerBot(PlanRepository planRepository, UserDataRepository userData, GuildDataRepository guildData, AuthDataRepository authDataRepository, TwilioService twilioService) {
+    public PlannerBot(PlanRepository planRepository, UserDataRepository userData, GuildDataRepository guildData, AuthDataRepository authDataRepository, TwilioService twilioService, PlanService planService) {
         this.planRepository = planRepository;
         this.userData = userData;
         this.guildData = guildData;
         this.authDataRepository = authDataRepository;
         this.twilioService = twilioService;
+        this.planService = planService;
     }
 
     @Bean
