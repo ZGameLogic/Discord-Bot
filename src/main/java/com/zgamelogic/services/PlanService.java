@@ -2,27 +2,43 @@ package com.zgamelogic.services;
 
 import com.zgamelogic.annotations.Bot;
 import com.zgamelogic.annotations.DiscordController;
-import com.zgamelogic.annotations.DiscordMapping;
+import com.zgamelogic.data.database.planData.plan.PlanRepository;
+import com.zgamelogic.data.database.planData.user.PlanUserRepository;
 import com.zgamelogic.data.intermediates.planData.PlanEvent;
+import com.zgamelogic.data.plan.PlanCreationData;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.events.session.ReadyEvent;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 @Service
 @DiscordController
 @Slf4j
 public class PlanService {
+
+    @Value("${discord.guild}")
+    private String discordGuildId;
     @Bot
     private JDA bot;
 
-    @DiscordMapping
-    private void onReady(ReadyEvent event){
+    private final PlanRepository planRepository;
+    private final PlanUserRepository planUserRepository;
+
+    public PlanService(PlanRepository planRepository, PlanUserRepository planUserRepository) {
+        this.planRepository = planRepository;
+        this.planUserRepository = planUserRepository;
+    }
+
+    public void createPlan(PlanCreationData planData){
 
     }
 
-    public void createPlan(){}
-    public void editPlan(){}
+    public void invitePlayersToPlan(long planId, long...players){}
+    public void editPlan(long planId){}
     public void deletePlan(){}
-    public void handelEvent(PlanEvent event){}
+    public void processEvent(PlanEvent event){}
+
+    private boolean isDiscordUser(long userId){
+        return bot.getGuildById(discordGuildId).getMemberById(userId) != null;
+    }
 }
