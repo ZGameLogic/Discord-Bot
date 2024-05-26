@@ -30,7 +30,7 @@ public class PlanUser {
     private Status userStatus;
     private Long messageId;
     private Date waitlist_time;
-    private Boolean needFillIn;
+    private boolean needFillIn;
 
     @ManyToOne
     @MapsId("planId")
@@ -41,9 +41,6 @@ public class PlanUser {
         needFillIn = false;
         this.plan = plan;
         userStatus = Status.DECIDING;
-
-        // TODO post plan to DM on user for discord
-
         waitlist_time = null;
         id = new PlanUserId(plan.getId(), userId);
     }

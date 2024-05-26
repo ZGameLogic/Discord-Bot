@@ -9,5 +9,6 @@ public record PlanCreationData(
         Date date,
         Long author,
         List<Long> players,
-        List<Long> roles
+        List<Long> roles,
+        int count
 ) {}

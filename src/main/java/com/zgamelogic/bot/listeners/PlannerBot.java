@@ -2,12 +2,33 @@ package com.zgamelogic.bot.listeners;
 
 import com.zgamelogic.annotations.Bot;
 import com.zgamelogic.annotations.DiscordController;
+import com.zgamelogic.annotations.DiscordMapping;
+import com.zgamelogic.annotations.EventProperty;
+import com.zgamelogic.bot.utils.EmbedMessageGenerator;
+import com.zgamelogic.bot.utils.PlanHelper;
 import com.zgamelogic.data.database.authData.AuthDataRepository;
 import com.zgamelogic.data.database.guildData.GuildDataRepository;
+import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.database.userData.UserDataRepository;
+import com.zgamelogic.data.intermediates.planData.PlanEvent;
+import com.zgamelogic.data.plan.PlanCreationData;
+import com.zgamelogic.data.plan.PlanModalData;
 import com.zgamelogic.services.PlanService;
+import net.dv8tion.jda.api.entities.ISnowflake;
+import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu;
+import net.dv8tion.jda.api.interactions.components.text.TextInput;
+import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
+import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.*;
@@ -18,7 +39,13 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
+
+import static com.zgamelogic.bot.utils.Helpers.STD_HELPER_MESSAGE;
+import static com.zgamelogic.bot.utils.Helpers.stringToDate;
+import static com.zgamelogic.bot.utils.PlanHelper.getPrePlanMessage;
+import static com.zgamelogic.data.intermediates.planData.PlanEvent.Event.*;
 
 @Slf4j
 @DiscordController
@@ -27,6 +54,8 @@ public class PlannerBot {
 
     @Value("${discord.guild}")
     private String guildId;
+    @Value("${discord.plan.id}")
+    private long discordPlanId;
 
     private final GuildDataRepository guildData;
     private final PlanRepository planRepository;
@@ -90,287 +119,202 @@ public class PlannerBot {
 //        event.reply("Text messaging disabled").setEphemeral(true).queue();
 //    }
 //
-//    @DiscordMapping(Id = "plan", SubId = "help")
-//    private void planHelpCommand(SlashCommandInteractionEvent event){
-//        event.replyEmbeds(EmbedMessageGenerator.plannerHelperMessage()).setEphemeral(true).queue();
-//    }
-//
-//    @DiscordMapping(Id = "plan", SubId = "event")
-//    private void planEventSlashCommand(SlashCommandInteractionEvent event){
-//        TextInput notes = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
-//                .setPlaceholder("Grinding the event").setRequired(false).build();
-//        TextInput date = TextInput.create("date", "Date and time", TextInputStyle.SHORT)
-//                .setPlaceholder("Central time zone. Examples: 4/5 9:23am, 7:00pm, tomorrow 6:00pm").build();
-//        TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
-//                .setPlaceholder("Hunt Showdown").build();
-//        TextInput count = TextInput.create("count", "Number of people (not including yourself)", TextInputStyle.SHORT)
-//                .setPlaceholder("Leave empty for infinite").setRequired(false).build();
-//        event.replyModal(Modal.create("plan_event_modal", "Details of meeting")
-//                .addActionRow(name)
-//                .addActionRow(date)
-//                .addActionRow(notes)
-//                .addActionRow(count)
-//                .build())
-//                .queue();
-//    }
-//
-//    @DiscordMapping(Id = "edit_event_modal")
-//    private void editEventModal(ModalInteractionEvent event){
-//        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-//        String notes = event.getValue("notes").getAsString();
-//        String dateString = event.getValue("date").getAsString();
-//        String title = event.getValue("title").getAsString();
-//        Date date = stringToDate(dateString);
-//        if(date == null){
-//            event.reply(Helpers.STD_HELPER_MESSAGE).setEphemeral(true).queue();
-//            return;
-//        }
-//        int count;
-//        try {
-//            if(!event.getValue("count").getAsString().isEmpty()) {
-//                count = Integer.parseInt(event.getValue("count").getAsString());
-//            } else count = -1;
-//        } catch (NumberFormatException e){
-//            event.reply("Invalid number").setEphemeral(true).queue();
-//            return;
-//        }
-//        if(count < 1 && count != -1){
-//            event.reply("Invalid number").setEphemeral(true).queue();
-//            return;
-//        }
-//        plan.setCount(count);
-//        plan.setTitle(title);
-//        plan.setNotes(notes);
-//        plan.setDate(date);
-//        updateMessages(plan, event.getJDA().getGuildById(plan.getGuildId()));
-//        planRepository.save(plan);
-//        event.reply("Plan details have been edited").setEphemeral(true).queue();
-//    }
-//
-//    @DiscordMapping(Id = "plan_event_modal")
-//    private void planEventModalResponse(ModalInteractionEvent event){
-//        String notes = event.getValue("notes").getAsString();
-//        String dateString = event.getValue("date").getAsString();
-//        String title = event.getValue("title").getAsString();
-//        Date date = stringToDate(dateString);
-//        if(date == null){
-//            event.reply("""
-//                    Invalid date and time. Here are some examples of valid dates:
-//                    7:00pm
-//                    Today at 7:00pm
-//                    Tomorrow 6:00pm
-//                    3/20/2022 4:15pm
-//                    6/20 3:45pm
-//                    Wednesday at 4:00pm""").setEphemeral(true).queue();
-//            return;
-//        }
-//        int count;
-//        try {
-//            if(!event.getValue("count").getAsString().isEmpty()) {
-//                count = Integer.parseInt(event.getValue("count").getAsString());
-//            } else count = -1;
-//        } catch (NumberFormatException e){
-//            event.reply("Invalid number").setEphemeral(true).queue();
-//            return;
-//        }
-//        if(count < 1 && count != -1){
-//            event.reply("Invalid number").setEphemeral(true).queue();
-//            return;
-//        }
-//        int finalCount = count;
-//        event.reply("Select people to invite (Don't include yourself). This cannot be changed. Plan id:" + event.getIdLong()).setActionRow(
-//                        EntitySelectMenu.create("People", EntitySelectMenu.SelectTarget.USER, EntitySelectMenu.SelectTarget.ROLE)
-//                                .setMinValues(1)
-//                                .setMaxValues(25)
-//                                .build())
-//                .setEphemeral(true)
-//                .queue(message -> {
-//                    Plan plan = new Plan();
-//                    plan.setTitle(title);
-//                    plan.setChannelId(guildData.getReferenceById(event.getGuild().getIdLong()).getPlanChannelId());
-//                    plan.setGuildId(event.getGuild().getIdLong());
-//                    plan.setNotes(notes);
-//                    plan.setDate(date);
-//                    plan.setAuthorId(event.getUser().getIdLong());
-//                    plan.setCount(finalCount);
-//                    plan.setId(event.getIdLong());
-//                    planRepository.save(plan);
-//                });
-//    }
-//
-//    @DiscordMapping(Id = "People")
-//    private void planPeople(EntitySelectInteractionEvent event){
-//        event.deferReply().setEphemeral(true).queue();
-//        long planId = Long.parseLong(event.getMessage().getContentRaw().split(":")[1]);
-//        Plan plan = planRepository.getReferenceById(planId);
-//        GuildData gd = guildData.getReferenceById(event.getGuild().getIdLong());
-//        if(!plan.getInvitees().isEmpty()){
-//            event.getHook().sendMessage("You already set the people for this event. You can dismiss this message").setEphemeral(true).queue();
-//            return;
-//        }
-//        HashMap<Long, User> invitees = new HashMap<>();
-//        for(Member m : event.getMentions().getMembers()){
-//            if(m.getUser().isBot()){
-//                event.getHook().sendMessage("You cannot add bots to an event you are planning").setEphemeral(true).queue();
-//                return;
-//            }
-//            if(m.getIdLong() == event.getUser().getIdLong()){
-//                event.getHook().sendMessage("You cannot add yourself to an event you are planning").setEphemeral(true).queue();
-//                return;
-//            }
-//            if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680L))) continue; //skip anyone with the no plan
-//            invitees.put(m.getIdLong(), new User(m.getIdLong(), DECIDING));
-//        }
-//        for(Role r: event.getMentions().getRoles()){
-//            if(r.getIdLong() == event.getGuild().getPublicRole().getIdLong()) continue;
-//            for(Member m: event.getGuild().getMembersWithRoles(r)){
-//                if(m.getUser().isBot()) continue;
-//                if(m.getIdLong() == event.getUser().getIdLong()) continue;
-//                if(invitees.containsKey(m.getIdLong())) continue;
-//                if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680L))) continue; //skip anyone with the no plan
-//                invitees.put(m.getIdLong(), new User(m.getIdLong(), DECIDING));
-//            }
-//        }
-//        plan.setInvitees(invitees);
-//        for(Long id: invitees.keySet()){
-//            Member m = event.getGuild().getMemberById(id);
-//            try {
-//                PrivateChannel pm = m.getUser().openPrivateChannel().complete();
-//                Message message = pm.sendMessageEmbeds(PlanHelper.getPlanPrivateMessage(plan, event.getGuild()))
-//                        .addActionRow(Button.success("accept_event", "Accept"),
-//                                Button.danger("deny_event", "Deny"),
-//                                Button.primary("maybe_event", "Maybe"))
-//                        .complete();
-//                plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
-//                if(userData.existsById(m.getIdLong())){
-//                    twilioService.sendMessage(
-//                            String.valueOf(userData.getReferenceById(m.getIdLong()).getPhone_number()),
-//                            event.getUser().getName() + " has invited you to " + plan.getTitle() + "." +
-//                                    " Reply to the invite on discord."
-//                    );
-//                }
-//            } catch (Exception e){
-//                log.error("Error sending message to member to create event", e);
-//            }
-//        }
-//        try {
-//            Message message = event.getGuild().getTextChannelById(gd.getPlanChannelId()).sendMessageEmbeds(getPlanChannelMessage(plan, event.getGuild()))
-//                    .addActionRow(Button.secondary("add_users", "Add users")).complete();
-//            plan.setMessageId(message.getIdLong());
-//            PrivateChannel channel = event.getGuild().getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().complete();
-//            Message m = channel.sendMessageEmbeds(PlanHelper.getHostMessage(plan, event.getGuild())).complete();
-//            m.editMessageComponents(
-//                    ActionRow.of(
-//                            Button.secondary("send_message", "Send message"),
-//                            Button.secondary("edit_event", "Edit details"),
-//                            Button.danger("delete_event", "Delete event")
-//                    )
-//            ).queue();
-//            plan.setPrivateMessageId(m.getIdLong());
-//            planRepository.save(plan);
-//        } catch (Exception e){
-//            log.error("Error sending creating event message reply", e);
-//        }
-//        event.getHook().setEphemeral(true).sendMessage("Event created in <#" + gd.getPlanChannelId() + ">").queue();
-//    }
-//
-//    @DiscordMapping(Id = "add_users")
-//    private void addUsersButton(ButtonInteractionEvent event){
-//        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-//        if(plan.getAuthorId() != event.getUser().getIdLong()){
-//            event.reply("You are not the owner of this event").setEphemeral(true).queue();
-//            return;
-//        }
-//        event.reply("Select people to add to the event. This cannot be changed. Plan id:" + plan.getId()).setActionRow(
-//                        EntitySelectMenu.create("add_people", EntitySelectMenu.SelectTarget.USER)
-//                                .setMinValues(1)
-//                                .setMaxValues(25)
-//                                .build())
-//                .setEphemeral(true).queue();
-//    }
-//
-//    @DiscordMapping(Id = "add_people")
-//    private void addPeopleResponse(EntitySelectInteractionEvent event){
-//        event.deferReply().setEphemeral(true).queue();
-//        long planId = Long.parseLong(event.getMessage().getContentRaw().split(":")[1]);
-//        Plan plan = planRepository.getReferenceById(planId);
-//        LinkedList<Member> invitees = new LinkedList<>();
-//        for(Member m : event.getMentions().getMembers()){
-//            if(m.getUser().isBot()){
-//                event.getHook().sendMessage("You cannot add bots to an event you are planning").setEphemeral(true).queue();
-//                return;
-//            }
-//            if(m.getIdLong() == event.getUser().getIdLong()){
-//                event.getHook().sendMessage("You cannot add yourself to an event you are planning").setEphemeral(true).queue();
-//                return;
-//            }
-//            if(plan.getInvitees().containsKey(m.getIdLong())) continue;
-//            if(m.getRoles().contains(event.getGuild().getRoleById(1115409055184322680L))) continue; //skip anyone with the no plan
-//            invitees.add(m);
-//        }
-//        for(Member m: invitees){
-//            Message message = m.getUser().openPrivateChannel().complete().sendMessageEmbeds(PlanHelper.getPlanPrivateMessage(plan, event.getGuild()))
-//                    .addActionRow(Button.success("accept_event", "Accept"),
-//                            Button.danger("deny_event", "Deny"),
-//                            Button.primary("maybe_event", "Maybe"))
-//                    .complete();
-//            if(userData.existsById(m.getIdLong())){
-//                twilioService.sendMessage(
-//                        String.valueOf(userData.getReferenceById(m.getIdLong()).getPhone_number()),
-//                        event.getUser().getName() + " has invited you to " + plan.getTitle() + "." +
-//                                " Reply to the invite on discord."
-//                );
-//            }
-//            plan.addUser(m);
-//            plan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
-//        }
-//        planRepository.save(plan);
-//        updateMessages(plan, event.getGuild());
-//    }
-//
-//    @DiscordMapping(Id = "send_message_modal")
-//    private void sendMessageModal(ModalInteractionEvent event){
-//        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-//        String message = event.getValue("message").getAsString();
-//        plan.getAccepted().forEach(id -> event.getJDA().openPrivateChannelById(id).queue(
-//                channel -> channel.sendMessage("A message in regards to the plans made for: " + plan.getTitle() + "\n" + message).queue()
-//        ));
-//        event.reply("Message sent to all accepted people").setEphemeral(true).queue();
-//    }
-//
-//    @DiscordMapping(Id = "send_message")
-//    private void sendMessageEvent(ButtonInteractionEvent event){
-//        TextInput message = TextInput.create("message", "Message to be sent to accepted users", TextInputStyle.PARAGRAPH).build();
-//        event.replyModal(Modal.create("send_message_modal", "Send message").addActionRow(message) .build()) .queue();
-//    }
-//
-//    @DiscordMapping(Id = "edit_event")
-//    private void editDetailsButtonEvent(ButtonInteractionEvent event){
-//        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-//        TextInput.Builder notesBuilder = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT).setRequired(false);
-//        if(plan.getNotes() != null && !plan.getNotes().isEmpty()) notesBuilder.setValue(plan.getNotes());
-//        TextInput notes = notesBuilder.build();
-//        TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
-//                .setValue(plan.getTitle()).build();
-//        TextInput count = TextInput.create("count", "Number of people looking for", TextInputStyle.SHORT)
-//                .setValue(String.valueOf(plan.getCount())).setRequired(false).build();
-//        SimpleDateFormat formatter = new SimpleDateFormat("M/dd h:mma", Locale.ENGLISH);
-//        String dateString;
-//        if(plan.getDate() != null) {
-//            dateString = formatter.format(plan.getDate());
-//        } else {
-//            dateString = formatter.format(new Date());
-//        }
-//        TextInput date = TextInput.create("date", "Date", TextInputStyle.SHORT)
-//                .setValue(dateString).build();
-//        event.replyModal(Modal.create("edit_event_modal", "Details of meeting")
-//                        .addActionRow(name)
-//                        .addActionRow(date)
-//                        .addActionRow(notes)
-//                        .addActionRow(count)
-//                        .build())
-//                .queue();
-//    }
+    @DiscordMapping(Id = "plan", SubId = "help")
+    private void planHelpCommand(SlashCommandInteractionEvent event){
+        event.replyEmbeds(EmbedMessageGenerator.plannerHelperMessage()).setEphemeral(true).queue();
+    }
+
+    @DiscordMapping(Id = "plan", SubId = "event")
+    private void planEventSlashCommand(SlashCommandInteractionEvent event){
+        TextInput notes = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
+                .setPlaceholder("Grinding the event").setRequired(false).build();
+        TextInput date = TextInput.create("date", "Date and time", TextInputStyle.SHORT)
+                .setPlaceholder("Central time zone. Examples: 4/5 9:23am, 7:00pm, tomorrow 6:00pm").build();
+        TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
+                .setPlaceholder("Hunt Showdown").build();
+        TextInput count = TextInput.create("count", "Number of people (not including yourself)", TextInputStyle.SHORT)
+                .setPlaceholder("Leave empty for infinite").setRequired(false).build();
+        event.replyModal(Modal.create("plan_event_modal", "Details of meeting")
+                .addActionRow(name)
+                .addActionRow(date)
+                .addActionRow(notes)
+                .addActionRow(count)
+                .build())
+                .queue();
+    }
+
+    @DiscordMapping(Id = "plan_event_modal")
+    private void planEventModalResponse(
+            ModalInteractionEvent event,
+            @EventProperty PlanModalData planData
+    ){
+        Date date = stringToDate(planData.date());
+        if(date == null){
+            event.reply("""
+                    Invalid date and time. Here are some examples of valid dates:
+                    7:00pm
+                    Today at 7:00pm
+                    Tomorrow 6:00pm
+                    3/20/2022 4:15pm
+                    6/20 3:45pm
+                    Wednesday at 4:00pm""").setEphemeral(true).queue();
+            return;
+        }
+        int count;
+        try {
+            count = planData.count() != null && !planData.count().isEmpty() ? Integer.parseInt(planData.count()) : -1;
+        } catch (NumberFormatException e){
+            event.reply("Invalid count").setEphemeral(true).queue();
+            return;
+        }
+        if(count < 1 && count != -1){
+            event.reply("Invalid count").setEphemeral(true).queue();
+            return;
+        }
+        event.replyEmbeds(getPrePlanMessage(planData.title(), planData.notes(), count, planData.date()))
+                .setEphemeral(true)
+                .addActionRow(
+                    EntitySelectMenu.create("People", EntitySelectMenu.SelectTarget.USER, EntitySelectMenu.SelectTarget.ROLE)
+                        .setMinValues(1)
+                        .setMaxValues(25)
+                        .build())
+                .queue();
+    }
+
+    @DiscordMapping(Id = "People")
+    private void planPeopleResponse(EntitySelectInteractionEvent event){
+        if(event.getMentions().getMembers().isEmpty() && event.getMentions().getRoles().isEmpty()) {
+            event.reply("You must select a member or role to invite to the event").setEphemeral(true).queue();
+            return;
+        }
+
+        event.deferReply().setEphemeral(true).queue();
+        List<MessageEmbed.Field> fields = event.getMessage().getEmbeds().get(0).getFields();
+        String title = fields.stream().filter(field -> field.getName().equals("title")).findFirst().get().getValue();
+        String notes = fields.stream().filter(field -> field.getName().equals("notes")).findFirst().get().getValue().replace((char)8206 + "", "");
+        Date date = stringToDate(fields.stream().filter(field -> field.getName().equals("date")).findFirst().get().getValue());
+        int count = Integer.parseInt(fields.stream().filter(field -> field.getName().equals("count")).findFirst().get().getValue());
+        PlanCreationData planData = new PlanCreationData(
+            title,
+            notes,
+            date,
+            event.getUser().getIdLong(),
+            event.getMentions().getMembers().stream().map(ISnowflake::getIdLong).toList(),
+            event.getMentions().getRoles().stream().map(ISnowflake::getIdLong).toList(),
+            count
+        );
+        boolean success = planService.createPlan(planData);
+        if(!success) {
+            event.getHook().setEphemeral(true).sendMessage("Event not created as the invite list resolves to empty. Invites to yourself, bots or users who are marked with `no plan` do not count.").queue();
+            return;
+        }
+        event.getHook().setEphemeral(true).sendMessage("Event created in <#" + discordPlanId + ">").queue();
+        event.getMessage().delete().queue();
+    }
+
+    @DiscordMapping(Id = "edit_event_modal")
+    private void editEventModal(ModalInteractionEvent event){
+        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        String notes = event.getValue("notes").getAsString();
+        String dateString = event.getValue("date").getAsString();
+        String title = event.getValue("title").getAsString();
+        Date date = stringToDate(dateString);
+        if(date == null){
+            event.reply(STD_HELPER_MESSAGE).setEphemeral(true).queue();
+            return;
+        }
+        int count;
+        try {
+            if(!event.getValue("count").getAsString().isEmpty()) {
+                count = Integer.parseInt(event.getValue("count").getAsString());
+            } else count = -1;
+        } catch (NumberFormatException e){
+            event.reply("Invalid number").setEphemeral(true).queue();
+            return;
+        }
+        if(count < 1 && count != -1){
+            event.reply("Invalid number").setEphemeral(true).queue();
+            return;
+        }
+        plan.setCount(count);
+        plan.setTitle(title);
+        plan.setNotes(notes);
+        plan.setDate(date);
+        planService.updateMessages(plan);
+        planRepository.save(plan);
+        event.reply("Plan details have been edited").setEphemeral(true).queue();
+    }
+
+    @DiscordMapping(Id = "add_users")
+    private void addUsersButton(ButtonInteractionEvent event){
+        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        if(plan.getAuthorId() != event.getUser().getIdLong()){
+            event.reply("You are not the owner of this event").setEphemeral(true).queue();
+            return;
+        }
+        event.reply("Select people to add to the event. Plan id:" + plan.getId()).setActionRow(
+                        EntitySelectMenu.create("add_people", EntitySelectMenu.SelectTarget.USER)
+                                .setMinValues(1)
+                                .setMaxValues(25)
+                                .build())
+                .setEphemeral(true).queue();
+    }
+
+    @DiscordMapping(Id = "add_people")
+    private void addPeopleResponse(EntitySelectInteractionEvent event){
+        event.deferReply().setEphemeral(true).queue();
+        long planId = Long.parseLong(event.getMessage().getContentRaw().split(":")[1]);
+        Plan plan = planRepository.getReferenceById(planId);
+        Long[] ids = event.getMentions().getMembers().stream().map(ISnowflake::getIdLong).toList().toArray(Long[]::new);
+        planService.addUsersToPlan(plan, ids);
+        event.getHook().sendMessage("Added user(s) to event").setEphemeral(true).queue();
+        event.getMessage().delete().queue();
+    }
+
+    @DiscordMapping(Id = "send_message_modal")
+    private void sendMessageModal(
+            ModalInteractionEvent event,
+            @EventProperty String message
+    ){
+        event.deferReply().queue();
+        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        planService.sendMessage(plan, message);
+        event.getHook().sendMessage("Message sent to all accepted people").setEphemeral(true).queue();
+    }
+
+    @DiscordMapping(Id = "send_message")
+    private void sendMessageEvent(ButtonInteractionEvent event){
+        TextInput message = TextInput.create("message", "Message to be sent to accepted users", TextInputStyle.PARAGRAPH).build();
+        event.replyModal(Modal.create("send_message_modal", "Send message").addActionRow(message) .build()) .queue();
+    }
+
+    @DiscordMapping(Id = "edit_event")
+    private void editDetailsButtonEvent(ButtonInteractionEvent event){
+        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        TextInput.Builder notesBuilder = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT).setRequired(false);
+        if(plan.getNotes() != null && !plan.getNotes().isEmpty()) notesBuilder.setValue(plan.getNotes());
+        TextInput notes = notesBuilder.build();
+        TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
+                .setValue(plan.getTitle()).build();
+        TextInput count = TextInput.create("count", "Number of people looking for", TextInputStyle.SHORT)
+                .setValue(String.valueOf(plan.getCount())).setRequired(false).build();
+        SimpleDateFormat formatter = new SimpleDateFormat("M/dd h:mma", Locale.ENGLISH);
+        String dateString;
+        if(plan.getDate() != null) {
+            dateString = formatter.format(plan.getDate());
+        } else {
+            dateString = formatter.format(new Date());
+        }
+        TextInput date = TextInput.create("date", "Date", TextInputStyle.SHORT)
+                .setValue(dateString).build();
+        event.replyModal(Modal.create("edit_event_modal", "Details of meeting")
+                        .addActionRow(name)
+                        .addActionRow(date)
+                        .addActionRow(notes)
+                        .addActionRow(count)
+                        .build())
+                .queue();
+    }
 //
 //    @DiscordMapping(Id = "delete_event")
 //    private void deleteEvent(ButtonInteractionEvent event){
@@ -404,60 +348,74 @@ public class PlannerBot {
 //        // delete from database
 //        planRepository.deleteById(plan.getId());
 //    }
-//
-//    @DiscordMapping(Id = "request_fill_in")
-//    private void requestFillIn(ButtonInteractionEvent event){
-//        long userId = event.getUser().getIdLong();
-//        PlanEvent planEvent = new PlanEvent(USER_REGISTERED_FOR_FILL_IN, userId);
-//        updateEvent(planEvent, event);
-//    }
-//
-//    @DiscordMapping(Id = "fill_in")
-//    private void fillIn(ButtonInteractionEvent event){
-//        long userId = event.getUser().getIdLong();
-//        PlanEvent planEvent = new PlanEvent(USER_FILLINED, userId);
-//        updateEvent(planEvent, event);
-//    }
-//
-//    @DiscordMapping(Id = "drop_out_event")
-//    private void dropOutEvent(ButtonInteractionEvent event){
-//        event.editButton(Button.danger("confirm_drop_out_event", "Confirm Dropout")).queue();
-//    }
-//
-//    @DiscordMapping(Id = "confirm_drop_out_event")
-//    private void confirmDropOutEvent(ButtonInteractionEvent event){
-//        long userId = event.getUser().getIdLong();
-//        PlanEvent planEvent = new PlanEvent(USER_DROPPED_OUT, userId);
-//        updateEvent(planEvent, event);
-//    }
-//
-//    @DiscordMapping(Id = "accept_event")
-//    private void acceptEvent(ButtonInteractionEvent event){
-//        long userId = event.getUser().getIdLong();
-//        PlanEvent planEvent = new PlanEvent(USER_ACCEPTED, userId);
-//        updateEvent(planEvent, event);
-//    }
-//
-//    @DiscordMapping(Id = "waitlist_event")
-//    private void waitlistEvent(ButtonInteractionEvent event){
-//        long userId = event.getUser().getIdLong();
-//        PlanEvent planEvent = new PlanEvent(USER_WAITLISTED, userId);
-//        updateEvent(planEvent, event);
-//    }
-//
-//    @DiscordMapping(Id = "deny_event")
-//    private void denyEvent(ButtonInteractionEvent event){
-//        long userId = event.getUser().getIdLong();
-//        PlanEvent planEvent = new PlanEvent(USER_DECLINED, userId);
-//        updateEvent(planEvent, event);
-//    }
-//
-//    @DiscordMapping(Id = "maybe_event")
-//    private void maybeEvent(ButtonInteractionEvent event) {
-//        long userId = event.getUser().getIdLong();
-//        PlanEvent planEvent = new PlanEvent(USER_MAYBED, userId);
-//        updateEvent(planEvent, event);
-//    }
+
+    @DiscordMapping(Id = "request_fill_in")
+    private void requestFillIn(ButtonInteractionEvent event){
+        event.deferEdit().queue();
+        long userId = event.getUser().getIdLong();
+        long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
+        PlanEvent planEvent = new PlanEvent(USER_REGISTERED_FOR_FILL_IN, userId);
+        planService.updateEvent(planId, planEvent);
+    }
+
+    @DiscordMapping(Id = "fill_in")
+    private void fillIn(ButtonInteractionEvent event){
+        event.deferEdit().queue();
+        long userId = event.getUser().getIdLong();
+        long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
+        PlanEvent planEvent = new PlanEvent(USER_FILLINED, userId);
+        planService.updateEvent(planId, planEvent);
+    }
+
+    @DiscordMapping(Id = "drop_out_event")
+    private void dropOutEvent(ButtonInteractionEvent event){
+        event.editButton(Button.danger("confirm_drop_out_event", "Confirm Dropout")).queue();
+    }
+
+    @DiscordMapping(Id = "confirm_drop_out_event")
+    private void confirmDropOutEvent(ButtonInteractionEvent event){
+        event.deferEdit().queue();
+        long userId = event.getUser().getIdLong();
+        long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
+        PlanEvent planEvent = new PlanEvent(USER_DROPPED_OUT, userId);
+        planService.updateEvent(planId, planEvent);
+    }
+
+    @DiscordMapping(Id = "accept_event")
+    private void acceptEvent(ButtonInteractionEvent event){
+        event.deferEdit().queue();
+        long userId = event.getUser().getIdLong();
+        long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
+        PlanEvent planEvent = new PlanEvent(USER_ACCEPTED, userId);
+        planService.updateEvent(planId, planEvent);
+    }
+
+    @DiscordMapping(Id = "waitlist_event")
+    private void waitlistEvent(ButtonInteractionEvent event){
+        event.deferEdit().queue();
+        long userId = event.getUser().getIdLong();
+        long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
+        PlanEvent planEvent = new PlanEvent(USER_WAITLISTED, userId);
+        planService.updateEvent(planId, planEvent);
+    }
+
+    @DiscordMapping(Id = "deny_event")
+    private void denyEvent(ButtonInteractionEvent event){
+        event.deferEdit().queue();
+        long userId = event.getUser().getIdLong();
+        long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
+        PlanEvent planEvent = new PlanEvent(USER_DECLINED, userId);
+        planService.updateEvent(planId, planEvent);
+    }
+
+    @DiscordMapping(Id = "maybe_event")
+    private void maybeEvent(ButtonInteractionEvent event) {
+        event.deferEdit().queue();
+        long userId = event.getUser().getIdLong();
+        long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
+        PlanEvent planEvent = new PlanEvent(USER_MAYBED, userId);
+        planService.updateEvent(planId, planEvent);
+    }
 //
 //    @PostMapping(value = "/sms")
 //    private void receiveMessage(@RequestBody String body) throws URISyntaxException {
@@ -539,43 +497,5 @@ public class PlannerBot {
 //        } catch (Exception ignored) {}
 //        updateMessages(newPlan, guild);
 //        planRepository.save(newPlan);
-//    }
-//
-//    private void updateMessages(Plan plan, Guild guild){
-//        // update guild message
-//        try {
-//            guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(
-//                        message -> message.editMessageEmbeds(getPlanChannelMessage(plan, guild)
-//                    ).queue());
-//        } catch (Exception e){
-//            log.error("Error editing public guild message for event " + plan.getTitle(), e);
-//        }
-//        // update private messages
-//        for(Long currentUserId: plan.getInvitees().keySet()){
-//            User user = plan.getInvitees().get(currentUserId);
-//            try {
-//                guild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> channel.retrieveMessageById(user.getMessageId()).queue(message -> {
-//                    message.editMessageEmbeds(PlanHelper.getPlanPrivateMessage(plan, guild)).queue();
-//
-//                    boolean full = plan.isFull();
-//                    boolean needsFillIn = plan.isNeedFillIn();
-//                    User.Status userStatus = user.getUserStatus();
-//
-//                    LinkedList<Button> buttons = PlanHelper.getButtons(full, needsFillIn, userStatus, user.getNeedFillIn());
-//                    if(buttons.isEmpty()){
-//                        message.editMessageComponents().queue();
-//                    } else {
-//                        message.editMessageComponents(ActionRow.of(buttons)).queue();
-//                    }
-//                }));
-//            } catch (Exception e){
-//                log.error("Error editing message to private member", e);
-//            }
-//        }
-//        try {
-//            guild.getMemberById(plan.getAuthorId()).getUser().openPrivateChannel().queue(channel -> channel.retrieveMessageById(plan.getPrivateMessageId()).queue(message -> message.editMessageEmbeds(PlanHelper.getHostMessage(plan, guild)).queue()));
-//        } catch (Exception e){
-//            log.error("Error editing private message for event " + plan.getTitle(), e);
-//        }
 //    }
 }
