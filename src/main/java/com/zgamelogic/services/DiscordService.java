@@ -11,6 +11,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.Optional;
@@ -73,7 +74,9 @@ public class DiscordService {
         try {
             ResponseEntity<DiscordUser> response = restTemplate.exchange(url, HttpMethod.GET, new HttpEntity<>(headers), DiscordUser.class);
             return Optional.of(response.getBody());
-        } catch(Exception e){
+        } catch(HttpClientErrorException.Unauthorized ignored) {
+            return Optional.empty();
+        } catch(Exception e) {
             log.error("Unable to get user from token", e);
             return Optional.empty();
         }

@@ -1,5 +1,9 @@
 package com.zgamelogic.data.database.planData.plan;
 
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.databind.JsonSerializer;
+import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.zgamelogic.data.database.planData.user.PlanUser;
 import com.zgamelogic.data.intermediates.planData.PlanEvent;
 import com.zgamelogic.data.plan.PlanCreationData;
@@ -7,7 +11,10 @@ import lombok.*;
 
 import jakarta.persistence.*;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static com.zgamelogic.data.database.planData.user.PlanUser.Status.*;
@@ -19,6 +26,7 @@ import static com.zgamelogic.data.database.planData.user.PlanUser.Status.*;
 @ToString
 @Entity
 @Table(name = "Plans")
+@JsonSerialize(using = Plan.PlanSerialization.class)
 public class Plan {
     @Id
     @GeneratedValue
@@ -188,5 +196,34 @@ public class Plan {
         SimpleDateFormat dtf = new SimpleDateFormat("MM-dd HH:mm");
         if(log == null) log = "";
         log += dtf.format(new Date())+ ": " + message + "\n";
+    }
+
+    public static class PlanSerialization extends JsonSerializer<Plan> {
+
+        @Override
+        public void serialize(Plan value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+            gen.writeStartObject();
+            gen.writeNumberField("id", value.getId());
+            gen.writeStringField("title", value.getTitle());
+            gen.writeStringField("notes", value.getNotes());
+            String utcDate = value.getDate().toInstant().atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_INSTANT);
+            gen.writeStringField("start time", utcDate);
+            gen.writeNumberField("count", value.getCount());
+            gen.writeNumberField("author id", value.getAuthorId());
+            gen.writeArrayFieldStart("invitees");
+            value.invitees.values().forEach(planUser -> {
+                try {
+                    gen.writeStartObject();
+                    gen.writeNumberField("user id", planUser.getId().getUserId());
+                    gen.writeStringField("status", planUser.getUserStatus().name());
+                    gen.writeBooleanField("needs fill in", planUser.isNeedFillIn());
+                    gen.writeEndObject();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+            gen.writeEndArray();
+            gen.writeEndObject();
+        }
     }
 }

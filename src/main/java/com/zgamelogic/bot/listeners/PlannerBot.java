@@ -5,19 +5,14 @@ import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
 import com.zgamelogic.annotations.EventProperty;
 import com.zgamelogic.bot.utils.EmbedMessageGenerator;
-import com.zgamelogic.bot.utils.PlanHelper;
-import com.zgamelogic.data.database.authData.AuthDataRepository;
-import com.zgamelogic.data.database.guildData.GuildDataRepository;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
-import com.zgamelogic.data.database.userData.UserDataRepository;
+import com.zgamelogic.data.intermediates.planData.DiscordUserData;
 import com.zgamelogic.data.intermediates.planData.PlanEvent;
 import com.zgamelogic.data.plan.PlanCreationData;
 import com.zgamelogic.data.plan.PlanModalData;
 import com.zgamelogic.services.PlanService;
 import net.dv8tion.jda.api.entities.ISnowflake;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -32,7 +27,6 @@ import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.*;
-import com.zgamelogic.services.TwilioService;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
@@ -51,28 +45,19 @@ import static com.zgamelogic.data.intermediates.planData.PlanEvent.Event.*;
 @DiscordController
 @RestController
 public class PlannerBot {
-
     @Value("${discord.guild}")
-    private String guildId;
+    private long guildId;
     @Value("${discord.plan.id}")
     private long discordPlanId;
 
-    private final GuildDataRepository guildData;
     private final PlanRepository planRepository;
-    private final AuthDataRepository authDataRepository;
-    private final UserDataRepository userData;
-    private final TwilioService twilioService;
     private final PlanService planService;
 
     @Bot
     private JDA bot;
 
-    public PlannerBot(PlanRepository planRepository, UserDataRepository userData, GuildDataRepository guildData, AuthDataRepository authDataRepository, TwilioService twilioService, PlanService planService) {
+    public PlannerBot(PlanRepository planRepository, PlanService planService) {
         this.planRepository = planRepository;
-        this.userData = userData;
-        this.guildData = guildData;
-        this.authDataRepository = authDataRepository;
-        this.twilioService = twilioService;
         this.planService = planService;
     }
 
@@ -90,35 +75,13 @@ public class PlannerBot {
         );
     }
 
-//    @PostMapping("api/plans")
-//    private void createPlan(
-//            @RequestHeader("user-token") String userToken,
-//            @RequestBody CreatePlanData planData
-//    ){
-//        System.out.println(userToken);
-//        System.out.println(planData);
-//    }
-//
-//    @GetMapping("api/plan/users")
-//    private List<DiscordUserData> getUsers(){
-//        return bot.getGuildById(guildId).getMembers().stream().map(user ->
-//                new DiscordUserData(user.getEffectiveName(), user.getUser().getAvatarId(), user.getIdLong())
-//        ).toList();
-//    }
-//
-//    @GetMapping("api/plans/{userId}")
-//    private void getUserPlans(@PathVariable String userId){
-//
-//    }
-//
-//    @DiscordMapping(Id = "text_notifications", SubId = "disable")
-//    private void disableTextSlash(SlashCommandInteractionEvent event){
-//        if(userData.existsById(event.getUser().getIdLong())){
-//            userData.deleteById(event.getUser().getIdLong());
-//        }
-//        event.reply("Text messaging disabled").setEphemeral(true).queue();
-//    }
-//
+    @GetMapping("/plan/users")
+    private List<DiscordUserData> getUsers(){
+        return bot.getGuildById(guildId).getMembers().stream().map(user ->
+                new DiscordUserData(user.getEffectiveName(), user.getUser().getAvatarId(), user.getIdLong())
+        ).toList();
+    }
+
     @DiscordMapping(Id = "plan", SubId = "help")
     private void planHelpCommand(SlashCommandInteractionEvent event){
         event.replyEmbeds(EmbedMessageGenerator.plannerHelperMessage()).setEphemeral(true).queue();
@@ -203,7 +166,7 @@ public class PlannerBot {
             event.getMentions().getRoles().stream().map(ISnowflake::getIdLong).toList(),
             count
         );
-        boolean success = planService.createPlan(planData);
+        boolean success = planService.createPlan(planData) != null;
         if(!success) {
             event.getHook().setEphemeral(true).sendMessage("Event not created as the invite list resolves to empty. Invites to yourself, bots or users who are marked with `no plan` do not count.").queue();
             return;
@@ -315,39 +278,12 @@ public class PlannerBot {
                         .build())
                 .queue();
     }
-//
-//    @DiscordMapping(Id = "delete_event")
-//    private void deleteEvent(ButtonInteractionEvent event){
-//        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-//        Guild guild = event.getJDA().getGuildById(plan.getGuildId());
-//        // let the people know
-//        plan.getAccepted().forEach(acceptedUser ->
-//            guild.getJDA().openPrivateChannelById(acceptedUser).queue(privateChannel -> {
-//                privateChannel.sendMessage("Event: " + plan.getTitle() + " has been canceled and deleted.").queue();
-//            })
-//        );
-//        plan.getMaybes().forEach(acceptedUser ->
-//                guild.getJDA().openPrivateChannelById(acceptedUser).queue(privateChannel -> {
-//                    privateChannel.sendMessage("Event: " + plan.getTitle() + " has been canceled and deleted.").queue();
-//                })
-//        );
-//        // delete guild message
-//        guild.getTextChannelById(plan.getChannelId()).retrieveMessageById(plan.getMessageId()).queue(message -> message.delete().queue());
-//        // delete coordinator message
-//        event.getJDA().openPrivateChannelById(plan.getAuthorId()).queue(
-//                channel -> channel.retrieveMessageById(plan.getPrivateMessageId()).queue(
-//                        message -> message.delete().queue()
-//                )
-//        );
-//        // delete private messages
-//        plan.getInvitees().forEach((id, user) -> event.getJDA().openPrivateChannelById(id).queue(
-//                channel -> channel.retrieveMessageById(user.getMessageId()).queue(
-//                        message -> message.delete().queue()
-//                )
-//        ));
-//        // delete from database
-//        planRepository.deleteById(plan.getId());
-//    }
+
+    @DiscordMapping(Id = "delete_event")
+    private void deleteEvent(ButtonInteractionEvent event){
+        Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
+        planService.deletePlan(plan);
+    }
 
     @DiscordMapping(Id = "request_fill_in")
     private void requestFillIn(ButtonInteractionEvent event){
@@ -416,86 +352,4 @@ public class PlannerBot {
         PlanEvent planEvent = new PlanEvent(USER_MAYBED, userId);
         planService.updateEvent(planId, planEvent);
     }
-//
-//    @PostMapping(value = "/sms")
-//    private void receiveMessage(@RequestBody String body) throws URISyntaxException {
-//        List<NameValuePair> params = URLEncodedUtils.parse(new URI("?" + body), StandardCharsets.UTF_8);
-//        Map<String, String> mapped = new HashMap<>();
-//        for (NameValuePair param : params) {
-//            mapped.put(param.getName(), param.getValue());
-//        }
-//        bot.getUserById(232675572772372481L).openPrivateChannel().queue(privateChannel -> privateChannel.sendMessage("Text message received from number: " + mapped.get("From") + "\n" +
-//                        "Body: " + mapped.get("Body"))
-//                .addActionRow(Button.primary("reply_text", "respond")).queue());
-//        log.info("Text message from: " + mapped.get("From"));
-//        log.info("Body: " + mapped.get("Body"));
-//    }
-//
-//    private void updateEvent(PlanEvent planEvent, ButtonInteractionEvent buttonEvent){
-//        buttonEvent.deferEdit().queue();
-//        Plan plan = planRepository.getReferenceById(Long.parseLong(buttonEvent.getMessage().getEmbeds().get(0).getFooter().getText()));
-//        String title = plan.getTitle();
-//        Guild guild = buttonEvent.getJDA().getGuildById(plan.getGuildId());
-//        LinkedList<PlanEvent> processedEvents = plan.processEvents(planEvent);
-//        // send messages about the processed events
-//        for(PlanEvent event: processedEvents){
-//            switch(event.getEvent()){
-//                case USER_MOVED_FILLIN_TO_ACCEPTED:
-//                    guild.getMemberById(event.getUid()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage("A member has dropped out of: " + title + " . You are now moved from filled in to accepted.").queue());
-//                    break;
-//                case USER_MOVED_WAITLIST_TO_ACCEPTED:
-//                    guild.getMemberById(event.getUid()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage("A member has dropped out of " + title + " . You are now moved from waitlisted to accepted.").queue());
-//                    break;
-//                case USER_MOVED_WAITLIST_TO_FILL_IN:
-//                    guild.getMemberById(event.getUid()).getUser().openPrivateChannel().queue(channel -> channel.sendMessage("A member has requested a fill in for event " + title + " . You are now moved from waitlisted to a fill-in spot.").queue());
-//                    break;
-//                case EVENT_CREATED_FROM_WAITLIST:
-//                    createNewPlanFromWaitlist(plan, guild, buttonEvent.getIdLong());
-//                    break;
-//            }
-//        }
-//
-//        updateMessages(plan, guild);
-//        planRepository.save(plan);
-//    }
-//
-//    private void createNewPlanFromWaitlist(Plan plan, Guild guild, long planId) {
-//        Plan newPlan = plan.createPlanFromWaitlist();
-//        newPlan.setId(planId);
-//        for(Long id: newPlan.getInvitees().keySet()){
-//            Member m = guild.getMemberById(id);
-//            try {
-//                PrivateChannel pm = m.getUser().openPrivateChannel().complete();
-//                Message message = pm.sendMessageEmbeds(PlanHelper.getPlanPrivateMessage(plan, guild))
-//                        .complete();
-//                newPlan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
-//                if(userData.existsById(m.getIdLong())){
-//                    twilioService.sendMessage(
-//                            String.valueOf(userData.getReferenceById(m.getIdLong()).getPhone_number()),
-//                            "The waitlist for the plan: " + newPlan.getTitle() + " is big enough for a new plan to be created. " +
-//                                    "Since you were waitlisted on the original plan, you have been automatically added ot the new one."
-//                    );
-//                }
-//            } catch (Exception e){
-//                log.error("Error sending message to member to create event", e);
-//            }
-//        }
-//        try {
-//            Message message = guild.getTextChannelById(newPlan.getChannelId()).sendMessageEmbeds(getPlanChannelMessage(newPlan, guild))
-//                    .addActionRow(Button.secondary("add_users", "Add users")).complete();
-//            newPlan.setMessageId(message.getIdLong());
-//            PrivateChannel channel = guild.getMemberById(newPlan.getAuthorId()).getUser().openPrivateChannel().complete();
-//            Message m = channel.sendMessageEmbeds(PlanHelper.getHostMessage(newPlan, guild)).complete();
-//            m.editMessageComponents(
-//                    ActionRow.of(
-//                            Button.secondary("send_message", "Send message"),
-//                            Button.secondary("edit_event", "Edit details"),
-//                            Button.danger("delete_event", "Delete event")
-//                    )
-//            ).queue();
-//            newPlan.setPrivateMessageId(m.getIdLong());
-//        } catch (Exception ignored) {}
-//        updateMessages(newPlan, guild);
-//        planRepository.save(newPlan);
-//    }
 }

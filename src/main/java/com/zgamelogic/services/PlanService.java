@@ -7,7 +7,6 @@ import com.zgamelogic.bot.utils.PlanHelper;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.database.planData.user.PlanUser;
-import com.zgamelogic.data.database.planData.user.PlanUserRepository;
 import com.zgamelogic.data.intermediates.planData.PlanEvent;
 import com.zgamelogic.data.plan.PlanCreationData;
 import lombok.extern.slf4j.Slf4j;
@@ -41,14 +40,12 @@ public class PlanService {
     private JDA bot;
 
     private final PlanRepository planRepository;
-    private final PlanUserRepository planUserRepository;
 
     private TextChannel planTextChannel;
     private Guild discordGuild;
 
-    public PlanService(PlanRepository planRepository, PlanUserRepository planUserRepository) {
+    public PlanService(PlanRepository planRepository) {
         this.planRepository = planRepository;
-        this.planUserRepository = planUserRepository;
     }
 
     @DiscordMapping
@@ -57,12 +54,12 @@ public class PlanService {
         planTextChannel = discordGuild.getTextChannelById(discordPlanId);
     }
 
-    public boolean createPlan(PlanCreationData planData){
+    public Plan createPlan(PlanCreationData planData){
         Plan plan = new Plan(planData);
         Set<Long> inviteeIds = new HashSet<>(planData.players());
         planData.roles().forEach(roleId -> inviteeIds.addAll(discordGuild.getMembersWithRoles(discordGuild.getRoleById(roleId)).stream().map(ISnowflake::getIdLong).toList()));
         inviteeIds.removeIf(id -> !isValidUser(planData.author(), id, discordNoInviteRoleId, discordGuild));
-        if(inviteeIds.isEmpty()) return false;
+        if(inviteeIds.isEmpty()) return null;
         inviteeIds.forEach(planUser -> plan.getInvitees().put(planUser, new PlanUser(plan, planUser)));
         Plan savedPlan = planRepository.save(plan); // Save initial plan
         long planChannelMessageId = planTextChannel.sendMessageEmbeds(getPlanChannelMessage(savedPlan, discordGuild)).addActionRow(
@@ -83,8 +80,7 @@ public class PlanService {
                     .complete().getIdLong();
             savedPlan.getInvitees().get(memberId).setMessageId(pmId);
         });
-        planRepository.save(savedPlan);
-        return true;
+        return planRepository.save(savedPlan);
     }
 
     public void addUsersToPlan(Plan plan, Long...userIds) {
@@ -132,6 +128,76 @@ public class PlanService {
 
         planRepository.save(plan);
         updateMessages(plan);
+    }
+
+//    private void createNewPlanFromWaitlist(Plan plan, Guild guild, long planId) {
+//        Plan newPlan = plan.createPlanFromWaitlist();
+//        newPlan.setId(planId);
+//        for(Long id: newPlan.getInvitees().keySet()){
+//            Member m = guild.getMemberById(id);
+//            try {
+//                PrivateChannel pm = m.getUser().openPrivateChannel().complete();
+//                Message message = pm.sendMessageEmbeds(PlanHelper.getPlanPrivateMessage(plan, guild))
+//                        .complete();
+//                newPlan.updateMessageIdForUser(m.getIdLong(), message.getIdLong());
+//                if(userData.existsById(m.getIdLong())){
+//                    twilioService.sendMessage(
+//                            String.valueOf(userData.getReferenceById(m.getIdLong()).getPhone_number()),
+//                            "The waitlist for the plan: " + newPlan.getTitle() + " is big enough for a new plan to be created. " +
+//                                    "Since you were waitlisted on the original plan, you have been automatically added ot the new one."
+//                    );
+//                }
+//            } catch (Exception e){
+//                log.error("Error sending message to member to create event", e);
+//            }
+//        }
+//        try {
+//            Message message = guild.getTextChannelById(newPlan.getChannelId()).sendMessageEmbeds(getPlanChannelMessage(newPlan, guild))
+//                    .addActionRow(Button.secondary("add_users", "Add users")).complete();
+//            newPlan.setMessageId(message.getIdLong());
+//            PrivateChannel channel = guild.getMemberById(newPlan.getAuthorId()).getUser().openPrivateChannel().complete();
+//            Message m = channel.sendMessageEmbeds(PlanHelper.getHostMessage(newPlan, guild)).complete();
+//            m.editMessageComponents(
+//                    ActionRow.of(
+//                            Button.secondary("send_message", "Send message"),
+//                            Button.secondary("edit_event", "Edit details"),
+//                            Button.danger("delete_event", "Delete event")
+//                    )
+//            ).queue();
+//            newPlan.setPrivateMessageId(m.getIdLong());
+//        } catch (Exception ignored) {}
+//        updateMessages(newPlan, guild);
+//        planRepository.save(newPlan);
+//    }
+
+    public void deletePlan(Plan plan){
+        // let the people know
+        plan.getAccepted().forEach(acceptedUser ->
+            bot.openPrivateChannelById(acceptedUser).queue(privateChannel -> {
+                privateChannel.sendMessage("Event: " + plan.getTitle() + " has been canceled and deleted.").queue();
+            })
+        );
+        plan.getMaybes().forEach(acceptedUser ->
+                bot.openPrivateChannelById(acceptedUser).queue(privateChannel -> {
+                    privateChannel.sendMessage("Event: " + plan.getTitle() + " has been canceled and deleted.").queue();
+                })
+        );
+        // delete guild message
+        planTextChannel.retrieveMessageById(plan.getMessageId()).queue(message -> message.delete().queue());
+        // delete coordinator message
+        bot.openPrivateChannelById(plan.getAuthorId()).queue(
+                channel -> channel.retrieveMessageById(plan.getPrivateMessageId()).queue(
+                        message -> message.delete().queue()
+                )
+        );
+        // delete private messages
+        plan.getInvitees().forEach((id, user) -> bot.openPrivateChannelById(id).queue(
+                channel -> channel.retrieveMessageById(user.getMessageId()).queue(
+                        message -> message.delete().queue()
+                )
+        ));
+        // delete from database
+        planRepository.deleteById(plan.getId());
     }
 
     public void updateMessages(Plan plan){

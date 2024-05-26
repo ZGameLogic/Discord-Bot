@@ -13,5 +13,6 @@ public record CreatePlanData(
         @JsonProperty("user invites")
         List<Long> userInvitees,
         @JsonProperty("role invites")
-        List<Long> roleInvitees
+        List<Long> roleInvitees,
+        int count
 ) {}
