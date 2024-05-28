@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 
 import static com.zgamelogic.bot.utils.PlanHelper.*;
+import static com.zgamelogic.data.intermediates.planData.PlanEvent.Event.USER_FILLINED;
 
 @Service
 @DiscordController
@@ -53,6 +54,26 @@ public class PlanService {
         discordGuild = event.getJDA().getGuildById(discordGuildId);
         planTextChannel = discordGuild.getTextChannelById(discordPlanId);
     }
+
+    public boolean requestFillIn(long planId, long userId){
+        if(!planRepository.existsById(planId) || !isDiscordUser(userId)) return false;
+        Plan plan = planRepository.getReferenceById(planId);
+        PlanEvent planEvent = new PlanEvent(USER_FILLINED, userId);
+        updateEvent(plan, planEvent);
+        return true;
+    }
+
+    public void fillIn(long planId, long userId){}
+
+    public void dropOut(long planId, long userId){}
+
+    public void accept(long planId, long userId){}
+
+    public void waitList(long planId, long userId){}
+
+    public void maybe(long planId, long userId){}
+
+    public void deny(long planId, long userId){}
 
     public Plan createPlan(PlanCreationData planData){
         Plan plan = new Plan(planData);
@@ -103,8 +124,7 @@ public class PlanService {
         ));
     }
 
-    public void updateEvent(long planId, PlanEvent planEvent) {
-        Plan plan = planRepository.findById(planId).orElse(null);
+    public void updateEvent(Plan plan, PlanEvent planEvent) {
         if(plan == null) return;
 
         LinkedList<PlanEvent> processedEvents = plan.processEvents(planEvent);
@@ -237,5 +257,9 @@ public class PlanService {
         } catch (Exception e){
             log.error("Error editing private message for event {}", plan.getId(), e);
         }
+    }
+
+    private boolean isDiscordUser(long uid){
+        return bot.getUserById(uid) != null;
     }
 }

@@ -313,8 +313,7 @@ public class PlannerBot {
         event.deferEdit().queue();
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
-        PlanEvent planEvent = new PlanEvent(USER_DROPPED_OUT, userId);
-        planService.updateEvent(planId, planEvent);
+        planService.requestFillIn(planId, userId);
     }
 
     @DiscordMapping(Id = "accept_event")
