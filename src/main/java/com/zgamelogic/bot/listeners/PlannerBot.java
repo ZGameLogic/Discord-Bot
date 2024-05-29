@@ -8,8 +8,8 @@ import com.zgamelogic.bot.utils.EmbedMessageGenerator;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.intermediates.planData.DiscordUserData;
-import com.zgamelogic.data.intermediates.planData.PlanEvent;
 import com.zgamelogic.data.plan.PlanCreationData;
+import com.zgamelogic.data.plan.PlanEventResultMessage;
 import com.zgamelogic.data.plan.PlanModalData;
 import com.zgamelogic.services.PlanService;
 import net.dv8tion.jda.api.entities.ISnowflake;
@@ -39,7 +39,6 @@ import java.util.*;
 import static com.zgamelogic.bot.utils.Helpers.STD_HELPER_MESSAGE;
 import static com.zgamelogic.bot.utils.Helpers.stringToDate;
 import static com.zgamelogic.bot.utils.PlanHelper.getPrePlanMessage;
-import static com.zgamelogic.data.intermediates.planData.PlanEvent.Event.*;
 
 @Slf4j
 @DiscordController
@@ -290,8 +289,8 @@ public class PlannerBot {
         event.deferEdit().queue();
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
-        PlanEvent planEvent = new PlanEvent(USER_REGISTERED_FOR_FILL_IN, userId);
-        planService.updateEvent(planId, planEvent);
+        PlanEventResultMessage result = planService.requestFillIn(planId, userId);
+        if(!result.success()) event.getMessage().reply(result.message()).queue();
     }
 
     @DiscordMapping(Id = "fill_in")
@@ -299,8 +298,8 @@ public class PlannerBot {
         event.deferEdit().queue();
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
-        PlanEvent planEvent = new PlanEvent(USER_FILLINED, userId);
-        planService.updateEvent(planId, planEvent);
+        PlanEventResultMessage result = planService.fillIn(planId, userId);
+        if(!result.success()) event.getMessage().reply(result.message()).queue();
     }
 
     @DiscordMapping(Id = "drop_out_event")
@@ -313,7 +312,8 @@ public class PlannerBot {
         event.deferEdit().queue();
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
-        planService.requestFillIn(planId, userId);
+        PlanEventResultMessage result = planService.dropOut(planId, userId);
+        if(!result.success()) event.getMessage().reply(result.message()).queue();
     }
 
     @DiscordMapping(Id = "accept_event")
@@ -321,8 +321,8 @@ public class PlannerBot {
         event.deferEdit().queue();
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
-        PlanEvent planEvent = new PlanEvent(USER_ACCEPTED, userId);
-        planService.updateEvent(planId, planEvent);
+        PlanEventResultMessage result = planService.accept(planId, userId);
+        if(!result.success()) event.getMessage().reply(result.message()).queue();
     }
 
     @DiscordMapping(Id = "waitlist_event")
@@ -330,8 +330,8 @@ public class PlannerBot {
         event.deferEdit().queue();
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
-        PlanEvent planEvent = new PlanEvent(USER_WAITLISTED, userId);
-        planService.updateEvent(planId, planEvent);
+        PlanEventResultMessage result = planService.waitList(planId, userId);
+        if(!result.success()) event.getMessage().reply(result.message()).queue();
     }
 
     @DiscordMapping(Id = "deny_event")
@@ -339,8 +339,8 @@ public class PlannerBot {
         event.deferEdit().queue();
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
-        PlanEvent planEvent = new PlanEvent(USER_DECLINED, userId);
-        planService.updateEvent(planId, planEvent);
+        PlanEventResultMessage result = planService.deny(planId, userId);
+        if(!result.success()) event.getMessage().reply(result.message()).queue();
     }
 
     @DiscordMapping(Id = "maybe_event")
@@ -348,7 +348,7 @@ public class PlannerBot {
         event.deferEdit().queue();
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
-        PlanEvent planEvent = new PlanEvent(USER_MAYBED, userId);
-        planService.updateEvent(planId, planEvent);
+        PlanEventResultMessage result = planService.maybe(planId, userId);
+        if(!result.success()) event.getMessage().reply(result.message()).queue();
     }
 }

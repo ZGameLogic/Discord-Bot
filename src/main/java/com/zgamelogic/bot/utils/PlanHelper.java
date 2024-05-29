@@ -54,7 +54,7 @@ public abstract class PlanHelper {
                 plan.getNotes());
         eb.setFooter(String.valueOf(plan.getId()));
         eb.addField("Coordinator", guild.getJDA().getUserById(plan.getAuthorId()).getName(), true);
-        eb.addField("People accepted", plan.getAccepted().size() +
+        eb.addField("People accepted", plan.getAcceptedIds().size() +
                         (plan.getCount() != -1 ? "/" + plan.getCount() : "")
                 , true);
         infoBody(plan, eb);
@@ -80,11 +80,11 @@ public abstract class PlanHelper {
         eb.setDescription(desc);
         StringBuilder attendees = new StringBuilder();
         int filledInIndex = 0;
-        for(Long id: plan.getAccepted()){
+        for(Long id: plan.getAcceptedIds()){
             attendees.append("<@").append(id).append(">");
             if(plan.requestedFillIn(id)){
-                if(plan.getFillInedList().size() > filledInIndex){
-                    attendees.append(" -> (<@").append(plan.getFillInedList().get(filledInIndex++)).append(">)");
+                if(plan.getFillinedListIds().size() > filledInIndex){
+                    attendees.append(" -> (<@").append(plan.getFillinedListIds().get(filledInIndex++)).append(">)");
                 } else {
                     attendees.append(" (Requested fill-in)");
                 }
@@ -92,17 +92,17 @@ public abstract class PlanHelper {
             attendees.append("\n");
         }
         if(attendees.isEmpty()) attendees = new StringBuilder("People who accept will show up here");
-        eb.addField("People accepted " + plan.getAccepted().size() + (plan.getCount() != -1 ? "/" + plan.getCount() : ""), attendees.toString(), true);
-        if(!plan.getWaitlist().isEmpty()){
+        eb.addField("People accepted " + plan.getAcceptedIds().size() + (plan.getCount() != -1 ? "/" + plan.getCount() : ""), attendees.toString(), true);
+        if(!plan.getWaitlistIds().isEmpty()){
             StringBuilder waitlistees = new StringBuilder();
-            for(Long id: plan.getWaitlist()){
+            for(Long id: plan.getWaitlistIds()){
                 waitlistees.append("<@").append(id).append(">").append("\n");
             }
             eb.addField("Wait list", waitlistees.toString(), true);
         }
-        if(!plan.getMaybes().isEmpty()){
+        if(!plan.getMaybesIds().isEmpty()){
             StringBuilder maybes = new StringBuilder();
-            for(Long id: plan.getMaybes()){
+            for(Long id: plan.getMaybesIds()){
                 maybes.append("<@").append(id).append(">").append("\n");
             }
             eb.addField("Maybes", maybes.toString(), true);
@@ -113,7 +113,7 @@ public abstract class PlanHelper {
 
     private static void infoBody(Plan plan, EmbedBuilder eb) {
         StringBuilder status = new StringBuilder();
-        int accepted = plan.getAccepted().size();
+        int accepted = plan.getAcceptedIds().size();
         if(plan.getCount() != -1) {
             status.append("filled:|`");
             for (int i = 0; i < 20; i++) {
@@ -126,27 +126,27 @@ public abstract class PlanHelper {
             status.append("`|\n");
         }
         int filledInIndex = 0;
-        for(long id: plan.getAccepted()){
+        for(long id: plan.getAcceptedIds()){
             status.append("<@").append(id).append(">").append(": accepted");
             if(plan.requestedFillIn(id)){
-                if(plan.getFillInedList().size() > filledInIndex){
-                    status.append(" -> (<@").append(plan.getFillInedList().get(filledInIndex++)).append(">)");
+                if(plan.getFillinedListIds().size() > filledInIndex){
+                    status.append(" -> (<@").append(plan.getFillinedListIds().get(filledInIndex++)).append(">)");
                 } else {
                     status.append(" (Requested fill-in)");
                 }
             }
             status.append("\n");
         }
-        for(long id: plan.getWaitlist()){
+        for(long id: plan.getWaitlistIds()){
             status.append("<@").append(id).append(">").append(": wait listed\n");
         }
-        for(long id: plan.getMaybes()){
+        for(long id: plan.getMaybesIds()){
             status.append("<@").append(id).append(">").append(": maybe\n");
         }
-        for(long id: plan.getPending()){
+        for(long id: plan.getPendingIds()){
             status.append("<@").append(id).append(">").append(": pending invite\n");
         }
-        for(long id: plan.getDeclined()){
+        for(long id: plan.getDeclinedIds()){
             status.append("<@").append(id).append(">").append(": declined\n");
         }
         eb.addField("Invite status", status.toString(), false);

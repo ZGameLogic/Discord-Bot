@@ -45,6 +45,14 @@ public class PlanUser {
         id = new PlanUserId(plan.getId(), userId);
     }
 
+    public PlanUser(Plan plan, long userId, Status status){
+        needFillIn = false;
+        this.plan = plan;
+        userStatus = status;
+        waitlist_time = null;
+        id = new PlanUserId(plan.getId(), userId);
+    }
+
     @NoArgsConstructor
     @AllArgsConstructor
     @Getter

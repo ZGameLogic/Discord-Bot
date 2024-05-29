@@ -55,19 +55,31 @@ public class Plan {
         invitees = new HashMap<>();
     }
 
-    public boolean isFull(){ return getAccepted().size() >= count; }
+    public boolean isFull(){ return getAcceptedIds().size() >= count; }
     public boolean isNeedFillIn(){ return invitees.values().stream().anyMatch(PlanUser::isNeedFillIn); }
-    public List<Long> getAccepted(){ return getUsersWithStatus(ACCEPTED); }
-    public List<Long> getDeclined(){ return getUsersWithStatus(PlanUser.Status.DECLINED); }
-    public List<Long> getWaitlist(){ return getUsersWithStatus(WAITLISTED); }
-    public List<Long> getMaybes(){ return getUsersWithStatus(PlanUser.Status.MAYBED); }
-    public List<Long> getPending(){ return getUsersWithStatus(DECIDING); }
-    public List<Long> getFillInedList(){ return getUsersWithStatus(PlanUser.Status.FILLINED); }
+    public List<Long> getAcceptedIds(){ return getUserIdsWithStatus(ACCEPTED); }
+    public List<Long> getDeclinedIds(){ return getUserIdsWithStatus(PlanUser.Status.DECLINED); }
+    public List<Long> getWaitlistIds(){ return getUserIdsWithStatus(WAITLISTED); }
+    public List<Long> getMaybesIds(){ return getUserIdsWithStatus(PlanUser.Status.MAYBED); }
+    public List<Long> getPendingIds(){ return getUserIdsWithStatus(DECIDING); }
+    public List<Long> getFillinedListIds(){ return getUserIdsWithStatus(PlanUser.Status.FILLINED); }
+    public List<PlanUser> getAccepted(){ return getUserWithStatus(ACCEPTED); }
+    public List<PlanUser> getDeclined(){ return getUserWithStatus(PlanUser.Status.DECLINED); }
+    public List<PlanUser> getWaitlist(){ return getUserWithStatus(WAITLISTED); }
+    public List<PlanUser> getMaybes(){ return getUserWithStatus(PlanUser.Status.MAYBED); }
+    public List<PlanUser> getPending(){ return getUserWithStatus(DECIDING); }
+    public List<PlanUser> getFillinedList(){ return getUserWithStatus(PlanUser.Status.FILLINED); }
 
-    private List<Long> getUsersWithStatus(PlanUser.Status status) {
+    private List<Long> getUserIdsWithStatus(PlanUser.Status status) {
         return invitees.values().stream()
                 .filter(user -> user.getUserStatus() == status)
                 .map(user -> user.getId().getUserId())
+                .toList();
+    }
+
+    private List<PlanUser> getUserWithStatus(PlanUser.Status status) {
+        return invitees.values().stream()
+                .filter(user -> user.getUserStatus() == status)
                 .toList();
     }
 
@@ -106,7 +118,7 @@ public class Plan {
             }
         }
         // Check to see if event isn't full and people are in fill-in list
-        List<Long> fillIns = getFillInedList();
+        List<Long> fillIns = getFillinedListIds();
         while(!fillIns.isEmpty() && !isFull()){
             long uid = fillIns.remove(0);
             subsequentEvents.add(new PlanEvent(PlanEvent.Event.USER_MOVED_FILLIN_TO_ACCEPTED, uid));
@@ -114,7 +126,7 @@ public class Plan {
         }
 
         // Check to see if event isn't full and people are in wait list
-        List<Long> waitlists = getWaitlist();
+        List<Long> waitlists = getWaitlistIds();
         while(!waitlists.isEmpty() && !isFull()){
             long uid = waitlists.remove(0);
             subsequentEvents.add(new PlanEvent(PlanEvent.Event.USER_MOVED_WAITLIST_TO_ACCEPTED, uid));
@@ -122,7 +134,7 @@ public class Plan {
         }
 
         // check to see if event is full and a fill in is request and people are in the waitlist
-        waitlists = getWaitlist();
+        waitlists = getWaitlistIds();
         while(!waitlists.isEmpty() && isNeedFillIn()){
             long uid = waitlists.remove(0);
             subsequentEvents.add(new PlanEvent(PlanEvent.Event.USER_MOVED_WAITLIST_TO_FILL_IN, uid));
@@ -130,7 +142,7 @@ public class Plan {
         }
 
         // check to see if the event has enough people wait listed to make another event
-        if(getWaitlist().size() >= count + 1 && count != -1){
+        if(getWaitlistIds().size() >= count + 1 && count != -1){
             subsequentEvents.add(new PlanEvent(PlanEvent.Event.EVENT_CREATED_FROM_WAITLIST, 0L));
         }
 

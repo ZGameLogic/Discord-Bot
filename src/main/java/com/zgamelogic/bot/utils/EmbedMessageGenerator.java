@@ -172,7 +172,7 @@ public abstract class EmbedMessageGenerator {
 
     private static void infoBody(Plan plan, Guild guild, EmbedBuilder eb) {
         StringBuilder status = new StringBuilder();
-        int accepted = plan.getAccepted().size();
+        int accepted = plan.getAcceptedIds().size();
         if(plan.getCount() != -1) {
             status.append("filled:|`");
             for (int i = 0; i < 20; i++) {
@@ -184,19 +184,19 @@ public abstract class EmbedMessageGenerator {
             }
             status.append("`|\n");
         }
-        for(long id: plan.getAccepted()){
+        for(long id: plan.getAcceptedIds()){
             status.append("<@").append(id).append(">").append(": accepted\n");
         }
-        for(long id: plan.getWaitlist()){
+        for(long id: plan.getWaitlistIds()){
             status.append("<@").append(id).append(">").append(": wait listed\n");
         }
-        for(long id: plan.getMaybes()){
+        for(long id: plan.getMaybesIds()){
             status.append("<@").append(id).append(">").append(": maybe\n");
         }
-        for(long id: plan.getPending()){
+        for(long id: plan.getPendingIds()){
             status.append("<@").append(id).append(">").append(": pending invite\n");
         }
-        for(long id: plan.getDeclined()){
+        for(long id: plan.getDeclinedIds()){
             status.append("<@").append(id).append(">").append(": declined\n");
         }
         eb.addField("Invite status", status.toString(), false);
