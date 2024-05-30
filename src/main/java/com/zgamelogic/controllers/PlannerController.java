@@ -48,7 +48,6 @@ public class PlannerController {
             @RequestHeader String device,
             @RequestBody CreatePlanData planData
     ){
-        System.out.println(planData);
         Optional<DiscordUser> discordUser = discordService.getUserFromToken(token);
         if(discordUser.isEmpty()) return ResponseEntity.status(401).build();
         Optional<AuthData> authData = authDataRepository.findById_DiscordIdAndId_DeviceIdAndToken(discordUser.get().id(), device, token);
