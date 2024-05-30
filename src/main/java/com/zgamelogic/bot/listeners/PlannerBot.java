@@ -7,6 +7,7 @@ import com.zgamelogic.annotations.EventProperty;
 import com.zgamelogic.bot.utils.EmbedMessageGenerator;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
+import com.zgamelogic.data.intermediates.planData.DiscordRoleData;
 import com.zgamelogic.data.intermediates.planData.DiscordUserData;
 import com.zgamelogic.data.plan.PlanCreationData;
 import com.zgamelogic.data.plan.PlanEventResultMessage;
@@ -79,6 +80,14 @@ public class PlannerBot {
         return bot.getGuildById(guildId).getMembers().stream().map(user ->
                 new DiscordUserData(user.getEffectiveName(), user.getUser().getAvatarId(), user.getIdLong())
         ).toList();
+    }
+
+    @GetMapping("/plan/roles")
+    private List<DiscordRoleData> getRoles(){
+        return bot.getGuildById(guildId).getRoles().stream()
+                .filter(role -> role.getIdLong() != bot.getGuildById(guildId).getPublicRole().getIdLong())
+                .map(role -> new DiscordRoleData(role.getName(), role.getIdLong(), role.getColor()))
+                .toList();
     }
 
     @DiscordMapping(Id = "plan", SubId = "help")
