@@ -7,11 +7,15 @@ import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.intermediates.planData.CreatePlanData;
 import com.zgamelogic.data.plan.PlanCreationData;
+import com.zgamelogic.data.plan.PlanEventResultMessage;
 import com.zgamelogic.services.DiscordService;
 import com.zgamelogic.services.PlanService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.context.request.WebRequest;
 
 import java.util.Date;
 import java.util.List;
@@ -34,29 +38,22 @@ public class PlannerController {
     }
 
     @GetMapping("plans")
-    private ResponseEntity<List<Plan>> getPlans(@RequestHeader String token) {
-        Optional<DiscordUser> discordUser = discordService.getUserFromToken(token);
-        if(discordUser.isEmpty()) return ResponseEntity.status(401).build();
-        List<Plan> plans = planRepository.findAllPlansByUserId(discordUser.get().id(), new Date());
-        plans.addAll(planRepository.findAllByAuthorIdAndDateGreaterThan(discordUser.get().id(), new Date()));
+    private ResponseEntity<List<Plan>> getPlans(@ModelAttribute DiscordUser discordUser) {
+        List<Plan> plans = planRepository.findAllPlansByUserId(discordUser.id(), new Date());
+        plans.addAll(planRepository.findAllByAuthorIdAndDateGreaterThan(discordUser.id(), new Date()));
         return ResponseEntity.ok(plans);
     }
 
     @PostMapping("plans")
     private ResponseEntity<Plan> createPlan(
-            @RequestHeader String token,
-            @RequestHeader String device,
-            @RequestBody CreatePlanData planData
+            @RequestBody CreatePlanData planData,
+            @ModelAttribute DiscordUser discordUser
     ){
-        Optional<DiscordUser> discordUser = discordService.getUserFromToken(token);
-        if(discordUser.isEmpty()) return ResponseEntity.status(401).build();
-        Optional<AuthData> authData = authDataRepository.findById_DiscordIdAndId_DeviceIdAndToken(discordUser.get().id(), device, token);
-        if(authData.isEmpty()) return ResponseEntity.status(401).build();
         PlanCreationData planCreationData = new PlanCreationData(
                 planData.title(),
                 planData.notes(),
                 planData.startTime(),
-                discordUser.get().id(),
+                discordUser.id(),
                 planData.userInvitees(),
                 planData.roleInvitees(),
                 planData.count()
@@ -64,5 +61,40 @@ public class PlannerController {
         Plan plan = planService.createPlan(planCreationData);
         if(plan == null) return ResponseEntity.badRequest().build();
         return ResponseEntity.ok(plan);
+    }
+
+    @PostMapping("plans/{planId}/accept/{userId}")
+    private ResponseEntity<PlanEventResultMessage> acceptPlan(
+            @PathVariable long planId,
+            @PathVariable long userId)
+    {
+        PlanEventResultMessage result = planService.accept(planId, userId);
+        return ResponseEntity.ok(result);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<?> handleUnauthorizedException() {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+    @ModelAttribute
+    public void authenticate(WebRequest request, Model model) {
+        String token = request.getHeader("token");
+        String device = request.getHeader("device");
+
+        if (token == null || device == null) throw new UnauthorizedException();
+        Optional<DiscordUser> discordUser = discordService.getUserFromToken(token);
+        if (discordUser.isEmpty()) throw new UnauthorizedException();
+        Optional<AuthData> authData = authDataRepository.findById_DiscordIdAndId_DeviceIdAndToken(discordUser.get().id(), device, token);
+        if (authData.isEmpty()) throw new UnauthorizedException();
+
+        model.addAttribute("discordUser", discordUser.get());
+        model.addAttribute("authData", authData.get());
+    }
+
+    private static class UnauthorizedException extends RuntimeException {
+        public UnauthorizedException() {
+            super("Unauthorized");
+        }
     }
 }
