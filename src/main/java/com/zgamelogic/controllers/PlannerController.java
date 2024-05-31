@@ -45,10 +45,7 @@ public class PlannerController {
     }
 
     @PostMapping("plans")
-    private ResponseEntity<Plan> createPlan(
-            @RequestBody CreatePlanData planData,
-            @ModelAttribute DiscordUser discordUser
-    ){
+    private ResponseEntity<Plan> createPlan(@RequestBody CreatePlanData planData, @ModelAttribute DiscordUser discordUser){
         PlanCreationData planCreationData = new PlanCreationData(
                 planData.title(),
                 planData.notes(),
@@ -63,13 +60,46 @@ public class PlannerController {
         return ResponseEntity.ok(plan);
     }
 
-    @PostMapping("plans/{planId}/accept/{userId}")
-    private ResponseEntity<PlanEventResultMessage> acceptPlan(
-            @PathVariable long planId,
-            @PathVariable long userId)
-    {
-        PlanEventResultMessage result = planService.accept(planId, userId);
-        return ResponseEntity.ok(result);
+    @PostMapping("plans/{planId}/accept")
+    private ResponseEntity<PlanEventResultMessage> acceptPlan(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
+        PlanEventResultMessage result = planService.accept(planId, discordUser.id());
+        return ResponseEntity.status(result.getStatus()).body(result);
+    }
+
+    @PostMapping("plans/{planId}/requestFillIn")
+    private ResponseEntity<PlanEventResultMessage> requestPlanFillIn(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
+        PlanEventResultMessage result = planService.requestFillIn(planId, discordUser.id());
+        return ResponseEntity.status(result.getStatus()).body(result);
+    }
+
+    @PostMapping("plans/{planId}/fillIn")
+    private ResponseEntity<PlanEventResultMessage> fillInPlan(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
+        PlanEventResultMessage result = planService.fillIn(planId, discordUser.id());
+        return ResponseEntity.status(result.getStatus()).body(result);
+    }
+
+    @PostMapping("plans/{planId}/dropOut")
+    private ResponseEntity<PlanEventResultMessage> dropOutPlan(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
+        PlanEventResultMessage result = planService.dropOut(planId, discordUser.id());
+        return ResponseEntity.status(result.getStatus()).body(result);
+    }
+
+    @PostMapping("plans/{planId}/waitlist")
+    private ResponseEntity<PlanEventResultMessage> waitlistPlan(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
+        PlanEventResultMessage result = planService.waitList(planId, discordUser.id());
+        return ResponseEntity.status(result.getStatus()).body(result);
+    }
+
+    @PostMapping("plans/{planId}/maybe")
+    private ResponseEntity<PlanEventResultMessage> maybePlan(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
+        PlanEventResultMessage result = planService.maybe(planId, discordUser.id());
+        return ResponseEntity.status(result.getStatus()).body(result);
+    }
+
+    @PostMapping("plans/{planId}/deny")
+    private ResponseEntity<PlanEventResultMessage> denyPlan(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
+        PlanEventResultMessage result = planService.deny(planId, discordUser.id());
+        return ResponseEntity.status(result.getStatus()).body(result);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
