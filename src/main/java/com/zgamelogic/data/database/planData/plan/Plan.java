@@ -13,8 +13,6 @@ import jakarta.persistence.*;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import static com.zgamelogic.data.database.planData.user.PlanUser.Status.*;
@@ -218,8 +216,7 @@ public class Plan {
             gen.writeNumberField("id", value.getId());
             gen.writeStringField("title", value.getTitle());
             gen.writeStringField("notes", value.getNotes());
-            String utcDate = value.getDate().toInstant().atZone(ZoneId.of("UTC")).format(DateTimeFormatter.ISO_INSTANT);
-            gen.writeStringField("start time", utcDate);
+            gen.writeObjectField("start time", value.getDate());
             gen.writeNumberField("count", value.getCount());
             gen.writeNumberField("author id", value.getAuthorId());
             gen.writeArrayFieldStart("invitees");
