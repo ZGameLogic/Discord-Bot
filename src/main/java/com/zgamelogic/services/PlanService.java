@@ -165,7 +165,7 @@ public class PlanService {
             long pmId = discordGuild.getMemberById(memberId).getUser().openPrivateChannel().complete().sendMessageEmbeds(getPlanPrivateMessage(savedPlan, discordGuild))
                     .addActionRow(getButtons(savedPlan.isFull(), savedPlan.isNeedFillIn(), PlanUser.Status.DECIDING, false))
                     .complete().getIdLong();
-            savedPlan.getInvitees().get(memberId).setMessageId(pmId);
+            savedPlan.getInvitees().get(memberId).setDiscordNotificationId(pmId);
         });
         return planRepository.save(savedPlan);
     }
@@ -178,7 +178,7 @@ public class PlanService {
             long pmId = discordGuild.getMemberById(memberId).getUser().openPrivateChannel().complete().sendMessageEmbeds(getPlanPrivateMessage(plan, discordGuild))
                     .addActionRow(getButtons(plan.isFull(), plan.isNeedFillIn(), PlanUser.Status.DECIDING, false))
                     .complete().getIdLong();
-            plan.getInvitees().get(memberId).setMessageId(pmId);
+            plan.getInvitees().get(memberId).setDiscordNotificationId(pmId);
         });
         planRepository.save(plan);
         updateMessages(plan);
@@ -255,7 +255,7 @@ public class PlanService {
             long pmId = discordGuild.getMemberById(memberId).getUser().openPrivateChannel().complete().sendMessageEmbeds(getPlanPrivateMessage(savedPlan, discordGuild))
                     .addActionRow(getButtons(savedPlan.isFull(), savedPlan.isNeedFillIn(), PlanUser.Status.DECIDING, false))
                     .complete().getIdLong();
-            savedPlan.getInvitees().get(memberId).setMessageId(pmId);
+            savedPlan.getInvitees().get(memberId).setDiscordNotificationId(pmId);
         });
         planRepository.save(savedPlan);
     }
@@ -282,7 +282,7 @@ public class PlanService {
         );
         // delete private messages
         plan.getInvitees().forEach((id, user) -> bot.openPrivateChannelById(id).queue(
-                channel -> channel.retrieveMessageById(user.getMessageId()).queue(
+                channel -> channel.retrieveMessageById(user.getDiscordNotificationId()).queue(
                         message -> message.delete().queue()
                 )
         ));
@@ -303,7 +303,7 @@ public class PlanService {
         for(Long currentUserId: plan.getInvitees().keySet()){
             PlanUser user = plan.getInvitees().get(currentUserId);
             try {
-                discordGuild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> channel.retrieveMessageById(user.getMessageId()).queue(message -> {
+                discordGuild.getMemberById(currentUserId).getUser().openPrivateChannel().queue(channel -> channel.retrieveMessageById(user.getDiscordNotificationId()).queue(message -> {
                     message.editMessageEmbeds(PlanHelper.getPlanPrivateMessage(plan, discordGuild)).queue();
 
                     boolean full = plan.isFull();

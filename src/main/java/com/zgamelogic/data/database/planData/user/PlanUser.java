@@ -28,7 +28,9 @@ public class PlanUser {
     private PlanUserId id;
     @Enumerated(EnumType.STRING)
     private Status userStatus;
-    private Long messageId;
+    private Long discordNotificationId;
+    private String iosNotificationId;
+    private String androidNotificationId;
     private Date waitlist_time;
     private boolean needFillIn;
 
