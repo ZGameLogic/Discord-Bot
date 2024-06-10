@@ -1,0 +1,33 @@
+{
+  "Simulator Target Bundle": "zgamelogic.Planner-Bot",
+  "aps": {
+    "alert": {
+      "title": "zabory has invited you to play GTFO",
+      "body": "zabory is looking for 4 more people to join them for the event"
+    },
+    "category": "time_sensitive"
+  },
+  "category": {
+    "id": "time_sensitive",
+    "actions": [
+      {
+        "title": "Accept",
+        "identifier": "ACCEPT_ACTION",
+        "textInput": false,
+        "foreground": true
+      },
+      {
+        "title": "Maybe",
+        "identifier": "MAYBE_ACTION",
+        "textInput": false,
+        "foreground": true
+      },
+      {
+        "title": "Decline",
+        "identifier": "DECLINE_ACTION",
+        "textInput": false,
+        "foreground": true
+      }
+    ]
+  }
+}

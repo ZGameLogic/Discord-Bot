@@ -57,7 +57,6 @@ public class DiscordAuthController {
                     if(userOptional.isPresent()){ // we are able to get user information
                         AuthData data = new AuthData(newDiscordToken.get(), userOptional.get(), device);
                         authDataRepository.save(data);
-                        System.out.println(new DiscordLoginPayload(newDiscordToken.get(), userOptional.get()));
                         return ResponseEntity.ok(new DiscordLoginPayload(newDiscordToken.get(), userOptional.get()));
                     }
                 }
