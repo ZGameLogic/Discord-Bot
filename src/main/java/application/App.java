@@ -11,7 +11,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
  * @author Ben Shabowski
  *
  */
-@SpringBootApplication(scanBasePackages = {"services", "bot"})
+@SpringBootApplication(scanBasePackages = {"services", "bot", "configurations"})
 @EnableJpaRepositories({"data.database"})
 @EntityScan({"data.database"})
 @EnableScheduling

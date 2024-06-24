@@ -1,4 +1,4 @@
-package com.zgamelogic.configurations;
+package configurations;
 
 import org.apache.catalina.connector.Connector;
 import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
