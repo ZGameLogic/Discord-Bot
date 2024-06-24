@@ -39,9 +39,15 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+  disable-monitor:
+    uses: zgamelogic/data-otter-monitor-active/.github/workflows/action.yml@v1.0.0
+    needs: build
+    with:
+      monitorId: 3
+      active: false
   Kubernetes:
     runs-on: PiServer
-    needs: build
+    needs: disable-monitor
     steps:
       - name: Checkout Kubernetes Directory
         uses: actions/checkout@v4
@@ -50,4 +56,13 @@ jobs:
       - name: Apply Kubernetes Configuration
         run: sudo kubectl apply -f kubernetes/
       - name: Rolling update
-        run: sudo kubectl rollout restart deployment discord-bot
+        run: |
+          sudo kubectl rollout restart deployment discord-bot
+          sudo kubectl rollout status deployment discord-bot --timeout=600s
+  enable-monitor:
+    uses: zgamelogic/data-otter-monitor-active/.github/workflows/action.yml@v1.0.0
+    needs: [ build, disable-monitor, Kubernetes ]
+    if: always()
+    with:
+      monitorId: 3
+      active: true
