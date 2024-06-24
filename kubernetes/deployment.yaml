@@ -26,6 +26,13 @@ spec:
           env:
             - name: TZ
               value: "America/Chicago"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8085
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 5
       volumes:
         - name: keystore-volume
           secret:
