@@ -3,9 +3,7 @@ package com.zgamelogic.bot.utils;
 import com.zgamelogic.data.database.cardData.cards.CardData;
 import com.zgamelogic.data.database.cardData.cards.CardDataRepository;
 import com.zgamelogic.data.database.cardData.player.PlayerCardData;
-import com.zgamelogic.data.database.planData.Plan;
 import net.dv8tion.jda.api.EmbedBuilder;
-import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
@@ -42,9 +40,7 @@ public abstract class EmbedMessageGenerator {
     public static MessageCreateData message(com.zgamelogic.data.intermediates.messaging.Message message) {
         MessageCreateBuilder mcb = new MessageCreateBuilder();
         StringBuilder content = new StringBuilder();
-        message.getMentionIds().forEach(id -> {
-            content.append("<@&").append(id).append(">\n");
-        });
+        message.getMentionIds().forEach(id -> content.append("<@&").append(id).append(">\n"));
         content.append(message.getMessage());
         return mcb.mentionRoles(message.getMentionIds())
                 .addContent(content.toString())
@@ -153,51 +149,5 @@ public abstract class EmbedMessageGenerator {
         eb.setDescription(desc.toString());
         if(total > PAGE_SIZE) eb.setFooter("page " + (page + 1));
         return eb.build();
-    }
-
-    public static MessageEmbed welcomeMessage(String ownerName, String guildName){
-        EmbedBuilder eb = new EmbedBuilder();
-        eb.setColor(GENERAL_COLOR);
-        eb.setTitle("Thank you for welcoming me into " + guildName);
-        eb.setDescription("Dear " + ownerName + ",\n" +
-                "This channel is private and only you should be able to see it. " +
-                "This bot contains multiple functions, and here is where you can enable/disable them. " +
-                "Simply press the button at the bottom of this message to enable/disable a feature. " +
-                "Green means its enabled, and red means its disabled. " +
-                "Everything is disabled by default. As features for the bot are released, expect them " +
-                "to appear under this message as a button.");
-        return eb.build();
-    }
-
-    private static void infoBody(Plan plan, Guild guild, EmbedBuilder eb) {
-        StringBuilder status = new StringBuilder();
-        int accepted = plan.getAccepted().size();
-        if(plan.getCount() != -1) {
-            status.append("filled:|`");
-            for (int i = 0; i < 20; i++) {
-                if (i < 20.0 * ((double) accepted / plan.getCount()) || plan.isFull()) {
-                    status.append("█");
-                } else {
-                    status.append(" ");
-                }
-            }
-            status.append("`|\n");
-        }
-        for(long id: plan.getAccepted()){
-            status.append("<@").append(id).append(">").append(": accepted\n");
-        }
-        for(long id: plan.getWaitlist()){
-            status.append("<@").append(id).append(">").append(": wait listed\n");
-        }
-        for(long id: plan.getMaybes()){
-            status.append("<@").append(id).append(">").append(": maybe\n");
-        }
-        for(long id: plan.getPending()){
-            status.append("<@").append(id).append(">").append(": pending invite\n");
-        }
-        for(long id: plan.getDeclined()){
-            status.append("<@").append(id).append(">").append(": declined\n");
-        }
-        eb.addField("Invite status", status.toString(), false);
     }
 }
