@@ -61,6 +61,15 @@ public abstract class PlanHelper {
         return eb.build();
     }
 
+    public static MessageEmbed getDeletedPlanMessage(Plan plan){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(GENERAL_COLOR);
+        eb.setTitle(plan.getTitle());
+        eb.setFooter(String.valueOf(plan.getId()));
+        eb.setDescription("The event was scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) + ". This event has been canceled");
+        return eb.build();
+    }
+
     public static MessageEmbed getPlanPrivateMessage(Plan plan, Guild guild){
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(GENERAL_COLOR);

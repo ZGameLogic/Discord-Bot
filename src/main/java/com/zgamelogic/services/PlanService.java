@@ -273,18 +273,21 @@ public class PlanService {
                 })
         );
         // delete guild message
-        planTextChannel.retrieveMessageById(plan.getMessageId()).queue(message -> message.delete().queue());
+        planTextChannel.editMessageEmbedsById(plan.getMessageId(), getDeletedPlanMessage(plan)).queue();
+        planTextChannel.retrieveMessageById(plan.getMessageId()).queue(message -> message.editMessageComponents().queue());
         // delete coordinator message
         bot.openPrivateChannelById(plan.getAuthorId()).queue(
-                channel -> channel.retrieveMessageById(plan.getPrivateMessageId()).queue(
-                        message -> message.delete().queue()
-                )
+                channel -> channel.retrieveMessageById(plan.getPrivateMessageId()).queue(message -> {
+                    message.editMessageEmbeds(getDeletedPlanMessage(plan)).queue();
+                    message.editMessageComponents().queue();
+                })
         );
         // delete private messages
         plan.getInvitees().forEach((id, user) -> bot.openPrivateChannelById(id).queue(
-                channel -> channel.retrieveMessageById(user.getDiscordNotificationId()).queue(
-                        message -> message.delete().queue()
-                )
+                channel -> channel.retrieveMessageById(user.getDiscordNotificationId()).queue(message -> {
+                    message.editMessageEmbeds(getDeletedPlanMessage(plan)).queue();
+                    message.editMessageComponents().queue();
+                })
         ));
         // delete from database
         planRepository.deleteById(plan.getId());
@@ -295,7 +298,7 @@ public class PlanService {
         try {
             planTextChannel.retrieveMessageById(plan.getMessageId()).queue(
                     message -> message.editMessageEmbeds(getPlanChannelMessage(plan, discordGuild)
-                    ).queue());
+            ).queue());
         } catch (Exception e){
             log.error("Error editing public guild message for event {}", plan.getId(), e);
         }
