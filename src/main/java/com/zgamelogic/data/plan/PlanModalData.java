@@ -1,8 +1,14 @@
 package com.zgamelogic.data.plan;
 
-public record PlanModalData(
-        String title,
-        String notes,
-        String count,
-        String date
-) {}
+import lombok.*;
+
+@AllArgsConstructor
+@NoArgsConstructor
+@Setter
+@Getter
+public class PlanModalData {
+    private String title;
+    private String notes;
+    private String count;
+    private String date;
+}
