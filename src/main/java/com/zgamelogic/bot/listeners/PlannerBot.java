@@ -119,7 +119,7 @@ public class PlannerBot {
             ModalInteractionEvent event,
             @EventProperty PlanModalData planData
     ){
-        Date date = stringToDate(planData.getDate());
+        Date date = stringToDate(planData.date());
         if(date == null){
             event.reply("""
                     Invalid date and time. Here are some examples of valid dates:
@@ -133,7 +133,7 @@ public class PlannerBot {
         }
         int count;
         try {
-            count = planData.getCount() != null && !planData.getCount().isEmpty() ? Integer.parseInt(planData.getCount()) : -1;
+            count = planData.count() != null && !planData.count().isEmpty() ? Integer.parseInt(planData.count()) : -1;
         } catch (NumberFormatException e){
             event.reply("Invalid count").setEphemeral(true).queue();
             return;
@@ -142,7 +142,7 @@ public class PlannerBot {
             event.reply("Invalid count").setEphemeral(true).queue();
             return;
         }
-        event.replyEmbeds(getPrePlanMessage(planData.getTitle(), planData.getNotes(), count, planData.getDate()))
+        event.replyEmbeds(getPrePlanMessage(planData.title(), planData.notes(), count, planData.date()))
                 .setEphemeral(true)
                 .addActionRow(
                         EntitySelectMenu.create("People", EntitySelectMenu.SelectTarget.USER, EntitySelectMenu.SelectTarget.ROLE)
