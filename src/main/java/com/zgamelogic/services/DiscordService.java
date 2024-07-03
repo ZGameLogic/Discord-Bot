@@ -41,6 +41,7 @@ public class DiscordService {
             return Optional.of(response.getBody());
         } catch (Exception e){
             log.error("Unable to post for token", e);
+            requestBody.forEach((key, value) -> log.info("{}: {}", key, value));
             return Optional.empty();
         }
     }
