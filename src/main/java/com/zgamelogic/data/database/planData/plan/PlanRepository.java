@@ -12,6 +12,6 @@ import java.util.List;
 public interface PlanRepository extends JpaRepository<Plan, Long> {
     List<Plan> findAllByAuthorIdAndDateGreaterThan(long authorId, Date date);
 
-    @Query("SELECT p FROM Plan p JOIN p.invitees pu WHERE pu.id.userId = :userId AND p.date > :date")
+    @Query("SELECT p FROM Plan p JOIN p.invitees pu WHERE pu.id.userId = :userId AND p.date > :date AND pu.userStatus <> 'DECLINED'")
     List<Plan> findAllPlansByUserId(@Param("userId") long userId, @Param("date") Date date);
 }
