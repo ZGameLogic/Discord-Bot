@@ -41,7 +41,7 @@ public class PlannerController {
 
     @GetMapping("plans")
     private ResponseEntity<List<Plan>> getPlans(@ModelAttribute DiscordUser discordUser) {
-        LocalDateTime dateTimeAnHourAgo = LocalDateTime.now().minusHours(1);
+        LocalDateTime dateTimeAnHourAgo = LocalDateTime.now().plusHours(1);
         Date dateAnHourAgo = Date.from(dateTimeAnHourAgo.atZone(ZoneId.systemDefault()).toInstant());
         List<Plan> plans = planRepository.findAllPlansByUserId(discordUser.id(), dateAnHourAgo);
         plans.addAll(planRepository.findAllByAuthorIdAndDateGreaterThan(discordUser.id(), new Date()));
