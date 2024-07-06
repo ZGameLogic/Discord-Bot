@@ -17,6 +17,8 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -39,7 +41,9 @@ public class PlannerController {
 
     @GetMapping("plans")
     private ResponseEntity<List<Plan>> getPlans(@ModelAttribute DiscordUser discordUser) {
-        List<Plan> plans = planRepository.findAllPlansByUserId(discordUser.id(), new Date());
+        LocalDateTime dateTimeAnHourAgo = LocalDateTime.now().minusHours(1);
+        Date dateAnHourAgo = Date.from(dateTimeAnHourAgo.atZone(ZoneId.systemDefault()).toInstant());
+        List<Plan> plans = planRepository.findAllPlansByUserId(discordUser.id(), dateAnHourAgo);
         plans.addAll(planRepository.findAllByAuthorIdAndDateGreaterThan(discordUser.id(), new Date()));
         return ResponseEntity.ok(plans);
     }
