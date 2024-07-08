@@ -45,12 +45,14 @@ public class PlanService {
     private JDA bot;
 
     private final PlanRepository planRepository;
+    private final PlannerWebsocketService plannerWebsocketService;
 
     private TextChannel planTextChannel;
     private Guild discordGuild;
 
-    public PlanService(PlanRepository planRepository) {
+    public PlanService(PlanRepository planRepository, PlannerWebsocketService plannerWebsocketService) {
         this.planRepository = planRepository;
+        this.plannerWebsocketService = plannerWebsocketService;
     }
 
     @DiscordMapping
@@ -67,6 +69,7 @@ public class PlanService {
         if(user == null) return PlanEventResultMessage.failure(USER_NOT_IN_PLAN);
         PlanEvent planEvent = new PlanEvent(USER_REGISTERED_FOR_FILL_IN, userId);
         updateEvent(plan, planEvent);
+        plannerWebsocketService.sendMessage(plan);
         return PlanEventResultMessage.success(PLAN_UPDATED);
     }
 
@@ -79,6 +82,7 @@ public class PlanService {
         if(!plan.isNeedFillIn()) return PlanEventResultMessage.failure(NO_FILLINS_AVAILABLE);
         PlanEvent planEvent = new PlanEvent(USER_FILLINED, userId);
         updateEvent(plan, planEvent);
+        plannerWebsocketService.sendMessage(plan);
         return PlanEventResultMessage.success(PLAN_UPDATED);
     }
 
@@ -91,6 +95,7 @@ public class PlanService {
         if(user.getUserStatus() != PlanUser.Status.ACCEPTED) return PlanEventResultMessage.failure(USER_NOT_ACCEPTED_PLAN);
         PlanEvent planEvent = new PlanEvent(USER_DROPPED_OUT, userId);
         updateEvent(plan, planEvent);
+        plannerWebsocketService.sendMessage(plan);
         return PlanEventResultMessage.success(PLAN_UPDATED);
     }
 
@@ -103,6 +108,7 @@ public class PlanService {
         if(plan.getAcceptedIds().size() >= plan.getCount()) return PlanEventResultMessage.failure(PLAN_FULL);
         PlanEvent planEvent = new PlanEvent(USER_ACCEPTED, userId);
         updateEvent(plan, planEvent);
+        plannerWebsocketService.sendMessage(plan);
         return PlanEventResultMessage.success(PLAN_UPDATED);
     }
 
@@ -115,6 +121,7 @@ public class PlanService {
         if(plan.getAcceptedIds().size() < plan.getCount()) return PlanEventResultMessage.failure(PLAN_NOT_FULL);
         PlanEvent planEvent = new PlanEvent(USER_WAITLISTED, userId);
         updateEvent(plan, planEvent);
+        plannerWebsocketService.sendMessage(plan);
         return PlanEventResultMessage.success(PLAN_UPDATED);
     }
 
@@ -126,6 +133,7 @@ public class PlanService {
         if(user == null) return PlanEventResultMessage.failure(USER_NOT_IN_PLAN);
         PlanEvent planEvent = new PlanEvent(USER_MAYBED, userId);
         updateEvent(plan, planEvent);
+        plannerWebsocketService.sendMessage(plan);
         return PlanEventResultMessage.success(PLAN_UPDATED);
     }
 
@@ -137,6 +145,7 @@ public class PlanService {
         if(user == null) return PlanEventResultMessage.failure(USER_NOT_IN_PLAN);
         PlanEvent planEvent = new PlanEvent(USER_DECLINED, userId);
         updateEvent(plan, planEvent);
+        plannerWebsocketService.sendMessage(plan);
         return PlanEventResultMessage.success(PLAN_UPDATED);
     }
 
@@ -167,6 +176,7 @@ public class PlanService {
                     .complete().getIdLong();
             savedPlan.getInvitees().get(memberId).setDiscordNotificationId(pmId);
         });
+        plannerWebsocketService.sendMessage(savedPlan);
         return planRepository.save(savedPlan);
     }
 
@@ -257,6 +267,7 @@ public class PlanService {
                     .complete().getIdLong();
             savedPlan.getInvitees().get(memberId).setDiscordNotificationId(pmId);
         });
+        plannerWebsocketService.sendMessage(savedPlan);
         planRepository.save(savedPlan);
     }
 

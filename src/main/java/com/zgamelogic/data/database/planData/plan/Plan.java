@@ -216,11 +216,14 @@ public class Plan {
             gen.writeNumberField("id", value.getId());
             gen.writeStringField("title", value.getTitle());
             gen.writeStringField("notes", value.getNotes());
-            gen.writeObjectField("start time", value.getDate());
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+            dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+            String formattedDate = dateFormat.format(value.getDate());
+            gen.writeStringField("start time", formattedDate);
             gen.writeNumberField("count", value.getCount());
             gen.writeNumberField("author id", value.getAuthorId());
             gen.writeArrayFieldStart("invitees");
-            value.invitees.values().forEach(planUser -> {
+            value.getInvitees().values().forEach(planUser -> {
                 try {
                     gen.writeStartObject();
                     gen.writeNumberField("user id", planUser.getId().getUserId());
