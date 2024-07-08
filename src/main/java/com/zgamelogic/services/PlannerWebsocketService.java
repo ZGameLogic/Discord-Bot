@@ -2,22 +2,22 @@ package com.zgamelogic.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.zgamelogic.data.authData.DiscordUser;
 import com.zgamelogic.data.database.authData.AuthData;
 import com.zgamelogic.data.database.authData.AuthDataRepository;
+import com.zgamelogic.data.database.planData.plan.Plan;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
+import org.springframework.web.socket.BinaryMessage;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 @Service
 @Slf4j
@@ -67,10 +67,19 @@ public class PlannerWebsocketService extends TextWebSocketHandler {
     }
 
     public void sendMessage(Object message){
+        Plan.PlanSerialization planSerialization = new Plan.PlanSerialization();
         ObjectMapper om = new ObjectMapper();
+        SimpleModule module = new SimpleModule();
+        module.addSerializer(Plan.class, planSerialization);
+        om.registerModule(module);
         try {
-            String output = om.writeValueAsString(message);
-            for(WebSocketSession session: sessions) session.sendMessage(new TextMessage(output));
+            System.out.println(new String(om.writeValueAsBytes(message)));
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+
+        try {
+            for(WebSocketSession session: sessions) session.sendMessage(new BinaryMessage(om.writeValueAsBytes(message)));
         } catch (JsonProcessingException e) {
             log.error("Unable to create JSON object", e);
         } catch (IOException i){
