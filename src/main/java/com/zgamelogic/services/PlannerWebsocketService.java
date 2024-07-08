@@ -2,6 +2,9 @@ package com.zgamelogic.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zgamelogic.data.authData.DiscordUser;
+import com.zgamelogic.data.database.authData.AuthData;
+import com.zgamelogic.data.database.authData.AuthDataRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
@@ -13,25 +16,48 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 @Service
 @Slf4j
 public class PlannerWebsocketService extends TextWebSocketHandler {
-    private final Set<WebSocketSession> sessions = Collections.synchronizedSet(new HashSet<>());
+    private final Set<WebSocketSession> sessions;
+    private final AuthDataRepository authDataRepository;
+    private final DiscordService discordService;
 
+    public PlannerWebsocketService(AuthDataRepository authDataRepository, DiscordService discordService) {
+        this.authDataRepository = authDataRepository;
+        this.discordService = discordService;
+        sessions = Collections.synchronizedSet(new HashSet<>());
+    }
     @Override
-    public void afterConnectionEstablished(WebSocketSession session) {
+    public void afterConnectionEstablished(WebSocketSession session) throws IOException {
         log.debug("Connected: {}", session.getId());
+        String device = session.getHandshakeHeaders().getFirst("device");
+        String token = session.getHandshakeHeaders().getFirst("token");
+
+        if (token == null || device == null) {
+            session.close(CloseStatus.BAD_DATA);
+            return;
+        }
+        Optional<DiscordUser> discordUser = discordService.getUserFromToken(token);
+        if (discordUser.isEmpty()) {
+            session.close(CloseStatus.BAD_DATA);
+            return;
+        }
+        Optional<AuthData> authData = authDataRepository.findById_DiscordIdAndId_DeviceIdAndToken(discordUser.get().id(), device, token);
+        if (authData.isEmpty()) {
+            session.close(CloseStatus.BAD_DATA);
+            return;
+        }
         sessions.add(session);
     }
 
     @Override
-    protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
+    protected void handleTextMessage(@NotNull WebSocketSession session, TextMessage message) {
         String payload = message.getPayload();
         log.debug("Received: {}", payload);
-        session.sendMessage(new TextMessage("Echo: " + payload));
-        sendMessage("BEP");
     }
 
     @Override
