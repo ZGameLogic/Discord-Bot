@@ -22,15 +22,16 @@ import java.util.*;
 @Service
 @Slf4j
 public class PlannerWebsocketService extends TextWebSocketHandler {
-    private final Set<WebSocketSession> sessions;
+    private final Map<Long, WebSocketSession> sessions;
     private final AuthDataRepository authDataRepository;
     private final DiscordService discordService;
 
     public PlannerWebsocketService(AuthDataRepository authDataRepository, DiscordService discordService) {
         this.authDataRepository = authDataRepository;
         this.discordService = discordService;
-        sessions = Collections.synchronizedSet(new HashSet<>());
+        sessions = Collections.synchronizedMap(new HashMap<>());
     }
+
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws IOException {
         log.debug("Connected: {}", session.getId());
@@ -51,7 +52,7 @@ public class PlannerWebsocketService extends TextWebSocketHandler {
             session.close(CloseStatus.BAD_DATA);
             return;
         }
-        sessions.add(session);
+        sessions.put(discordUser.get().id(), session);
     }
 
     @Override
@@ -63,7 +64,7 @@ public class PlannerWebsocketService extends TextWebSocketHandler {
     @Override
     public void afterConnectionClosed(WebSocketSession session, @NotNull CloseStatus status) {
         log.debug("Disconnected: {}", session.getId());
-        sessions.remove(session);
+        sessions.entrySet().removeIf(entry -> entry.getValue().getId().equals(session.getId()));
     }
 
     public void sendMessage(Object message){
@@ -72,14 +73,17 @@ public class PlannerWebsocketService extends TextWebSocketHandler {
         SimpleModule module = new SimpleModule();
         module.addSerializer(Plan.class, planSerialization);
         om.registerModule(module);
-        try {
-            System.out.println(new String(om.writeValueAsBytes(message)));
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException(e);
-        }
 
         try {
-            for(WebSocketSession session: sessions) session.sendMessage(new BinaryMessage(om.writeValueAsBytes(message)));
+            for(Long key: sessions.keySet()){
+                if(message instanceof Plan){
+                    if(((Plan) message).getNotDeclinedIds().contains(key)){
+                        sessions.get(key).sendMessage(new BinaryMessage(om.writeValueAsBytes(message)));
+                    }
+                } else {
+                    sessions.get(key).sendMessage(new BinaryMessage(om.writeValueAsBytes(message)));
+                }
+            }
         } catch (JsonProcessingException e) {
             log.error("Unable to create JSON object", e);
         } catch (IOException i){
