@@ -1,5 +1,6 @@
 package com.zgamelogic.data.database.planData.plan;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -84,6 +85,16 @@ public class Plan {
     public boolean requestedFillIn(long id){
         return invitees.values().stream()
                 .anyMatch(user -> user.getId().getUserId() == id && user.isNeedFillIn());
+    }
+
+    @JsonIgnore
+    public List<Long> getNotDeclinedIds(){
+        List<Long> ids = new ArrayList<>(invitees.values().stream()
+                .filter(invitee -> invitee.getUserStatus() != DECLINED)
+                .map(invitee -> invitee.getId().getUserId()).toList()
+        );
+        ids.add(authorId);
+        return ids;
     }
 
     public LinkedList<PlanEvent> processEvents(PlanEvent...events){
