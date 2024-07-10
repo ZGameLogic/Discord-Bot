@@ -106,6 +106,13 @@ public class PlannerController {
         return ResponseEntity.status(result.getStatus()).body(result);
     }
 
+    @DeleteMapping("plans/{planId}")
+    private ResponseEntity<?> deletePlan(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
+        planService.deletePlan(planId);
+        PlanEventResultMessage message = PlanEventResultMessage.success("Event canceled");
+        return ResponseEntity.status(message.getStatus()).body(message);
+    }
+
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<?> handleUnauthorizedException() {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();

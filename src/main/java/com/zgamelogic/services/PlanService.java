@@ -271,6 +271,10 @@ public class PlanService {
         planRepository.save(savedPlan);
     }
 
+    public void deletePlan(long planId){
+        planRepository.findById(planId).ifPresent(this::deletePlan);
+    }
+
     public void deletePlan(Plan plan){
         // let the people know
         plan.getAcceptedIds().forEach(acceptedUser ->
