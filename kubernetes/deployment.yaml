@@ -23,7 +23,7 @@ spec:
             - name: keystore-volume
               mountPath: "/etc/keystore"
               readOnly: true
-            - name: downloads-volume
+            - name: apns
               mountPath: "/apns"
               readOnly: true
           env:
