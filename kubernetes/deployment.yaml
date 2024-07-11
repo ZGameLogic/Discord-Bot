@@ -23,7 +23,7 @@ spec:
             - name: keystore-volume
               mountPath: "/etc/keystore"
               readOnly: true
-            - name: apns
+            - name: apns-volume
               mountPath: "/apns"
               readOnly: true
           env:
@@ -40,7 +40,7 @@ spec:
         - name: keystore-volume
           secret:
             secretName: ssl-keystore-secret
-        - name: apns
+        - name: apns-volume
           hostPath:
             path: /home/Ben/front-end/apns
             type: Directory
