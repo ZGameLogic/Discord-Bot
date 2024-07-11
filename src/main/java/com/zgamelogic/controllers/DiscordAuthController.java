@@ -6,7 +6,9 @@ import com.zgamelogic.data.authData.DiscordUser;
 import com.zgamelogic.data.database.authData.AuthData;
 import com.zgamelogic.data.database.authData.AuthDataRepository;
 import com.zgamelogic.services.DiscordService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Optional;
 
 @RestController
+@Slf4j
 public class DiscordAuthController {
     private final AuthDataRepository authDataRepository;
     private final DiscordService discordService;
@@ -21,6 +24,17 @@ public class DiscordAuthController {
     public DiscordAuthController(AuthDataRepository authDataRepository, DiscordService discordService) {
         this.authDataRepository = authDataRepository;
         this.discordService = discordService;
+    }
+
+    @PostMapping("/devices/register/{deviceId}/{token}")
+    public ResponseEntity<?> registerDevice(@PathVariable String deviceId, @PathVariable String token) {
+        Optional<AuthData> data = authDataRepository.findById_DeviceId(deviceId);
+        if (data.isPresent()) {
+            data.get().setAppleNotificationId(token);
+            authDataRepository.save(data.get());
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @PostMapping("auth/login")

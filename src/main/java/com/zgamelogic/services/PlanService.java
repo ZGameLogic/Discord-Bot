@@ -4,10 +4,12 @@ import com.zgamelogic.annotations.Bot;
 import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
 import com.zgamelogic.bot.utils.PlanHelper;
+import com.zgamelogic.data.database.authData.AuthDataRepository;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.database.planData.user.PlanUser;
 import com.zgamelogic.data.intermediates.planData.PlanEvent;
+import com.zgamelogic.data.plan.ApplePlanNotification;
 import com.zgamelogic.data.plan.PlanCreationData;
 import com.zgamelogic.data.plan.PlanEventResultMessage;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,7 @@ import static com.zgamelogic.data.intermediates.planData.PlanEvent.Event.*;
 @Slf4j
 public class PlanService {
 
+    private final AuthDataRepository authDataRepository;
     @Value("${discord.guild}")
     private long discordGuildId;
     @Value("${discord.plan.id}")
@@ -46,13 +49,16 @@ public class PlanService {
 
     private final PlanRepository planRepository;
     private final PlannerWebsocketService plannerWebsocketService;
+    private final ApplePushNotificationService apns;
 
     private TextChannel planTextChannel;
     private Guild discordGuild;
 
-    public PlanService(PlanRepository planRepository, PlannerWebsocketService plannerWebsocketService) {
+    public PlanService(PlanRepository planRepository, PlannerWebsocketService plannerWebsocketService, ApplePushNotificationService apns, AuthDataRepository authDataRepository) {
         this.planRepository = planRepository;
         this.plannerWebsocketService = plannerWebsocketService;
+        this.apns = apns;
+        this.authDataRepository = authDataRepository;
     }
 
     @DiscordMapping
@@ -170,11 +176,20 @@ public class PlanService {
                 )
         ).complete().getIdLong();
         savedPlan.setPrivateMessageId(authorMessageId); // Send author message and save id
+        String authorName = bot.getUserById(planData.author()).getName();
+        ApplePlanNotification notification = new ApplePlanNotification(authorName + " has invited you to a plan.", planData.title(), "Respond in the app.");
         inviteeIds.forEach(memberId -> { // Send invitee messages and save ids
             long pmId = discordGuild.getMemberById(memberId).getUser().openPrivateChannel().complete().sendMessageEmbeds(getPlanPrivateMessage(savedPlan, discordGuild))
                     .addActionRow(getButtons(savedPlan.isFull(), savedPlan.isNeedFillIn(), PlanUser.Status.DECIDING, false))
                     .complete().getIdLong();
             savedPlan.getInvitees().get(memberId).setDiscordNotificationId(pmId);
+            authDataRepository
+                    .findAllById_DiscordId(memberId)
+                    .stream()
+                    .filter(data -> data.getAppleNotificationId() != null)
+                    .forEach(data -> {
+                        apns.sendNotification(data.getAppleNotificationId(), notification);
+            });
         });
         plannerWebsocketService.sendMessage(savedPlan);
         return planRepository.save(savedPlan);

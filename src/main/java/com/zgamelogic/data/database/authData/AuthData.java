@@ -5,10 +5,7 @@ import com.zgamelogic.data.authData.DiscordUser;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 
 @Entity
 @NoArgsConstructor
@@ -22,6 +19,8 @@ public class AuthData {
     private String tokenType;
     private String scope;
     private Long expiresIn;
+    @Setter
+    private String appleNotificationId;
 
     public AuthData(DiscordToken token, DiscordUser user, String deviceId) {
         this.token = token.access_token();
