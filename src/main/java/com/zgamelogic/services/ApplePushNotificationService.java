@@ -32,7 +32,10 @@ public class ApplePushNotificationService {
 
     @PostConstruct
     public void init() {
-        log.info("AuthKey_{} : {}", kid, new File("apns/AuthKey_" + kid + ".p8").exists());
+        for(File file: new File("./apns").listFiles()){
+            log.info(file.getName());
+        }
+        log.info("AuthKey_{} : {}", kid, new File("./apns/AuthKey_" + kid + ".p8").exists());
     }
 
     public void sendNotification(String device, ApplePlanNotification notification){
@@ -54,7 +57,7 @@ public class ApplePushNotificationService {
 
     private String authJWT() {
         try {
-            String privateKeyPEM = new String(Files.readAllBytes(new File("apns/AuthKey_" + kid + ".p8").toPath()));
+            String privateKeyPEM = new String(Files.readAllBytes(new File("./apns/AuthKey_" + kid + ".p8").toPath()));
             privateKeyPEM = privateKeyPEM.replace("-----BEGIN PRIVATE KEY-----", "")
                     .replace("-----END PRIVATE KEY-----", "")
                     .replaceAll("\\s", ""); // Remove any whitespaces or newlines
