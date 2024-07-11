@@ -42,7 +42,7 @@ spec:
             secretName: ssl-keystore-secret
         - name: apns
           hostPath:
-            path: /home/Ben/front-end/apns/discord-bot
+            path: /home/Ben/front-end/apns
             type: Directory
       restartPolicy: Always
       imagePullSecrets:
