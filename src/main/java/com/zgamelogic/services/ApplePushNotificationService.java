@@ -32,7 +32,7 @@ public class ApplePushNotificationService {
 
     @PostConstruct
     public void init() {
-        for(File file: new File("./apns").listFiles()){
+        for(File file: new File(".").listFiles()){
             log.info(file.getName());
         }
         log.info("AuthKey_{} : {}", kid, new File("./apns/AuthKey_" + kid + ".p8").exists());
