@@ -1,6 +1,7 @@
 package com.zgamelogic.services;
 
 import com.zgamelogic.data.plan.ApplePlanNotification;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -29,6 +30,11 @@ public class ApplePushNotificationService {
     @Value("${org_id}") private String orgId;
     @Value("${APN}")    private String apnEndpoint;
 
+    @PostConstruct
+    public void init() {
+        log.info("AuthKey_{} : {}", kid, new File("apns/AuthKey_" + kid + ".p8").exists());
+    }
+
     public void sendNotification(String device, ApplePlanNotification notification){
         String url = apnEndpoint + "/3/device/" + device;
         HttpHeaders headers = new HttpHeaders();
@@ -48,7 +54,7 @@ public class ApplePushNotificationService {
 
     private String authJWT() {
         try {
-            String privateKeyPEM = new String(Files.readAllBytes(new File("./apns/AuthKey_" + kid + ".p8").toPath()));
+            String privateKeyPEM = new String(Files.readAllBytes(new File("apns/AuthKey_" + kid + ".p8").toPath()));
             privateKeyPEM = privateKeyPEM.replace("-----BEGIN PRIVATE KEY-----", "")
                     .replace("-----END PRIVATE KEY-----", "")
                     .replaceAll("\\s", ""); // Remove any whitespaces or newlines

@@ -188,7 +188,11 @@ public class PlanService {
                     .stream()
                     .filter(data -> data.getAppleNotificationId() != null)
                     .forEach(data -> {
-                        apns.sendNotification(data.getAppleNotificationId(), notification);
+                        try {
+                            apns.sendNotification(data.getAppleNotificationId(), notification);
+                        } catch (Exception e){
+                            log.error("Unable to send notification", e);
+                        }
             });
         });
         plannerWebsocketService.sendMessage(savedPlan);
