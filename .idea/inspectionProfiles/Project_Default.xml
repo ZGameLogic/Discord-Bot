@@ -14,9 +14,14 @@
         <set>
           <option value="device" />
           <option value="token" />
+          <option value="apns-push-type" />
+          <option value="apns-priority" />
+          <option value="apns-expiration" />
+          <option value="apns-topic" />
         </set>
       </option>
     </inspection_tool>
+    <inspection_tool class="MarkedForRemoval" enabled="false" level="ERROR" enabled_by_default="false" />
     <inspection_tool class="OptionalGetWithoutIsPresent" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SameParameterValue" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="SpringJavaInjectionPointsAutowiringInspection" enabled="false" level="ERROR" enabled_by_default="false" />
@@ -26,15 +31,21 @@
       <option name="ignoredModules">
         <list>
           <option value="DiscordBot" />
+          <option value="DiscordBot" />
+          <option value="DiscordBot" />
         </list>
       </option>
       <option name="ignoredPackages">
         <list>
           <option value="org.json:json:20230227" />
+          <option value="org.bouncycastle:bcprov-jdk15on:1.70" />
+          <option value="com.squareup.okio:okio:2.8.0" />
         </list>
       </option>
       <option name="ignoredReasons">
         <list>
+          <option value="Not exploitable" />
+          <option value="Not exploitable" />
           <option value="Not exploitable" />
         </list>
       </option>

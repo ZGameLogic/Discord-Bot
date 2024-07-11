@@ -23,6 +23,9 @@ spec:
             - name: keystore-volume
               mountPath: "/etc/keystore"
               readOnly: true
+            - name: downloads-volume
+              mountPath: "/apns"
+              readOnly: true
           env:
             - name: TZ
               value: "America/Chicago"
@@ -37,6 +40,10 @@ spec:
         - name: keystore-volume
           secret:
             secretName: ssl-keystore-secret
+        - name: apns
+          hostPath:
+            path: /home/Ben/front-end/apns/discord-bot
+            type: Directory
       restartPolicy: Always
       imagePullSecrets:
         - name: ghcr-secret
