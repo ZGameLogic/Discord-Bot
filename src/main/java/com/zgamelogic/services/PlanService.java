@@ -177,7 +177,7 @@ public class PlanService {
         ).complete().getIdLong();
         savedPlan.setPrivateMessageId(authorMessageId); // Send author message and save id
         String authorName = bot.getUserById(planData.author()).getName();
-        ApplePlanNotification notification = new ApplePlanNotification(authorName + " has invited you to a plan.", planData.title(), "Respond in the app.");
+        ApplePlanNotification notification = ApplePlanNotification.PlanInvite(authorName, planData.title());
         inviteeIds.forEach(memberId -> { // Send invitee messages and save ids
             long pmId = discordGuild.getMemberById(memberId).getUser().openPrivateChannel().complete().sendMessageEmbeds(getPlanPrivateMessage(savedPlan, discordGuild))
                     .addActionRow(getButtons(savedPlan.isFull(), savedPlan.isNeedFillIn(), PlanUser.Status.DECIDING, false))

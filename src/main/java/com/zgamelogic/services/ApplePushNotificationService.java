@@ -1,5 +1,6 @@
 package com.zgamelogic.services;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.zgamelogic.data.plan.ApplePlanNotification;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
@@ -32,9 +34,6 @@ public class ApplePushNotificationService {
 
     @PostConstruct
     public void init() {
-        for(File file: new File(".").listFiles()){
-            log.info(file.getName());
-        }
         log.info("AuthKey_{} : {}", kid, new File("/apns/AuthKey_" + kid + ".p8").exists());
     }
 
@@ -43,16 +42,22 @@ public class ApplePushNotificationService {
         HttpHeaders headers = new HttpHeaders();
         headers.add("authorization", "bearer " + authJWT());
         headers.add("apns-push-type", "alert");
-        headers.add("apns-priority", "5");
+        headers.add("apns-priority", "10");
         headers.add("apns-expiration", "0");
         headers.add("apns-topic", "zgamelogic.Planner-Bot");
         OkHttpClient okHttpClient = new OkHttpClient.Builder()
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .readTimeout(30, TimeUnit.SECONDS)
                 .build();
-
         RestTemplate restTemplate = new RestTemplate(new OkHttp3ClientHttpRequestFactory(okHttpClient));
-        restTemplate.exchange(url, HttpMethod.POST, new HttpEntity<>(notification, headers), String.class);
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            restTemplate.exchange(url, HttpMethod.POST, new HttpEntity<>(objectMapper.writeValueAsString(notification), headers), String.class);
+        } catch (HttpClientErrorException e) {
+            log.error("APNs error response: {}", e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error("Error sending notification", e);
+        }
     }
 
     private String authJWT() {
