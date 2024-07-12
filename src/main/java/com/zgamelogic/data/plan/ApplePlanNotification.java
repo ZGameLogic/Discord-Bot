@@ -16,6 +16,10 @@ public class ApplePlanNotification {
     private final String subtitle;
     private final String body;
 
+    public static ApplePlanNotification PlanInvite(String author, String planTitle){
+        return new ApplePlanNotification(author + " has invited you to a plan.", planTitle, "Respond in the app.");
+    }
+
     protected static class ApplePlanNotificationSerializer extends JsonSerializer<ApplePlanNotification> {
         @Override
         public void serialize(ApplePlanNotification notification, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)
