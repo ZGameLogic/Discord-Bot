@@ -15,6 +15,14 @@ import static com.zgamelogic.bot.utils.EmbedMessageGenerator.GENERAL_COLOR;
 
 public abstract class PlanHelper {
 
+    public static MessageEmbed getRemindMessage(Plan plan){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(GENERAL_COLOR);
+        eb.setTitle("There are still spots open for " + plan.getTitle());
+        eb.setDescription("You are receiving this notification because this plan is still not filled and you \"maybed\" the plan.");
+        return eb.build();
+    }
+
     public static MessageEmbed getPrePlanMessage(String title, String notes, int count, String date) {
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(GENERAL_COLOR);

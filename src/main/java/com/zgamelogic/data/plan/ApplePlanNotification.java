@@ -24,6 +24,10 @@ public class ApplePlanNotification {
         return new ApplePlanNotification(username + " has accepted your plan.", title, null);
     }
 
+    public static ApplePlanNotification PlanRemind(String title){
+        return new ApplePlanNotification(title, "You are receiving this notification because this plan is still not filled and you \"maybed\" the plan.", null);
+    }
+
     protected static class ApplePlanNotificationSerializer extends JsonSerializer<ApplePlanNotification> {
         @Override
         public void serialize(ApplePlanNotification notification, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)
