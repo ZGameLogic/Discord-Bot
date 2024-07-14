@@ -115,6 +115,10 @@ public class PlanService {
         PlanEvent planEvent = new PlanEvent(USER_ACCEPTED, userId);
         updateEvent(plan, planEvent);
         plannerWebsocketService.sendMessage(plan);
+        String username = discordGuild.getMemberById(user.getId().getUserId()).getEffectiveName();
+        ApplePlanNotification notification = ApplePlanNotification.PlanAccepted(plan.getTitle(), username);
+        authDataRepository.findAllById_DiscordIdAndAppleNotificationIdNotNull(plan.getAuthorId())
+                .forEach(auth -> apns.sendNotification(auth.getAppleNotificationId(), notification));
         return PlanEventResultMessage.success(PLAN_UPDATED);
     }
 
@@ -184,16 +188,8 @@ public class PlanService {
                     .complete().getIdLong();
             savedPlan.getInvitees().get(memberId).setDiscordNotificationId(pmId);
             authDataRepository
-                    .findAllById_DiscordId(memberId)
-                    .stream()
-                    .filter(data -> data.getAppleNotificationId() != null)
-                    .forEach(data -> {
-                        try {
-                            apns.sendNotification(data.getAppleNotificationId(), notification);
-                        } catch (Exception e){
-                            log.error("Unable to send notification", e);
-                        }
-            });
+                    .findAllById_DiscordIdAndAppleNotificationIdNotNull(memberId)
+                    .forEach(data -> apns.sendNotification(data.getAppleNotificationId(), notification));
         });
         plannerWebsocketService.sendMessage(savedPlan);
         return planRepository.save(savedPlan);
