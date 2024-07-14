@@ -14,4 +14,7 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
 
     @Query("SELECT p FROM Plan p JOIN p.invitees pu WHERE pu.id.userId = :userId AND p.date > :date AND pu.userStatus <> 'DECLINED'")
     List<Plan> findAllPlansByUserId(@Param("userId") long userId, @Param("date") Date date);
+
+    @Query("SELECT p FROM Plan p WHERE CAST(p.date AS date) = CAST(:date AS date) AND p.count > (SELECT COUNT(pu) FROM PlanUser pu WHERE pu.plan = p AND pu.userStatus = 'ACCEPTED')")
+    List<Plan> findAllPlansByDateWithAvailableSpots(Date date);
 }

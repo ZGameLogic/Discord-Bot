@@ -16,12 +16,14 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.ISnowflake;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.Role;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -115,6 +117,10 @@ public class PlanService {
         PlanEvent planEvent = new PlanEvent(USER_ACCEPTED, userId);
         updateEvent(plan, planEvent);
         plannerWebsocketService.sendMessage(plan);
+        String username = discordGuild.getMemberById(user.getId().getUserId()).getEffectiveName();
+        ApplePlanNotification notification = ApplePlanNotification.PlanAccepted(plan.getTitle(), username);
+        authDataRepository.findAllById_DiscordIdAndAppleNotificationIdNotNull(plan.getAuthorId())
+                .forEach(auth -> apns.sendNotification(auth.getAppleNotificationId(), notification));
         return PlanEventResultMessage.success(PLAN_UPDATED);
     }
 
@@ -184,16 +190,8 @@ public class PlanService {
                     .complete().getIdLong();
             savedPlan.getInvitees().get(memberId).setDiscordNotificationId(pmId);
             authDataRepository
-                    .findAllById_DiscordId(memberId)
-                    .stream()
-                    .filter(data -> data.getAppleNotificationId() != null)
-                    .forEach(data -> {
-                        try {
-                            apns.sendNotification(data.getAppleNotificationId(), notification);
-                        } catch (Exception e){
-                            log.error("Unable to send notification", e);
-                        }
-            });
+                    .findAllById_DiscordIdAndAppleNotificationIdNotNull(memberId)
+                    .forEach(data -> apns.sendNotification(data.getAppleNotificationId(), notification));
         });
         plannerWebsocketService.sendMessage(savedPlan);
         return planRepository.save(savedPlan);
@@ -243,51 +241,6 @@ public class PlanService {
 
         planRepository.save(plan);
         updateMessages(plan);
-    }
-
-    private void createNewPlanFromWaitlist(Plan plan){
-        // decline everyone in the old plan
-        List<PlanUser> newCrew = plan.getWaitlist()
-                .stream()
-                .sorted(Comparator.comparing(PlanUser::getWaitlist_time))
-                .limit(plan.getCount() + 1).toList();
-        List<PlanEvent> declineEvents = newCrew.stream().map(user -> new PlanEvent(USER_DECLINED, user.getId().getUserId())).toList();
-        plan.processEvents(declineEvents.toArray(PlanEvent[]::new));
-        planRepository.save(plan);
-        updateMessages(plan);
-        // create a new plan with the new users
-        PlanCreationData planCreationData = new PlanCreationData(
-                plan.getTitle(),
-                plan.getNotes(),
-                plan.getDate(),
-                newCrew.remove(0).getId().getUserId(),
-                newCrew.stream().map(user -> user.getId().getUserId()).toList(),
-                List.of(),
-                plan.getCount()
-        );
-        Plan newPlan = new Plan(planCreationData);
-        newCrew.stream().map(user -> user.getId().getUserId()).forEach(planUser -> newPlan.getInvitees().put(planUser, new PlanUser(plan, planUser, PlanUser.Status.ACCEPTED)));
-        Plan savedPlan = planRepository.save(newPlan); // Save initial plan
-        long planChannelMessageId = planTextChannel.sendMessageEmbeds(getPlanChannelMessage(savedPlan, discordGuild)).addActionRow(
-                Button.secondary("add_users", "Add users")
-        ).complete().getIdLong();
-        savedPlan.setMessageId(planChannelMessageId); // Send plan channel message and save id
-        long authorMessageId = bot.getUserById(newPlan.getAuthorId()).openPrivateChannel().complete().sendMessageEmbeds(getHostMessage(savedPlan, discordGuild)).addActionRow(
-                List.of(
-                        Button.secondary("send_message", "Send message"),
-                        Button.secondary("edit_event", "Edit details"),
-                        Button.danger("delete_event", "Delete event")
-                )
-        ).complete().getIdLong();
-        savedPlan.setPrivateMessageId(authorMessageId); // Send author message and save id
-        newCrew.stream().map(user -> user.getId().getUserId()).forEach(memberId -> { // Send invitee messages and save ids
-            long pmId = discordGuild.getMemberById(memberId).getUser().openPrivateChannel().complete().sendMessageEmbeds(getPlanPrivateMessage(savedPlan, discordGuild))
-                    .addActionRow(getButtons(savedPlan.isFull(), savedPlan.isNeedFillIn(), PlanUser.Status.DECIDING, false))
-                    .complete().getIdLong();
-            savedPlan.getInvitees().get(memberId).setDiscordNotificationId(pmId);
-        });
-        plannerWebsocketService.sendMessage(savedPlan);
-        planRepository.save(savedPlan);
     }
 
     public void deletePlan(long planId){
@@ -364,6 +317,65 @@ public class PlanService {
         } catch (Exception e){
             log.error("Error editing private message for event {}", plan.getId(), e);
         }
+    }
+
+    @Scheduled(cron = "0 0 9 * * *")
+    public void nineAmTasks(){
+        planRepository.findAllPlansByDateWithAvailableSpots(new Date()).forEach(plan -> {
+            MessageEmbed discordMessage = PlanHelper.getRemindMessage(plan);
+            ApplePlanNotification appleMessage = ApplePlanNotification.PlanRemind(plan.getTitle());
+            plan.getMaybes().forEach(user -> {
+                discordGuild.getMemberById(user.getId().getUserId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessageEmbeds(discordMessage).queue());
+                authDataRepository.findAllById_DiscordIdAndAppleNotificationIdNotNull(user.getId().getUserId()).forEach(auth -> {
+                    apns.sendNotification(auth.getAppleNotificationId(), appleMessage);
+                });
+            });
+        });
+    }
+
+    private void createNewPlanFromWaitlist(Plan plan){
+        // decline everyone in the old plan
+        List<PlanUser> newCrew = plan.getWaitlist()
+                .stream()
+                .sorted(Comparator.comparing(PlanUser::getWaitlist_time))
+                .limit(plan.getCount() + 1).toList();
+        List<PlanEvent> declineEvents = newCrew.stream().map(user -> new PlanEvent(USER_DECLINED, user.getId().getUserId())).toList();
+        plan.processEvents(declineEvents.toArray(PlanEvent[]::new));
+        planRepository.save(plan);
+        updateMessages(plan);
+        // create a new plan with the new users
+        PlanCreationData planCreationData = new PlanCreationData(
+                plan.getTitle(),
+                plan.getNotes(),
+                plan.getDate(),
+                newCrew.remove(0).getId().getUserId(),
+                newCrew.stream().map(user -> user.getId().getUserId()).toList(),
+                List.of(),
+                plan.getCount()
+        );
+        Plan newPlan = new Plan(planCreationData);
+        newCrew.stream().map(user -> user.getId().getUserId()).forEach(planUser -> newPlan.getInvitees().put(planUser, new PlanUser(plan, planUser, PlanUser.Status.ACCEPTED)));
+        Plan savedPlan = planRepository.save(newPlan); // Save initial plan
+        long planChannelMessageId = planTextChannel.sendMessageEmbeds(getPlanChannelMessage(savedPlan, discordGuild)).addActionRow(
+                Button.secondary("add_users", "Add users")
+        ).complete().getIdLong();
+        savedPlan.setMessageId(planChannelMessageId); // Send plan channel message and save id
+        long authorMessageId = bot.getUserById(newPlan.getAuthorId()).openPrivateChannel().complete().sendMessageEmbeds(getHostMessage(savedPlan, discordGuild)).addActionRow(
+                List.of(
+                        Button.secondary("send_message", "Send message"),
+                        Button.secondary("edit_event", "Edit details"),
+                        Button.danger("delete_event", "Delete event")
+                )
+        ).complete().getIdLong();
+        savedPlan.setPrivateMessageId(authorMessageId); // Send author message and save id
+        newCrew.stream().map(user -> user.getId().getUserId()).forEach(memberId -> { // Send invitee messages and save ids
+            long pmId = discordGuild.getMemberById(memberId).getUser().openPrivateChannel().complete().sendMessageEmbeds(getPlanPrivateMessage(savedPlan, discordGuild))
+                    .addActionRow(getButtons(savedPlan.isFull(), savedPlan.isNeedFillIn(), PlanUser.Status.DECIDING, false))
+                    .complete().getIdLong();
+            savedPlan.getInvitees().get(memberId).setDiscordNotificationId(pmId);
+        });
+        plannerWebsocketService.sendMessage(savedPlan);
+        planRepository.save(savedPlan);
     }
 
     private boolean isDiscordUser(long uid){
