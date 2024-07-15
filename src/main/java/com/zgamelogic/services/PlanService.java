@@ -14,10 +14,7 @@ import com.zgamelogic.data.plan.PlanCreationData;
 import com.zgamelogic.data.plan.PlanEventResultMessage;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.entities.Guild;
-import net.dv8tion.jda.api.entities.ISnowflake;
-import net.dv8tion.jda.api.entities.MessageEmbed;
-import net.dv8tion.jda.api.entities.Role;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
@@ -325,7 +322,9 @@ public class PlanService {
             MessageEmbed discordMessage = PlanHelper.getRemindMessage(plan);
             ApplePlanNotification appleMessage = ApplePlanNotification.PlanRemind(plan.getTitle());
             plan.getMaybes().forEach(user -> {
-                discordGuild.getMemberById(user.getId().getUserId()).getUser().openPrivateChannel().queue(channel -> channel.sendMessageEmbeds(discordMessage).queue());
+                User u = discordGuild.getMemberById(user.getId().getUserId()).getUser();
+                log.info("Sending {} a message about a maybed plan", u.getName());
+                u.openPrivateChannel().queue(channel -> channel.sendMessageEmbeds(discordMessage).queue());
                 authDataRepository.findAllById_DiscordIdAndAppleNotificationIdNotNull(user.getId().getUserId()).forEach(auth -> {
                     apns.sendNotification(auth.getAppleNotificationId(), appleMessage);
                 });
