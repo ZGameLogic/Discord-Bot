@@ -72,6 +72,7 @@ public class PlanService {
         Plan plan = planRepository.getReferenceById(planId);
         PlanUser user = plan.getInvitees().get(userId);
         if(user == null) return PlanEventResultMessage.failure(USER_NOT_IN_PLAN);
+        if(user.isNeedFillIn()) return PlanEventResultMessage.success(USER_ALREADY_STATUS);
         PlanEvent planEvent = new PlanEvent(USER_REGISTERED_FOR_FILL_IN, userId);
         updateEvent(plan, planEvent);
         plannerWebsocketService.sendMessage(plan);
@@ -84,6 +85,7 @@ public class PlanService {
         Plan plan = planRepository.getReferenceById(planId);
         PlanUser user = plan.getInvitees().get(userId);
         if(user == null) return PlanEventResultMessage.failure(USER_NOT_IN_PLAN);
+        if(user.getUserStatus() == PlanUser.Status.FILLINED) return PlanEventResultMessage.success(USER_ALREADY_STATUS);
         if(!plan.isNeedFillIn()) return PlanEventResultMessage.failure(NO_FILLINS_AVAILABLE);
         PlanEvent planEvent = new PlanEvent(USER_FILLINED, userId);
         updateEvent(plan, planEvent);
@@ -97,6 +99,7 @@ public class PlanService {
         Plan plan = planRepository.getReferenceById(planId);
         PlanUser user = plan.getInvitees().get(userId);
         if(user == null) return PlanEventResultMessage.failure(USER_NOT_IN_PLAN);
+        if(user.getUserStatus() == PlanUser.Status.DECIDING) return PlanEventResultMessage.success(USER_ALREADY_STATUS);
         if(user.getUserStatus() != PlanUser.Status.ACCEPTED) return PlanEventResultMessage.failure(USER_NOT_ACCEPTED_PLAN);
         PlanEvent planEvent = new PlanEvent(USER_DROPPED_OUT, userId);
         updateEvent(plan, planEvent);
@@ -110,6 +113,7 @@ public class PlanService {
         Plan plan = planRepository.getReferenceById(planId);
         PlanUser user = plan.getInvitees().get(userId);
         if(user == null) return PlanEventResultMessage.failure(USER_NOT_IN_PLAN);
+        if(user.getUserStatus() == PlanUser.Status.ACCEPTED) return PlanEventResultMessage.success(USER_ALREADY_STATUS);
         if(plan.getAcceptedIds().size() >= plan.getCount()) return PlanEventResultMessage.failure(PLAN_FULL);
         PlanEvent planEvent = new PlanEvent(USER_ACCEPTED, userId);
         updateEvent(plan, planEvent);
@@ -127,6 +131,7 @@ public class PlanService {
         Plan plan = planRepository.getReferenceById(planId);
         PlanUser user = plan.getInvitees().get(userId);
         if(user == null) return PlanEventResultMessage.failure(USER_NOT_IN_PLAN);
+        if(user.getUserStatus() == PlanUser.Status.WAITLISTED) return PlanEventResultMessage.success(USER_ALREADY_STATUS);
         if(plan.getAcceptedIds().size() < plan.getCount()) return PlanEventResultMessage.failure(PLAN_NOT_FULL);
         PlanEvent planEvent = new PlanEvent(USER_WAITLISTED, userId);
         updateEvent(plan, planEvent);
@@ -140,6 +145,7 @@ public class PlanService {
         Plan plan = planRepository.getReferenceById(planId);
         PlanUser user = plan.getInvitees().get(userId);
         if(user == null) return PlanEventResultMessage.failure(USER_NOT_IN_PLAN);
+        if(user.getUserStatus() == PlanUser.Status.MAYBED) return PlanEventResultMessage.success(USER_ALREADY_STATUS);
         PlanEvent planEvent = new PlanEvent(USER_MAYBED, userId);
         updateEvent(plan, planEvent);
         plannerWebsocketService.sendMessage(plan);
@@ -152,6 +158,7 @@ public class PlanService {
         Plan plan = planRepository.getReferenceById(planId);
         PlanUser user = plan.getInvitees().get(userId);
         if(user == null) return PlanEventResultMessage.failure(USER_NOT_IN_PLAN);
+        if(user.getUserStatus() == PlanUser.Status.DECLINED) return PlanEventResultMessage.success(USER_ALREADY_STATUS);
         PlanEvent planEvent = new PlanEvent(USER_DECLINED, userId);
         updateEvent(plan, planEvent);
         plannerWebsocketService.sendMessage(plan);
