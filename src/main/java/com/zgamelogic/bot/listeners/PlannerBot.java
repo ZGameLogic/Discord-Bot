@@ -249,7 +249,7 @@ public class PlannerBot {
     ){
         event.deferReply().queue();
         Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-        planService.sendMessage(plan, message);
+        planService.sendMessage(plan, event.getUser().getIdLong(), message);
         event.getHook().sendMessage("Message sent to all accepted people").setEphemeral(true).queue();
     }
 
