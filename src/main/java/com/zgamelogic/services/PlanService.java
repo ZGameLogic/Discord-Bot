@@ -215,10 +215,18 @@ public class PlanService {
         updateMessages(plan);
     }
 
-    public void sendMessage(Plan plan, String message){
+    public PlanEventResultMessage sendMessage(long planId, long userId, String message){
+        if(!planRepository.existsById(planId)) return PlanEventResultMessage.failure(PLAN_NOT_FOUND);
+        Plan plan = planRepository.getReferenceById(planId);
+        return sendMessage(plan, userId, message);
+    }
+
+    public PlanEventResultMessage sendMessage(Plan plan, long userId, String message){
+        if(plan.getAuthorId() != userId) return PlanEventResultMessage.failure(USER_NOT_AUTHOR_OF_PLAN);
         plan.getAcceptedIds().forEach(id -> bot.openPrivateChannelById(id).queue(
                 channel -> channel.sendMessage("A message in regards to the plans made for: " + plan.getTitle() + "\n" + message).queue()
         ));
+        return PlanEventResultMessage.success(PLAN_MESSAGE_SENT);
     }
 
     public void updateEvent(Plan plan, PlanEvent planEvent) {

@@ -106,6 +106,16 @@ public class PlannerController {
         return ResponseEntity.status(result.getStatus()).body(result);
     }
 
+    @PostMapping("/plans/{planId}/message")
+    private ResponseEntity<PlanEventResultMessage> sendMessage(
+            @PathVariable long planId,
+            @ModelAttribute DiscordUser discordUser,
+            @RequestBody String message
+    ){
+        PlanEventResultMessage result = planService.sendMessage(planId, discordUser.id(), message);
+        return ResponseEntity.status(result.getStatus()).body(result);
+    }
+
     @DeleteMapping("plans/{planId}")
     private ResponseEntity<?> deletePlan(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
         planService.deletePlan(planId);
