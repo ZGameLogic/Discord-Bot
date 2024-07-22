@@ -175,14 +175,16 @@ public class PlanService {
         inviteeIds.forEach(planUser -> plan.getInvitees().put(planUser, new PlanUser(plan, planUser)));
         Plan savedPlan = planRepository.save(plan); // Save initial plan
         long planChannelMessageId = planTextChannel.sendMessageEmbeds(getPlanChannelMessage(savedPlan, discordGuild)).addActionRow(
-                Button.secondary("add_users", "Add users")
+                Button.secondary("add_users", "Add users"),
+                IOS_BUTTON
         ).complete().getIdLong();
         savedPlan.setMessageId(planChannelMessageId); // Send plan channel message and save id
         long authorMessageId = bot.getUserById(planData.author()).openPrivateChannel().complete().sendMessageEmbeds(getHostMessage(savedPlan, discordGuild)).addActionRow(
                 List.of(
                         Button.secondary("send_message", "Send message"),
                         Button.secondary("edit_event", "Edit details"),
-                        Button.danger("delete_event", "Delete event")
+                        Button.danger("delete_event", "Delete event"),
+                        IOS_BUTTON
                 )
         ).complete().getIdLong();
         savedPlan.setPrivateMessageId(authorMessageId); // Send author message and save id
@@ -313,6 +315,7 @@ public class PlanService {
                     PlanUser.Status userStatus = user.getUserStatus();
 
                     LinkedList<Button> buttons = PlanHelper.getButtons(full, needsFillIn, userStatus, user.isNeedFillIn());
+                    buttons.add(IOS_BUTTON);
                     if(buttons.isEmpty()){
                         message.editMessageComponents().queue();
                     } else {
@@ -371,14 +374,16 @@ public class PlanService {
         newCrew.stream().map(user -> user.getId().getUserId()).forEach(planUser -> newPlan.getInvitees().put(planUser, new PlanUser(plan, planUser, PlanUser.Status.ACCEPTED)));
         Plan savedPlan = planRepository.save(newPlan); // Save initial plan
         long planChannelMessageId = planTextChannel.sendMessageEmbeds(getPlanChannelMessage(savedPlan, discordGuild)).addActionRow(
-                Button.secondary("add_users", "Add users")
+                Button.secondary("add_users", "Add users"),
+                IOS_BUTTON
         ).complete().getIdLong();
         savedPlan.setMessageId(planChannelMessageId); // Send plan channel message and save id
         long authorMessageId = bot.getUserById(newPlan.getAuthorId()).openPrivateChannel().complete().sendMessageEmbeds(getHostMessage(savedPlan, discordGuild)).addActionRow(
                 List.of(
                         Button.secondary("send_message", "Send message"),
                         Button.secondary("edit_event", "Edit details"),
-                        Button.danger("delete_event", "Delete event")
+                        Button.danger("delete_event", "Delete event"),
+                        IOS_BUTTON
                 )
         ).complete().getIdLong();
         savedPlan.setPrivateMessageId(authorMessageId); // Send author message and save id

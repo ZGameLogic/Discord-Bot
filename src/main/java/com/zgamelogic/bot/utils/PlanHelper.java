@@ -15,6 +15,8 @@ import static com.zgamelogic.bot.utils.EmbedMessageGenerator.GENERAL_COLOR;
 
 public abstract class PlanHelper {
 
+    public static Button IOS_BUTTON = Button.link("https://testflight.apple.com/join/TtCib0x1", "iOS app");
+
     public static MessageEmbed getRemindMessage(Plan plan){
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(GENERAL_COLOR);
@@ -224,6 +226,7 @@ public abstract class PlanHelper {
                 break;
         }
 
+        neededButtons.add(IOS_BUTTON);
         return neededButtons;
     }
 }
