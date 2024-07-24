@@ -183,8 +183,7 @@ public class PlanService {
                 List.of(
                         Button.secondary("send_message", "Send message"),
                         Button.secondary("edit_event", "Edit details"),
-                        Button.danger("delete_event", "Delete event"),
-                        IOS_BUTTON
+                        Button.danger("delete_event", "Delete event")
                 )
         ).complete().getIdLong();
         savedPlan.setPrivateMessageId(authorMessageId); // Send author message and save id
@@ -315,7 +314,6 @@ public class PlanService {
                     PlanUser.Status userStatus = user.getUserStatus();
 
                     LinkedList<Button> buttons = PlanHelper.getButtons(full, needsFillIn, userStatus, user.isNeedFillIn());
-                    buttons.add(IOS_BUTTON);
                     if(buttons.isEmpty()){
                         message.editMessageComponents().queue();
                     } else {
@@ -382,8 +380,7 @@ public class PlanService {
                 List.of(
                         Button.secondary("send_message", "Send message"),
                         Button.secondary("edit_event", "Edit details"),
-                        Button.danger("delete_event", "Delete event"),
-                        IOS_BUTTON
+                        Button.danger("delete_event", "Delete event")
                 )
         ).complete().getIdLong();
         savedPlan.setPrivateMessageId(authorMessageId); // Send author message and save id
