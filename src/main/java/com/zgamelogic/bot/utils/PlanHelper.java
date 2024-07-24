@@ -225,8 +225,6 @@ public abstract class PlanHelper {
             case DECLINED:
                 break;
         }
-
-        neededButtons.add(IOS_BUTTON);
         return neededButtons;
     }
 }
