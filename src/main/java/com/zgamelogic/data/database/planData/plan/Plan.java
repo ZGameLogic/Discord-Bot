@@ -54,7 +54,10 @@ public class Plan {
         invitees = new HashMap<>();
     }
 
-    public boolean isFull(){ return getAcceptedIds().size() >= count; }
+    public boolean isFull(){
+        if(count == -1) return false;
+        return getAcceptedIds().size() >= count;
+    }
     public boolean isNeedFillIn(){ return invitees.values().stream().anyMatch(PlanUser::isNeedFillIn); }
     public List<Long> getAcceptedIds(){ return getUserIdsWithStatus(ACCEPTED); }
     public List<Long> getDeclinedIds(){ return getUserIdsWithStatus(PlanUser.Status.DECLINED); }
