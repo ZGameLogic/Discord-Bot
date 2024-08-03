@@ -114,7 +114,7 @@ public class PlanService {
         PlanUser user = plan.getInvitees().get(userId);
         if(user == null) return PlanEventResultMessage.failure(USER_NOT_IN_PLAN);
         if(user.getUserStatus() == PlanUser.Status.ACCEPTED) return PlanEventResultMessage.success(USER_ALREADY_STATUS);
-        if(plan.getAcceptedIds().size() >= plan.getCount()) return PlanEventResultMessage.failure(PLAN_FULL);
+        if(plan.isFull()) return PlanEventResultMessage.failure(PLAN_FULL);
         PlanEvent planEvent = new PlanEvent(USER_ACCEPTED, userId);
         updateEvent(plan, planEvent);
         plannerWebsocketService.sendMessage(plan);
