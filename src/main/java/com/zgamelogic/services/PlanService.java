@@ -179,17 +179,27 @@ public class PlanService {
                 IOS_BUTTON
         ).complete().getIdLong();
         savedPlan.setMessageId(planChannelMessageId); // Send plan channel message and save id
-        long authorMessageId = bot.getUserById(planData.author()).openPrivateChannel().complete().sendMessageEmbeds(getHostMessage(savedPlan, discordGuild)).addActionRow(
-                List.of(
-                        Button.secondary("send_message", "Send message"),
-                        Button.secondary("edit_event", "Edit details"),
-                        Button.danger("delete_event", "Delete event")
-                )
-        ).complete().getIdLong();
-        savedPlan.setPrivateMessageId(authorMessageId); // Send author message and save id
+        Long authorMessageId = null;
+        try {
+            authorMessageId = bot.getUserById(planData.author()).openPrivateChannel().complete().sendMessageEmbeds(getHostMessage(savedPlan, discordGuild)).addActionRow(
+                    List.of(
+                            Button.secondary("send_message", "Send message"),
+                            Button.secondary("edit_event", "Edit details"),
+                            Button.danger("delete_event", "Delete event")
+                    )
+            ).complete().getIdLong();
+        } catch(Exception e) {
+            log.error("Error sending private message", e);
+        }
+        try {
+            savedPlan.setPrivateMessageId(authorMessageId); // Send author message and save id
+        } catch(Exception e) {
+            log.error("Error sending private message", e);
+        }
         String authorName = bot.getUserById(planData.author()).getName();
         ApplePlanNotification notification = ApplePlanNotification.PlanInvite(authorName, planData.title());
         inviteeIds.forEach(memberId -> { // Send invitee messages and save ids
+            try {
             long pmId = discordGuild.getMemberById(memberId).getUser().openPrivateChannel().complete().sendMessageEmbeds(getPlanPrivateMessage(savedPlan, discordGuild))
                     .addActionRow(getButtons(savedPlan.isFull(), savedPlan.isNeedFillIn(), PlanUser.Status.DECIDING, false))
                     .complete().getIdLong();
@@ -197,6 +207,9 @@ public class PlanService {
             authDataRepository
                     .findAllById_DiscordIdAndAppleNotificationIdNotNull(memberId)
                     .forEach(data -> apns.sendNotification(data.getAppleNotificationId(), notification));
+            } catch(Exception e) {
+                log.error("Error sending private message", e);
+            }
         });
         plannerWebsocketService.sendMessage(savedPlan);
         return planRepository.save(savedPlan);
