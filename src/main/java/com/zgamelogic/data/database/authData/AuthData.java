@@ -7,6 +7,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import lombok.*;
 
+import java.time.Instant;
+import java.util.Date;
+
 @Entity
 @NoArgsConstructor
 @ToString
@@ -18,7 +21,7 @@ public class AuthData {
     private String refreshToken;
     private String tokenType;
     private String scope;
-    private Long expiresIn;
+    private Instant expires;
     @Setter
     private String appleNotificationId;
 
@@ -28,7 +31,7 @@ public class AuthData {
         id = new AuthDataId(deviceId, user.id());
         tokenType = token.token_type();
         scope = token.scope();
-        expiresIn = token.expires_in();
+        expires = new Date().toInstant().plusSeconds(token.expires_in());
     }
 
     @Embeddable

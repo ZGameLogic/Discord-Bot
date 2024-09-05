@@ -2,6 +2,9 @@ package com.zgamelogic.data.authData;
 
 import com.zgamelogic.data.database.authData.AuthData;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+
 public record DiscordToken(
         String token_type,
         String access_token,
@@ -13,7 +16,7 @@ public record DiscordToken(
         return new DiscordToken(
                 authData.getTokenType(),
                 authData.getToken(),
-                authData.getExpiresIn(),
+                Instant.now().until(authData.getExpires(), ChronoUnit.SECONDS),
                 authData.getRefreshToken(),
                 authData.getScope()
         );

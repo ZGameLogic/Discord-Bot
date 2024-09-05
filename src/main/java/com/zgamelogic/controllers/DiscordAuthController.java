@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Optional;
 
 @RestController
@@ -60,20 +62,16 @@ public class DiscordAuthController {
         Optional<DiscordUser> userOptional = discordService.getUserFromToken(token);
         Optional<AuthData> authData = authDataRepository.findById_DiscordIdAndId_DeviceIdAndToken(userId, device, token);
         if(userOptional.isPresent()){ // if we get user data, its valid
-            if(authData.isPresent()){
-                return ResponseEntity.ok(new DiscordLoginPayload(DiscordToken.fromAuthData(authData.get()), userOptional.get()));
-            }
-        } else { // no user data means it's not valid, refresh the token
-            if(authData.isPresent()){ // we have auth data
-                Optional<DiscordToken> newDiscordToken = discordService.refreshToken(authData.get().getRefreshToken());
-                if(newDiscordToken.isPresent()){ // we have a new token
-                    userOptional = discordService.getUserFromToken(newDiscordToken.get().access_token());
-                    if(userOptional.isPresent()){ // we are able to get user information
-                        AuthData data = new AuthData(newDiscordToken.get(), userOptional.get(), device);
-                        authDataRepository.save(data);
-                        return ResponseEntity.ok(new DiscordLoginPayload(newDiscordToken.get(), userOptional.get()));
-                    }
+            if(authData.isPresent()){ // if we have auth data, its valid
+                Duration durationBetween = Duration.between(Instant.now(), authData.get().getExpires());
+                boolean isLessThanADay = durationBetween.compareTo(Duration.ofDays(1)) < 0;
+                if(isLessThanADay){ // if the token expires in less than a day
+                    DiscordToken newToken = discordService.refreshToken(authData.get().getRefreshToken()).get();
+                    AuthData newAuth = new AuthData(newToken, discordService.getUserFromToken(newToken.access_token()).get(), device);
+                    authDataRepository.save(newAuth);
+                    return ResponseEntity.ok(new DiscordLoginPayload(newToken, userOptional.get()));
                 }
+                return ResponseEntity.ok(new DiscordLoginPayload(DiscordToken.fromAuthData(authData.get()), userOptional.get()));
             }
         }
         return ResponseEntity.badRequest().build();

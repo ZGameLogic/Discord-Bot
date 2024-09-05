@@ -1,6 +1,7 @@
 package com.zgamelogic.services;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.zgamelogic.data.plan.ApplePlanLiveNotification;
 import com.zgamelogic.data.plan.ApplePlanNotification;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +35,31 @@ public class ApplePushNotificationService {
 
     @PostConstruct
     public void init() {
-        log.info("AuthKey_{} : {}", kid, new File("/apns/AuthKey_" + kid + ".p8").exists());
+        log.info("AuthKey_{} : {}", kid, new File("apns/AuthKey_" + kid + ".p8").exists());
+        sendLiveNotificationStart("eb50fd9eeec631eefe9424eb60c1838a33babc865a43b82cc71f1c92821980f1", new ApplePlanLiveNotification());
+    }
+
+    public void sendLiveNotificationStart(String device, ApplePlanLiveNotification notification){
+        String url = apnEndpoint + "/3/device/" + device;
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("authorization", "bearer " + authJWT());
+        headers.add("apns-push-type", "liveactivity");
+        headers.add("apns-priority", "10");
+        headers.add("apns-expiration", "0");
+        headers.add("apns-topic", "zgamelogic.Planner-Bot.push-type.liveactivity");
+        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(30, TimeUnit.SECONDS)
+                .build();
+        RestTemplate restTemplate = new RestTemplate(new OkHttp3ClientHttpRequestFactory(okHttpClient));
+        try {
+            ObjectMapper objectMapper = new ObjectMapper();
+            restTemplate.exchange(url, HttpMethod.POST, new HttpEntity<>(objectMapper.writeValueAsString(notification), headers), String.class);
+        } catch (HttpClientErrorException e) {
+            log.error("APNs error response: {}", e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error("Error sending notification", e);
+        }
     }
 
     public void sendNotification(String device, ApplePlanNotification notification){
@@ -62,7 +87,7 @@ public class ApplePushNotificationService {
 
     private String authJWT() {
         try {
-            String privateKeyPEM = new String(Files.readAllBytes(new File("/apns/AuthKey_" + kid + ".p8").toPath()));
+            String privateKeyPEM = new String(Files.readAllBytes(new File("apns/AuthKey_" + kid + ".p8").toPath()));
             privateKeyPEM = privateKeyPEM.replace("-----BEGIN PRIVATE KEY-----", "")
                     .replace("-----END PRIVATE KEY-----", "")
                     .replaceAll("\\s", ""); // Remove any whitespaces or newlines
