@@ -8,6 +8,7 @@ import com.zgamelogic.data.database.guildData.GuildData;
 import com.zgamelogic.data.database.guildData.GuildDataRepository;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.Region;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
@@ -192,7 +193,8 @@ public class PartyBot  {
                     name = chatroomName.getName();
                 }
                 VoiceChannel newChannel = guild.createVoiceChannel(name)
-                        .setParent(guild.getCategoryById(savedGuild.getPartyCategory())).complete();
+                        .setParent(guild.getCategoryById(savedGuild.getPartyCategory()))
+                        .setRegion(Region.US_CENTRAL).complete();
                 newChannel.sendMessage(String.format("This chatroom name comes from the game: %s", chatroomName.getGame())).queue();
                 for (Member member : members) {
                     guild.moveVoiceMember(member, newChannel).queue();
