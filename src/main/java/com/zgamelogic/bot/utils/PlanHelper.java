@@ -17,6 +17,14 @@ public abstract class PlanHelper {
 
     public static Button IOS_BUTTON = Button.link("https://testflight.apple.com/join/TtCib0x1", "iOS app");
 
+    public static MessageEmbed getHourTillMessage(Plan plan){
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setTitle("There is one hour until plan: " + plan.getTitle() + " starts");
+        eb.setTitle("To stop receiving these notifications use the `/plan notifications false` slash command");
+        eb.setColor(GENERAL_COLOR);
+        return eb.build();
+    }
+
     public static MessageEmbed getRemindMessage(Plan plan){
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(GENERAL_COLOR);

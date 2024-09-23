@@ -60,6 +60,11 @@ public class Plan {
     }
     public boolean isNeedFillIn(){ return invitees.values().stream().anyMatch(PlanUser::isNeedFillIn); }
     public List<Long> getAcceptedIds(){ return getUserIdsWithStatus(ACCEPTED); }
+    public List<Long> getAcceptedIdsAndAuthor(){
+        List<Long> users = getUserIdsWithStatus(ACCEPTED);
+        users.add(authorId);
+        return users;
+    }
     public List<Long> getDeclinedIds(){ return getUserIdsWithStatus(PlanUser.Status.DECLINED); }
     public List<Long> getWaitlistIds(){ return getUserIdsWithStatus(WAITLISTED); }
     public List<Long> getMaybesIds(){ return getUserIdsWithStatus(PlanUser.Status.MAYBED); }
