@@ -8,6 +8,7 @@ import com.zgamelogic.data.database.authData.AuthDataRepository;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.database.planData.user.PlanUser;
+import com.zgamelogic.data.database.userData.UserDataRepository;
 import com.zgamelogic.data.intermediates.planData.PlanEvent;
 import com.zgamelogic.data.plan.ApplePlanNotification;
 import com.zgamelogic.data.plan.PlanCreationData;
@@ -23,6 +24,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static com.zgamelogic.bot.utils.PlanHelper.*;
@@ -48,16 +51,18 @@ public class PlanService {
 
     private final PlanRepository planRepository;
     private final PlannerWebsocketService plannerWebsocketService;
+    private final UserDataRepository userDataRepository;
     private final ApplePushNotificationService apns;
 
     private TextChannel planTextChannel;
     private Guild discordGuild;
 
-    public PlanService(PlanRepository planRepository, PlannerWebsocketService plannerWebsocketService, ApplePushNotificationService apns, AuthDataRepository authDataRepository) {
+    public PlanService(PlanRepository planRepository, PlannerWebsocketService plannerWebsocketService, ApplePushNotificationService apns, AuthDataRepository authDataRepository, UserDataRepository userDataRepository) {
         this.planRepository = planRepository;
         this.plannerWebsocketService = plannerWebsocketService;
         this.apns = apns;
         this.authDataRepository = authDataRepository;
+        this.userDataRepository = userDataRepository;
     }
 
     @DiscordMapping
@@ -356,6 +361,19 @@ public class PlanService {
                 u.openPrivateChannel().queue(channel -> channel.sendMessageEmbeds(discordMessage).queue());
                 authDataRepository.findAllById_DiscordIdAndAppleNotificationIdNotNull(user.getId().getUserId()).forEach(auth -> {
                     apns.sendNotification(auth.getAppleNotificationId(), appleMessage);
+                });
+            });
+        });
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    public void minuteTasks(){
+        Instant time = Instant.now().plus(1, ChronoUnit.HOURS);
+        planRepository.getPlansByTime(time).forEach(plan -> {
+            List<Long> users = plan.getAcceptedIdsAndAuthor();
+            userDataRepository.findUsersWithNoHourMessageEnabled(users).forEach(user -> {
+                bot.openPrivateChannelById(user.getId()).queue(channel -> {
+                    channel.sendMessageEmbeds(getHourTillMessage(plan)).queue();
                 });
             });
         });

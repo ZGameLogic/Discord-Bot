@@ -7,6 +7,8 @@ import com.zgamelogic.annotations.EventProperty;
 import com.zgamelogic.bot.utils.EmbedMessageGenerator;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
+import com.zgamelogic.data.database.userData.User;
+import com.zgamelogic.data.database.userData.UserDataRepository;
 import com.zgamelogic.data.intermediates.planData.DiscordRoleData;
 import com.zgamelogic.data.intermediates.planData.DiscordUserData;
 import com.zgamelogic.data.plan.PlanCreationData;
@@ -51,13 +53,15 @@ public class PlannerBot {
     private long discordPlanId;
 
     private final PlanRepository planRepository;
+    private final UserDataRepository userDataRepository;
     private final PlanService planService;
 
     @Bot
     private JDA bot;
 
-    public PlannerBot(PlanRepository planRepository, PlanService planService) {
+    public PlannerBot(PlanRepository planRepository, UserDataRepository userDataRepository, PlanService planService) {
         this.planRepository = planRepository;
+        this.userDataRepository = userDataRepository;
         this.planService = planService;
     }
 
@@ -66,7 +70,10 @@ public class PlannerBot {
         return List.of(
                 Commands.slash("plan", "Plan things")
                         .addSubcommands(new SubcommandData("help", "Description of how this works"))
-                        .addSubcommands(new SubcommandData("event", "Plan an event with friends")),
+                        .addSubcommands(new SubcommandData("event", "Plan an event with friends"))
+                        .addSubcommands(new SubcommandData("notifications", "Enable or disable notifications")
+                                .addOption(OptionType.BOOLEAN, "receive", "Weather or not you want notifications", true)
+                        ),
                 Commands.slash("text_notifications", "Enable or disable text message notifications")
                         .addSubcommands(
                                 new SubcommandData("enable", "Enables text messaging")
@@ -88,6 +95,18 @@ public class PlannerBot {
                 .filter(role -> role.getIdLong() != bot.getGuildById(guildId).getPublicRole().getIdLong())
                 .map(role -> new DiscordRoleData(role.getName(), role.getIdLong(), role.getColor()))
                 .toList();
+    }
+
+    @DiscordMapping(Id = "plan", SubId = "notifications")
+    private void planNotifications(
+            SlashCommandInteractionEvent event,
+            @EventProperty boolean receive
+    ) {
+        User user = userDataRepository.findById(event.getUser().getIdLong())
+                .orElseGet(() -> new User(event.getUser().getIdLong()));
+        user.setNo_hour_message(receive);
+        userDataRepository.save(user);
+        event.reply("Preferences have been updated.").setEphemeral(true).queue();
     }
 
     @DiscordMapping(Id = "plan", SubId = "help")

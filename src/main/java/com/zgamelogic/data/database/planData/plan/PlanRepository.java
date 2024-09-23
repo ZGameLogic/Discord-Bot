@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
@@ -17,4 +18,13 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
 
     @Query("SELECT p FROM Plan p WHERE CAST(p.date AS date) = CAST(:date AS date) AND p.count > (SELECT COUNT(pu) FROM PlanUser pu WHERE pu.plan = p AND pu.userStatus = 'ACCEPTED')")
     List<Plan> findAllPlansByDateWithAvailableSpots(Date date);
+
+    @Query("SELECT p FROM Plan p WHERE " +
+            "YEAR(p.date) = YEAR(:date) " +
+            "AND MONTH(p.date) = MONTH(:date) " +
+            "AND DAY(p.date) = DAY(:date) " +
+            "AND HOUR(p.date) = HOUR(:date) " +
+            "AND MINUTE(p.date) = MINUTE(:date)"
+    )
+    List<Plan> getPlansByTime(Instant date);
 }
