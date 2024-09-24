@@ -9,6 +9,6 @@ import java.util.List;
 
 @Component
 public interface UserDataRepository extends JpaRepository<User, Long> {
-    @Query("SELECT u FROM User u WHERE u.id IN :ids AND (u.no_hour_message IS NULL OR u.no_hour_message = TRUE)")
-    List<User> findUsersWithNoHourMessageEnabled(@Param("ids") List<Long> ids);
+    @Query("SELECT u FROM User u WHERE u.id IN :ids AND u.hour_message = FALSE")
+    List<User> findUsersWithHourMessageDisabled(@Param("ids") List<Long> ids);
 }
