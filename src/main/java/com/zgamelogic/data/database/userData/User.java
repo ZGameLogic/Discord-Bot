@@ -20,7 +20,7 @@ public class User {
     private Long id;
     private Long phone_number;
     private String user_name;
-    private Boolean no_hour_message;
+    private Boolean hour_message;
 
     public User(long id){
         this.id = id;

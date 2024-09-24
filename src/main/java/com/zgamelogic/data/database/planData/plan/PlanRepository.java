@@ -26,5 +26,5 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
             "AND HOUR(p.date) = HOUR(:date) " +
             "AND MINUTE(p.date) = MINUTE(:date)"
     )
-    List<Plan> getPlansByTime(Instant date);
+    List<Plan> getPlansByTime(Date date);
 }

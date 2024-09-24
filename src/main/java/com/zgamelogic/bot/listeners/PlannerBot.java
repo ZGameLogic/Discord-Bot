@@ -104,7 +104,7 @@ public class PlannerBot {
     ) {
         User user = userDataRepository.findById(event.getUser().getIdLong())
                 .orElseGet(() -> new User(event.getUser().getIdLong()));
-        user.setNo_hour_message(receive);
+        user.setHour_message(receive);
         userDataRepository.save(user);
         event.reply("Preferences have been updated.").setEphemeral(true).queue();
     }

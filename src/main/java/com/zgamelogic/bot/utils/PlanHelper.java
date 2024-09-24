@@ -20,7 +20,7 @@ public abstract class PlanHelper {
     public static MessageEmbed getHourTillMessage(Plan plan){
         EmbedBuilder eb = new EmbedBuilder();
         eb.setTitle("There is one hour until plan: " + plan.getTitle() + " starts");
-        eb.setTitle("To stop receiving these notifications use the `/plan notifications false` slash command");
+        eb.setDescription("To stop receiving these notifications use the `/plan notifications false` slash command");
         eb.setColor(GENERAL_COLOR);
         return eb.build();
     }

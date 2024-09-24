@@ -15,6 +15,7 @@ import jakarta.persistence.*;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.zgamelogic.data.database.planData.user.PlanUser.Status.*;
 
@@ -81,7 +82,7 @@ public class Plan {
         return invitees.values().stream()
                 .filter(user -> user.getUserStatus() == status)
                 .map(user -> user.getId().getUserId())
-                .toList();
+                .collect(Collectors.toList());
     }
 
     private List<PlanUser> getUserWithStatus(PlanUser.Status status) {
