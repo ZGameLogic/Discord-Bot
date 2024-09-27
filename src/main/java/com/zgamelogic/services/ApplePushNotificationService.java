@@ -35,7 +35,7 @@ public class ApplePushNotificationService {
 
     @PostConstruct
     public void init() {
-        log.info("AuthKey_{} : {}", kid, new File("apns/AuthKey_" + kid + ".p8").exists());
+        log.info("AuthKey_{} : {}", kid, new File("/apns/AuthKey_" + kid + ".p8").exists());
         sendNotification("126ea4bb54e8360596bc092cfc4352cca3dd4b5c5af5f14e861f0078c53e3284", new ApplePlanNotification("test", "test",  "test"));
     }
 
