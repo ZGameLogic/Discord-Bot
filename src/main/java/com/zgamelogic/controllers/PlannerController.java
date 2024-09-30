@@ -44,7 +44,7 @@ public class PlannerController {
         LocalDateTime dateTimeAnHourAgo = LocalDateTime.now().minusHours(1);
         Date dateAnHourAgo = Date.from(dateTimeAnHourAgo.atZone(ZoneId.systemDefault()).toInstant());
         List<Plan> plans = planRepository.findAllPlansByUserId(discordUser.id(), dateAnHourAgo);
-        plans.addAll(planRepository.findAllByAuthorIdAndDateGreaterThanAndDeletedIsNullOrDeletedIsFalse(discordUser.id(), dateAnHourAgo));
+        plans.addAll(planRepository.findAllPlansByAuthorId(discordUser.id(), dateAnHourAgo));
         return ResponseEntity.ok(plans);
     }
 
