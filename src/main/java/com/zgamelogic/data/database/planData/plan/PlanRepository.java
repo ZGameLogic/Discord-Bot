@@ -10,7 +10,9 @@ import java.util.List;
 
 @Component
 public interface PlanRepository extends JpaRepository<Plan, Long> {
-    List<Plan> findAllByAuthorIdAndDateGreaterThanAndDeletedIsNullOrDeletedIsFalse(long authorId, Date date);
+
+    @Query("SELECT p FROM Plan p WHERE p.authorId = :authorId AND p.date > :date AND (p.deleted = null OR p.deleted = false)")
+    List<Plan> findAllPlansByAuthorId(@Param("authorId") long authorId, @Param("date") Date date);
 
     @Query("SELECT p FROM Plan p JOIN p.invitees pu WHERE pu.id.userId = :userId AND p.date > :date AND pu.userStatus <> 'DECLINED' AND (p.deleted = null OR p.deleted = false)")
     List<Plan> findAllPlansByUserId(@Param("userId") long userId, @Param("date") Date date);
