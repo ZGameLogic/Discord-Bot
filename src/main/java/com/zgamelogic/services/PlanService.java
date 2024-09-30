@@ -308,7 +308,8 @@ public class PlanService {
                 })
         ));
         // delete from database
-        planRepository.deleteById(plan.getId());
+        plan.setDeleted(true);
+        planRepository.save(plan);
     }
 
     public void updateMessages(Plan plan){

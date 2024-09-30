@@ -5,18 +5,17 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Component;
 
-import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
 @Component
 public interface PlanRepository extends JpaRepository<Plan, Long> {
-    List<Plan> findAllByAuthorIdAndDateGreaterThan(long authorId, Date date);
+    List<Plan> findAllByAuthorIdAndDateGreaterThanAndDeletedIsNullOrDeletedIsFalse(long authorId, Date date);
 
-    @Query("SELECT p FROM Plan p JOIN p.invitees pu WHERE pu.id.userId = :userId AND p.date > :date AND pu.userStatus <> 'DECLINED'")
+    @Query("SELECT p FROM Plan p JOIN p.invitees pu WHERE pu.id.userId = :userId AND p.date > :date AND pu.userStatus <> 'DECLINED' AND (p.deleted = null OR p.deleted = false)")
     List<Plan> findAllPlansByUserId(@Param("userId") long userId, @Param("date") Date date);
 
-    @Query("SELECT p FROM Plan p WHERE CAST(p.date AS date) = CAST(:date AS date) AND p.count > (SELECT COUNT(pu) FROM PlanUser pu WHERE pu.plan = p AND pu.userStatus = 'ACCEPTED')")
+    @Query("SELECT p FROM Plan p WHERE CAST(p.date AS date) = CAST(:date AS date) AND p.count > (SELECT COUNT(pu) FROM PlanUser pu WHERE pu.plan = p AND pu.userStatus = 'ACCEPTED') AND (p.deleted = null OR p.deleted = false)")
     List<Plan> findAllPlansByDateWithAvailableSpots(Date date);
 
     @Query("SELECT p FROM Plan p WHERE " +
@@ -24,7 +23,8 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
             "AND MONTH(p.date) = MONTH(:date) " +
             "AND DAY(p.date) = DAY(:date) " +
             "AND HOUR(p.date) = HOUR(:date) " +
-            "AND MINUTE(p.date) = MINUTE(:date)"
+            "AND MINUTE(p.date) = MINUTE(:date)" +
+            "AND (p.deleted = null OR p.deleted = false)"
     )
     List<Plan> getPlansByTime(Date date);
 }
