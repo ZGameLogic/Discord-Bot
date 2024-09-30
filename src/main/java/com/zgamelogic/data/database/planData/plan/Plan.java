@@ -40,6 +40,7 @@ public class Plan {
     private Long messageId;
     private Long privateMessageId;
     private int count;
+    private Boolean deleted;
 
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
     @MapKey(name = "id.userId")
