@@ -54,6 +54,7 @@ public class Plan {
         authorId = planCreationData.author();
         count = planCreationData.count();
         invitees = new HashMap<>();
+        deleted = false;
     }
 
     public boolean isFull(){
