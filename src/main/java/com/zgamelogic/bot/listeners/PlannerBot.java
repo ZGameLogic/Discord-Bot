@@ -59,6 +59,8 @@ public class PlannerBot {
     @Bot
     private JDA bot;
 
+    private final static long JASON_ID = 259491864208474115L;
+
     public PlannerBot(PlanRepository planRepository, UserDataRepository userDataRepository, PlanService planService) {
         this.planRepository = planRepository;
         this.userDataRepository = userDataRepository;
@@ -337,11 +339,37 @@ public class PlannerBot {
 
     @DiscordMapping(Id = "confirm_drop_out_event")
     private void confirmDropOutEvent(ButtonInteractionEvent event){
+        if(event.getUser().getIdLong() == JASON_ID){ //uh oh jason denied a plan again
+            TextInput reason = TextInput.create("reason", "Why are you denying this plan Jason?", TextInputStyle.PARAGRAPH)
+                    .setRequired(true).build();
+            event.replyModal(Modal.create("plan_event_jason_dropout", "Deny plan form")
+                    .addActionRow(reason)
+                    .build())
+            .queue();
+            return;
+        }
         event.deferEdit().queue();
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
         PlanEventResultMessage result = planService.dropOut(planId, userId);
         if(!result.success()) event.getMessage().reply(result.message()).queue();
+    }
+
+    @DiscordMapping(Id = "plan_event_jason_dropout")
+    private void jasonDropoutPlan(
+            ModalInteractionEvent event,
+            @EventProperty String reason
+    ){
+        event.deferReply().queue();
+        long userId = event.getUser().getIdLong();
+        long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
+        PlanEventResultMessage result = planService.dropOut(planId, userId);
+        if(!result.success()) event.getInteraction().reply(result.message()).queue();
+        sendMessageInGeneral("Jason just dropped out of a plan again. Here's his reason why: " + reason);
+    }
+
+    private void sendMessageInGeneral(String message){
+        bot.getGuildById(330751526735970305L).getTextChannelById(1291475866567835659L).sendMessage(message).queue();
     }
 
     @DiscordMapping(Id = "accept_event")
@@ -364,11 +392,33 @@ public class PlannerBot {
 
     @DiscordMapping(Id = "deny_event")
     private void denyEvent(ButtonInteractionEvent event){
+        if(event.getUser().getIdLong() == JASON_ID){ //uh oh jason denied a plan again
+            TextInput reason = TextInput.create("reason", "Why are you denying this plan Jason?", TextInputStyle.PARAGRAPH)
+                    .setRequired(true).build();
+            event.replyModal(Modal.create("plan_event_jason_deny", "Deny plan form")
+                            .addActionRow(reason)
+                            .build())
+                    .queue();
+            return;
+        }
         event.deferEdit().queue();
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
         PlanEventResultMessage result = planService.deny(planId, userId);
         if(!result.success()) event.getMessage().reply(result.message()).queue();
+    }
+
+    @DiscordMapping(Id = "plan_event_jason_dropout")
+    private void jasonDenyPlan(
+            ModalInteractionEvent event,
+            @EventProperty String reason
+    ){
+        event.deferReply().queue();
+        long userId = event.getUser().getIdLong();
+        long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
+        PlanEventResultMessage result = planService.deny(planId, userId);
+        if(!result.success()) event.getInteraction().reply(result.message()).queue();
+        sendMessageInGeneral("Jason just denied a plan again. Here's his reason why: " + reason);
     }
 
     @DiscordMapping(Id = "maybe_event")
