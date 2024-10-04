@@ -369,7 +369,9 @@ public class PlannerBot {
     }
 
     private void sendMessageInGeneral(String message){
-        bot.getGuildById(330751526735970305L).getTextChannelById(1291475866567835659L).sendMessage(message).queue();
+        bot.getUserById(232675572772372481L).openPrivateChannel().queue(
+                channel -> channel.sendMessage(message)
+        );
     }
 
     @DiscordMapping(Id = "accept_event")
