@@ -410,7 +410,7 @@ public class PlannerBot {
         if(!result.success()) event.getMessage().reply(result.message()).queue();
     }
 
-    @DiscordMapping(Id = "plan_event_jason_dropout")
+    @DiscordMapping(Id = "plan_event_jason_deny")
     private void jasonDenyPlan(
             ModalInteractionEvent event,
             @EventProperty String reason
