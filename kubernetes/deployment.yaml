@@ -25,7 +25,7 @@ spec:
               readOnly: true
             - name: archipelago-player-volume
               mountPath: "/players"
-              readOnly: true
+              readOnly: false
             - name: apns-volume
               mountPath: "/apns"
               readOnly: true
