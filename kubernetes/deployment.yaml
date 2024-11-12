@@ -23,6 +23,9 @@ spec:
             - name: keystore-volume
               mountPath: "/etc/keystore"
               readOnly: true
+            - name: archipelago-player-volume
+              mountPath: "/players"
+              readOnly: true
             - name: apns-volume
               mountPath: "/apns"
               readOnly: true
@@ -43,6 +46,10 @@ spec:
         - name: apns-volume
           hostPath:
             path: /home/Ben/front-end/apns
+            type: Directory
+        - name: archipelago-player-volume
+          hostPath:
+            path: /home/Ben/front-end/archipelago/Players
             type: Directory
       restartPolicy: Always
       imagePullSecrets:
