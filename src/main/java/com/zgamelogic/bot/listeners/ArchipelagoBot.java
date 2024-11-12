@@ -29,7 +29,7 @@ public class ArchipelagoBot {
 
     @DiscordMapping(Id = "archipelago", SubId = "collect")
     private void collectionArchipelago(SlashCommandInteractionEvent event){
-        if(event.getChannel().getType() != ChannelType.GUILD_PUBLIC_THREAD) {
+        if(event.getChannel().getType() != ChannelType.GUILD_PUBLIC_THREAD && event.getChannel().getType() != ChannelType.GUILD_PRIVATE_THREAD) {
             event.reply("This has to be done in a thread").setEphemeral(true).queue();
             return;
         }
