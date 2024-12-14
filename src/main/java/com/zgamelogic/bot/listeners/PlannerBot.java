@@ -14,13 +14,16 @@ import com.zgamelogic.data.intermediates.planData.DiscordUserData;
 import com.zgamelogic.data.plan.PlanCreationData;
 import com.zgamelogic.data.plan.PlanEventResultMessage;
 import com.zgamelogic.data.plan.PlanModalData;
+import com.zgamelogic.services.DiscordService;
 import com.zgamelogic.services.PlanService;
 import net.dv8tion.jda.api.entities.ISnowflake;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent;
+import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu;
@@ -59,7 +62,7 @@ public class PlannerBot {
     @Bot
     private JDA bot;
 
-    public PlannerBot(PlanRepository planRepository, UserDataRepository userDataRepository, PlanService planService) {
+    public PlannerBot(PlanRepository planRepository, UserDataRepository userDataRepository, PlanService planService, DiscordService discordService) {
         this.planRepository = planRepository;
         this.userDataRepository = userDataRepository;
         this.planService = planService;
@@ -69,10 +72,14 @@ public class PlannerBot {
     private List<CommandData> plannerCommands(){
         return List.of(
                 Commands.slash("plan", "Plan things")
-                        .addSubcommands(new SubcommandData("help", "Description of how this works"))
-                        .addSubcommands(new SubcommandData("event", "Plan an event with friends"))
-                        .addSubcommands(new SubcommandData("notifications", "Enable or disable notifications")
-                                .addOption(OptionType.BOOLEAN, "receive", "Weather or not you want notifications", true)
+                        .addSubcommands(
+                            new SubcommandData("help", "Description of how this works"),
+                            new SubcommandData("event", "Plan an event with friends"),
+                            new SubcommandData("notifications", "Enable or disable notifications")
+                                    .addOption(OptionType.BOOLEAN, "receive", "Whether or not you want notifications", true),
+                            new SubcommandData("link", "Adds a copy of a plan to a channel")
+                                    .addOption(OptionType.STRING, "name", "The name of the plan to link to", false, true)
+                                    .addOption(OptionType.STRING, "id", "The id of the plan to link to", false, true)
                         ),
                 Commands.slash("text_notifications", "Enable or disable text message notifications")
                         .addSubcommands(
@@ -95,6 +102,58 @@ public class PlannerBot {
                 .filter(role -> role.getIdLong() != bot.getGuildById(guildId).getPublicRole().getIdLong())
                 .map(role -> new DiscordRoleData(role.getName(), role.getIdLong(), role.getColor()))
                 .toList();
+    }
+
+    @DiscordMapping(Id = "plan", SubId = "link", FocusedOption = "name")
+    private void planLinkNameAutocomplete(
+            CommandAutoCompleteInteractionEvent event,
+            @EventProperty String name
+    ){
+        event.replyChoices(
+            planRepository.findAllPlansByDateAfterAndNotDeleted(new Date()).stream()
+                    .filter(plan -> name.isEmpty() || plan.getTitle().contains(name))
+                    .map(plan -> new Command.Choice(plan.getTitle(), plan.getId())).toList()
+        ).queue();
+    }
+
+    @DiscordMapping(Id = "plan", SubId = "link", FocusedOption = "id")
+    private void planLinkIdAutocomplete(
+            CommandAutoCompleteInteractionEvent event,
+            @EventProperty String id
+    ){
+        event.replyChoices(
+                planRepository.findAllPlansByDateAfterAndNotDeleted(new Date()).stream()
+                        .filter(plan -> {
+                            String idString = plan.getId() + "";
+                            return id.isEmpty() || idString.contains(id);
+                        })
+                        .map(plan -> new Command.Choice(plan.getId() + "", plan.getId())).toList()
+        ).queue();
+    }
+
+    @DiscordMapping(Id = "plan", SubId = "link")
+    private void planLinkSlashCommand(
+            SlashCommandInteractionEvent event,
+            @EventProperty String name,
+            @EventProperty String id
+    ){
+        // TODO send a message to that channel about the plan
+        // TODO save to the database the channel and message IDs so we can edit it later
+        // TODO reply to the command
+        long planId = -1;
+        try {
+            if(name != null) {
+                planId = Long.parseLong(name);
+            } else {
+                planId = Long.parseLong(id);
+            }
+        } catch (Exception e) {
+            event.reply("Unable to convert the id to a long. What happened?").setEphemeral(true).queue();
+        }
+        planRepository.findById(planId).ifPresentOrElse(plan -> {
+            plan.addLinkedMessage(15L, 14L);
+            planRepository.save(plan);
+        }, () -> event.reply("A plan with that ID does not exist.").setEphemeral(true).queue());
     }
 
     @DiscordMapping(Id = "plan", SubId = "notifications")

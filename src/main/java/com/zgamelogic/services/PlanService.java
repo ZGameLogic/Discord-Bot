@@ -307,6 +307,7 @@ public class PlanService {
                     message.editMessageComponents().queue();
                 })
         ));
+        // TODO delete any linked messages
         // delete from database
         plan.setDeleted(true);
         planRepository.save(plan);
@@ -349,6 +350,7 @@ public class PlanService {
         } catch (Exception e){
             log.error("Error editing private message for event {}", plan.getId(), e);
         }
+        // TODO update linked messages
     }
 
     @Scheduled(cron = "0 0 9 * * *")

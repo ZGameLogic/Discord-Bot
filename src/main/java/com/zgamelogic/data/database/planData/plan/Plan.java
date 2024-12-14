@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.zgamelogic.data.database.planData.linkedMessage.LinkedMessage;
 import com.zgamelogic.data.database.planData.user.PlanUser;
 import com.zgamelogic.data.intermediates.planData.PlanEvent;
 import com.zgamelogic.data.plan.PlanCreationData;
@@ -46,6 +47,9 @@ public class Plan {
     @MapKey(name = "id.userId")
     private Map<Long, PlanUser> invitees;
 
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<LinkedMessage> linked;
+
     public Plan(PlanCreationData planCreationData) {
         title = planCreationData.title();
         notes = planCreationData.notes();
@@ -54,6 +58,7 @@ public class Plan {
         authorId = planCreationData.author();
         count = planCreationData.count();
         invitees = new HashMap<>();
+        linked =   new LinkedList<>();
         deleted = false;
     }
 
@@ -106,6 +111,10 @@ public class Plan {
         );
         ids.add(authorId);
         return ids;
+    }
+
+    public void addLinkedMessage(long channelId, long messageId){
+        linked.add(new LinkedMessage(this, channelId, messageId));
     }
 
     public LinkedList<PlanEvent> processEvents(PlanEvent...events){
