@@ -14,9 +14,9 @@ import com.zgamelogic.data.intermediates.planData.DiscordUserData;
 import com.zgamelogic.data.plan.PlanCreationData;
 import com.zgamelogic.data.plan.PlanEventResultMessage;
 import com.zgamelogic.data.plan.PlanModalData;
-import com.zgamelogic.services.DiscordService;
 import com.zgamelogic.services.PlanService;
 import net.dv8tion.jda.api.entities.ISnowflake;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
@@ -44,6 +44,7 @@ import java.util.*;
 
 import static com.zgamelogic.bot.utils.Helpers.STD_HELPER_MESSAGE;
 import static com.zgamelogic.bot.utils.Helpers.stringToDate;
+import static com.zgamelogic.bot.utils.PlanHelper.getPlanChannelMessage;
 import static com.zgamelogic.bot.utils.PlanHelper.getPrePlanMessage;
 
 @Slf4j
@@ -62,7 +63,7 @@ public class PlannerBot {
     @Bot
     private JDA bot;
 
-    public PlannerBot(PlanRepository planRepository, UserDataRepository userDataRepository, PlanService planService, DiscordService discordService) {
+    public PlannerBot(PlanRepository planRepository, UserDataRepository userDataRepository, PlanService planService) {
         this.planRepository = planRepository;
         this.userDataRepository = userDataRepository;
         this.planService = planService;
@@ -137,9 +138,6 @@ public class PlannerBot {
             @EventProperty String name,
             @EventProperty String id
     ){
-        // TODO send a message to that channel about the plan
-        // TODO save to the database the channel and message IDs so we can edit it later
-        // TODO reply to the command
         long planId = -1;
         try {
             if(name != null) {
@@ -150,9 +148,12 @@ public class PlannerBot {
         } catch (Exception e) {
             event.reply("Unable to convert the id to a long. What happened?").setEphemeral(true).queue();
         }
+        event.deferReply(true).queue();
         planRepository.findById(planId).ifPresentOrElse(plan -> {
-            plan.addLinkedMessage(15L, 14L);
+            Message message = event.getChannel().sendMessageEmbeds(getPlanChannelMessage(plan, event.getGuild())).complete();
+            plan.addLinkedMessage(message.getChannelIdLong(), message.getIdLong());
             planRepository.save(plan);
+            event.getHook().sendMessage("Plan message added to channel").setEphemeral(true).queue();
         }, () -> event.reply("A plan with that ID does not exist.").setEphemeral(true).queue());
     }
 
