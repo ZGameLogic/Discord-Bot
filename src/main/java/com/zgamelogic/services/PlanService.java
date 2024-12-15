@@ -307,6 +307,8 @@ public class PlanService {
                     message.editMessageComponents().queue();
                 })
         ));
+        // delete linked messages
+        plan.getLinked().forEach(link -> discordGuild.getTextChannelById(link.getId().getChannelId()).deleteMessageById(link.getId().getMessageId()).queue());
         // delete from database
         plan.setDeleted(true);
         planRepository.save(plan);
@@ -349,6 +351,7 @@ public class PlanService {
         } catch (Exception e){
             log.error("Error editing private message for event {}", plan.getId(), e);
         }
+        plan.getLinked().forEach(link -> discordGuild.getTextChannelById(link.getId().getChannelId()).editMessageEmbedsById(link.getId().getMessageId(), getPlanChannelMessage(plan, discordGuild)).queue());
     }
 
     @Scheduled(cron = "0 0 9 * * *")

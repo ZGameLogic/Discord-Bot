@@ -29,4 +29,7 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
             "AND p.deleted = false"
     )
     List<Plan> getPlansByTime(Date date);
+
+    @Query("SELECT p FROM Plan p WHERE p.date > :date AND p.deleted = false")
+    List<Plan> findAllPlansByDateAfterAndNotDeleted(Date date);
 }
