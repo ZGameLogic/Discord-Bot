@@ -8,6 +8,7 @@ import com.zgamelogic.data.database.authData.AuthDataRepository;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.database.planData.user.PlanUser;
+import com.zgamelogic.data.database.planData.user.PlanUserRepository;
 import com.zgamelogic.data.database.userData.UserDataRepository;
 import com.zgamelogic.data.intermediates.planData.PlanEvent;
 import com.zgamelogic.data.plan.ApplePlanNotification;
@@ -69,6 +70,7 @@ public class PlanService {
     private void onReady(ReadyEvent event){
         discordGuild = event.getJDA().getGuildById(discordGuildId);
         planTextChannel = discordGuild.getTextChannelById(discordPlanId);
+
     }
 
     public PlanEventResultMessage requestFillIn(long planId, long userId){
