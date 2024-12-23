@@ -8,7 +8,6 @@ import com.zgamelogic.data.database.authData.AuthDataRepository;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.database.planData.user.PlanUser;
-import com.zgamelogic.data.database.planData.user.PlanUserRepository;
 import com.zgamelogic.data.database.userData.UserDataRepository;
 import com.zgamelogic.data.intermediates.planData.PlanEvent;
 import com.zgamelogic.data.plan.ApplePlanNotification;
@@ -374,6 +373,7 @@ public class PlanService {
 
     @Scheduled(cron = "0 * * * * *")
     public void minuteTasks(){
+        // one hour ahead
         Instant time = Instant.now().plus(1, ChronoUnit.HOURS);
         planRepository.getPlansByTime(new Date(time.toEpochMilli())).forEach(plan -> {
             List<Long> users = plan.getAcceptedIdsAndAuthor();
@@ -390,6 +390,26 @@ public class PlanService {
                 }
             });
         });
+
+        // five minutes ahead
+        time = Instant.now().plus(5, ChronoUnit.MINUTES);
+        planRepository.getPlansByTime(new Date(time.toEpochMilli())).forEach(plan -> {
+            List<Long> users = plan.getAcceptedIdsAndAuthor();
+            List<Long> configuredUsers = userDataRepository.findUsersWithHourMessageDisabled(users).stream().map(user -> user.getId()).toList();
+            users.stream().filter(userId -> {
+                return !configuredUsers.contains(userId);
+            }).forEach(user -> {
+                try {
+                    bot.openPrivateChannelById(user).queue(channel -> {
+                        channel.sendMessageEmbeds(getFiveTillMessage(plan)).queue();
+                    });
+                } catch (Exception e){
+                    log.error("Unable to send PM to user for hour till message", e);
+                }
+            });
+        });
+
+        // TODO if the auther of a plan is in discord, send the plan message
     }
 
     private void createNewPlanFromWaitlist(Plan plan){

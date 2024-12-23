@@ -32,4 +32,10 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
 
     @Query("SELECT p FROM Plan p WHERE p.date > :date AND p.deleted = false")
     List<Plan> findAllPlansByDateAfterAndNotDeleted(Date date);
+
+    @Query("SELECT p FROM Plan p WHERE p.date > :startDate AND p.date < :endDate AND p.deleted = false")
+    List<Plan> findAllPlansBetweenDates(@Param("startDate") Date startDate, @Param("endDate") Date endDate);
+
+    @Query("SELECT p FROM Plan p WHERE p.authorId = :authorId AND p.date > :startDate AND p.date < :endDate AND p.deleted = false")
+    List<Plan> findAllPlansByAuthorIdBetweenDates(@Param("authorId") long authorId, @Param("startDate") Date startDate, @Param("endDate") Date endDate);
 }
