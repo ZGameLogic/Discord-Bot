@@ -6,11 +6,13 @@ import com.zgamelogic.annotations.DiscordMapping;
 import com.zgamelogic.data.database.chatroomNames.ChatroomNamesRepository;
 import com.zgamelogic.data.database.guildData.GuildData;
 import com.zgamelogic.data.database.guildData.GuildDataRepository;
+import com.zgamelogic.data.database.planData.linkedMessage.LinkedMessageRepository;
+import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
+import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel;
 import net.dv8tion.jda.api.events.guild.voice.GuildVoiceUpdateEvent;
@@ -25,7 +27,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
+
+import static com.zgamelogic.bot.utils.PlanHelper.getPlanChannelMessage;
 
 /**
  * Party bot stuff
@@ -33,17 +39,20 @@ import java.util.*;
 @DiscordController
 @Slf4j
 public class PartyBot  {
-
     private final GuildDataRepository guildData;
     private final ChatroomNamesRepository namesRepository;
+    private final LinkedMessageRepository linkedMessageRepository;
+    private final PlanRepository planRepository;
 
     @Bot
     private JDA bot;
 
     @Autowired
-    public PartyBot(GuildDataRepository guildData, ChatroomNamesRepository namesRepository){
+    public PartyBot(GuildDataRepository guildData, ChatroomNamesRepository namesRepository, LinkedMessageRepository linkedMessageRepository, PlanRepository planRepository){
         this.namesRepository = namesRepository;
         this.guildData = guildData;
+        this.linkedMessageRepository = linkedMessageRepository;
+        this.planRepository = planRepository;
     }
 
     @Bean
@@ -124,9 +133,9 @@ public class PartyBot  {
         if(guildData.findById(event.getGuild().getIdLong()).get().getChatroomEnabled()) {
             if (event.getChannelJoined() != null && event.getChannelLeft() != null) {
                 playerLeft(event.getChannelLeft(), event.getGuild());
-                playerJoined(event.getChannelJoined(), event.getGuild());
+                playerJoined(event.getChannelJoined().asVoiceChannel(), event.getGuild(), event.getMember());
             } else if (event.getChannelJoined() != null) {
-                playerJoined(event.getChannelJoined(), event.getGuild());
+                playerJoined(event.getChannelJoined().asVoiceChannel(), event.getGuild(), event.getMember());
             } else if (event.getChannelLeft() != null) {
                 playerLeft(event.getChannelLeft(), event.getGuild());
             }
@@ -162,6 +171,7 @@ public class PartyBot  {
             if (channel.getIdLong() != savedGuild.getCreateChatId() && channel.getIdLong() != savedGuild.getAfkChannelId()) {
                 // We get here if the channel left in is the chatroom categories
                 if (channel.getMembers().isEmpty()) {
+                    linkedMessageRepository.deleteAllById_ChannelId(channel.getIdLong());
                     channel.delete().queue();
                 }
             }
@@ -174,12 +184,21 @@ public class PartyBot  {
      * @param channelJoined the channel the user joined
      * @param guild         the guild that this took place in
      */
-    private void playerJoined(AudioChannel channelJoined, Guild guild) {
+    private void playerJoined(VoiceChannel channelJoined, Guild guild, Member member) {
         VoiceChannel channel = guild.getVoiceChannelById(channelJoined.getIdLong());
         GuildData savedGuild = guildData.findById(guild.getIdLong()).get();
         if (channel.getParentCategoryIdLong() == savedGuild.getPartyCategory()) {
             if (channel.getIdLong() == savedGuild.getCreateChatId()) {
                 checkCreateChatroom(guild);
+            } else if(channel.getIdLong() != savedGuild.getAfkChannelId()) {
+                Instant time = Instant.now().plus(5, ChronoUnit.MINUTES);
+                Date limit = new Date(time.toEpochMilli());
+                planRepository.findAllPlansByAuthorIdBetweenDates(member.getIdLong(), new Date(), limit).forEach(plan -> {
+                    if(linkedMessageRepository.existsById_ChannelId(channelJoined.getIdLong())) return;
+                    Message message = channelJoined.sendMessageEmbeds(getPlanChannelMessage(plan, channelJoined.getGuild())).complete();
+                    plan.addLinkedMessage(channelJoined.getIdLong(), message.getIdLong());
+                    planRepository.save(plan);
+                });
             }
         }
     }
@@ -200,8 +219,15 @@ public class PartyBot  {
                 }
                 VoiceChannel newChannel = builder.complete();
                 newChannel.sendMessage(String.format("This chatroom name comes from the game: %s", chatroomName.getGame())).queue();
+                Instant time = Instant.now().plus(5, ChronoUnit.MINUTES);
+                Date limit = new Date(time.toEpochMilli());
                 for (Member member : members) {
                     guild.moveVoiceMember(member, newChannel).queue();
+                    planRepository.findAllPlansByAuthorIdBetweenDates(member.getIdLong(), new Date(), limit).forEach(plan -> {
+                        Message message = newChannel.sendMessageEmbeds(getPlanChannelMessage(plan, newChannel.getGuild())).complete();
+                        plan.addLinkedMessage(newChannel.getIdLong(), message.getIdLong());
+                        planRepository.save(plan);
+                    });
                 }
             });
         }

@@ -5,6 +5,8 @@ import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
 import com.zgamelogic.bot.utils.PlanHelper;
 import com.zgamelogic.data.database.authData.AuthDataRepository;
+import com.zgamelogic.data.database.guildData.GuildData;
+import com.zgamelogic.data.database.guildData.GuildDataRepository;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.database.planData.user.PlanUser;
@@ -17,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -27,6 +30,7 @@ import org.springframework.stereotype.Service;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.zgamelogic.bot.utils.PlanHelper.*;
 import static com.zgamelogic.data.Constants.*;
@@ -49,6 +53,7 @@ public class PlanService {
     @Bot
     private JDA bot;
 
+    private final GuildDataRepository guildDataRepository;
     private final PlanRepository planRepository;
     private final PlannerWebsocketService plannerWebsocketService;
     private final UserDataRepository userDataRepository;
@@ -57,7 +62,8 @@ public class PlanService {
     private TextChannel planTextChannel;
     private Guild discordGuild;
 
-    public PlanService(PlanRepository planRepository, PlannerWebsocketService plannerWebsocketService, ApplePushNotificationService apns, AuthDataRepository authDataRepository, UserDataRepository userDataRepository) {
+    public PlanService(GuildDataRepository guildDataRepository, PlanRepository planRepository, PlannerWebsocketService plannerWebsocketService, ApplePushNotificationService apns, AuthDataRepository authDataRepository, UserDataRepository userDataRepository) {
+        this.guildDataRepository = guildDataRepository;
         this.planRepository = planRepository;
         this.plannerWebsocketService = plannerWebsocketService;
         this.apns = apns;
@@ -69,6 +75,7 @@ public class PlanService {
     private void onReady(ReadyEvent event){
         discordGuild = event.getJDA().getGuildById(discordGuildId);
         planTextChannel = discordGuild.getTextChannelById(discordPlanId);
+
     }
 
     public PlanEventResultMessage requestFillIn(long planId, long userId){
@@ -372,6 +379,7 @@ public class PlanService {
 
     @Scheduled(cron = "0 * * * * *")
     public void minuteTasks(){
+        // one hour ahead
         Instant time = Instant.now().plus(1, ChronoUnit.HOURS);
         planRepository.getPlansByTime(new Date(time.toEpochMilli())).forEach(plan -> {
             List<Long> users = plan.getAcceptedIdsAndAuthor();
@@ -382,6 +390,24 @@ public class PlanService {
                 try {
                     bot.openPrivateChannelById(user).queue(channel -> {
                         channel.sendMessageEmbeds(getHourTillMessage(plan)).queue();
+                    });
+                } catch (Exception e){
+                    log.error("Unable to send PM to user for hour till message", e);
+                }
+            });
+        });
+
+        // five minutes ahead
+        time = Instant.now().plus(5, ChronoUnit.MINUTES);
+        planRepository.getPlansByTime(new Date(time.toEpochMilli())).forEach(plan -> {
+            List<Long> users = plan.getAcceptedIdsAndAuthor();
+            List<Long> configuredUsers = userDataRepository.findUsersWithHourMessageDisabled(users).stream().map(user -> user.getId()).toList();
+            users.stream().filter(userId -> {
+                return !configuredUsers.contains(userId);
+            }).forEach(user -> {
+                try {
+                    bot.openPrivateChannelById(user).queue(channel -> {
+                        channel.sendMessageEmbeds(getFiveTillMessage(plan)).queue();
                     });
                 } catch (Exception e){
                     log.error("Unable to send PM to user for hour till message", e);
@@ -434,6 +460,19 @@ public class PlanService {
         });
         plannerWebsocketService.sendMessage(savedPlan);
         planRepository.save(savedPlan);
+    }
+
+    public Map<Long, VoiceChannel> getConnectedPartyGoers(){
+        GuildData gd = guildDataRepository.getReferenceById(discordGuildId);
+        Guild guild = bot.getGuildById(discordGuildId);
+
+        return guild
+                .getCategoryById(gd.getPartyCategory())
+                .getVoiceChannels().stream()
+                .filter(channel -> channel.getIdLong() != gd.getAfkChannelId() && channel.getIdLong() != gd.getCreateChatId())
+                .flatMap(channel -> channel.getMembers().stream()
+                        .map(member -> Map.entry(member.getIdLong(), channel))
+                ).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private boolean isDiscordUser(long uid){
