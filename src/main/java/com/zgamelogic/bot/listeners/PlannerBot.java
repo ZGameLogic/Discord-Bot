@@ -5,6 +5,7 @@ import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
 import com.zgamelogic.annotations.EventProperty;
 import com.zgamelogic.bot.utils.EmbedMessageGenerator;
+import com.zgamelogic.data.database.planData.linkedMessage.LinkedMessageRepository;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.database.userData.User;
@@ -15,9 +16,7 @@ import com.zgamelogic.data.plan.PlanCreationData;
 import com.zgamelogic.data.plan.PlanEventResultMessage;
 import com.zgamelogic.data.plan.PlanModalData;
 import com.zgamelogic.services.PlanService;
-import net.dv8tion.jda.api.entities.ISnowflake;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.MessageEmbed;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -32,6 +31,7 @@ import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
@@ -40,6 +40,8 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import static com.zgamelogic.bot.utils.Helpers.STD_HELPER_MESSAGE;
@@ -59,14 +61,16 @@ public class PlannerBot {
     private final PlanRepository planRepository;
     private final UserDataRepository userDataRepository;
     private final PlanService planService;
+    private final LinkedMessageRepository linkedMessageRepository;
 
     @Bot
     private JDA bot;
 
-    public PlannerBot(PlanRepository planRepository, UserDataRepository userDataRepository, PlanService planService) {
+    public PlannerBot(PlanRepository planRepository, UserDataRepository userDataRepository, PlanService planService, LinkedMessageRepository linkedMessageRepository) {
         this.planRepository = planRepository;
         this.userDataRepository = userDataRepository;
         this.planService = planService;
+        this.linkedMessageRepository = linkedMessageRepository;
     }
 
     @Bean
@@ -438,5 +442,19 @@ public class PlannerBot {
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
         PlanEventResultMessage result = planService.maybe(planId, userId);
         if(!result.success()) event.getMessage().reply(result.message()).queue();
+    }
+
+    @Scheduled(cron = "0 * * * * *")
+    private void minuteTasks(){
+        Instant time = Instant.now().plus(5, ChronoUnit.MINUTES);
+        Date startTime = new Date();
+        Date endTime = Date.from(time);
+        planService.getConnectedPartyGoers().forEach((userId, channel) ->
+                planRepository.findAllPlansByAuthorIdBetweenDates(userId, startTime, endTime).forEach(plan -> {
+                    if(linkedMessageRepository.existsById_ChannelId(channel.getIdLong())) return;
+                    Message message = channel.sendMessageEmbeds(getPlanChannelMessage(plan, channel.getGuild())).complete();
+                    plan.addLinkedMessage(channel.getIdLong(), message.getIdLong());
+                    planRepository.save(plan);
+        }));
     }
 }

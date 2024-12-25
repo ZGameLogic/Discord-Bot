@@ -39,7 +39,6 @@ import static com.zgamelogic.bot.utils.PlanHelper.getPlanChannelMessage;
 @DiscordController
 @Slf4j
 public class PartyBot  {
-
     private final GuildDataRepository guildData;
     private final ChatroomNamesRepository namesRepository;
     private final LinkedMessageRepository linkedMessageRepository;
@@ -134,9 +133,9 @@ public class PartyBot  {
         if(guildData.findById(event.getGuild().getIdLong()).get().getChatroomEnabled()) {
             if (event.getChannelJoined() != null && event.getChannelLeft() != null) {
                 playerLeft(event.getChannelLeft(), event.getGuild());
-                playerJoined(event.getChannelJoined(), event.getGuild());
+                playerJoined(event.getChannelJoined().asVoiceChannel(), event.getGuild(), event.getMember());
             } else if (event.getChannelJoined() != null) {
-                playerJoined(event.getChannelJoined(), event.getGuild());
+                playerJoined(event.getChannelJoined().asVoiceChannel(), event.getGuild(), event.getMember());
             } else if (event.getChannelLeft() != null) {
                 playerLeft(event.getChannelLeft(), event.getGuild());
             }
@@ -172,7 +171,7 @@ public class PartyBot  {
             if (channel.getIdLong() != savedGuild.getCreateChatId() && channel.getIdLong() != savedGuild.getAfkChannelId()) {
                 // We get here if the channel left in is the chatroom categories
                 if (channel.getMembers().isEmpty()) {
-                    linkedMessageRepository.deleteAllByChannelId(channel.getIdLong());
+                    linkedMessageRepository.deleteAllById_ChannelId(channel.getIdLong());
                     channel.delete().queue();
                 }
             }
@@ -185,12 +184,21 @@ public class PartyBot  {
      * @param channelJoined the channel the user joined
      * @param guild         the guild that this took place in
      */
-    private void playerJoined(AudioChannel channelJoined, Guild guild) {
+    private void playerJoined(VoiceChannel channelJoined, Guild guild, Member member) {
         VoiceChannel channel = guild.getVoiceChannelById(channelJoined.getIdLong());
         GuildData savedGuild = guildData.findById(guild.getIdLong()).get();
         if (channel.getParentCategoryIdLong() == savedGuild.getPartyCategory()) {
             if (channel.getIdLong() == savedGuild.getCreateChatId()) {
                 checkCreateChatroom(guild);
+            } else if(channel.getIdLong() != savedGuild.getAfkChannelId()) {
+                Instant time = Instant.now().plus(5, ChronoUnit.MINUTES);
+                Date limit = new Date(time.toEpochMilli());
+                planRepository.findAllPlansByAuthorIdBetweenDates(member.getIdLong(), new Date(), limit).forEach(plan -> {
+                    if(linkedMessageRepository.existsById_ChannelId(channelJoined.getIdLong())) return;
+                    Message message = channelJoined.sendMessageEmbeds(getPlanChannelMessage(plan, channelJoined.getGuild())).complete();
+                    plan.addLinkedMessage(channelJoined.getIdLong(), message.getIdLong());
+                    planRepository.save(plan);
+                });
             }
         }
     }
