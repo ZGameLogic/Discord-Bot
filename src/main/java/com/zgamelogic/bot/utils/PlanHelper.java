@@ -19,7 +19,7 @@ public abstract class PlanHelper {
 
     public static MessageEmbed getFiveTillMessage(Plan plan){
         EmbedBuilder eb = new EmbedBuilder();
-        eb.setTitle("There is five minutes until plan: " + plan.getTitle() + " starts");
+        eb.setTitle("There are five minutes until plan: " + plan.getTitle() + " starts");
         eb.setDescription("To stop receiving these notifications use the `/plan notifications false` slash command");
         eb.setColor(GENERAL_COLOR);
         return eb.build();
