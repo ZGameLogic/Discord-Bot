@@ -397,6 +397,8 @@ public class PlanService {
             });
         });
 
+        Map connected = getConnectedPartyGoers();
+
         // five minutes ahead
         time = Instant.now().plus(5, ChronoUnit.MINUTES);
         planRepository.getPlansByTime(new Date(time.toEpochMilli())).forEach(plan -> {
@@ -405,6 +407,7 @@ public class PlanService {
             users.stream().filter(userId -> {
                 return !configuredUsers.contains(userId);
             }).forEach(user -> {
+                if(connected.containsKey(user)) return;
                 try {
                     bot.openPrivateChannelById(user).queue(channel -> {
                         channel.sendMessageEmbeds(getFiveTillMessage(plan)).queue();
