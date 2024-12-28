@@ -1,14 +1,14 @@
 package com.zgamelogic.controllers;
 
-import com.zgamelogic.data.authData.DiscordUser;
-import com.zgamelogic.data.database.authData.AuthData;
-import com.zgamelogic.data.database.authData.AuthDataRepository;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.intermediates.planData.CreatePlanData;
 import com.zgamelogic.data.plan.PlanCreationData;
 import com.zgamelogic.data.plan.PlanEventResultMessage;
-import com.zgamelogic.services.DiscordService;
+import com.zgamelogic.discord.auth.data.authData.DiscordUser;
+import com.zgamelogic.discord.auth.data.database.authData.AuthData;
+import com.zgamelogic.discord.auth.data.database.authData.AuthDataRepository;
+import com.zgamelogic.discord.auth.services.DiscordService;
 import com.zgamelogic.services.PlanService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
