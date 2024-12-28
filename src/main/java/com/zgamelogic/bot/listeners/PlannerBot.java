@@ -183,7 +183,7 @@ public class PlannerBot {
         TextInput notes = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
                 .setPlaceholder("Grinding the event").setRequired(false).build();
         TextInput date = TextInput.create("date", "Date and time", TextInputStyle.SHORT)
-                .setPlaceholder("Central time zone. Examples: 4/5 9:23am, 7:00pm, tomorrow 6:00pm").build();
+                .setPlaceholder("Central time zone. Examples: 4/5 9:23am, 7:00pm, tomorrow 6:00pm").setRequired(false).build();
         TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
                 .setPlaceholder("Hunt Showdown").build();
         TextInput count = TextInput.create("count", "Number of people (not including yourself)", TextInputStyle.SHORT)
@@ -202,8 +202,11 @@ public class PlannerBot {
             ModalInteractionEvent event,
             @EventProperty PlanModalData planData
     ){
+        String planDate = planData.date();
         Date date = stringToDate(planData.date());
-        if(date == null){
+        if(date == null && planData.date().isEmpty()) {
+            planDate = "waiting on poll";
+        } else if(date == null){
             event.reply("""
                     Invalid date and time. Here are some examples of valid dates:
                     7:00pm
@@ -225,7 +228,7 @@ public class PlannerBot {
             event.reply("Invalid count").setEphemeral(true).queue();
             return;
         }
-        event.replyEmbeds(getPrePlanMessage(planData.title(), planData.notes(), count, planData.date()))
+        event.replyEmbeds(getPrePlanMessage(planData.title(), planData.notes(), count, planDate))
                 .setEphemeral(true)
                 .addActionRow(
                         EntitySelectMenu.create("People", EntitySelectMenu.SelectTarget.USER, EntitySelectMenu.SelectTarget.ROLE)
