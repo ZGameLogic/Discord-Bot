@@ -6,41 +6,29 @@ import com.zgamelogic.data.intermediates.planData.CreatePlanData;
 import com.zgamelogic.data.plan.PlanCreationData;
 import com.zgamelogic.data.plan.PlanEventResultMessage;
 import com.zgamelogic.discord.auth.data.authData.DiscordUser;
-import com.zgamelogic.discord.auth.data.database.authData.AuthData;
-import com.zgamelogic.discord.auth.data.database.authData.AuthDataRepository;
-import com.zgamelogic.discord.auth.services.DiscordService;
 import com.zgamelogic.services.PlanService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.context.request.WebRequest;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 
 @Slf4j
 @RestController
 public class PlannerController {
-
-    private final AuthDataRepository authDataRepository;
-    private final DiscordService discordService;
     private final PlanService planService;
     private final PlanRepository planRepository;
 
-    public PlannerController(AuthDataRepository authDataRepository, DiscordService discordService, PlanService planService, PlanRepository planRepository) {
-        this.authDataRepository = authDataRepository;
-        this.discordService = discordService;
+    public PlannerController(PlanService planService, PlanRepository planRepository) {
         this.planService = planService;
         this.planRepository = planRepository;
     }
 
     @GetMapping("plans")
-    private ResponseEntity<List<Plan>> getPlans(@ModelAttribute DiscordUser discordUser) {
+    private ResponseEntity<List<Plan>> getPlans(DiscordUser discordUser) {
         LocalDateTime dateTimeAnHourAgo = LocalDateTime.now().minusHours(1);
         Date dateAnHourAgo = Date.from(dateTimeAnHourAgo.atZone(ZoneId.systemDefault()).toInstant());
         List<Plan> plans = planRepository.findAllPlansByUserId(discordUser.id(), dateAnHourAgo);
@@ -49,7 +37,7 @@ public class PlannerController {
     }
 
     @PostMapping("plans")
-    private ResponseEntity<Plan> createPlan(@RequestBody CreatePlanData planData, @ModelAttribute DiscordUser discordUser){
+    private ResponseEntity<Plan> createPlan(@RequestBody CreatePlanData planData, DiscordUser discordUser){
         PlanCreationData planCreationData = new PlanCreationData(
                 planData.title(),
                 planData.notes(),
@@ -65,43 +53,43 @@ public class PlannerController {
     }
 
     @PostMapping("plans/{planId}/accept")
-    private ResponseEntity<PlanEventResultMessage> acceptPlan(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
+    private ResponseEntity<PlanEventResultMessage> acceptPlan(@PathVariable long planId, DiscordUser discordUser){
         PlanEventResultMessage result = planService.accept(planId, discordUser.id());
         return ResponseEntity.status(result.getStatus()).body(result);
     }
 
     @PostMapping("plans/{planId}/requestFillIn")
-    private ResponseEntity<PlanEventResultMessage> requestPlanFillIn(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
+    private ResponseEntity<PlanEventResultMessage> requestPlanFillIn(@PathVariable long planId, DiscordUser discordUser){
         PlanEventResultMessage result = planService.requestFillIn(planId, discordUser.id());
         return ResponseEntity.status(result.getStatus()).body(result);
     }
 
     @PostMapping("plans/{planId}/fillIn")
-    private ResponseEntity<PlanEventResultMessage> fillInPlan(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
+    private ResponseEntity<PlanEventResultMessage> fillInPlan(@PathVariable long planId, DiscordUser discordUser){
         PlanEventResultMessage result = planService.fillIn(planId, discordUser.id());
         return ResponseEntity.status(result.getStatus()).body(result);
     }
 
     @PostMapping("plans/{planId}/dropOut")
-    private ResponseEntity<PlanEventResultMessage> dropOutPlan(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
+    private ResponseEntity<PlanEventResultMessage> dropOutPlan(@PathVariable long planId, DiscordUser discordUser){
         PlanEventResultMessage result = planService.dropOut(planId, discordUser.id());
         return ResponseEntity.status(result.getStatus()).body(result);
     }
 
     @PostMapping("plans/{planId}/waitlist")
-    private ResponseEntity<PlanEventResultMessage> waitlistPlan(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
+    private ResponseEntity<PlanEventResultMessage> waitlistPlan(@PathVariable long planId, DiscordUser discordUser){
         PlanEventResultMessage result = planService.waitList(planId, discordUser.id());
         return ResponseEntity.status(result.getStatus()).body(result);
     }
 
     @PostMapping("plans/{planId}/maybe")
-    private ResponseEntity<PlanEventResultMessage> maybePlan(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
+    private ResponseEntity<PlanEventResultMessage> maybePlan(@PathVariable long planId, DiscordUser discordUser){
         PlanEventResultMessage result = planService.maybe(planId, discordUser.id());
         return ResponseEntity.status(result.getStatus()).body(result);
     }
 
     @PostMapping("plans/{planId}/deny")
-    private ResponseEntity<PlanEventResultMessage> denyPlan(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
+    private ResponseEntity<PlanEventResultMessage> denyPlan(@PathVariable long planId, DiscordUser discordUser){
         PlanEventResultMessage result = planService.deny(planId, discordUser.id());
         return ResponseEntity.status(result.getStatus()).body(result);
     }
@@ -109,7 +97,7 @@ public class PlannerController {
     @PostMapping("/plans/{planId}/message")
     private ResponseEntity<PlanEventResultMessage> sendMessage(
             @PathVariable long planId,
-            @ModelAttribute DiscordUser discordUser,
+            DiscordUser discordUser,
             @RequestBody String message
     ){
         PlanEventResultMessage result = planService.sendMessage(planId, discordUser.id(), message);
@@ -117,35 +105,9 @@ public class PlannerController {
     }
 
     @DeleteMapping("plans/{planId}")
-    private ResponseEntity<?> deletePlan(@PathVariable long planId, @ModelAttribute DiscordUser discordUser){
+    private ResponseEntity<?> deletePlan(@PathVariable long planId, DiscordUser discordUser){
         planService.deletePlan(planId);
         PlanEventResultMessage message = PlanEventResultMessage.success("Event canceled");
         return ResponseEntity.status(message.getStatus()).body(message);
-    }
-
-    @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<?> handleUnauthorizedException() {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
-
-    @ModelAttribute
-    public void authenticate(WebRequest request, Model model) {
-        String token = request.getHeader("token");
-        String device = request.getHeader("device");
-
-        if (token == null || device == null) throw new UnauthorizedException();
-        Optional<DiscordUser> discordUser = discordService.getUserFromToken(token);
-        if (discordUser.isEmpty()) throw new UnauthorizedException();
-        Optional<AuthData> authData = authDataRepository.findById_DiscordIdAndId_DeviceIdAndToken(discordUser.get().id(), device, token);
-        if (authData.isEmpty()) throw new UnauthorizedException();
-
-        model.addAttribute("discordUser", discordUser.get());
-        model.addAttribute("authData", authData.get());
-    }
-
-    private static class UnauthorizedException extends RuntimeException {
-        public UnauthorizedException() {
-            super("Unauthorized");
-        }
     }
 }
