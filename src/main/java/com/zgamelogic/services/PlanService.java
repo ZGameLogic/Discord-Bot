@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.components.ActionRow;
@@ -358,7 +359,15 @@ public class PlanService {
         } catch (Exception e){
             log.error("Error editing private message for event {}", plan.getId(), e);
         }
-        plan.getLinked().forEach(link -> discordGuild.getTextChannelById(link.getId().getChannelId()).editMessageEmbedsById(link.getId().getMessageId(), getPlanChannelMessage(plan, discordGuild)).queue());
+        plan.getLinked().forEach(link -> {
+            TextChannel channel = discordGuild.getTextChannelById(link.getId().getChannelId());
+            if(channel == null){
+                ThreadChannel tChannel = discordGuild.getThreadChannelById(link.getId().getChannelId());
+                tChannel.editMessageEmbedsById(link.getId().getMessageId(), getPlanChannelMessage(plan, discordGuild)).queue();
+                return;
+            }
+            channel.editMessageEmbedsById(link.getId().getMessageId(), getPlanChannelMessage(plan, discordGuild)).queue();
+        });
     }
 
     @Scheduled(cron = "0 0 9 * * *")
