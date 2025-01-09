@@ -9,7 +9,7 @@ public class DadBot {
     @DiscordMapping
     public void messageReceived(MessageReceivedEvent event) {
         if(!event.isFromGuild()) return;
-        if(event.getAuthor().getIdLong() == 102923614344482816L) { // Karisa's stuff
+        if(event.getAuthor().getIdLong() == 195174230281814016L) { // Karisa's stuff
             String message = event.getMessage().getContentRaw().toLowerCase().replaceAll("'", "").replaceAll("’", "");
             if(message.startsWith("im ") || message.contains(" im ")){
                 String[] messageArray = message.split(" ");
