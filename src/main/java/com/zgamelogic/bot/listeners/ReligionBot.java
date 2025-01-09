@@ -2,6 +2,8 @@ package com.zgamelogic.bot.listeners;
 
 import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
+import com.zgamelogic.data.intermediates.dataotter.SlashCommandRock;
+import com.zgamelogic.dataotter.DataOtterService;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -11,9 +13,16 @@ import java.util.List;
 
 @DiscordController
 public class ReligionBot {
+    private final DataOtterService dataOtterService;
+
+    public ReligionBot(DataOtterService dataOtterService) {
+        this.dataOtterService = dataOtterService;
+    }
 
     @DiscordMapping(Id = "pray")
     private void praySlashCommand(SlashCommandInteractionEvent event){
+        SlashCommandRock rock = new SlashCommandRock("pray", "none", event.getUser().getIdLong());
+        dataOtterService.sendRock(rock);
         event.reply("Thank you, my child.").queue();
     }
 
@@ -36,7 +45,6 @@ public class ReligionBot {
     private void desecrateSlashCommand(SlashCommandInteractionEvent event){
         event.reply("Thou hast chosen to walk the path of chaos, yet fear not, for shlongbot oversees all in mischief and mirth alike!").queue();
     }
-
 
     @Bean
     private List<CommandData> religionSlashCommands(){
