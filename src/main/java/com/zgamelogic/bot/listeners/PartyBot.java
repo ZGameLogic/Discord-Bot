@@ -8,6 +8,8 @@ import com.zgamelogic.data.database.guildData.GuildData;
 import com.zgamelogic.data.database.guildData.GuildDataRepository;
 import com.zgamelogic.data.database.planData.linkedMessage.LinkedMessageRepository;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
+import com.zgamelogic.data.intermediates.dataotter.SlashCommandRock;
+import com.zgamelogic.dataotter.DataOtterService;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
@@ -43,16 +45,18 @@ public class PartyBot  {
     private final ChatroomNamesRepository namesRepository;
     private final LinkedMessageRepository linkedMessageRepository;
     private final PlanRepository planRepository;
+    private final DataOtterService dataOtterService;
 
     @Bot
     private JDA bot;
 
     @Autowired
-    public PartyBot(GuildDataRepository guildData, ChatroomNamesRepository namesRepository, LinkedMessageRepository linkedMessageRepository, PlanRepository planRepository){
+    public PartyBot(GuildDataRepository guildData, ChatroomNamesRepository namesRepository, LinkedMessageRepository linkedMessageRepository, PlanRepository planRepository, DataOtterService dataOtterService){
         this.namesRepository = namesRepository;
         this.guildData = guildData;
         this.linkedMessageRepository = linkedMessageRepository;
         this.planRepository = planRepository;
+        this.dataOtterService = dataOtterService;
     }
 
     @Bean
@@ -67,6 +71,7 @@ public class PartyBot  {
 
     @DiscordMapping(Id = "rename-chatroom")
     private void renameChatroom(SlashCommandInteractionEvent event){
+        dataOtterService.sendRock(new SlashCommandRock(event));
         try {
             // get voice channel the user is in
             AudioChannel voice = event.getMember().getVoiceState().getChannel();
@@ -89,6 +94,7 @@ public class PartyBot  {
 
     @DiscordMapping(Id = "limit")
     private void limit(SlashCommandInteractionEvent event){
+        dataOtterService.sendRock(new SlashCommandRock(event));
         try {
             // get voice channel the user is in
             AudioChannel voice = event.getMember().getVoiceState().getChannel();
