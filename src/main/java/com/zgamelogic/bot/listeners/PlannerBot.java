@@ -10,6 +10,7 @@ import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.database.userData.User;
 import com.zgamelogic.data.database.userData.UserDataRepository;
+import com.zgamelogic.data.intermediates.dataotter.ButtonCommandRock;
 import com.zgamelogic.data.intermediates.dataotter.SlashCommandRock;
 import com.zgamelogic.data.intermediates.planData.DiscordRoleData;
 import com.zgamelogic.data.intermediates.planData.DiscordUserData;
@@ -309,6 +310,7 @@ public class PlannerBot {
 
     @DiscordMapping(Id = "add_users")
     private void addUsersButton(ButtonInteractionEvent event){
+        dataOtterService.sendRock(new ButtonCommandRock(event));
         Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         if(plan.getAuthorId() != event.getUser().getIdLong()){
             event.reply("You are not the owner of this event").setEphemeral(true).queue();
@@ -346,12 +348,14 @@ public class PlannerBot {
 
     @DiscordMapping(Id = "send_message")
     private void sendMessageEvent(ButtonInteractionEvent event){
+        dataOtterService.sendRock(new ButtonCommandRock(event));
         TextInput message = TextInput.create("message", "Message to be sent to accepted users", TextInputStyle.PARAGRAPH).build();
         event.replyModal(Modal.create("send_message_modal", "Send message").addActionRow(message) .build()) .queue();
     }
 
     @DiscordMapping(Id = "edit_event")
     private void editDetailsButtonEvent(ButtonInteractionEvent event){
+        dataOtterService.sendRock(new ButtonCommandRock(event));
         Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         TextInput.Builder notesBuilder = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT).setRequired(false);
         if(plan.getNotes() != null && !plan.getNotes().isEmpty()) notesBuilder.setValue(plan.getNotes());
@@ -380,6 +384,7 @@ public class PlannerBot {
 
     @DiscordMapping(Id = "delete_event")
     private void deleteEvent(ButtonInteractionEvent event){
+        dataOtterService.sendRock(new ButtonCommandRock(event));
         Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         planService.deletePlan(plan);
     }
@@ -387,6 +392,7 @@ public class PlannerBot {
     @DiscordMapping(Id = "request_fill_in")
     private void requestFillIn(ButtonInteractionEvent event){
         event.deferEdit().queue();
+        dataOtterService.sendRock(new ButtonCommandRock(event));
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
         PlanEventResultMessage result = planService.requestFillIn(planId, userId);
@@ -396,6 +402,7 @@ public class PlannerBot {
     @DiscordMapping(Id = "fill_in")
     private void fillIn(ButtonInteractionEvent event){
         event.deferEdit().queue();
+        dataOtterService.sendRock(new ButtonCommandRock(event));
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
         PlanEventResultMessage result = planService.fillIn(planId, userId);
@@ -404,12 +411,14 @@ public class PlannerBot {
 
     @DiscordMapping(Id = "drop_out_event")
     private void dropOutEvent(ButtonInteractionEvent event){
+        dataOtterService.sendRock(new ButtonCommandRock(event));
         event.editButton(Button.danger("confirm_drop_out_event", "Confirm Dropout")).queue();
     }
 
     @DiscordMapping(Id = "confirm_drop_out_event")
     private void confirmDropOutEvent(ButtonInteractionEvent event){
         event.deferEdit().queue();
+        dataOtterService.sendRock(new ButtonCommandRock(event));
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
         PlanEventResultMessage result = planService.dropOut(planId, userId);
@@ -419,6 +428,7 @@ public class PlannerBot {
     @DiscordMapping(Id = "accept_event")
     private void acceptEvent(ButtonInteractionEvent event){
         event.deferEdit().queue();
+        dataOtterService.sendRock(new ButtonCommandRock(event));
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
         PlanEventResultMessage result = planService.accept(planId, userId);
@@ -428,6 +438,7 @@ public class PlannerBot {
     @DiscordMapping(Id = "waitlist_event")
     private void waitlistEvent(ButtonInteractionEvent event){
         event.deferEdit().queue();
+        dataOtterService.sendRock(new ButtonCommandRock(event));
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
         PlanEventResultMessage result = planService.waitList(planId, userId);
@@ -437,6 +448,7 @@ public class PlannerBot {
     @DiscordMapping(Id = "deny_event")
     private void denyEvent(ButtonInteractionEvent event){
         event.deferEdit().queue();
+        dataOtterService.sendRock(new ButtonCommandRock(event));
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
         PlanEventResultMessage result = planService.deny(planId, userId);
@@ -446,6 +458,7 @@ public class PlannerBot {
     @DiscordMapping(Id = "maybe_event")
     private void maybeEvent(ButtonInteractionEvent event) {
         event.deferEdit().queue();
+        dataOtterService.sendRock(new ButtonCommandRock(event));
         long userId = event.getUser().getIdLong();
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
         PlanEventResultMessage result = planService.maybe(planId, userId);
