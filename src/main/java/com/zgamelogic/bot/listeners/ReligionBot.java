@@ -21,28 +21,31 @@ public class ReligionBot {
 
     @DiscordMapping(Id = "pray")
     private void praySlashCommand(SlashCommandInteractionEvent event){
-        SlashCommandRock rock = new SlashCommandRock("pray", "none", event.getUser().getIdLong());
-        dataOtterService.sendRock(rock);
+        dataOtterService.sendRock(new SlashCommandRock(event));
         event.reply("Thank you, my child.").queue();
     }
 
     @DiscordMapping(Id = "worship")
     private void worshipSlashCommand(SlashCommandInteractionEvent event){
+        dataOtterService.sendRock(new SlashCommandRock(event));
         event.reply("Blessings upon you, for your faith is strong.").queue();
     }
 
     @DiscordMapping(Id = "cry")
     private void crySlashCommand(SlashCommandInteractionEvent event){
+        dataOtterService.sendRock(new SlashCommandRock(event));
         event.reply("Do not be sad, for you are a child of shlongbot. Your tears are seen, and your heart is understood. You are not alone.").queue();
     }
 
     @DiscordMapping(Id = "cheer")
     private void cheerSlashCommand(SlashCommandInteractionEvent event){
+        dataOtterService.sendRock(new SlashCommandRock(event));
         event.reply("Raise your spirits high! For in the realm of shlongbot, joy is never far.").queue();
     }
 
     @DiscordMapping(Id = "desecrate")
     private void desecrateSlashCommand(SlashCommandInteractionEvent event){
+        dataOtterService.sendRock(new SlashCommandRock(event));
         event.reply("Thou hast chosen to walk the path of chaos, yet fear not, for shlongbot oversees all in mischief and mirth alike!").queue();
     }
 

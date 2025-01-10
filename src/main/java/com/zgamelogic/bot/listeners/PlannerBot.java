@@ -10,11 +10,13 @@ import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.database.userData.User;
 import com.zgamelogic.data.database.userData.UserDataRepository;
+import com.zgamelogic.data.intermediates.dataotter.SlashCommandRock;
 import com.zgamelogic.data.intermediates.planData.DiscordRoleData;
 import com.zgamelogic.data.intermediates.planData.DiscordUserData;
 import com.zgamelogic.data.plan.PlanCreationData;
 import com.zgamelogic.data.plan.PlanEventResultMessage;
 import com.zgamelogic.data.plan.PlanModalData;
+import com.zgamelogic.dataotter.DataOtterService;
 import com.zgamelogic.services.PlanService;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
@@ -62,15 +64,17 @@ public class PlannerBot {
     private final UserDataRepository userDataRepository;
     private final PlanService planService;
     private final LinkedMessageRepository linkedMessageRepository;
+    private final DataOtterService dataOtterService;
 
     @Bot
     private JDA bot;
 
-    public PlannerBot(PlanRepository planRepository, UserDataRepository userDataRepository, PlanService planService, LinkedMessageRepository linkedMessageRepository) {
+    public PlannerBot(PlanRepository planRepository, UserDataRepository userDataRepository, PlanService planService, LinkedMessageRepository linkedMessageRepository, DataOtterService dataOtterService) {
         this.planRepository = planRepository;
         this.userDataRepository = userDataRepository;
         this.planService = planService;
         this.linkedMessageRepository = linkedMessageRepository;
+        this.dataOtterService = dataOtterService;
     }
 
     @Bean
@@ -142,6 +146,7 @@ public class PlannerBot {
             @EventProperty String name,
             @EventProperty String id
     ){
+        dataOtterService.sendRock(new SlashCommandRock(event));
         long planId = -1;
         try {
             if(name != null) {
@@ -166,6 +171,7 @@ public class PlannerBot {
             SlashCommandInteractionEvent event,
             @EventProperty boolean receive
     ) {
+        dataOtterService.sendRock(new SlashCommandRock(event));
         User user = userDataRepository.findById(event.getUser().getIdLong())
                 .orElseGet(() -> new User(event.getUser().getIdLong()));
         user.setHour_message(receive);
@@ -175,11 +181,13 @@ public class PlannerBot {
 
     @DiscordMapping(Id = "plan", SubId = "help")
     private void planHelpCommand(SlashCommandInteractionEvent event){
+        dataOtterService.sendRock(new SlashCommandRock(event));
         event.replyEmbeds(EmbedMessageGenerator.plannerHelperMessage()).setEphemeral(true).queue();
     }
 
     @DiscordMapping(Id = "plan", SubId = "event")
     private void planEventSlashCommand(SlashCommandInteractionEvent event){
+        dataOtterService.sendRock(new SlashCommandRock(event));
         TextInput notes = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
                 .setPlaceholder("Grinding the event").setRequired(false).build();
         TextInput date = TextInput.create("date", "Date and time", TextInputStyle.SHORT)
