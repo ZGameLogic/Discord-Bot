@@ -11,6 +11,7 @@ import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.database.userData.User;
 import com.zgamelogic.data.database.userData.UserDataRepository;
 import com.zgamelogic.data.intermediates.dataotter.ButtonCommandRock;
+import com.zgamelogic.data.intermediates.dataotter.ModalCommandRock;
 import com.zgamelogic.data.intermediates.dataotter.SlashCommandRock;
 import com.zgamelogic.data.intermediates.planData.DiscordRoleData;
 import com.zgamelogic.data.intermediates.planData.DiscordUserData;
@@ -211,6 +212,7 @@ public class PlannerBot {
             ModalInteractionEvent event,
             @EventProperty PlanModalData planData
     ){
+        dataOtterService.sendRock(new ModalCommandRock(event));
         Date date = stringToDate(planData.date());
         if(date == null){
             event.reply("""
@@ -277,6 +279,7 @@ public class PlannerBot {
 
     @DiscordMapping(Id = "edit_event_modal")
     private void editEventModal(ModalInteractionEvent event){
+        dataOtterService.sendRock(new ModalCommandRock(event));
         Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         String notes = event.getValue("notes").getAsString();
         String dateString = event.getValue("date").getAsString();
@@ -341,6 +344,7 @@ public class PlannerBot {
             @EventProperty String message
     ){
         event.deferReply().queue();
+        dataOtterService.sendRock(new ModalCommandRock(event));
         Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         planService.sendMessage(plan, event.getUser().getIdLong(), message);
         event.getHook().sendMessage("Message sent to all accepted people").setEphemeral(true).queue();
