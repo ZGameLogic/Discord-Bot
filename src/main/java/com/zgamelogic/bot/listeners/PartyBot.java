@@ -8,6 +8,9 @@ import com.zgamelogic.data.database.guildData.GuildData;
 import com.zgamelogic.data.database.guildData.GuildDataRepository;
 import com.zgamelogic.data.database.planData.linkedMessage.LinkedMessageRepository;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
+import com.zgamelogic.data.intermediates.dataotter.PartyBotRock;
+import com.zgamelogic.data.intermediates.dataotter.SlashCommandRock;
+import com.zgamelogic.dataotter.DataOtterService;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
@@ -43,16 +46,18 @@ public class PartyBot  {
     private final ChatroomNamesRepository namesRepository;
     private final LinkedMessageRepository linkedMessageRepository;
     private final PlanRepository planRepository;
+    private final DataOtterService dataOtterService;
 
     @Bot
     private JDA bot;
 
     @Autowired
-    public PartyBot(GuildDataRepository guildData, ChatroomNamesRepository namesRepository, LinkedMessageRepository linkedMessageRepository, PlanRepository planRepository){
+    public PartyBot(GuildDataRepository guildData, ChatroomNamesRepository namesRepository, LinkedMessageRepository linkedMessageRepository, PlanRepository planRepository, DataOtterService dataOtterService){
         this.namesRepository = namesRepository;
         this.guildData = guildData;
         this.linkedMessageRepository = linkedMessageRepository;
         this.planRepository = planRepository;
+        this.dataOtterService = dataOtterService;
     }
 
     @Bean
@@ -67,6 +72,7 @@ public class PartyBot  {
 
     @DiscordMapping(Id = "rename-chatroom")
     private void renameChatroom(SlashCommandInteractionEvent event){
+        dataOtterService.sendRock(new SlashCommandRock(event));
         try {
             // get voice channel the user is in
             AudioChannel voice = event.getMember().getVoiceState().getChannel();
@@ -89,6 +95,7 @@ public class PartyBot  {
 
     @DiscordMapping(Id = "limit")
     private void limit(SlashCommandInteractionEvent event){
+        dataOtterService.sendRock(new SlashCommandRock(event));
         try {
             // get voice channel the user is in
             AudioChannel voice = event.getMember().getVoiceState().getChannel();
@@ -132,12 +139,12 @@ public class PartyBot  {
     public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
         if(guildData.findById(event.getGuild().getIdLong()).get().getChatroomEnabled()) {
             if (event.getChannelJoined() != null && event.getChannelLeft() != null) {
-                playerLeft(event.getChannelLeft(), event.getGuild());
+                playerLeft(event.getChannelLeft(), event.getGuild(), event.getMember());
                 playerJoined(event.getChannelJoined().asVoiceChannel(), event.getGuild(), event.getMember());
             } else if (event.getChannelJoined() != null) {
                 playerJoined(event.getChannelJoined().asVoiceChannel(), event.getGuild(), event.getMember());
             } else if (event.getChannelLeft() != null) {
-                playerLeft(event.getChannelLeft(), event.getGuild());
+                playerLeft(event.getChannelLeft(), event.getGuild(), event.getMember());
             }
         }
     }
@@ -164,7 +171,8 @@ public class PartyBot  {
      * @param channelLeft The channel the user left
      * @param guild       the guild that the user left from
      */
-    private void playerLeft(AudioChannel channelLeft, Guild guild) {
+    private void playerLeft(AudioChannel channelLeft, Guild guild, Member member) {
+        dataOtterService.sendRock(new PartyBotRock(member.getIdLong(), false));
         GuildData savedGuild = guildData.findById(guild.getIdLong()).get();
         VoiceChannel channel = guild.getVoiceChannelById(channelLeft.getIdLong());
         if (channel.getParentCategoryIdLong() == savedGuild.getPartyCategory()) {
@@ -186,6 +194,7 @@ public class PartyBot  {
      */
     private void playerJoined(VoiceChannel channelJoined, Guild guild, Member member) {
         VoiceChannel channel = guild.getVoiceChannelById(channelJoined.getIdLong());
+        dataOtterService.sendRock(new PartyBotRock(member.getIdLong(), true));
         GuildData savedGuild = guildData.findById(guild.getIdLong()).get();
         if (channel.getParentCategoryIdLong() == savedGuild.getPartyCategory()) {
             if (channel.getIdLong() == savedGuild.getCreateChatId()) {

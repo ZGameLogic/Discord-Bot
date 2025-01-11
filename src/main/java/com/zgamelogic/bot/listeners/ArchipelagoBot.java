@@ -2,6 +2,8 @@ package com.zgamelogic.bot.listeners;
 
 import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
+import com.zgamelogic.data.intermediates.dataotter.SlashCommandRock;
+import com.zgamelogic.dataotter.DataOtterService;
 import jakarta.annotation.PostConstruct;
 import net.dv8tion.jda.api.entities.channel.ChannelType;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
@@ -18,6 +20,11 @@ import java.util.List;
 @DiscordController
 public class ArchipelagoBot {
     private final static String PLAYER_BASE_PATH = "players";
+    private final DataOtterService dataOtterService;
+
+    public ArchipelagoBot(DataOtterService dataOtterService) {
+        this.dataOtterService = dataOtterService;
+    }
 
     @PostConstruct
     public void init() {
@@ -29,6 +36,7 @@ public class ArchipelagoBot {
 
     @DiscordMapping(Id = "archipelago", SubId = "collect")
     private void collectionArchipelago(SlashCommandInteractionEvent event){
+        dataOtterService.sendRock(new SlashCommandRock(event));
         if(event.getChannel().getType() != ChannelType.GUILD_PUBLIC_THREAD && event.getChannel().getType() != ChannelType.GUILD_PRIVATE_THREAD) {
             event.reply("This has to be done in a thread").setEphemeral(true).queue();
             return;
