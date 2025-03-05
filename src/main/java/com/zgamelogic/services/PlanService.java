@@ -363,6 +363,10 @@ public class PlanService {
             TextChannel channel = discordGuild.getTextChannelById(link.getId().getChannelId());
             if(channel == null){
                 ThreadChannel tChannel = discordGuild.getThreadChannelById(link.getId().getChannelId());
+                if(tChannel == null) {
+                    log.error("Uh oh, thread channel is null. Cant update embed message");
+                    return;
+                }
                 tChannel.editMessageEmbedsById(link.getId().getMessageId(), getPlanChannelMessage(plan, discordGuild)).queue();
                 return;
             }
