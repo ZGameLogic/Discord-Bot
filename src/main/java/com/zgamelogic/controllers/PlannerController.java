@@ -46,6 +46,7 @@ public class PlannerController {
                 planData.userInvitees(),
                 planData.roleInvitees(),
                 planData.count(),
+                null,
                 null
         );
         Plan plan = planService.createPlan(planCreationData);
