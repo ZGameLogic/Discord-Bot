@@ -34,7 +34,7 @@
 		<dependency>
 			<groupId>com.zgamelogic</groupId>
 			<artifactId>spring-boot-starter-discord</artifactId>
-			<version>1.4.3</version>
+			<version>1.4.5</version>
 		</dependency>
 
 		<dependency>
@@ -62,7 +62,7 @@
 			<artifactId>spring-cloud-starter-config</artifactId>
 			<version>4.1.0</version>
 		</dependency>
-		
+
 		<dependency>
 			<groupId>org.json</groupId>
 			<artifactId>json</artifactId>

@@ -45,7 +45,9 @@ public class PlannerController {
                 discordUser.id(),
                 planData.userInvitees(),
                 planData.roleInvitees(),
-                planData.count()
+                planData.count(),
+                null,
+                null
         );
         Plan plan = planService.createPlan(planCreationData);
         if(plan == null) return ResponseEntity.badRequest().build();

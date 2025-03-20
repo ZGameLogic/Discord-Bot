@@ -10,5 +10,7 @@ public record PlanCreationData(
         Long author,
         List<Long> players,
         List<Long> roles,
-        int count
+        int count,
+        Long pollId,
+        Long pollChannelId
 ) {}

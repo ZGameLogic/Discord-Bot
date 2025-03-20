@@ -42,6 +42,8 @@ public class Plan {
     private Long privateMessageId;
     private int count;
     private Boolean deleted;
+    private Long pollId;
+    private Long pollChannelId;
 
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
     @MapKey(name = "id.userId")
@@ -60,6 +62,8 @@ public class Plan {
         invitees = new HashMap<>();
         linked =   new LinkedList<>();
         deleted = false;
+        pollId = planCreationData.pollId();
+        pollChannelId = planCreationData.pollChannelId();
     }
 
     public boolean isFull(){
@@ -71,6 +75,12 @@ public class Plan {
     public List<Long> getAcceptedIdsAndAuthor(){
         List<Long> users = getUserIdsWithStatus(ACCEPTED);
         users.add(authorId);
+        return users;
+    }
+    public List<Long> getAllUsers(){
+        List<Long> users = new ArrayList<>();
+        users.add(authorId);
+        users.addAll(invitees.keySet());
         return users;
     }
     public List<Long> getDeclinedIds(){ return getUserIdsWithStatus(PlanUser.Status.DECLINED); }
@@ -247,10 +257,12 @@ public class Plan {
             gen.writeNumberField("id", value.getId());
             gen.writeStringField("title", value.getTitle());
             gen.writeStringField("notes", value.getNotes());
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
-            dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
-            String formattedDate = dateFormat.format(value.getDate());
-            gen.writeStringField("start time", formattedDate);
+            if(value.getDate() != null) {
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
+                dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
+                String formattedDate = dateFormat.format(value.getDate());
+                gen.writeStringField("start time", formattedDate);
+            }
             gen.writeNumberField("count", value.getCount());
             gen.writeNumberField("author id", value.getAuthorId());
             gen.writeArrayFieldStart("invitees");

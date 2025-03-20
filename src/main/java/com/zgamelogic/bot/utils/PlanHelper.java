@@ -53,12 +53,24 @@ public abstract class PlanHelper {
         return eb.build();
     }
 
+    public static MessageEmbed getPrePlanMessage(String title, String notes, int count, long pollChannel, long poll) {
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(GENERAL_COLOR);
+        eb.setTitle("Pending event details");
+        eb.setDescription("Select people to invite (Don't include yourself).");
+        eb.addField("title", title, false);
+        eb.addField("notes", notes, false);
+        eb.addField("count", "" + count, false);
+        eb.addField("poll", pollChannel + "-" + poll, false);
+        return eb.build();
+    }
+
     public static MessageEmbed getHostMessage(Plan plan, Guild guild){
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(GENERAL_COLOR);
         eb.setTitle("Plan details for: " + plan.getTitle());
-        eb.setDescription("The event is scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) + "\n" +
-                plan.getNotes() + "\n" + plan.getLog() != null ? plan.getLog() : "");
+        String date = plan.getDate() != null ? "The event is scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) : "This plans date is being decided by a poll.";
+        eb.setDescription(date + "\n" + plan.getNotes() + "\n" + plan.getLog() != null ? plan.getLog() : "");
         infoBody(plan, eb);
         eb.setFooter(String.valueOf(plan.getId()));
         return eb.build();
@@ -76,8 +88,8 @@ public abstract class PlanHelper {
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(GENERAL_COLOR);
         eb.setTitle(plan.getTitle());
-        eb.setDescription("The event is scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) + "\n" +
-                plan.getNotes());
+        String date = plan.getDate() != null ? "This event is scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) : "This plans date is being decided by a poll.";
+        eb.setDescription(date + "\n" + plan.getNotes());
         eb.setFooter(String.valueOf(plan.getId()));
         eb.addField("Coordinator", guild.getJDA().getUserById(plan.getAuthorId()).getName(), true);
         eb.addField("People accepted", plan.getAcceptedIds().size() +
@@ -92,7 +104,8 @@ public abstract class PlanHelper {
         eb.setColor(GENERAL_COLOR);
         eb.setTitle(plan.getTitle());
         eb.setFooter(String.valueOf(plan.getId()));
-        eb.setDescription("The event was scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) + ". This event has been canceled");
+        String date = plan.getDate() != null ? "This event was scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) : "This plans date was being decided by a poll.";
+        eb.setDescription(date + ". This event has been canceled");
         return eb.build();
     }
 
@@ -102,10 +115,11 @@ public abstract class PlanHelper {
         String inviter = guild.getJDA().getUserById(plan.getAuthorId()).getName();
         int count = plan.getCount();
         eb.setTitle(inviter + " has invited you to join them doing: " + plan.getTitle());
+        String date = plan.getDate() != null ? "This event is scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) : "This plans date is being decided by a poll.";
         String desc = inviter + " is looking for " +
                 (plan.getCount() == -1 ? "" : count) +
                 " people to join them for " + plan.getTitle() + " (" + plan.getInvitees().size() + " invited).\n" +
-                "The event is scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime()) + "\n" +
+                date + "\n" +
                 "For more details, visit the planning channel in the discord server: " + guild.getName() + "\n" + plan.getNotes();
         if(plan.isFull() && !plan.isNeedFillIn()){
             desc += "\nWe are no longer looking for more members to join this event. Check back later in case someone drops out or requests a fill-in.\nYou can also waitlist yourself so if anyone does drop out or requests a fill-in, you will join the event automatically.";

@@ -8,6 +8,8 @@ import com.zgamelogic.bot.utils.EmbedMessageGenerator;
 import com.zgamelogic.data.database.planData.linkedMessage.LinkedMessageRepository;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
+import com.zgamelogic.data.database.planData.poll.PollVotes;
+import com.zgamelogic.data.database.planData.poll.PollVotesRepository;
 import com.zgamelogic.data.database.userData.User;
 import com.zgamelogic.data.database.userData.UserDataRepository;
 import com.zgamelogic.data.intermediates.dataotter.ButtonCommandRock;
@@ -15,17 +17,24 @@ import com.zgamelogic.data.intermediates.dataotter.ModalCommandRock;
 import com.zgamelogic.data.intermediates.dataotter.SlashCommandRock;
 import com.zgamelogic.data.intermediates.planData.DiscordRoleData;
 import com.zgamelogic.data.intermediates.planData.DiscordUserData;
+import com.zgamelogic.data.intermediates.planData.PlanEvent;
 import com.zgamelogic.data.plan.PlanCreationData;
 import com.zgamelogic.data.plan.PlanEventResultMessage;
 import com.zgamelogic.data.plan.PlanModalData;
+import com.zgamelogic.data.plan.PlanModalDataDateless;
 import com.zgamelogic.dataotter.DataOtterService;
 import com.zgamelogic.services.PlanService;
 import net.dv8tion.jda.api.entities.*;
+import net.dv8tion.jda.api.entities.messages.MessagePoll;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionEvent;
+import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
+import net.dv8tion.jda.api.events.message.poll.MessagePollVoteAddEvent;
+import net.dv8tion.jda.api.events.message.poll.MessagePollVoteRemoveEvent;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -33,6 +42,7 @@ import net.dv8tion.jda.api.interactions.components.selections.EntitySelectMenu;
 import net.dv8tion.jda.api.interactions.components.text.TextInput;
 import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
 import net.dv8tion.jda.api.interactions.modals.Modal;
+import net.dv8tion.jda.api.utils.TimeFormat;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -62,6 +72,7 @@ public class PlannerBot {
     @Value("${discord.plan.id}")
     private long discordPlanId;
 
+    private final PollVotesRepository pollVotesRepository;
     private final PlanRepository planRepository;
     private final UserDataRepository userDataRepository;
     private final PlanService planService;
@@ -71,12 +82,13 @@ public class PlannerBot {
     @Bot
     private JDA bot;
 
-    public PlannerBot(PlanRepository planRepository, UserDataRepository userDataRepository, PlanService planService, LinkedMessageRepository linkedMessageRepository, DataOtterService dataOtterService) {
+    public PlannerBot(PlanRepository planRepository, UserDataRepository userDataRepository, PlanService planService, LinkedMessageRepository linkedMessageRepository, DataOtterService dataOtterService, PollVotesRepository pollVotesRepository) {
         this.planRepository = planRepository;
         this.userDataRepository = userDataRepository;
         this.planService = planService;
         this.linkedMessageRepository = linkedMessageRepository;
         this.dataOtterService = dataOtterService;
+        this.pollVotesRepository = pollVotesRepository;
     }
 
     @Bean
@@ -96,7 +108,8 @@ public class PlannerBot {
                         .addSubcommands(
                                 new SubcommandData("enable", "Enables text messaging")
                                         .addOption(OptionType.STRING, "number", "your phone number. EX: 16301112222", true),
-                                new SubcommandData("disable", "Disables text messaging"))
+                                new SubcommandData("disable", "Disables text messaging")),
+                Commands.message("link_poll")
         );
     }
 
@@ -113,6 +126,92 @@ public class PlannerBot {
                 .filter(role -> role.getIdLong() != bot.getGuildById(guildId).getPublicRole().getIdLong())
                 .map(role -> new DiscordRoleData(role.getName(), role.getIdLong(), role.getColor()))
                 .toList();
+    }
+
+    @DiscordMapping(Id = "link_poll")
+    private void linkPlanToPoll(MessageContextInteractionEvent event){
+        MessagePoll poll = event.getTarget().getPoll();
+        if(poll == null || poll.isExpired()) {
+            event.reply("This can only be used on open polls.").setEphemeral(true).queue();
+            return;
+        }
+        for(MessagePoll.Answer a: poll.getAnswers()){
+            Date d = stringToDate(a.getText());
+            if(d == null){
+                event.reply("One or more of answers to this poll are not valid dates.").setEphemeral(true).queue();
+                return;
+            }
+        }
+        if(planRepository.existsPlanByPollIdAndDateIsNull(event.getTarget().getIdLong())){
+            event.reply("This poll is already being used for a plan").setEphemeral(true).queue();
+            return;
+        }
+        TextInput notes = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT)
+                .setPlaceholder("Grinding the event").setRequired(false).build();
+        TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
+                .setPlaceholder("Hunt Showdown").build();
+        TextInput count = TextInput.create("count", "Number of people (not including yourself)", TextInputStyle.SHORT)
+                .setPlaceholder("Leave empty for infinite").setRequired(false).build();
+        TextInput pollInput = TextInput.create("poll", "Poll Id", TextInputStyle.SHORT)
+                .setValue(event.getTarget().getChannelId() + "-" + event.getTarget().getId()).setRequired(true).build();
+        event.replyModal(Modal.create("plan_event_modal_poll", "Details of meeting")
+                        .addActionRow(name)
+                        .addActionRow(notes)
+                        .addActionRow(count)
+                        .addActionRow(pollInput)
+                        .build())
+                .queue();
+    }
+
+    @DiscordMapping
+    private void pollVoted(MessagePollVoteAddEvent event){
+        long pollId = event.getMessageIdLong();
+        long pollOptionId = event.getAnswerId();
+        long userId = event.getUserIdLong();
+        if(!planRepository.existsPlanByPollIdAndDateIsNull(pollId)) return;
+        PollVotes vote = new PollVotes(pollId, pollOptionId, userId);
+        pollVotesRepository.save(vote);
+    }
+
+    @DiscordMapping
+    private void pollUnVoted(MessagePollVoteRemoveEvent event){
+        long pollId = event.getMessageIdLong();
+        long pollOptionId = event.getAnswerId();
+        long userId = event.getUserIdLong();
+        if(!planRepository.existsPlanByPollIdAndDateIsNull(pollId)) return;
+        PollVotes vote = new PollVotes(pollId, pollOptionId, userId);
+        pollVotesRepository.delete(vote);
+    }
+
+    @DiscordMapping
+    private void pollEnded(MessageUpdateEvent event){
+        MessagePoll poll = event.getMessage().getPoll();
+        if(poll == null || !poll.isFinalizedVotes()) return;
+        Optional<Plan> optionalPlan = planRepository.findPlanByPollIdAndDateIsNull(event.getMessageIdLong());
+        if(optionalPlan.isEmpty()){ return; }
+        Plan plan = optionalPlan.get();
+        int maxVotes = poll.getAnswers().stream()
+                .mapToInt(MessagePoll.Answer::getVotes)
+                .max()
+                .orElse(0);
+
+        MessagePoll.Answer topAnswer = poll.getAnswers().stream()
+                .filter(answer -> answer.getVotes() == maxVotes).findFirst().get();
+
+        Date date = stringToDate(topAnswer.getText());
+        plan.setDate(date);
+        // Accept all the users who voted for this time
+        PlanEvent[] acceptEvents = pollVotesRepository.findAllByPollIdAndOptionId(event.getMessage().getIdLong(), topAnswer.getId())
+                .stream()
+                .map(PollVotes::getUserId)
+                .filter(id -> plan.getInvitees().containsKey(id))
+                .map(id -> new PlanEvent(PlanEvent.Event.USER_ACCEPTED, id))
+                .toArray(PlanEvent[]::new);
+        plan.processEvents(acceptEvents);
+        planRepository.save(plan);
+        planService.updateMessages(plan);
+        String dateMessage = plan.getTitle() + " poll has ended and has been scheduled for " + TimeFormat.DATE_TIME_SHORT.format(plan.getDate().getTime());
+        plan.getAcceptedIdsAndAuthor().forEach(id -> planService.sendMessage(plan, id, dateMessage));
     }
 
     @DiscordMapping(Id = "plan", SubId = "link", FocusedOption = "name")
@@ -207,6 +306,34 @@ public class PlannerBot {
                 .queue();
     }
 
+    @DiscordMapping(Id = "plan_event_modal_poll")
+    private void planEventModalPollCommand(
+            ModalInteractionEvent event,
+            @EventProperty PlanModalDataDateless planData
+    ){
+        int count;
+        try {
+            count = planData.count() != null && !planData.count().isEmpty() ? Integer.parseInt(planData.count()) : -1;
+        } catch (NumberFormatException e){
+            event.reply("Invalid count").setEphemeral(true).queue();
+            return;
+        }
+        if(count < 1 && count != -1){
+            event.reply("Invalid count").setEphemeral(true).queue();
+            return;
+        }
+        long pollId = planData.getPollId();
+        long pollChannelId = planData.getPollChannelId();
+        event.replyEmbeds(getPrePlanMessage(planData.title(), planData.notes(), count, pollChannelId, pollId))
+                .setEphemeral(true)
+                .addActionRow(
+                        EntitySelectMenu.create("People_poll", EntitySelectMenu.SelectTarget.USER, EntitySelectMenu.SelectTarget.ROLE)
+                                .setMinValues(1)
+                                .setMaxValues(25)
+                                .build())
+                .queue();
+    }
+
     @DiscordMapping(Id = "plan_event_modal")
     private void planEventModalResponse(
             ModalInteractionEvent event,
@@ -246,6 +373,42 @@ public class PlannerBot {
                 .queue();
     }
 
+    @DiscordMapping(Id = "People_poll")
+    private void planPeopleResponsePoll(EntitySelectInteractionEvent event){
+        if(event.getMentions().getMembers().isEmpty() && event.getMentions().getRoles().isEmpty()) {
+            event.reply("You must select a member or role to invite to the event").setEphemeral(true).queue();
+            return;
+        }
+
+        event.deferReply().setEphemeral(true).queue();
+        List<MessageEmbed.Field> fields = event.getMessage().getEmbeds().get(0).getFields();
+        String title = fields.stream().filter(field -> field.getName().equals("title")).findFirst().get().getValue();
+        String notes = fields.stream().filter(field -> field.getName().equals("notes")).findFirst().get().getValue().replace((char)8206 + "", "");
+        String[] pollAndChannel = fields.stream().filter(field -> field.getName().equals("poll")).findFirst().get().getValue().split("-");
+        long poll = Long.parseLong(pollAndChannel[1]);
+        long pollChannel = Long.parseLong(pollAndChannel[0]);
+        int count = Integer.parseInt(fields.stream().filter(field -> field.getName().equals("count")).findFirst().get().getValue());
+        PlanCreationData planData = new PlanCreationData(
+                title,
+                notes,
+                null,
+                event.getUser().getIdLong(),
+                event.getMentions().getMembers().stream().map(ISnowflake::getIdLong).toList(),
+                event.getMentions().getRoles().stream().map(ISnowflake::getIdLong).toList(),
+                count,
+                poll,
+                pollChannel
+        );
+        Plan plan = planService.createPlan(planData);
+        if(plan == null) {
+            event.getHook().setEphemeral(true).sendMessage("Event not created as the invite list resolves to empty. Invites to yourself, bots or users who are marked with `no plan` do not count.").queue();
+            return;
+        }
+        planService.sendPollToAll(plan);
+        event.getHook().setEphemeral(true).sendMessage("Event created in <#" + discordPlanId + ">").queue();
+        event.getMessage().delete().queue();
+    }
+
     @DiscordMapping(Id = "People")
     private void planPeopleResponse(EntitySelectInteractionEvent event){
         if(event.getMentions().getMembers().isEmpty() && event.getMentions().getRoles().isEmpty()) {
@@ -266,7 +429,9 @@ public class PlannerBot {
                 event.getUser().getIdLong(),
                 event.getMentions().getMembers().stream().map(ISnowflake::getIdLong).toList(),
                 event.getMentions().getRoles().stream().map(ISnowflake::getIdLong).toList(),
-                count
+                count,
+                null,
+                null
         );
         boolean success = planService.createPlan(planData) != null;
         if(!success) {
@@ -285,7 +450,7 @@ public class PlannerBot {
         String dateString = event.getValue("date").getAsString();
         String title = event.getValue("title").getAsString();
         Date date = stringToDate(dateString);
-        if(date == null){
+        if(date == null && !dateString.equals("poll")){
             event.reply(STD_HELPER_MESSAGE).setEphemeral(true).queue();
             return;
         }
@@ -305,7 +470,9 @@ public class PlannerBot {
         plan.setCount(count);
         plan.setTitle(title);
         plan.setNotes(notes);
-        plan.setDate(date);
+        if(date != null){
+            plan.setDate(date);
+        }
         planService.updateMessages(plan);
         planRepository.save(plan);
         event.reply("Plan details have been edited").setEphemeral(true).queue();
@@ -373,7 +540,7 @@ public class PlannerBot {
         if(plan.getDate() != null) {
             dateString = formatter.format(plan.getDate());
         } else {
-            dateString = formatter.format(new Date());
+            dateString = "poll";
         }
         TextInput date = TextInput.create("date", "Date", TextInputStyle.SHORT)
                 .setValue(dateString).build();

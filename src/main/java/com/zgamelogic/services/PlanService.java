@@ -322,6 +322,15 @@ public class PlanService {
         planRepository.save(plan);
     }
 
+    public void sendPollToAll(Plan plan){
+        String planLink = "https://discord.com/channels/" + discordGuild.getId() + "/" + plan.getPollChannelId() + "/" + plan.getPollId();
+        plan.getAllUsers().forEach(user -> {
+            bot.openPrivateChannelById(user).queue(privateChannel -> {
+                privateChannel.sendMessage("The poll to vote on this plans time can be found at: " + planLink).queue();
+            });
+        });
+    }
+
     public void updateMessages(Plan plan){
         // update guild message
         try {
@@ -450,7 +459,9 @@ public class PlanService {
                 newCrew.remove(0).getId().getUserId(),
                 newCrew.stream().map(user -> user.getId().getUserId()).toList(),
                 List.of(),
-                plan.getCount()
+                plan.getCount(),
+                null,
+                null
         );
         Plan newPlan = new Plan(planCreationData);
         newCrew.stream().map(user -> user.getId().getUserId()).forEach(planUser -> newPlan.getInvitees().put(planUser, new PlanUser(plan, planUser, PlanUser.Status.ACCEPTED)));
