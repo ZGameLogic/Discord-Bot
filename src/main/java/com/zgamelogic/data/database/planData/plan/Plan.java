@@ -42,6 +42,7 @@ public class Plan {
     private Long privateMessageId;
     private int count;
     private Boolean deleted;
+    private Long pollId;
 
     @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
     @MapKey(name = "id.userId")
@@ -60,6 +61,7 @@ public class Plan {
         invitees = new HashMap<>();
         linked =   new LinkedList<>();
         deleted = false;
+        pollId = planCreationData.pollId();
     }
 
     public boolean isFull(){

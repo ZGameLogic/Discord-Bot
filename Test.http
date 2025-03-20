@@ -1,0 +1,2 @@
+### GET request to example server
+POST http://localhost:2001/auth/relogin?userId=232675572772372481&token=CBkpmjJfKTASuXSHxi5Tb27rLoTild&device=9955598B-5B41-4912-B087-03186A4E2B0A

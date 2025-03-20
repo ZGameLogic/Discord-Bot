@@ -53,6 +53,18 @@ public abstract class PlanHelper {
         return eb.build();
     }
 
+    public static MessageEmbed getPrePlanMessage(String title, String notes, int count, long poll) {
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(GENERAL_COLOR);
+        eb.setTitle("Pending event details");
+        eb.setDescription("Select people to invite (Don't include yourself).");
+        eb.addField("title", title, false);
+        eb.addField("notes", notes, false);
+        eb.addField("count", "" + count, false);
+        eb.addField("poll", "" + poll, false);
+        return eb.build();
+    }
+
     public static MessageEmbed getHostMessage(Plan plan, Guild guild){
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(GENERAL_COLOR);

@@ -450,7 +450,8 @@ public class PlanService {
                 newCrew.remove(0).getId().getUserId(),
                 newCrew.stream().map(user -> user.getId().getUserId()).toList(),
                 List.of(),
-                plan.getCount()
+                plan.getCount(),
+                null
         );
         Plan newPlan = new Plan(planCreationData);
         newCrew.stream().map(user -> user.getId().getUserId()).forEach(planUser -> newPlan.getInvitees().put(planUser, new PlanUser(plan, planUser, PlanUser.Status.ACCEPTED)));

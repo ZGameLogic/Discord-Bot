@@ -1,0 +1,13 @@
+{
+  "installed": {
+    "client_id": "268486966599-ub46v25coojqam95ugmm2hqceb6sb9i3.apps.googleusercontent.com",
+    "project_id": "discord-bot-446000",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_secret": "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",
+    "redirect_uris": [
+      "http://localhost"
+    ]
+  }
+}
