@@ -9,5 +9,4 @@ spec:
     - protocol: TCP
       port: 2000
       targetPort: 2000
-      nodePort: 30020
-  type: NodePort
+  type: ClusterIP

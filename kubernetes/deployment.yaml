@@ -20,9 +20,6 @@ spec:
           image: ghcr.io/zgamelogic/discord-bot:master
           imagePullPolicy: Always
           volumeMounts:
-            - name: keystore-volume
-              mountPath: "/etc/keystore"
-              readOnly: true
             - name: archipelago-player-volume
               mountPath: "/players"
               readOnly: false
@@ -40,9 +37,6 @@ spec:
             initialDelaySeconds: 15
             periodSeconds: 5
       volumes:
-        - name: keystore-volume
-          secret:
-            secretName: ssl-keystore-secret
         - name: apns-volume
           hostPath:
             path: /home/Ben/front-end/apns
