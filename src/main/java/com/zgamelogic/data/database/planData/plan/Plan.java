@@ -108,6 +108,12 @@ public class Plan {
                 .toList();
     }
 
+    public List<PlanUser> getUserWithStatus(List<PlanUser.Status> status) {
+        return invitees.values().stream()
+                .filter(user -> status.contains(user.getUserStatus()))
+                .toList();
+    }
+
     public boolean requestedFillIn(long id){
         return invitees.values().stream()
                 .anyMatch(user -> user.getId().getUserId() == id && user.isNeedFillIn());
