@@ -10,6 +10,7 @@ import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.database.planData.poll.PollVotes;
 import com.zgamelogic.data.database.planData.poll.PollVotesRepository;
+import com.zgamelogic.data.database.planData.user.PlanUser;
 import com.zgamelogic.data.database.userData.User;
 import com.zgamelogic.data.database.userData.UserDataRepository;
 import com.zgamelogic.data.intermediates.dataotter.ButtonCommandRock;
@@ -634,6 +635,34 @@ public class PlannerBot {
         long planId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
         PlanEventResultMessage result = planService.maybe(planId, userId);
         if(!result.success()) event.getMessage().reply(result.message()).queue();
+    }
+
+    @DiscordMapping(Id = "schedule_reminder")
+    private void scheduleReminder(ButtonInteractionEvent event){
+        TextInput message = TextInput.create("message", "Message", TextInputStyle.SHORT).setRequired(true).build();
+        TextInput date = TextInput.create("date", "Date", TextInputStyle.SHORT).setRequired(true).build();
+
+        event.replyModal(Modal.create("schedule_reminder_modal", "Schedule Reminder")
+            .addActionRow(message)
+            .addActionRow(date)
+            .build()
+        ).queue();
+    }
+
+    @DiscordMapping(Id = "schedule_reminder_modal")
+    private void scheduleReminderModal(
+        ModalInteractionEvent event,
+        @EventProperty(name = "date") String dateString,
+        @EventProperty String message
+    ){
+        Date date = stringToDate(dateString);
+        if(date == null){
+            event.reply("Date is invalid").setEphemeral(true).queue();
+            return;
+        }
+        Plan plan = planRepository.findById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText())).get();
+        planService.createPlanReminder(plan, date, PlanUser.Status.MAYBED, message);
+        event.reply("Reminder has been scheduled").setEphemeral(true).queue();
     }
 
     @Scheduled(cron = "0 * * * * *")

@@ -8,6 +8,8 @@ import com.zgamelogic.data.database.guildData.GuildData;
 import com.zgamelogic.data.database.guildData.GuildDataRepository;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
+import com.zgamelogic.data.database.planData.reminder.PlanReminder;
+import com.zgamelogic.data.database.planData.reminder.PlanReminderRepository;
 import com.zgamelogic.data.database.planData.user.PlanUser;
 import com.zgamelogic.data.database.userData.UserDataRepository;
 import com.zgamelogic.data.intermediates.planData.PlanEvent;
@@ -58,18 +60,20 @@ public class PlanService {
     private final PlanRepository planRepository;
     private final PlannerWebsocketService plannerWebsocketService;
     private final UserDataRepository userDataRepository;
+    private final PlanReminderRepository planReminderRepository;
     private final ApplePushNotificationService apns;
 
     private TextChannel planTextChannel;
     private Guild discordGuild;
 
-    public PlanService(GuildDataRepository guildDataRepository, PlanRepository planRepository, PlannerWebsocketService plannerWebsocketService, ApplePushNotificationService apns, AuthDataRepository authDataRepository, UserDataRepository userDataRepository) {
+    public PlanService(GuildDataRepository guildDataRepository, PlanRepository planRepository, PlannerWebsocketService plannerWebsocketService, ApplePushNotificationService apns, AuthDataRepository authDataRepository, UserDataRepository userDataRepository, PlanReminderRepository planReminderRepository) {
         this.guildDataRepository = guildDataRepository;
         this.planRepository = planRepository;
         this.plannerWebsocketService = plannerWebsocketService;
         this.apns = apns;
         this.authDataRepository = authDataRepository;
         this.userDataRepository = userDataRepository;
+        this.planReminderRepository = planReminderRepository;
     }
 
     @DiscordMapping
@@ -196,6 +200,7 @@ public class PlanService {
         try {
             authorMessageId = bot.getUserById(planData.author()).openPrivateChannel().complete().sendMessageEmbeds(getHostMessage(savedPlan, discordGuild)).addActionRow(
                     List.of(
+                            Button.secondary("schedule_reminder", "Schedule reminder"),
                             Button.secondary("send_message", "Send message"),
                             Button.secondary("edit_event", "Edit details"),
                             Button.danger("delete_event", "Delete event")
@@ -383,6 +388,11 @@ public class PlanService {
         });
     }
 
+    public PlanReminder createPlanReminder(Plan plan, Date time, PlanUser.Status minStatus, String message){
+        PlanReminder reminder = new PlanReminder(plan, time, minStatus, message);
+        return planReminderRepository.save(reminder);
+    }
+
     @Scheduled(cron = "0 0 9 * * *")
     public void nineAmTasks(){
         planRepository.findAllPlansByDateWithAvailableSpots(new Date()).forEach(plan -> {
@@ -439,6 +449,18 @@ public class PlanService {
                 }
             });
         });
+
+        // reminders
+        planReminderRepository.getRemindersByTime(new Date()).forEach(planReminder -> {
+            if(planReminder.getPlan().getDeleted()) return;
+            List<PlanUser.Status> statuses = PlanUser.Status.getHierarchalStatus(planReminder.getMinStatus());
+            List<PlanUser> planUsers = planReminder.getPlan().getUserWithStatus(statuses);
+            planUsers.forEach(user -> {
+                bot.openPrivateChannelById(user.getId().getUserId()).queue(channel -> {
+                   channel.sendMessageEmbeds(reminderMessage(planReminder)).queue();
+                });
+            });
+        });
     }
 
     private void createNewPlanFromWaitlist(Plan plan){
@@ -473,6 +495,7 @@ public class PlanService {
         savedPlan.setMessageId(planChannelMessageId); // Send plan channel message and save id
         long authorMessageId = bot.getUserById(newPlan.getAuthorId()).openPrivateChannel().complete().sendMessageEmbeds(getHostMessage(savedPlan, discordGuild)).addActionRow(
                 List.of(
+                        Button.secondary("schedule_reminder", "Schedule reminder"),
                         Button.secondary("send_message", "Send message"),
                         Button.secondary("edit_event", "Edit details"),
                         Button.danger("delete_event", "Delete event")

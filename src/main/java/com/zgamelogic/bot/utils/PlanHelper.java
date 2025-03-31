@@ -1,6 +1,7 @@
 package com.zgamelogic.bot.utils;
 
 import com.zgamelogic.data.database.planData.plan.Plan;
+import com.zgamelogic.data.database.planData.reminder.PlanReminder;
 import com.zgamelogic.data.database.planData.user.PlanUser;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Guild;
@@ -16,6 +17,14 @@ import static com.zgamelogic.bot.utils.EmbedMessageGenerator.GENERAL_COLOR;
 public abstract class PlanHelper {
 
     public static Button IOS_BUTTON = Button.link("https://testflight.apple.com/join/TtCib0x1", "iOS app");
+
+    public static MessageEmbed reminderMessage(PlanReminder reminder) {
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setTitle("Reminder for plan: " + reminder.getPlan().getTitle());
+        eb.setDescription(reminder.getMessage());
+        eb.setColor(GENERAL_COLOR);
+        return eb.build();
+    }
 
     public static MessageEmbed getFiveTillMessage(Plan plan){
         EmbedBuilder eb = new EmbedBuilder();

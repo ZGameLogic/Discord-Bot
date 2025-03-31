@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.util.Date;
+import java.util.List;
 
 @Entity
 @Getter
@@ -21,7 +22,16 @@ public class PlanUser {
         MAYBED, // 3
         WAITLISTED, // 2
         FILLINED, // 4
-        DECLINED // -1
+        DECLINED; // -1
+
+        public static List<Status> getHierarchalStatus(Status status){
+            return switch (status){
+                case DECIDING -> List.of(DECIDING, ACCEPTED, MAYBED, WAITLISTED, FILLINED);
+                case ACCEPTED, WAITLISTED, FILLINED -> List.of(ACCEPTED, WAITLISTED, FILLINED);
+                case MAYBED -> List.of(ACCEPTED, MAYBED, WAITLISTED, FILLINED);
+                case DECLINED -> List.of(DECLINED);
+            };
+        }
     }
 
     @EmbeddedId
