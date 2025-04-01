@@ -13,7 +13,7 @@ spec:
               service:
                 name: discord-bot
                 port:
-                  number: 2000
+                  number: 8080
   tls:
     - hosts:
         - "discord.zgamelogic.com"
