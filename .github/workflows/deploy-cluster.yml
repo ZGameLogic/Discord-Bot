@@ -37,7 +37,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ghcr.io/zgamelogic/discord-bot:master
           labels: ${{ steps.meta.outputs.labels }}
   disable-monitor:
     uses: zgamelogic/data-otter-monitor-active/.github/workflows/action.yml@v1.0.2
