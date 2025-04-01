@@ -8,6 +8,6 @@ COPY /target/DiscordBot-1.0.jar /app/DiscordBot-1.0.0.jar
 
 EXPOSE 8080
 
-ENV SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-cert}
+ENV SPRING_PROFILES_ACTIVE=$SPRING_PROFILES_ACTIVE
 
 CMD ["java", "-jar", "-Dspring.profiles.active=${SPRING_PROFILES_ACTIVE}", "DiscordBot-1.0.0.jar"]
