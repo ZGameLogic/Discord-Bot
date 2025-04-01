@@ -7,6 +7,6 @@ spec:
     app: discord-bot
   ports:
     - protocol: TCP
-      port: 2000
-      targetPort: 2000
+      port: 8080
+      targetPort: 8080
   type: ClusterIP
