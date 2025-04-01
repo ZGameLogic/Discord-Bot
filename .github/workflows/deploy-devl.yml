@@ -59,4 +59,3 @@ jobs:
       - name: Rolling update
         run: |
           sudo kubectl rollout restart deployment discord-bot-dev
-          sudo kubectl rollout status deployment discord-bot-dev --timeout=600s
