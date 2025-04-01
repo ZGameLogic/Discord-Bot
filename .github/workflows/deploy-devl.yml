@@ -43,7 +43,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ github.repository }}:development
+          tags: ghcr.io/zgamelogic/discord-bot:development
           labels: ${{ steps.meta.outputs.labels }}
 
   Kubernetes:
