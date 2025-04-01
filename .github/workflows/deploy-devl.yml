@@ -24,7 +24,7 @@ jobs:
       - name: build project
         run: mvn clean install
       - name: Build the Docker image
-        run: docker build -f Dockerfile-Dev . --tag tsa:$(date +%s)
+        run: docker build -f Dockerfile-Dev .
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
