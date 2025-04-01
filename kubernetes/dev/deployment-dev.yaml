@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: discord-bot-dev
+  labels:
+    app: discord-bot-dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: discord-bot-dev
+  template:
+    metadata:
+      name: discord-bot-dev
+      labels:
+        app: discord-bot-dev
+    spec:
+      containers:
+        - name: discord-bot-dev
+          image: ghcr.io/zgamelogic/discord-bot:development
+          imagePullPolicy: Always
+          volumeMounts:
+            - name: archipelago-player-volume
+              mountPath: "/players"
+              readOnly: false
+            - name: apns-volume
+              mountPath: "/apns"
+              readOnly: true
+          env:
+            - name: TZ
+              value: "America/Chicago"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8085
+              scheme: HTTP
+            initialDelaySeconds: 15
+            periodSeconds: 5
+      volumes:
+        - name: apns-volume
+          hostPath:
+            path: /home/Ben/front-end/apns
+            type: Directory
+        - name: archipelago-player-volume
+          hostPath:
+            path: /home/Ben/front-end/archipelago/Players
+            type: Directory
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: ghcr-secret

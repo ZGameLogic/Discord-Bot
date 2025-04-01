@@ -33,12 +33,19 @@ public class ApplePushNotificationService {
     @Value("${org_id}") private String orgId;
     @Value("${APN}")    private String apnEndpoint;
 
+    private final boolean enabled;
+
+    public ApplePushNotificationService() {
+        enabled = new File("/apns/AuthKey_" + kid + ".p8").exists();
+    }
+
     @PostConstruct
     public void init() {
         log.info("AuthKey_{} : {}", kid, new File("/apns/AuthKey_" + kid + ".p8").exists());
     }
 
     public void sendLiveNotificationStart(String device, ApplePlanLiveNotification notification){
+        if (!enabled) return;
         String url = apnEndpoint + "/3/device/" + device;
         HttpHeaders headers = new HttpHeaders();
         headers.add("authorization", "bearer " + authJWT());
@@ -62,6 +69,7 @@ public class ApplePushNotificationService {
     }
 
     public void sendNotification(String device, ApplePlanNotification notification){
+        if (!enabled) return;
         String url = apnEndpoint + "/3/device/" + device;
         HttpHeaders headers = new HttpHeaders();
         headers.add("authorization", "bearer " + authJWT());
