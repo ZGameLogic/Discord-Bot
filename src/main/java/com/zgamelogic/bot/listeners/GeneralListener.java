@@ -6,12 +6,7 @@ import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
 import com.zgamelogic.data.database.guildData.GuildDataRepository;
 import com.zgamelogic.data.intermediates.messaging.Message;
-import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import net.dv8tion.jda.api.interactions.commands.build.CommandData;
-import net.dv8tion.jda.api.interactions.commands.build.Commands;
-import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.RestController;
-import com.zgamelogic.services.TwilioService;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Guild;
@@ -41,7 +36,6 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class GeneralListener {
 
     private final GuildDataRepository guildData;
-    private final TwilioService twilioService;
 
     @Bot
     private JDA bot;
@@ -50,9 +44,8 @@ public class GeneralListener {
     private String apiToken;
 
     @Autowired
-    public GeneralListener(GuildDataRepository guildData, TwilioService twilioService){
+    public GeneralListener(GuildDataRepository guildData){
         this.guildData = guildData;
-        this.twilioService = twilioService;
     }
 
     @DiscordMapping
@@ -82,14 +75,6 @@ public class GeneralListener {
     private void replyTextMessageButtonPress(ButtonInteractionEvent event){
         TextInput message = TextInput.create("message", "Reply", TextInputStyle.PARAGRAPH).build();
         event.replyModal(Modal.create("reply_text_modal", "Message response").addActionRow(message).build()).queue();
-    }
-
-    @DiscordMapping(Id = "reply_text_modal")
-    private void modalResponseTextMessageReply(ModalInteractionEvent event){
-        String number = event.getMessage().getContentRaw().split("\n")[0].replace("Text message received from number: ", "");
-        String message = event.getValue("message").getAsString();
-        twilioService.sendMessage(number, message);
-        event.reply("Message has been sent").queue();
     }
 
     @DiscordMapping

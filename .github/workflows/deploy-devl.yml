@@ -1,8 +1,14 @@
-name: Docker Image CI
+name: Deploy Development
 
 on:
-  push:
-    branches: [ "master" ]
+  pull_request:
+    types:
+      - synchronize
+      - opened
+      - reopened
+    branches:
+      - master
+
 jobs:
   build:
     permissions: write-all
@@ -18,7 +24,7 @@ jobs:
       - name: build project
         run: mvn clean install
       - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag tsa:$(date +%s) --build-arg SPRING_PROFILES_ACTIVE=cluster
+        run: docker build . --file Dockerfile --tag tsa:$(date +%s)
       - name: Log in to the Container registry
         uses: docker/login-action@v3
         with:
@@ -37,34 +43,20 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: ghcr.io/zgamelogic/discord-bot:development
           labels: ${{ steps.meta.outputs.labels }}
-  disable-monitor:
-    uses: zgamelogic/data-otter-monitor-active/.github/workflows/action.yml@v1.0.2
-    needs: build
-    with:
-      applicationId: 2
-      monitorId: 4
-      active: false
+
   Kubernetes:
     runs-on: PiServer
-    needs: disable-monitor
+    needs: build
     steps:
       - name: Checkout Kubernetes Directory
         uses: actions/checkout@v4
         with:
-          sparse-checkout: 'kubernetes/cluster'
+          sparse-checkout: 'kubernetes/dev'
       - name: Apply Kubernetes Configuration
-        run: sudo kubectl apply -f kubernetes/cluster
+        run: sudo kubectl apply -f kubernetes/dev
       - name: Rolling update
         run: |
-          sudo kubectl rollout restart deployment discord-bot
-          sudo kubectl rollout status deployment discord-bot --timeout=600s
-  enable-monitor:
-    uses: zgamelogic/data-otter-monitor-active/.github/workflows/action.yml@v1.0.2
-    needs: [ build, disable-monitor, Kubernetes ]
-    if: always()
-    with:
-      applicationId: 2
-      monitorId: 4
-      active: true
+          sudo kubectl rollout restart deployment discord-bot-dev
+          sudo kubectl rollout status deployment discord-bot-dev --timeout=600s
