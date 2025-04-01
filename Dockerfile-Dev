@@ -8,4 +8,4 @@ COPY /target/DiscordBot-1.0.jar /app/DiscordBot-1.0.0.jar
 
 EXPOSE 8080
 
-CMD ["java", "-jar", "-Dspring.profiles.active=cluster", "DiscordBot-1.0.0.jar"]
+CMD ["java", "-jar", "-Dspring.profiles.active=cert", "DiscordBot-1.0.0.jar"]
