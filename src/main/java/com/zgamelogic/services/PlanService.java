@@ -460,6 +460,9 @@ public class PlanService {
                    channel.sendMessageEmbeds(reminderMessage(planReminder)).queue();
                 });
             });
+            bot.openPrivateChannelById(planReminder.getPlan().getAuthorId()).queue(channel -> {
+                channel.sendMessageEmbeds(reminderMessage(planReminder)).queue();
+            });
         });
     }
 
