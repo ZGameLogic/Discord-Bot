@@ -20,9 +20,6 @@ spec:
           image: ghcr.io/zgamelogic/discord-bot:development
           imagePullPolicy: Always
           volumeMounts:
-            - name: archipelago-player-volume
-              mountPath: "/players"
-              readOnly: false
             - name: apns-volume
               mountPath: "/apns"
               readOnly: true
@@ -38,13 +35,8 @@ spec:
             periodSeconds: 5
       volumes:
         - name: apns-volume
-          hostPath:
-            path: /home/Ben/front-end/apns
-            type: Directory
-        - name: archipelago-player-volume
-          hostPath:
-            path: /home/Ben/front-end/archipelago/Players
-            type: Directory
+          secret:
+            secretName: apns-secret
       restartPolicy: Always
       imagePullSecrets:
         - name: ghcr-secret
