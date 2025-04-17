@@ -137,8 +137,8 @@ public class PlanService {
         plannerWebsocketService.sendMessage(plan);
         String username = discordGuild.getMemberById(user.getId().getUserId()).getEffectiveName();
         ApplePlanNotification notification = ApplePlanNotification.PlanAccepted(plan.getTitle(), username);
-        authDataRepository.findAllById_DiscordIdAndAppleNotificationIdNotNull(plan.getAuthorId())
-                .forEach(auth -> apns.sendNotification(auth.getAppleNotificationId(), notification));
+        authDataRepository.findAllById_DiscordIdAndNotificationIdNotNull(plan.getAuthorId())
+                .forEach(auth -> apns.sendNotification(auth.getNotificationId(), notification));
         return PlanEventResultMessage.success(PLAN_UPDATED);
     }
 
@@ -223,8 +223,8 @@ public class PlanService {
                     .complete().getIdLong();
             savedPlan.getInvitees().get(memberId).setDiscordNotificationId(pmId);
             authDataRepository
-                    .findAllById_DiscordIdAndAppleNotificationIdNotNull(memberId)
-                    .forEach(data -> apns.sendNotification(data.getAppleNotificationId(), notification));
+                    .findAllById_DiscordIdAndNotificationIdNotNull(memberId)
+                    .forEach(data -> apns.sendNotification(data.getNotificationId(), notification));
             } catch(Exception e) {
                 log.error("Error sending private message", e);
             }
@@ -402,8 +402,8 @@ public class PlanService {
                 User u = discordGuild.getMemberById(user.getId().getUserId()).getUser();
                 log.info("Sending {} a message about a maybed plan", u.getName());
                 u.openPrivateChannel().queue(channel -> channel.sendMessageEmbeds(discordMessage).queue());
-                authDataRepository.findAllById_DiscordIdAndAppleNotificationIdNotNull(user.getId().getUserId()).forEach(auth -> {
-                    apns.sendNotification(auth.getAppleNotificationId(), appleMessage);
+                authDataRepository.findAllById_DiscordIdAndNotificationIdNotNull(user.getId().getUserId()).forEach(auth -> {
+                    apns.sendNotification(auth.getNotificationId(), appleMessage);
                 });
             });
         });
