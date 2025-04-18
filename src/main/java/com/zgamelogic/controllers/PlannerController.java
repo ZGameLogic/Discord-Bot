@@ -1,8 +1,10 @@
 package com.zgamelogic.controllers;
 
+import com.zgamelogic.bot.utils.PlanHelper;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.intermediates.planData.CreatePlanData;
+import com.zgamelogic.data.intermediates.planData.PlanWithActionsData;
 import com.zgamelogic.data.plan.PlanCreationData;
 import com.zgamelogic.data.plan.PlanEventResultMessage;
 import com.zgamelogic.discord.auth.data.authData.DiscordUser;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -28,12 +31,18 @@ public class PlannerController {
     }
 
     @GetMapping("plans")
-    private ResponseEntity<List<Plan>> getPlans(DiscordUser discordUser) {
+    private ResponseEntity<List<PlanWithActionsData>> getPlans(DiscordUser discordUser) {
         LocalDateTime dateTimeAnHourAgo = LocalDateTime.now().minusHours(1);
         Date dateAnHourAgo = Date.from(dateTimeAnHourAgo.atZone(ZoneId.systemDefault()).toInstant());
         List<Plan> plans = planRepository.findAllPlansByUserId(discordUser.id(), dateAnHourAgo);
         plans.addAll(planRepository.findAllPlansByAuthorId(discordUser.id(), dateAnHourAgo));
-        return ResponseEntity.ok(plans);
+        List<PlanWithActionsData> plansWithActionsData = plans.stream().map(plan -> {
+            List<PlanWithActionsData.PlanAction> actions = new ArrayList<>();
+            PlanHelper.getButtons(plan.isFull(), plan.isNeedFillIn(), plan.getStatusOfUser(discordUser.id()), false);
+            // TODO finish this
+            return new PlanWithActionsData(plan, actions);
+        }).toList();
+        return ResponseEntity.ok(plansWithActionsData);
     }
 
     @PostMapping("plans")

@@ -95,6 +95,9 @@ public class Plan {
     public List<PlanUser> getPending(){ return getUserWithStatus(DECIDING); }
     public List<PlanUser> getFillinedList(){ return getUserWithStatus(PlanUser.Status.FILLINED); }
 
+    public PlanUser.Status getStatusOfUser(Long userId){
+        return invitees.get(userId).getUserStatus();
+    }
     private List<Long> getUserIdsWithStatus(PlanUser.Status status) {
         return invitees.values().stream()
                 .filter(user -> user.getUserStatus() == status)
