@@ -4,7 +4,9 @@ import com.fasterxml.jackson.annotation.JsonUnwrapped;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Getter
@@ -17,17 +19,21 @@ public class PlanWithActionsData {
     @Getter
     @AllArgsConstructor
     public enum PlanAction {
-        ACCEPT(0b1000_0000_0000),
-        MAYBE(0b0100_0000_0000),
-        DENY(0b0010_0000_0000),
-        DROPOUT(0b0001_0000_0000),
-        WAITLIST(0b0000_1000_0000),
-        FILLIN(0b0000_0100_0000),
-        REQUEST_FILLIN(0b0000_0010_0000),
-        EDIT_EVENT(0b0000_0000_1000),
-        DELETE(0b0000_0000_0100),
-        SEND_MESSAGE(0b0000_0000_0010),
-        SCHEDULE_REMINDER(0b0000_0000_0001);
-        private final int mask;
+        ACCEPT("accept_event"),
+        MAYBE("maybe_event"),
+        DENY("deny_event"),
+        DROPOUT("drop_out_event"),
+        WAITLIST("waitlist_event"),
+        FILLIN("fill_in"),
+        REQUEST_FILLIN("request_fill_in"),
+        EDIT_EVENT("edit_event"),
+        DELETE("delete_event"),
+        SEND_MESSAGE("send_message"),
+        SCHEDULE_REMINDER("schedule_reminder");
+        private final String id;
+
+        public static PlanAction fromButton(Button button){
+            return Arrays.stream(PlanAction.values()).filter(action -> action.getId().equals(button.getId())).findFirst().orElse(null);
+        }
     }
 }

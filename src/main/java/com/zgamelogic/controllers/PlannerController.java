@@ -15,9 +15,9 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import static com.zgamelogic.data.intermediates.planData.PlanWithActionsData.PlanAction.*;
 
 @Slf4j
 @RestController
@@ -37,10 +37,12 @@ public class PlannerController {
         List<Plan> plans = planRepository.findAllPlansByUserId(discordUser.id(), dateAnHourAgo);
         plans.addAll(planRepository.findAllPlansByAuthorId(discordUser.id(), dateAnHourAgo));
         List<PlanWithActionsData> plansWithActionsData = plans.stream().map(plan -> {
-            List<PlanWithActionsData.PlanAction> actions = new ArrayList<>();
-            PlanHelper.getButtons(plan.isFull(), plan.isNeedFillIn(), plan.getStatusOfUser(discordUser.id()), false);
-            // TODO finish this
-            return new PlanWithActionsData(plan, actions);
+            if(plan.getAuthorId() == discordUser.id()) {
+                return new PlanWithActionsData(plan, List.of(EDIT_EVENT, DELETE, SEND_MESSAGE, SCHEDULE_REMINDER));
+            } else {
+                return new PlanWithActionsData(plan, PlanHelper.getButtons(plan.isFull(), plan.isNeedFillIn(), plan.getStatusOfUser(discordUser.id()), plan.getInvitees().get(discordUser.id()).isNeedFillIn())
+                        .stream().map(PlanWithActionsData.PlanAction::fromButton).toList());
+            }
         }).toList();
         return ResponseEntity.ok(plansWithActionsData);
     }
