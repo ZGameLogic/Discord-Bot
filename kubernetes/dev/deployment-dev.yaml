@@ -24,6 +24,8 @@ spec:
             - name: apns-volume
               mountPath: "/apns"
               readOnly: true
+            - name: cobble-volume
+              mountPath: "/cobble"
           env:
             - name: TZ
               value: "America/Chicago"
@@ -38,6 +40,9 @@ spec:
         - name: apns-volume
           secret:
             secretName: apns-secret
+        - name: cobble-volume
+          persistentVolumeClaim:
+            claimName: cobble-nfs-pvc
       restartPolicy: Always
       imagePullSecrets:
         - name: ghcr-secret

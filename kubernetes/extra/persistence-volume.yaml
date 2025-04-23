@@ -1,0 +1,36 @@
+# cobble-nfs-pvs.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: cobble-nfs-pv-default
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: cobble-nfs
+  claimRef:
+    name: cobble-nfs-pvc
+    namespace: default
+  nfs:
+    server: 192.168.1.12
+    path: /mnt/Media/Cobble/prod
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: cobble-nfs-pv-dev
+spec:
+  capacity:
+    storage: 100Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: cobble-nfs
+  claimRef:
+    name: cobble-nfs-pvc
+    namespace: dev
+  nfs:
+    server: 192.168.1.12
+    path: /mnt/Media/Cobble/dev
