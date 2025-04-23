@@ -26,5 +26,7 @@ public class CobbleService {
         writer.println("Ben we made it");
         writer.flush();
         writer.close();
+        System.out.println("Wrote cobble.txt");
+        System.out.println(out.exists());
     }
 }
