@@ -12,7 +12,7 @@ public class CobbleService {
     private final File BASE_DIR;
 
     public CobbleService() {
-        BASE_DIR = new File("cobble");
+        BASE_DIR = new File("/cobble");
     }
 
     @PostConstruct
