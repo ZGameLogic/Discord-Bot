@@ -18,6 +18,7 @@ public class CobbleService {
     @PostConstruct
     public void init() throws IOException {
         File out = new File(BASE_DIR, "cobble.txt");
+        System.out.println(out.exists());
         if(!out.exists()){
             out.getParentFile().mkdirs();
             out.createNewFile();
