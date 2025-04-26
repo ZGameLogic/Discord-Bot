@@ -1,33 +1,19 @@
 package com.zgamelogic.services;
 
-import jakarta.annotation.PostConstruct;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.IOException;
-import java.io.PrintWriter;
 
 @Service
+@Slf4j
 public class CobbleService {
     private final File BASE_DIR;
 
     public CobbleService() {
-        BASE_DIR = new File("/cobble");
-    }
-
-    @PostConstruct
-    public void init() throws IOException {
-        File out = new File(BASE_DIR, "cobble.txt");
-        System.out.println(out.exists());
-        if(!out.exists()){
-            out.getParentFile().mkdirs();
-            out.createNewFile();
-        }
-        PrintWriter writer = new PrintWriter(out);
-        writer.println("Ben we made it");
-        writer.flush();
-        writer.close();
-        System.out.println("Wrote cobble.txt");
-        System.out.println(out.exists());
+        File file = new File("/cobble"); // check if we are in cluster
+        if(!file.exists()) file = new File("cobble"); // change to local
+        BASE_DIR = file;
+        log.info("Cobble service started");
     }
 }
