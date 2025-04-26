@@ -80,7 +80,6 @@ public class PlanService {
     private void onReady(ReadyEvent event){
         discordGuild = event.getJDA().getGuildById(discordGuildId);
         planTextChannel = discordGuild.getTextChannelById(discordPlanId);
-
     }
 
     public PlanEventResultMessage requestFillIn(long planId, long userId){
