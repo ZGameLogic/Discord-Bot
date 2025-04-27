@@ -5,6 +5,7 @@ import com.zgamelogic.annotations.DiscordMapping;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Icon;
+import net.dv8tion.jda.api.entities.emoji.Emoji;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
@@ -14,14 +15,15 @@ import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.FileUpload;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.io.support.ResourcePatternResolver;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
@@ -30,11 +32,16 @@ import static com.zgamelogic.bot.utils.CobbleHelper.*;
 @Slf4j
 @DiscordController
 public class CobbleBot {
-    @Value("${discord.guild}")
-    private long discordGuildId;
+    private final long discordGuildId;
+    private final ResourcePatternResolver resourcePatternResolver;
 
     private HashMap<Long, RichCustomEmoji> emojis;
     private Guild discordGuild;
+
+    public CobbleBot(@Value("${discord.guild}") long discordGuildId, ResourcePatternResolver resourcePatternResolver) {
+        this.discordGuildId = discordGuildId;
+        this.resourcePatternResolver = resourcePatternResolver;
+    }
 
     @DiscordMapping
     private void onReady(ReadyEvent event) throws IOException, URISyntaxException {
@@ -68,29 +75,6 @@ public class CobbleBot {
             ).queue();
     }
 
-    private void mapEmojis() throws URISyntaxException, IOException {
-        emojis = new HashMap<>();
-        Files.walk(Paths.get(getClass().getClassLoader().getResource("assets/Cobble/Emojis").toURI()))
-            .map(Path::toFile)
-            .filter(file -> file.getName().endsWith(".png"))
-            .forEach(iconFile -> {
-                int dotIndex = iconFile.getName().lastIndexOf('.');
-                String filename = iconFile.getName().substring(0, dotIndex);
-                List<RichCustomEmoji> existing = discordGuild.getEmojisByName(filename, true);
-                if(existing.isEmpty()) {
-                    try {
-                        Icon icon = Icon.from(iconFile);
-                        RichCustomEmoji emoji = discordGuild.createEmoji(filename, icon).complete();
-                        emojis.put(emoji.getIdLong(), emoji);
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-                } else {
-                    emojis.put(existing.get(0).getIdLong(), existing.get(0));
-                }
-            });
-    }
-
     @Bean
     public List<CommandData> cobbleCommands(){
         return List.of(
@@ -98,5 +82,26 @@ public class CobbleBot {
                 new SubcommandData("help", "Get some idea on how to play the game.")
             )
         );
+    }
+
+    private void mapEmojis() throws IOException {
+        emojis = new HashMap<>();
+        Arrays.stream(resourcePatternResolver.getResources("classpath:assets/Cobble/Emojis/*")).forEach(resource -> {
+            try {
+                String filename = resource.getFilename();
+                String iconName = filename.replace(".png", "");
+                List<RichCustomEmoji> emojiList = discordGuild.getEmojisByName(iconName, true);
+                RichCustomEmoji emoji;
+                if(emojiList.isEmpty()) {
+                    Icon icon = Icon.from(resource.getInputStream());
+                    emoji = discordGuild.createEmoji(iconName, icon).complete();
+                } else {
+                    emoji = emojiList.get(0);
+                }
+                emojis.put(emoji.getIdLong(), emoji);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 }
