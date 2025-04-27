@@ -7,16 +7,17 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Icon;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
+import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,18 +43,29 @@ public class CobbleBot {
     }
 
     @DiscordMapping(Id = "cobble", SubId = "help")
-    private void cobbleHelp(SlashCommandInteractionEvent event){
-        /*
-        InputStream file = new URL("https://http.cat/500").openStream();
-embed.setImage("attachment://cat.png") // we specify this in sendFile as "cat.png"
-     .setDescription("This is a cute cat :3");
-channel.sendFiles(FileUpload.fromData(file, "cat.png")).setEmbeds(embed.build()).queue()
-         */
-        try {
-            event.replyFiles(FileUpload.fromData(getClass().getClassLoader().getResource("assets/Cobble/cobble-logo.png").openStream(), "cobble-logo.png")).addEmbeds(getHelpMessage()).queue();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+    private void cobbleHelp(SlashCommandInteractionEvent event) throws IOException {
+        event
+            .replyFiles(FileUpload.fromData(getClass().getClassLoader().getResource("assets/Cobble/cobble-logo.png").openStream(), "cobble-logo.png"))
+            .addEmbeds(getHelpMessage(1))
+                .addActionRow(Button.secondary("cobble-help-page-prev", "Previous page").asDisabled(), Button.secondary("cobble-help-page-next", "Next Page"))
+            .queue();
+    }
+
+    @DiscordMapping(Id = "cobble-help-page-next")
+    @DiscordMapping(Id = "cobble-help-page-prev")
+    private void cobbleHelpPageUp(ButtonInteractionEvent event) {
+        long slashUserId = event.getMessage().getInteractionMetadata().getUser().getIdLong();
+        if(event.getUser().getIdLong() != slashUserId){
+            event.reply(PAGEABLE_PERMISSION).setEphemeral(true).queue();
+            return;
         }
+        int it = event.getButton().getId().equals("cobble-help-page-next") ? 1 : -1;
+        int newPage = Integer.parseInt(event.getMessage().getEmbeds().get(0).getFooter().getText().replace("Page ", "")) + it;
+        event.editMessageEmbeds(getHelpMessage(newPage))
+            .setActionRow(
+                Button.secondary("cobble-help-page-prev", "Previous page").withDisabled(newPage == 1),
+                Button.secondary("cobble-help-page-next", "Next Page").withDisabled(newPage == 3)
+            ).queue();
     }
 
     private void mapEmojis() throws URISyntaxException, IOException {
