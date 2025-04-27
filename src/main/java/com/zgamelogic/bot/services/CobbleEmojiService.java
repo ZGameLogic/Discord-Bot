@@ -1,4 +1,4 @@
-package com.zgamelogic.services;
+package com.zgamelogic.bot.services;
 
 import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;

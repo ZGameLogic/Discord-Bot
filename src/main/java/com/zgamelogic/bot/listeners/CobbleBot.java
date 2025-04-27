@@ -2,7 +2,7 @@ package com.zgamelogic.bot.listeners;
 
 import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
-import com.zgamelogic.services.CobbleHelperService;
+import com.zgamelogic.bot.services.CobbleHelperService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;

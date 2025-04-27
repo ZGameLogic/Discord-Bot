@@ -1,4 +1,4 @@
-package com.zgamelogic.services;
+package com.zgamelogic.bot.services;
 
 import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.EmbedBuilder;
