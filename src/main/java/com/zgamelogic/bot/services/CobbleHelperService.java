@@ -45,7 +45,10 @@ public class CobbleHelperService {
             case 3:
                 eb.setTitle("Cobble Help - building");
                 eb.setDescription(BUILDING_DESCRIPTION);
-                eb.addField("Wheat farm",  "1x" + ces.km("production") + " -> " + ces.km("rations"), true);
+                eb.addField("Wheat farm",  ces.km("production") + " -> " + ces.km("rations"), true);
+                eb.addField("Fishery",  ces.km("production") + " -> " + ces.km("rations"), true);
+                eb.addField("Builder",  ces.km("production") + " -> work", true);
+                eb.addField("Mine",  ces.km("production") + ces.km("production") + ces.km("wood") +  " -> " + ces.km("stone") + ces.km("stone") + ces.km("metal"), true);
                 break;
             case 1:
             default:

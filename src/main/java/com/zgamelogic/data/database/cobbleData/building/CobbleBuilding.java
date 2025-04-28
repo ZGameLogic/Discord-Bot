@@ -1,13 +1,17 @@
 package com.zgamelogic.data.database.cobbleData.building;
 
 import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
+import com.zgamelogic.data.database.cobbleData.production.CobbleProduction;
 import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
+@Getter
 @NoArgsConstructor
 public class CobbleBuilding {
     @EmbeddedId
@@ -17,6 +21,13 @@ public class CobbleBuilding {
     @Enumerated(EnumType.STRING)
     private CobbleBuildingType type;
 
+    @OneToOne
+    @JoinColumns({
+        @JoinColumn(name = "type", referencedColumnName = "building", insertable = false, updatable = false),
+        @JoinColumn(name = "level", referencedColumnName = "level", insertable = false, updatable = false)
+    })
+    private CobbleProduction production;
+
     public CobbleBuilding(long userId, CobbleBuildingType type) {
         level = 0;
         this.type = type;
@@ -25,6 +36,7 @@ public class CobbleBuilding {
 
     @Embeddable
     @NoArgsConstructor
+    @EqualsAndHashCode
     public static class CobbleBuildingId {
         @GeneratedValue(strategy = GenerationType.UUID)
         private UUID cobbleBuildingId;

@@ -4,5 +4,6 @@ public enum CobbleBuildingType {
     TOWN_HALL,
     BUILDER,
     WHEAT_FARM,
-    FISHERY
+    FISHERY,
+    MINE
 }

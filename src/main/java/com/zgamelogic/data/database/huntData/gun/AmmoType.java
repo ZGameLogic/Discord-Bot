@@ -1,6 +1,7 @@
 package com.zgamelogic.data.database.huntData.gun;
 
 import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -10,6 +11,7 @@ import jakarta.persistence.Embeddable;
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode
 public class AmmoType {
 
     private String name;

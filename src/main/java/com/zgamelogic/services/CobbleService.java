@@ -1,6 +1,7 @@
 package com.zgamelogic.services;
 
 import com.zgamelogic.data.database.cobbleData.player.CobblePlayerRepository;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import java.io.File;
@@ -18,5 +19,12 @@ public class CobbleService {
         if(!file.exists()) file = new File("cobble"); // change to local
         BASE_DIR = file;
         log.info("Cobble service started");
+    }
+
+    @PostConstruct
+    public void init() {
+        cobblePlayerRepository.getReferenceById(15L).getBuildings().forEach(building -> {
+            System.out.println(building.getProduction().getProduction());
+        });
     }
 }

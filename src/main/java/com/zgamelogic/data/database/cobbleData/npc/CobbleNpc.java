@@ -2,6 +2,7 @@ package com.zgamelogic.data.database.cobbleData.npc;
 
 import com.zgamelogic.data.database.cobbleData.building.CobbleBuilding;
 import jakarta.persistence.*;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
 import java.time.LocalDate;
@@ -19,16 +20,17 @@ public class CobbleNpc {
 
     @OneToOne
     @JoinColumns({
-        @JoinColumn(name = "userId", referencedColumnName = "userId"),
-        @JoinColumn(name = "cobbleBuildingId", referencedColumnName = "cobbleBuildingId")
+        @JoinColumn(name = "userId", referencedColumnName = "userId", insertable = false, updatable = false),
+        @JoinColumn(name = "cobbleBuildingId", referencedColumnName = "cobbleBuildingId", insertable = false, updatable = false)
     })
     private CobbleBuilding building;
 
+    @Getter
     @Embeddable
+    @EqualsAndHashCode
     public static class CobbleNpcId {
         @GeneratedValue(strategy = GenerationType.UUID)
         public UUID id;
-        @Column(insertable = false, updatable = false)
         private long userId;
     }
 }
