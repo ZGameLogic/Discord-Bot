@@ -4,12 +4,14 @@ import com.zgamelogic.data.database.cobbleData.building.CobbleBuilding;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 
 import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
 @Getter
+@ToString
 public class CobbleNpc {
     @Id
     private CobbleNpcId id;
@@ -27,6 +29,7 @@ public class CobbleNpc {
 
     @Getter
     @Embeddable
+    @ToString
     @EqualsAndHashCode
     public static class CobbleNpcId {
         @GeneratedValue(strategy = GenerationType.UUID)

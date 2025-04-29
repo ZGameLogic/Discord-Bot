@@ -6,12 +6,14 @@ import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
 @Getter
+@ToString
 @NoArgsConstructor
 public class CobbleBuilding {
     @EmbeddedId
@@ -20,6 +22,7 @@ public class CobbleBuilding {
     private LocalDateTime buildTime;
     @Enumerated(EnumType.STRING)
     private CobbleBuildingType type;
+    private String buildingName;
 
     @OneToOne
     @JoinColumns({
@@ -34,6 +37,7 @@ public class CobbleBuilding {
         id = new CobbleBuildingId(userId);
     }
 
+    @ToString
     @Embeddable
     @NoArgsConstructor
     @EqualsAndHashCode

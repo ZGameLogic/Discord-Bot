@@ -23,8 +23,7 @@ public class CobbleService {
 
     @PostConstruct
     public void init() {
-        cobblePlayerRepository.getReferenceById(15L).getBuildings().forEach(building -> {
-            System.out.println(building.getProduction().getProduction());
-        });
+        System.out.println(cobblePlayerRepository.getReferenceById(15L).getBuildings().get(0));
+        System.out.println(cobblePlayerRepository.getReferenceById(15L).getNpcs().get(0));
     }
 }

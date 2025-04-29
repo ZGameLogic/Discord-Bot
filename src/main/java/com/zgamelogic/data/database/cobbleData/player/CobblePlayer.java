@@ -1,5 +1,6 @@
 package com.zgamelogic.data.database.cobbleData.player;
 
+import com.zgamelogic.data.database.cobbleData.action.CobbleAction;
 import com.zgamelogic.data.database.cobbleData.building.CobbleBuilding;
 import com.zgamelogic.data.database.cobbleData.npc.CobbleNpc;
 import jakarta.persistence.*;
@@ -19,17 +20,20 @@ public class CobblePlayer {
     private long id;
     private LocalDateTime started;
 
-    @OneToMany(mappedBy = "id.userId", cascade = CascadeType.ALL, orphanRemoval = true)
     @Setter
+    @OneToMany(mappedBy = "id.userId", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CobbleBuilding> buildings;
     @OneToMany(mappedBy = "id.userId", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CobbleNpc> npcs;
+    @OneToMany(mappedBy = "id.userId", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CobbleAction> actions;
 
     public CobblePlayer(long id) {
         this.id = id;
         started = LocalDateTime.now();
         buildings = new ArrayList<>();
         npcs = new ArrayList<>();
+        actions = new ArrayList<>();
     }
 
     public void addNpc(CobbleNpc npc) { npcs.add(npc); }

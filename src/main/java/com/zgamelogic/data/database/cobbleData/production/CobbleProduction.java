@@ -4,15 +4,18 @@ import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 
 @Entity
 @Getter
+@ToString
 public class CobbleProduction {
     @EmbeddedId
     private CobbleProductionId id;
     private String cost;
     private String production;
 
+    @ToString
     @Embeddable
     @EqualsAndHashCode
     public static class CobbleProductionId {
