@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
@@ -53,7 +54,13 @@ public class CobbleBot {
     public List<CommandData> cobbleCommands(){
         return List.of(
             Commands.slash("cobble", "All commands related to the cobble game.").addSubcommands(
-                new SubcommandData("help", "Get some idea on how to play the game.")
+                new SubcommandData("start", "Start the game of cobble!"),
+                new SubcommandData("help", "Get some idea on how to play the game."),
+                new SubcommandData("production", "Get an overview of production statistics for your town"),
+                new SubcommandData("schedule-build", "Schedule a building to be built during the day")
+                    .addOption(OptionType.STRING, "building", "The building to be scheduled to be built", true, true),
+                new SubcommandData("schedule-upgrade", "Schedule a building to be upgraded during the day")
+                    .addOption(OptionType.STRING, "building", "The building to be scheduled to be upgraded", true, true)
             )
         );
     }

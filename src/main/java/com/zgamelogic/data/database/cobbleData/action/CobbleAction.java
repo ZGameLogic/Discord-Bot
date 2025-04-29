@@ -13,6 +13,7 @@ public class CobbleAction {
     private CobbleActionId id;
     @Enumerated(EnumType.STRING)
     private CobbleActionType type;
+    private int remaining;
     @OneToOne
     @JoinColumns({
         @JoinColumn(name = "userId", referencedColumnName = "userId", insertable = false, updatable = false),
