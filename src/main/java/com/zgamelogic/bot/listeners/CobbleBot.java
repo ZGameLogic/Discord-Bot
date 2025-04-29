@@ -54,9 +54,11 @@ public class CobbleBot {
     public List<CommandData> cobbleCommands(){
         return List.of(
             Commands.slash("cobble", "All commands related to the cobble game.").addSubcommands(
-                new SubcommandData("start", "Start the game of cobble!"),
                 new SubcommandData("help", "Get some idea on how to play the game."),
+                new SubcommandData("start", "Start the game of cobble!"),
                 new SubcommandData("production", "Get an overview of production statistics for your town"),
+                new SubcommandData("citizens", "Get information on citizens in your town")
+                    .addOption(OptionType.STRING, "citizen", "Get a specific citizen", false, true),
                 new SubcommandData("schedule-build", "Schedule a building to be built during the day")
                     .addOption(OptionType.STRING, "building", "The building to be scheduled to be built", true, true),
                 new SubcommandData("schedule-upgrade", "Schedule a building to be upgraded during the day")
