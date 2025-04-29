@@ -1,13 +1,16 @@
 package com.zgamelogic.data.database.cobbleData.action;
 
+import com.zgamelogic.data.database.cobbleData.CobbleActionType;
 import com.zgamelogic.data.database.cobbleData.building.CobbleBuilding;
 import jakarta.persistence.*;
+import lombok.Getter;
 import lombok.ToString;
 
 import java.util.UUID;
 
 @Entity
 @ToString
+@Getter
 public class CobbleAction {
     @EmbeddedId
     private CobbleActionId id;
@@ -21,11 +24,7 @@ public class CobbleAction {
     })
     private CobbleBuilding building;
 
-    public enum CobbleActionType {
-        BUILD,
-        UPGRADE
-    }
-
+    @Getter
     @ToString
     @Embeddable
     public static class CobbleActionId {

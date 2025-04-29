@@ -37,6 +37,7 @@ public class CobbleBuilding {
         id = new CobbleBuildingId(userId);
     }
 
+    @Getter
     @ToString
     @Embeddable
     @NoArgsConstructor
