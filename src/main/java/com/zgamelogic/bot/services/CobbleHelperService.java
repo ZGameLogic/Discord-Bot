@@ -13,17 +13,23 @@ public class CobbleHelperService {
     private final CobbleEmojiService ces;
 
     public final String PAGEABLE_PERMISSION = "You do not have permissions to change the page on this message.";
+    public final String COBBLE_DESCRIPTION = """
+        Cobble is a colony simulator where you produce to consume. Every day (12 hours real world time) your colony will produce and consume an amount of resources.
+        This is determined by the buildings you build and the number of citizens you have. Progression comes in the form of upgrading your buildings to produce more.
+        Your town hall building level determines what buildings you can build and what level you can upgrade them to.
+        (Coming soon) A lightweight desktop client to just throw up and watch your colony produce.
+        """;
     public final String RESOURCE_DESCRIPTION = """
-            %s Production is a way to track how much work citizens can do each day.
-            %s Rations are used to feed citizens each day.
-            %s Wood is useful for building and you will need a lot of it.
-            %s Stone is useful for building and upgrading.
-            %s Metal is useful for defending your town and late game upgrades.
-            %s Magic is useful for defending your town.
-            """;
+        %s Production is a way to track how much work citizens can do each day.
+        %s Rations are used to feed citizens each day.
+        %s Wood is useful for building and you will need a lot of it.
+        %s Stone is useful for building and upgrading.
+        %s Metal is useful for defending your town and late game upgrades.
+        %s Magic is useful for defending your town.
+        """;
     public final String BUILDING_DESCRIPTION = """
-            Buildings take resources and produce resources during the day. Some buildings take only time while others require a resource to produce.
-            """;
+        Buildings take resources and produce resources during the day. Some buildings take only time while others require a resource to produce.
+        """;
 
     private final Color COBBLE_COLOR = new Color(149, 145, 145);
 
@@ -34,12 +40,12 @@ public class CobbleHelperService {
             case 2:
                 eb.setTitle("Cobble Help - resources");
                 eb.setDescription(String.format(RESOURCE_DESCRIPTION,
-                        ces.km("production"),
-                        ces.km("rations"),
-                        ces.km("wood"),
-                        ces.km("stone"),
-                        ces.km("metal"),
-                        ces.km("magic")
+                    ces.km("production"),
+                    ces.km("rations"),
+                    ces.km("wood"),
+                    ces.km("stone"),
+                    ces.km("metal"),
+                    ces.km("magic")
                 ));
                 break;
             case 3:
@@ -53,7 +59,7 @@ public class CobbleHelperService {
             case 1:
             default:
                 eb.setTitle("Cobble Help");
-                eb.setDescription("This is a test description");
+                eb.setDescription(COBBLE_DESCRIPTION);
                 break;
         }
         eb.setThumbnail("attachment://cobble-logo.png");
