@@ -2,14 +2,19 @@ package com.zgamelogic.bot.listeners;
 
 import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
+import com.zgamelogic.annotations.EventProperty;
 import com.zgamelogic.bot.services.CobbleHelperService;
+import com.zgamelogic.bot.services.CobbleResourceService;
 import com.zgamelogic.data.database.cobbleData.CobbleServiceException;
+import com.zgamelogic.data.database.cobbleData.npc.CobbleNpc;
 import com.zgamelogic.data.database.cobbleData.player.CobblePlayer;
 import com.zgamelogic.services.CobbleService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
+import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -26,12 +31,13 @@ import java.util.List;
 @AllArgsConstructor
 public class CobbleBot {
     private final CobbleHelperService helperService;
+    private final CobbleResourceService resourceService;
     private final CobbleService cobbleService;
 
     @DiscordMapping(Id = "cobble", SubId = "help")
     private void cobbleHelp(SlashCommandInteractionEvent event) throws IOException {
         event
-            .replyFiles(FileUpload.fromData(getClass().getClassLoader().getResource("assets/Cobble/cobble-logo.png").openStream(), "cobble-logo.png"))
+            .replyFiles(FileUpload.fromData(resourceService.getCobbleLogo().getInputStream(), "cobble-logo.png"))
             .addEmbeds(helperService.getHelpMessage(1))
                 .addActionRow(Button.secondary("cobble-help-page-prev", "Previous page").asDisabled(), Button.secondary("cobble-help-page-next", "Next Page"))
             .queue();
@@ -45,6 +51,43 @@ public class CobbleBot {
             event.getHook().sendMessageEmbeds(helperService.getStartMessage(player)).queue();
         } catch (CobbleServiceException e) {
             event.getHook().sendMessage(e.getMessage()).setEphemeral(true).queue();
+        }
+    }
+
+    @DiscordMapping(Id = "cobble", SubId = "citizens")
+    private void cobbleCitizens(
+        SlashCommandInteractionEvent event,
+        @EventProperty String citizen
+    ) {
+        boolean citizenIncluded = citizen != null && !citizen.isEmpty();
+        if (citizenIncluded) {
+            cobbleCitizen(event, citizen);
+        } else {
+            cobbleCitizens(event);
+        }
+    }
+
+    private void cobbleCitizen(SlashCommandInteractionEvent event, String citizen) {
+        // TODO complete
+    }
+    private void cobbleCitizens(SlashCommandInteractionEvent event){
+        // TODO complete
+    }
+
+    @DiscordMapping(Id = "cobble", SubId = "citizens", FocusedOption = "citizen")
+    private void cobbleCitizensAutocomplete(
+        CommandAutoCompleteInteractionEvent event,
+        @EventProperty String citizen
+    ){
+        try {
+            List<CobbleNpc> npcs = cobbleService.getCobbleNpcs(event.getUser().getIdLong());
+            event.replyChoices(npcs.stream()
+                .filter(npc -> citizen.isEmpty() || npc.getFirstName().toLowerCase().contains(citizen.toLowerCase()) ||  npc.getLastName().toLowerCase().contains(citizen.toLowerCase()))
+                .map(npc -> new Command.Choice(npc.getFirstName() + " " + npc.getLastName(), npc.getId().getId().toString()))
+                .toList()
+            ).queue();
+        } catch (CobbleServiceException e) {
+            event.replyChoices(List.of()).queue();
         }
     }
 

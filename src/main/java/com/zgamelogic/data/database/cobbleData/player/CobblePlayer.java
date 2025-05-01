@@ -38,10 +38,7 @@ public class CobblePlayer {
         actions = new ArrayList<>();
     }
 
-    public void addNpc(String firstname, String lastname, long appearance){
-        CobbleNpc npc = new CobbleNpc(id, firstname, lastname, appearance);
-        npcs.add(npc);
-    }
+    public void addNpc(CobbleNpc npc) { npcs.add(npc); }
 
     public void addBuilding(CobbleBuildingType type, int level, String name, UUID buildingUUID) {
         CobbleBuilding building = new CobbleBuilding(id, type, level, name, buildingUUID);

@@ -17,12 +17,12 @@ public class CobbleNpc {
     private LocalDate born;
     private String firstName;
     private String lastName;
-    private long appearance;
+    private String appearance;
 
     @JoinColumn(name = "cobbleBuildingId", referencedColumnName = "cobbleBuildingId")
     private UUID cobbleBuildingId;
 
-    public CobbleNpc(long userId, String firstname, String lastname, long appearance) {
+    public CobbleNpc(long userId, String firstname, String lastname, String appearance) {
         id = new CobbleNpcId(userId);
         this.firstName = firstname;
         this.lastName = lastname;

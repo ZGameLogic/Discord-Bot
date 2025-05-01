@@ -2,11 +2,13 @@ package com.zgamelogic.bot.services;
 
 import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
+import lombok.Getter;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Icon;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
@@ -23,6 +25,8 @@ public class CobbleResourceService {
     private final List<String> maleFirstNames;
     private final List<String> femaleFirstNames;
     private final List<String> lastNames;
+    @Getter
+    private final Resource cobbleLogo;
 
     private HashMap<String, RichCustomEmoji> emojis;
     private Guild discordGuild;
@@ -34,6 +38,7 @@ public class CobbleResourceService {
         this.maleFirstNames = new LinkedList<>();
         this.femaleFirstNames = new LinkedList<>();
         this.lastNames = new LinkedList<>();
+        cobbleLogo = resourceLoader.getResource("classpath:assets/Cobble/cobble-logo.png");
         loadNames();
     }
 
@@ -41,13 +46,17 @@ public class CobbleResourceService {
         return emojis.get(key).getAsMention();
     }
 
-    public String randomName() {
+    public String randomName(boolean male) {
         Random random = new Random();
-        String firstName = random.nextBoolean()
-            ? maleFirstNames.get(random.nextInt(maleFirstNames.size()))
-            : femaleFirstNames.get(random.nextInt(femaleFirstNames.size()));
+        String firstName = male ?
+            maleFirstNames.get(random.nextInt(maleFirstNames.size())) :
+            femaleFirstNames.get(random.nextInt(femaleFirstNames.size()));
         String lastName = lastNames.get(random.nextInt(lastNames.size()));
         return firstName + " " + lastName;
+    }
+
+    public void mapAppearance(String appearance) {
+        // TODO complete
     }
 
     @DiscordMapping
