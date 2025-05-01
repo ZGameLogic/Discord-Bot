@@ -7,36 +7,65 @@ import net.dv8tion.jda.api.entities.Icon;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 @Service
 @DiscordController
-public class CobbleEmojiService {
+public class CobbleResourceService {
     private final ResourcePatternResolver resourcePatternResolver;
+    private final ResourceLoader resourceLoader;
     private final long discordGuildId;
+    private final List<String> maleFirstNames;
+    private final List<String> femaleFirstNames;
+    private final List<String> lastNames;
 
     private HashMap<String, RichCustomEmoji> emojis;
     private Guild discordGuild;
 
-    public CobbleEmojiService(@Value("${discord.guild}") long discordGuildId, ResourcePatternResolver resourcePatternResolver) {
+    public CobbleResourceService(@Value("${discord.guild}") long discordGuildId, ResourcePatternResolver resourcePatternResolver, ResourceLoader resourceLoader) throws IOException {
         this.discordGuildId = discordGuildId;
         this.resourcePatternResolver = resourcePatternResolver;
+        this.resourceLoader = resourceLoader;
+        this.maleFirstNames = new LinkedList<>();
+        this.femaleFirstNames = new LinkedList<>();
+        this.lastNames = new LinkedList<>();
+        loadNames();
     }
 
     public String km(String key){
         return emojis.get(key).getAsMention();
     }
 
+    public String randomName() {
+        Random random = new Random();
+        String firstName = random.nextBoolean()
+            ? maleFirstNames.get(random.nextInt(maleFirstNames.size()))
+            : femaleFirstNames.get(random.nextInt(femaleFirstNames.size()));
+        String lastName = lastNames.get(random.nextInt(lastNames.size()));
+        return firstName + " " + lastName;
+    }
+
     @DiscordMapping
     private void onReady(ReadyEvent event) throws IOException {
         discordGuild = event.getJDA().getGuildById(discordGuildId);
         mapEmojis();
+    }
+
+    private void loadNames() throws IOException {
+        Scanner in = new Scanner(resourceLoader.getResource("classpath:assets/Cobble/female_first_names.txt").getInputStream());
+        while (in.hasNextLine()) femaleFirstNames.add(in.nextLine());
+        in.close();
+        in = new Scanner(resourceLoader.getResource("classpath:assets/Cobble/male_first_names.txt").getInputStream());
+        while (in.hasNextLine()) maleFirstNames.add(in.nextLine());
+        in.close();
+        in = new Scanner(resourceLoader.getResource("classpath:assets/Cobble/last_names.txt").getInputStream());
+        while (in.hasNextLine()) lastNames.add(in.nextLine());
+        in.close();
     }
 
     private void mapEmojis() throws IOException {

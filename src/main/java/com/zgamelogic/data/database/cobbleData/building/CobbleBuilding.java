@@ -31,10 +31,12 @@ public class CobbleBuilding {
     })
     private CobbleProduction production;
 
-    public CobbleBuilding(long userId, CobbleBuildingType type) {
-        level = 0;
+    public CobbleBuilding(long userId, CobbleBuildingType type, int level, String name, UUID buildingId) {
+        this.level = level;
+        buildingName = name;
         this.type = type;
-        id = new CobbleBuildingId(userId);
+        id = new CobbleBuildingId(userId, buildingId);
+        buildTime= LocalDateTime.now();
     }
 
     @Getter
@@ -43,10 +45,17 @@ public class CobbleBuilding {
     @NoArgsConstructor
     @EqualsAndHashCode
     public static class CobbleBuildingId {
-        @GeneratedValue(strategy = GenerationType.UUID)
         private UUID cobbleBuildingId;
         private long userId;
 
-        public CobbleBuildingId(long userId) { this.userId = userId; }
+        public CobbleBuildingId(long userId, UUID cobbleBuildingId) {
+            this.userId = userId;
+            this.cobbleBuildingId = cobbleBuildingId;
+        }
+
+        public CobbleBuildingId(long userId) {
+            this.userId = userId;
+            this.cobbleBuildingId = UUID.randomUUID();
+        }
     }
 }

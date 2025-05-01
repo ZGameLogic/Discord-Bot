@@ -1,5 +1,6 @@
 package com.zgamelogic.bot.services;
 
+import com.zgamelogic.data.database.cobbleData.player.CobblePlayer;
 import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.MessageEmbed;
@@ -10,7 +11,7 @@ import java.awt.*;
 @Service
 @RequiredArgsConstructor
 public class CobbleHelperService {
-    private final CobbleEmojiService ces;
+    private final CobbleResourceService ces;
 
     public final String PAGEABLE_PERMISSION = "You do not have permissions to change the page on this message.";
     public final String COBBLE_DESCRIPTION = """
@@ -64,6 +65,13 @@ public class CobbleHelperService {
         }
         eb.setThumbnail("attachment://cobble-logo.png");
         eb.setFooter("Page " + page);
+        return eb.build();
+    }
+
+    public MessageEmbed getStartMessage(CobblePlayer player) {
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(COBBLE_COLOR);
+        eb.setTitle("Cobble Start");
         return eb.build();
     }
 }

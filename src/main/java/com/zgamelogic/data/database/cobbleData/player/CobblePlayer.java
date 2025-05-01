@@ -1,5 +1,6 @@
 package com.zgamelogic.data.database.cobbleData.player;
 
+import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
 import com.zgamelogic.data.database.cobbleData.action.CobbleAction;
 import com.zgamelogic.data.database.cobbleData.building.CobbleBuilding;
 import com.zgamelogic.data.database.cobbleData.npc.CobbleNpc;
@@ -11,6 +12,7 @@ import lombok.Setter;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -36,6 +38,13 @@ public class CobblePlayer {
         actions = new ArrayList<>();
     }
 
-    public void addNpc(CobbleNpc npc) { npcs.add(npc); }
-    public void addBuilding(CobbleBuilding building) { buildings.add(building); }
+    public void addNpc(String firstname, String lastname, long appearance){
+        CobbleNpc npc = new CobbleNpc(id, firstname, lastname, appearance);
+        npcs.add(npc);
+    }
+
+    public void addBuilding(CobbleBuildingType type, int level, String name, UUID buildingUUID) {
+        CobbleBuilding building = new CobbleBuilding(id, type, level, name, buildingUUID);
+        buildings.add(building);
+    }
 }

@@ -1,17 +1,16 @@
 package com.zgamelogic.data.database.cobbleData.npc;
 
-import com.zgamelogic.data.database.cobbleData.building.CobbleBuilding;
 import jakarta.persistence.*;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.*;
 
 import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
 @Getter
+@Setter
 @ToString
+@NoArgsConstructor
 public class CobbleNpc {
     @Id
     private CobbleNpcId id;
@@ -20,20 +19,29 @@ public class CobbleNpc {
     private String lastName;
     private long appearance;
 
-    @OneToOne
-    @JoinColumns({
-        @JoinColumn(name = "userId", referencedColumnName = "userId", insertable = false, updatable = false),
-        @JoinColumn(name = "cobbleBuildingId", referencedColumnName = "cobbleBuildingId", insertable = false, updatable = false)
-    })
-    private CobbleBuilding building;
+    @JoinColumn(name = "cobbleBuildingId", referencedColumnName = "cobbleBuildingId")
+    private UUID cobbleBuildingId;
+
+    public CobbleNpc(long userId, String firstname, String lastname, long appearance) {
+        id = new CobbleNpcId(userId);
+        this.firstName = firstname;
+        this.lastName = lastname;
+        this.appearance = appearance;
+        born = LocalDate.now();
+    }
 
     @Getter
     @Embeddable
     @ToString
     @EqualsAndHashCode
+    @NoArgsConstructor
     public static class CobbleNpcId {
         @GeneratedValue(strategy = GenerationType.UUID)
         public UUID id;
         private long userId;
+
+        public CobbleNpcId(long userId) {
+            this.userId = userId;
+        }
     }
 }

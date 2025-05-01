@@ -3,6 +3,9 @@ package com.zgamelogic.bot.listeners;
 import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
 import com.zgamelogic.bot.services.CobbleHelperService;
+import com.zgamelogic.data.database.cobbleData.CobbleServiceException;
+import com.zgamelogic.data.database.cobbleData.player.CobblePlayer;
+import com.zgamelogic.services.CobbleService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -23,6 +26,7 @@ import java.util.List;
 @AllArgsConstructor
 public class CobbleBot {
     private final CobbleHelperService helperService;
+    private final CobbleService cobbleService;
 
     @DiscordMapping(Id = "cobble", SubId = "help")
     private void cobbleHelp(SlashCommandInteractionEvent event) throws IOException {
@@ -31,6 +35,17 @@ public class CobbleBot {
             .addEmbeds(helperService.getHelpMessage(1))
                 .addActionRow(Button.secondary("cobble-help-page-prev", "Previous page").asDisabled(), Button.secondary("cobble-help-page-next", "Next Page"))
             .queue();
+    }
+
+    @DiscordMapping(Id = "cobble", SubId = "start")
+    private void cobbleStart(SlashCommandInteractionEvent event) {
+        event.deferReply().queue();
+        try {
+            CobblePlayer player = cobbleService.startCobblePlayer(event.getUser().getIdLong());
+            event.getHook().sendMessageEmbeds(helperService.getStartMessage(player)).queue();
+        } catch (CobbleServiceException e) {
+            event.getHook().sendMessage(e.getMessage()).setEphemeral(true).queue();
+        }
     }
 
     @DiscordMapping(Id = "cobble-help-page-next")
