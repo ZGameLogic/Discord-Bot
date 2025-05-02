@@ -90,6 +90,7 @@ public class CobbleService {
         boolean male = rand.nextBoolean();
         String name = cobbleResourceService.randomName(male);
         String appearance = male ? "m" : "f";
+        appearance += rand.nextInt(5); // skin color
         appearance += rand.nextInt(5); // hair color
         appearance += rand.nextInt(10); // hair style
         appearance += rand.nextInt(3); // eye color
