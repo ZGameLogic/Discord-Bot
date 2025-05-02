@@ -105,11 +105,16 @@ public class CobbleResourceService {
     private void mapCommands(){
         commands = new HashMap<>();
         discordGuild.getJDA().retrieveCommands().complete().stream().filter(command -> command.getName().equals("cobble"))
-            .forEach(command ->
-            command.getSubcommands().forEach(subcommand ->
-                commands.put(command.getName() + " " + subcommand.getName(), subcommand)
-            )
-        );
+            .forEach(command -> {
+                command.getSubcommandGroups().forEach(subcommandGroup -> {
+                    subcommandGroup.getSubcommands().forEach(subcommand ->
+                        commands.put(command.getName() + " " + subcommandGroup.getName() + " " + subcommand.getName(), subcommand)
+                    );
+                });
+                command.getSubcommands().forEach(subcommand ->
+                    commands.put(command.getName() + " " + subcommand.getName(), subcommand)
+                );
+            });
     }
 
     private void mapEmojis() throws IOException {
