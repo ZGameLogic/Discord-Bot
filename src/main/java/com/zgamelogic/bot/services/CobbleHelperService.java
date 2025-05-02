@@ -41,21 +41,21 @@ public class CobbleHelperService {
             case 2:
                 eb.setTitle("Cobble Help - resources");
                 eb.setDescription(String.format(RESOURCE_DESCRIPTION,
-                    ces.km("production"),
-                    ces.km("rations"),
-                    ces.km("wood"),
-                    ces.km("stone"),
-                    ces.km("metal"),
-                    ces.km("magic")
+                    ces.em("production"),
+                    ces.em("rations"),
+                    ces.em("wood"),
+                    ces.em("stone"),
+                    ces.em("metal"),
+                    ces.em("magic")
                 ));
                 break;
             case 3:
                 eb.setTitle("Cobble Help - building");
                 eb.setDescription(BUILDING_DESCRIPTION);
-                eb.addField("Wheat farm",  ces.km("production") + " -> " + ces.km("rations"), true);
-                eb.addField("Fishery",  ces.km("production") + " -> " + ces.km("rations"), true);
-                eb.addField("Builder",  ces.km("production") + " -> work", true);
-                eb.addField("Mine",  ces.km("production") + ces.km("production") + ces.km("wood") +  " -> " + ces.km("stone") + ces.km("stone") + ces.km("metal"), true);
+                eb.addField("Wheat farm",  ces.em("production") + " -> " + ces.em("rations"), true);
+                eb.addField("Fishery",  ces.em("production") + " -> " + ces.em("rations"), true);
+                eb.addField("Builder",  ces.em("production") + " -> work", true);
+                eb.addField("Mine",  ces.em("production") + ces.em("production") + ces.em("wood") +  " -> " + ces.em("stone") + ces.em("stone") + ces.em("metal"), true);
                 break;
             case 1:
             default:

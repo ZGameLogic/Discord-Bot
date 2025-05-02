@@ -63,12 +63,12 @@ public class CobbleService {
     }
 
     public List<CobbleNpc> getCobbleNpcs(long playerId) throws CobbleServiceException {
-        if(!cobblePlayerRepository.existsById(playerId)) throw new CobbleServiceException("You must start the game first with the `/cobble start` slash command");
+        if(!cobblePlayerRepository.existsById(playerId)) throw new CobbleServiceException("You must start the game first with the " + cobbleResourceService.cm("cobble start")  + " slash command");
         return cobbleNpcRepository.findAllById_UserId(playerId);
     }
 
     public CobbleNpc getCobbleNpc(long playerId, UUID npcId) throws CobbleServiceException {
-        if(!cobblePlayerRepository.existsById(playerId)) throw new CobbleServiceException("You must start the game first with the `/cobble start` slash command");
+        if(!cobblePlayerRepository.existsById(playerId)) throw new CobbleServiceException("You must start the game first with the " + cobbleResourceService.cm("cobble start")  + " slash command");
         Optional<CobbleNpc> npc = cobbleNpcRepository.findById_UserIdAndId_Id(playerId, npcId);
         if(npc.isPresent()) return npc.get();
         throw new CobbleServiceException("Cobble npc not found");

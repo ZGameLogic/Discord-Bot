@@ -45,12 +45,11 @@ public class CobbleBot {
 
     @DiscordMapping(Id = "cobble", SubId = "start")
     private void cobbleStart(SlashCommandInteractionEvent event) {
-        event.deferReply().queue();
         try {
             CobblePlayer player = cobbleService.startCobblePlayer(event.getUser().getIdLong());
-            event.getHook().sendMessageEmbeds(helperService.getStartMessage(player)).queue();
+            event.replyEmbeds(helperService.getStartMessage(player)).queue();
         } catch (CobbleServiceException e) {
-            event.getHook().sendMessage(e.getMessage()).setEphemeral(true).queue();
+            event.reply(e.getMessage()).setEphemeral(true).queue();
         }
     }
 
@@ -71,7 +70,11 @@ public class CobbleBot {
         // TODO complete
     }
     private void cobbleCitizens(SlashCommandInteractionEvent event){
-        // TODO complete
+        try {
+            cobbleService.getCobbleNpcs(event.getUser().getIdLong());
+        } catch (CobbleServiceException e) {
+            event.reply(e.getMessage()).setEphemeral(true).queue();
+        }
     }
 
     @DiscordMapping(Id = "cobble", SubId = "citizens", FocusedOption = "citizen")

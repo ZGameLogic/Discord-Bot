@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Icon;
 import net.dv8tion.jda.api.entities.emoji.RichCustomEmoji;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
+import net.dv8tion.jda.api.interactions.commands.Command;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
@@ -29,6 +30,7 @@ public class CobbleResourceService {
     private final Resource cobbleLogo;
 
     private HashMap<String, RichCustomEmoji> emojis;
+    private HashMap<String, Command.Subcommand> commands;
     private Guild discordGuild;
 
     public CobbleResourceService(@Value("${discord.guild}") long discordGuildId, ResourcePatternResolver resourcePatternResolver, ResourceLoader resourceLoader) throws IOException {
@@ -42,8 +44,22 @@ public class CobbleResourceService {
         loadNames();
     }
 
-    public String km(String key){
+    /**
+     * Get a mentionable string of an emoji
+     * @param key
+     * @return String mentionable
+     */
+    public String em(String key){
         return emojis.get(key).getAsMention();
+    }
+
+    /**
+     * Get a mentionable string of a slash command
+     * @param key
+     * @return String mentionable
+     */
+    public String cm(String key){
+        return commands.get(key).getAsMention();
     }
 
     public String randomName(boolean male) {
@@ -63,6 +79,7 @@ public class CobbleResourceService {
     private void onReady(ReadyEvent event) throws IOException {
         discordGuild = event.getJDA().getGuildById(discordGuildId);
         mapEmojis();
+        mapCommands();
     }
 
     private void loadNames() throws IOException {
@@ -75,6 +92,16 @@ public class CobbleResourceService {
         in = new Scanner(resourceLoader.getResource("classpath:assets/Cobble/last_names.txt").getInputStream());
         while (in.hasNextLine()) lastNames.add(in.nextLine());
         in.close();
+    }
+
+    private void mapCommands(){
+        commands = new HashMap<>();
+        discordGuild.getJDA().retrieveCommands().complete().stream().filter(command -> command.getName().equals("cobble"))
+            .forEach(command ->
+            command.getSubcommands().forEach(subcommand ->
+                commands.put(command.getName() + " " + subcommand.getName(), subcommand)
+            )
+        );
     }
 
     private void mapEmojis() throws IOException {
