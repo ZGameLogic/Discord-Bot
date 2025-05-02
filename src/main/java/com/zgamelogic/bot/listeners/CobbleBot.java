@@ -20,6 +20,7 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import net.dv8tion.jda.api.utils.FileUpload;
 import org.springframework.context.annotation.Bean;
@@ -44,24 +45,6 @@ public class CobbleBot {
             .addEmbeds(helperService.getHelpMessage(1))
                 .addActionRow(Button.secondary("cobble-help-page-prev", "Previous page").asDisabled(), Button.secondary("cobble-help-page-next", "Next Page"))
             .queue();
-    }
-
-    @DiscordMapping(Id = "cobble", SubId = "building-codex")
-    private void cobbleBuildingCodex(
-        SlashCommandInteractionEvent event,
-        @EventProperty String building
-    ) throws CobbleServiceException {
-        int page = 1;
-        int maxPage = cobbleService.getCobbleBuildingList().size();
-        if(building != null && CobbleBuildingType.validName(building)) {
-            page = CobbleBuildingType.fromName(building).ordinal() + 1;
-        }
-        event.replyEmbeds(helperService.getBuildingMessage(page))
-            .addActionRow(
-                Button.secondary("cobble-building-codex-page-prev", "Previous page").withDisabled(page == 1),
-                Button.secondary("cobble-building-codex-page-next", "Next Page").withDisabled(page == maxPage)
-            )
-        .queue();
     }
 
     @DiscordMapping(Id = "cobble", SubId = "start")
@@ -104,7 +87,7 @@ public class CobbleBot {
         }
     }
 
-    @DiscordMapping(Id = "cobble", SubId = "building-codex", FocusedOption = "building")
+    @DiscordMapping(Id = "cobble", GroupName = "building", SubId = "codex", FocusedOption = "building")
     private void cobbleBuildingCodexAutocomplete(
         CommandAutoCompleteInteractionEvent event,
         @EventProperty String building
@@ -114,6 +97,24 @@ public class CobbleBot {
             .map(type -> new Command.Choice(type.getFriendlyName(), type.getFriendlyName()))
             .toList()
         ).queue();
+    }
+
+    @DiscordMapping(Id = "cobble", GroupName = "building", SubId = "codex")
+    private void cobbleBuildingCodex(
+        SlashCommandInteractionEvent event,
+        @EventProperty String building
+    ) throws CobbleServiceException {
+        int page = 1;
+        int maxPage = cobbleService.getCobbleBuildingList().size();
+        if(building != null && CobbleBuildingType.validName(building)) {
+            page = CobbleBuildingType.fromName(building).ordinal() + 1;
+        }
+        event.replyEmbeds(helperService.getBuildingMessage(page))
+            .addActionRow(
+                Button.secondary("cobble-building-codex-page-prev", "Previous page").withDisabled(page == 1),
+                Button.secondary("cobble-building-codex-page-next", "Next Page").withDisabled(page == maxPage)
+            )
+            .queue();
     }
 
     @DiscordMapping(Id = "cobble-help-page-next")
@@ -133,14 +134,27 @@ public class CobbleBot {
                 new SubcommandData("help", "Get some idea on how to play the game."),
                 new SubcommandData("start", "Start the game of cobble!"),
                 new SubcommandData("production", "Get an overview of production statistics for your town"),
-                new SubcommandData("building-codex", "Get a book of buildings and what they do")
-                    .addOption(OptionType.STRING, "building", "Start the book on a specific building", false, true),
                 new SubcommandData("citizens", "Get information on citizens in your town")
                     .addOption(OptionType.STRING, "citizen", "Get a specific citizen", false, true),
                 new SubcommandData("schedule-build", "Schedule a building to be built during the day")
                     .addOption(OptionType.STRING, "building", "The building to be scheduled to be built", true, true),
                 new SubcommandData("schedule-upgrade", "Schedule a building to be upgraded during the day")
                     .addOption(OptionType.STRING, "building", "The building to be scheduled to be upgraded", true, true)
+            ).addSubcommandGroups(
+                new SubcommandGroupData("building", "building stuff").addSubcommands(
+                    new SubcommandData("codex", "Get a book of buildings and what they do")
+                        .addOption(OptionType.STRING, "building", "Start the book on a specific building", false, true)
+                ),
+                new SubcommandGroupData("rename", "rename stuff").addSubcommands(
+                    new SubcommandData("building", "Rename a building")
+                        .addOption(OptionType.STRING, "name", "The current name of the building", true, true)
+                        .addOption(OptionType.STRING, "new-name", "The new name of the building", true),
+                    new SubcommandData("npc", "Rename an NPC")
+                        .addOption(OptionType.STRING, "name", "The current name of the NPC", true, true)
+                        .addOption(OptionType.STRING, "new-name", "The new name of the NPC", true),
+                    new SubcommandData("town", "Rename your town")
+                        .addOption(OptionType.STRING, "new-name", "The new name of the town", true)
+                )
             )
         );
     }
