@@ -14,7 +14,9 @@ public class CobbleProduction {
     private CobbleProductionId id;
     private String cost;
     private String production;
+    private String consumption;
 
+    @Getter
     @ToString
     @Embeddable
     @EqualsAndHashCode

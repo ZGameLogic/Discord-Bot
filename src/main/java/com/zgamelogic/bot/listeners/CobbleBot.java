@@ -3,8 +3,9 @@ package com.zgamelogic.bot.listeners;
 import com.zgamelogic.annotations.DiscordController;
 import com.zgamelogic.annotations.DiscordMapping;
 import com.zgamelogic.annotations.EventProperty;
-import com.zgamelogic.bot.services.CobbleHelperService;
+import com.zgamelogic.bot.services.CobbleBotHelperService;
 import com.zgamelogic.bot.services.CobbleResourceService;
+import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
 import com.zgamelogic.data.database.cobbleData.CobbleServiceException;
 import com.zgamelogic.data.database.cobbleData.npc.CobbleNpc;
 import com.zgamelogic.data.database.cobbleData.player.CobblePlayer;
@@ -24,15 +25,17 @@ import net.dv8tion.jda.api.utils.FileUpload;
 import org.springframework.context.annotation.Bean;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 
 @Slf4j
 @DiscordController
 @AllArgsConstructor
 public class CobbleBot {
-    private final CobbleHelperService helperService;
+    private final CobbleBotHelperService helperService;
     private final CobbleResourceService resourceService;
     private final CobbleService cobbleService;
+    private final CobbleBotHelperService cobbleBotHelperService;
 
     @DiscordMapping(Id = "cobble", SubId = "help")
     private void cobbleHelp(SlashCommandInteractionEvent event) throws IOException {
@@ -41,6 +44,24 @@ public class CobbleBot {
             .addEmbeds(helperService.getHelpMessage(1))
                 .addActionRow(Button.secondary("cobble-help-page-prev", "Previous page").asDisabled(), Button.secondary("cobble-help-page-next", "Next Page"))
             .queue();
+    }
+
+    @DiscordMapping(Id = "cobble", SubId = "building-codex")
+    private void cobbleBuildingCodex(
+        SlashCommandInteractionEvent event,
+        @EventProperty String building
+    ) throws CobbleServiceException {
+        int page = 1;
+        int maxPage = cobbleService.getCobbleBuildingList().size();
+        if(building != null && CobbleBuildingType.validName(building)) {
+            page = CobbleBuildingType.fromName(building).ordinal() + 1;
+        }
+        event.replyEmbeds(helperService.getBuildingMessage(page))
+            .addActionRow(
+                Button.secondary("cobble-building-codex-page-prev", "Previous page").withDisabled(page == 1),
+                Button.secondary("cobble-building-codex-page-next", "Next Page").withDisabled(page == maxPage)
+            )
+        .queue();
     }
 
     @DiscordMapping(Id = "cobble", SubId = "start")
@@ -60,20 +81,9 @@ public class CobbleBot {
     ) {
         boolean citizenIncluded = citizen != null && !citizen.isEmpty();
         if (citizenIncluded) {
-            cobbleCitizen(event, citizen);
+            cobbleBotHelperService.cobbleCitizen(event, citizen);
         } else {
-            cobbleCitizens(event);
-        }
-    }
-
-    private void cobbleCitizen(SlashCommandInteractionEvent event, String citizen) {
-        // TODO complete
-    }
-    private void cobbleCitizens(SlashCommandInteractionEvent event){
-        try {
-            cobbleService.getCobbleNpcs(event.getUser().getIdLong());
-        } catch (CobbleServiceException e) {
-            event.reply(e.getMessage()).setEphemeral(true).queue();
+            cobbleBotHelperService.cobbleCitizens(event);
         }
     }
 
@@ -94,22 +104,27 @@ public class CobbleBot {
         }
     }
 
-    @DiscordMapping(Id = "cobble-help-page-next")
-    @DiscordMapping(Id = "cobble-help-page-prev")
-    private void cobbleHelpPageUp(ButtonInteractionEvent event) {
-        long slashUserId = event.getMessage().getInteractionMetadata().getUser().getIdLong();
-        if(event.getUser().getIdLong() != slashUserId){
-            event.reply(helperService.PAGEABLE_PERMISSION).setEphemeral(true).queue();
-            return;
-        }
-        int it = event.getButton().getId().equals("cobble-help-page-next") ? 1 : -1;
-        int newPage = Integer.parseInt(event.getMessage().getEmbeds().get(0).getFooter().getText().replace("Page ", "")) + it;
-        event.editMessageEmbeds(helperService.getHelpMessage(newPage))
-            .setActionRow(
-                Button.secondary("cobble-help-page-prev", "Previous page").withDisabled(newPage == 1),
-                Button.secondary("cobble-help-page-next", "Next Page").withDisabled(newPage == 3)
-            ).queue();
+    @DiscordMapping(Id = "cobble", SubId = "building-codex", FocusedOption = "building")
+    private void cobbleBuildingCodexAutocomplete(
+        CommandAutoCompleteInteractionEvent event,
+        @EventProperty String building
+    ){
+        event.replyChoices(Arrays.stream(CobbleBuildingType.values())
+            .filter(type -> building.isEmpty() || type.getFriendlyName().toLowerCase().replaceAll("'", "").contains(building.toLowerCase()))
+            .map(type -> new Command.Choice(type.getFriendlyName(), type.getFriendlyName()))
+            .toList()
+        ).queue();
     }
+
+    @DiscordMapping(Id = "cobble-help-page-next")
+    private void cobbleHelpPageNext(ButtonInteractionEvent event){ helperService.cobbleHelpPage(event); }
+    @DiscordMapping(Id = "cobble-help-page-prev")
+    private void cobbleHelpPagePrev(ButtonInteractionEvent event){ helperService.cobbleHelpPage(event); }
+
+    @DiscordMapping(Id = "cobble-building-codex-page-next")
+    private void cobbleBuildingCodexPageNext(ButtonInteractionEvent event){ helperService.cobbleBuildingCodexPage(event); }
+    @DiscordMapping(Id = "cobble-building-codex-page-prev")
+    private void cobbleBuildingCodexPagePrev(ButtonInteractionEvent event){ helperService.cobbleBuildingCodexPage(event); }
 
     @Bean
     public List<CommandData> cobbleCommands(){
@@ -118,6 +133,8 @@ public class CobbleBot {
                 new SubcommandData("help", "Get some idea on how to play the game."),
                 new SubcommandData("start", "Start the game of cobble!"),
                 new SubcommandData("production", "Get an overview of production statistics for your town"),
+                new SubcommandData("building-codex", "Get a book of buildings and what they do")
+                    .addOption(OptionType.STRING, "building", "Start the book on a specific building", false, true),
                 new SubcommandData("citizens", "Get information on citizens in your town")
                     .addOption(OptionType.STRING, "citizen", "Get a specific citizen", false, true),
                 new SubcommandData("schedule-build", "Schedule a building to be built during the day")

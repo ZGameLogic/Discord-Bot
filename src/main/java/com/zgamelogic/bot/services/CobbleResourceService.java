@@ -50,7 +50,11 @@ public class CobbleResourceService {
      * @return String mentionable
      */
     public String em(String key){
-        return emojis.get(key).getAsMention();
+        try {
+            return emojis.get(key).getAsMention();
+        } catch(Exception e){
+            return "`Emoji not found`";
+        }
     }
 
     /**
@@ -59,7 +63,11 @@ public class CobbleResourceService {
      * @return String mentionable
      */
     public String cm(String key){
-        return commands.get(key).getAsMention();
+        try {
+            return commands.get(key).getAsMention();
+        } catch(Exception e){
+            return "`Slash command not found`";
+        }
     }
 
     public String randomName(boolean male) {

@@ -1,20 +1,20 @@
 package com.zgamelogic.services;
 
 import com.zgamelogic.bot.services.CobbleResourceService;
+import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
 import com.zgamelogic.data.database.cobbleData.CobbleServiceException;
 import com.zgamelogic.data.database.cobbleData.history.CobbleHistoryRepository;
 import com.zgamelogic.data.database.cobbleData.npc.CobbleNpc;
 import com.zgamelogic.data.database.cobbleData.npc.CobbleNpcRepository;
 import com.zgamelogic.data.database.cobbleData.player.CobblePlayer;
 import com.zgamelogic.data.database.cobbleData.player.CobblePlayerRepository;
+import com.zgamelogic.data.database.cobbleData.production.CobbleProduction;
+import com.zgamelogic.data.database.cobbleData.production.CobbleProductionRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import java.io.File;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 import static com.zgamelogic.data.database.cobbleData.CobbleBuildingType.*;
 
@@ -23,15 +23,18 @@ import static com.zgamelogic.data.database.cobbleData.CobbleBuildingType.*;
 public class CobbleService {
     private final CobblePlayerRepository cobblePlayerRepository;
     private final CobbleHistoryRepository cobbleHistoryRepository;
-    private final CobbleResourceService cobbleResourceService;
     private final CobbleNpcRepository cobbleNpcRepository;
+    private final CobbleProductionRepository cobbleProductionRepository;
+
+    private final CobbleResourceService cobbleResourceService;
 
     private final File BASE_DIR;
     private final CobbleNpcIdRepository cobbleNpcIdRepository;
 
-    public CobbleService(CobblePlayerRepository cobblePlayerRepository, CobbleHistoryRepository cobbleHistoryRepository, CobbleResourceService cobbleResourceService, CobbleNpcRepository cobbleNpcRepository, CobbleNpcIdRepository cobbleNpcIdRepository) {
+    public CobbleService(CobblePlayerRepository cobblePlayerRepository, CobbleHistoryRepository cobbleHistoryRepository, CobbleProductionRepository cobbleProductionRepository, CobbleResourceService cobbleResourceService, CobbleNpcRepository cobbleNpcRepository, CobbleNpcIdRepository cobbleNpcIdRepository) {
         this.cobblePlayerRepository = cobblePlayerRepository;
         this.cobbleHistoryRepository = cobbleHistoryRepository;
+        this.cobbleProductionRepository = cobbleProductionRepository;
         this.cobbleResourceService = cobbleResourceService;
         this.cobbleNpcRepository = cobbleNpcRepository;
         File file = new File("/cobble"); // check if we are in cluster
@@ -74,6 +77,14 @@ public class CobbleService {
         throw new CobbleServiceException("Cobble npc not found");
     }
 
+    public List<String> getCobbleBuildingList(){
+        return Arrays.stream(values()).map(CobbleBuildingType::getFriendlyName).toList();
+    }
+
+    public List<CobbleProduction> getCobbleProductions(CobbleBuildingType buildingType){
+        return cobbleProductionRepository.findAllById_Building(buildingType);
+    }
+
     private CobbleNpc generateRandomCobbleNpc(long id){
         Random rand = new Random();
         boolean male = rand.nextBoolean();
@@ -85,7 +96,6 @@ public class CobbleService {
         appearance += male ? rand.nextInt(5) : 0; // facial hair
         appearance += rand.nextInt(10); // shirt color
         appearance += rand.nextInt(3); // pant color
-
         return new CobbleNpc(id, name.split(" ")[0], name.split(" ")[1], appearance);
     }
 }
