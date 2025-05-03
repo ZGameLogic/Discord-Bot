@@ -24,7 +24,7 @@ public class CobblePlayer {
     private LocalDateTime started;
     @Setter
     private String townName;
-    @Getter(AccessLevel.NONE)
+    @Getter(AccessLevel.PRIVATE)
     private String resources;
 
     @Transient
