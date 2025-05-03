@@ -1,9 +1,9 @@
 package com.zgamelogic.data.database.cobbleData.building;
 
 import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
+import com.zgamelogic.data.database.cobbleData.player.CobblePlayer;
 import com.zgamelogic.data.database.cobbleData.production.CobbleProduction;
 import jakarta.persistence.*;
-import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
@@ -16,8 +16,8 @@ import java.util.UUID;
 @ToString
 @NoArgsConstructor
 public class CobbleBuilding {
-    @EmbeddedId
-    private CobbleBuildingId id;
+    @Id
+    private UUID cobbleBuildingId;
     private int level;
     private LocalDateTime buildTime;
     @Enumerated(EnumType.STRING)
@@ -31,31 +31,16 @@ public class CobbleBuilding {
     })
     private CobbleProduction production;
 
-    public CobbleBuilding(long userId, CobbleBuildingType type, int level, String name, UUID buildingId) {
+    @ManyToOne
+    @JoinColumn(name = "playerId", referencedColumnName = "playerId", nullable = false)
+    private CobblePlayer player;
+
+    public CobbleBuilding(CobblePlayer player, CobbleBuildingType type, int level, String name, UUID buildingId) {
         this.level = level;
         buildingName = name;
         this.type = type;
-        id = new CobbleBuildingId(userId, buildingId);
+        this.player = player;
+        this.cobbleBuildingId = buildingId;
         buildTime= LocalDateTime.now();
-    }
-
-    @Getter
-    @ToString
-    @Embeddable
-    @NoArgsConstructor
-    @EqualsAndHashCode
-    public static class CobbleBuildingId {
-        private UUID cobbleBuildingId;
-        private long userId;
-
-        public CobbleBuildingId(long userId, UUID cobbleBuildingId) {
-            this.userId = userId;
-            this.cobbleBuildingId = cobbleBuildingId;
-        }
-
-        public CobbleBuildingId(long userId) {
-            this.userId = userId;
-            this.cobbleBuildingId = UUID.randomUUID();
-        }
     }
 }

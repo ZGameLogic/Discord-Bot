@@ -2,6 +2,7 @@ package com.zgamelogic.bot.services;
 
 import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
 import com.zgamelogic.data.database.cobbleData.CobbleServiceException;
+import com.zgamelogic.data.database.cobbleData.npc.CobbleNpc;
 import com.zgamelogic.data.database.cobbleData.player.CobblePlayer;
 import com.zgamelogic.data.database.cobbleData.production.CobbleProduction;
 import com.zgamelogic.services.CobbleService;
@@ -11,6 +12,7 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.utils.TimeFormat;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
@@ -85,11 +87,23 @@ public class CobbleBotHelperService {
         return eb.build();
     }
 
-    public MessageEmbed getStartMessage(CobblePlayer player) {
+    public MessageEmbed getStartMessage(CobblePlayer player) throws CobbleServiceException {
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(COBBLE_COLOR);
         eb.setTitle("Cobble Start");
-        // TODO give them information about their 2 new NPCs
+        eb.setImage("attachment://npc.png");
+        eb.setDescription("Welcome to cobble! Meet your new mayor: " + player.getMayor().getFullName());
+        return eb.build();
+    }
+
+    public MessageEmbed getCitizenMessage(CobbleNpc npc) throws CobbleServiceException {
+        EmbedBuilder eb = new EmbedBuilder();
+        eb.setColor(COBBLE_COLOR);
+        eb.setTitle(npc.getFullName());
+        String time = TimeFormat.DATE_TIME_LONG.now().toString();
+        eb.setTimestamp(npc.getBorn());
+        eb.setImage("attachment://npc.png");
+        eb.addField("Born", time, true);
         return eb.build();
     }
 
@@ -135,8 +149,9 @@ public class CobbleBotHelperService {
     }
 
     public void cobbleCitizen(SlashCommandInteractionEvent event, String citizen) {
-        // TODO complete
+
     }
+
     public void cobbleCitizens(SlashCommandInteractionEvent event){
         // TODO complete
         try {
@@ -144,5 +159,6 @@ public class CobbleBotHelperService {
         } catch (CobbleServiceException e) {
             event.reply(e.getMessage()).setEphemeral(true).queue();
         }
+        // TODO pageable, for a big towns
     }
 }

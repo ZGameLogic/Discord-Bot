@@ -14,8 +14,15 @@ import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Service;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
+import java.util.List;
 
 @Service
 @DiscordController
@@ -46,7 +53,7 @@ public class CobbleResourceService {
 
     /**
      * Get a mentionable string of an emoji
-     * @param key
+     * @param key key of the mapping
      * @return String mentionable
      */
     public String em(String key){
@@ -59,7 +66,7 @@ public class CobbleResourceService {
 
     /**
      * Get a mentionable string of a slash command
-     * @param key
+     * @param key key of the mapping
      * @return String mentionable
      */
     public String cm(String key){
@@ -79,8 +86,46 @@ public class CobbleResourceService {
         return firstName + " " + lastName;
     }
 
-    public void mapAppearance(String appearance) {
-        // TODO complete
+    public BufferedImage mapAppearance(String appearance) throws IOException {
+        int index = 1;
+        int skinColorOffset = Integer.parseInt(appearance.substring(index, (index++) + 1));
+        int hairColorOffset = Integer.parseInt(appearance.substring(index, (index++) + 1));
+        int hairStyleOffset = Integer.parseInt(appearance.substring(index, (index++) + 1));
+        int eyeColorOffset = Integer.parseInt(appearance.substring(index, (index++) + 1));
+        int facialHairOffset = Integer.parseInt(appearance.substring(index, (index++) + 1));
+        int shirtColorOffset = Integer.parseInt(appearance.substring(index, (index++) + 1));
+        int pantColorOffset = Integer.parseInt(appearance.substring(index, index + 1));
+
+        BufferedImage npc = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D pane = npc.createGraphics();
+        // skin
+        BufferedImage skins = ImageIO.read(resourceLoader.getResource("classpath:/assets/Cobble/Npc Assets/skin.png").getInputStream());
+        pane.drawImage(skins.getSubimage(skinColorOffset * 32, 0, 32, 32), 0, 0, null);
+        // shirt
+        BufferedImage shirts = ImageIO.read(resourceLoader.getResource("classpath:/assets/Cobble/Npc Assets/shirt.png").getInputStream());
+        pane.drawImage(shirts.getSubimage(shirtColorOffset * 32, 0, 32, 32), 0, 0, null);
+        // pants
+        BufferedImage pants = ImageIO.read(resourceLoader.getResource("classpath:/assets/Cobble/Npc Assets/pants.png").getInputStream());
+        pane.drawImage(pants.getSubimage(pantColorOffset * 32, 0, 32, 32), 0, 0, null);
+        // eyes
+        BufferedImage eyes = ImageIO.read(resourceLoader.getResource("classpath:/assets/Cobble/Npc Assets/eyes.png").getInputStream());
+        pane.drawImage(eyes.getSubimage(eyeColorOffset * 32, 0, 32, 32), 0, 0, null);
+
+        pane.dispose();
+        int newWidth = npc.getWidth() * 3;
+        int newHeight = npc.getHeight() * 3;
+        BufferedImage scaledNpc = new BufferedImage(newWidth, newHeight, BufferedImage.TYPE_INT_ARGB);
+        Graphics2D g2d = scaledNpc.createGraphics();
+        g2d.drawImage(npc, 0, 0, newWidth, newHeight, null);
+        g2d.dispose();
+        return scaledNpc;
+    }
+
+    public InputStream mapAppearanceAsStream(String appearance) throws IOException {
+        BufferedImage image = mapAppearance(appearance);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", baos);
+        return new ByteArrayInputStream(baos.toByteArray());
     }
 
     @DiscordMapping

@@ -3,6 +3,7 @@ package com.zgamelogic.data.database.cobbleData.history;
 import com.zgamelogic.data.database.cobbleData.CobbleActionType;
 import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
 import com.zgamelogic.data.database.cobbleData.action.CobbleAction;
+import com.zgamelogic.data.database.cobbleData.player.CobblePlayer;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -14,8 +15,9 @@ import java.util.UUID;
 @Getter
 @NoArgsConstructor
 public class CobbleHistory {
-    @EmbeddedId
-    private CobbleHistoryId id;
+    @Id
+    @GeneratedValue
+    private UUID id;
     private LocalDateTime completed;
     private int buildingLevel;
 
@@ -25,8 +27,12 @@ public class CobbleHistory {
     private CobbleBuildingType buildingType;
     private UUID cobbleBuildingId;
 
-    public CobbleHistory(long userId, int buildingLevel, CobbleActionType actionType, CobbleBuildingType buildingType, UUID cobbleBuildingId) {
-        id = new CobbleHistoryId(userId);
+    @ManyToOne
+    @JoinColumn(name = "playerId", referencedColumnName = "playerId", nullable = false)
+    private CobblePlayer player;
+
+    public CobbleHistory(CobblePlayer player, int buildingLevel, CobbleActionType actionType, CobbleBuildingType buildingType, UUID cobbleBuildingId) {
+        this.player = player;
         this.completed = LocalDateTime.now();
         this.buildingLevel = buildingLevel;
         this.actionType = actionType;
@@ -36,24 +42,11 @@ public class CobbleHistory {
 
     public static CobbleHistory from(CobbleAction action){
         return new CobbleHistory(
-            action.getId().getUserId(),
+            action.getPlayer(),
             action.getBuilding().getLevel(),
             action.getType(),
             action.getBuilding().getType(),
-            action.getBuilding().getId().getCobbleBuildingId()
+            action.getBuilding().getCobbleBuildingId()
         );
-    }
-
-    @Getter
-    @Embeddable
-    @NoArgsConstructor
-    public static class CobbleHistoryId {
-        @GeneratedValue
-        private UUID id;
-        private long userId;
-
-        public CobbleHistoryId(long userId) {
-            this.userId = userId;
-        }
     }
 }

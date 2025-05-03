@@ -46,7 +46,7 @@ public class CobbleService {
 
     @PostConstruct
     public void init() {
-        deleteCobblePlayer(232675572772372481L);
+        cobblePlayerRepository.deleteById(232675572772372481L);
     }
 
     public CobblePlayer startCobblePlayer(long playerId) throws CobbleServiceException {
@@ -54,25 +54,20 @@ public class CobbleService {
         CobblePlayer cobblePlayer = new CobblePlayer(playerId);
         UUID buildingUUID = UUID.randomUUID();
         cobblePlayer.addBuilding(TOWN_HALL, 1, "Town Hall", buildingUUID);
-        cobblePlayer.addNpc(generateRandomCobbleNpc(playerId));
-        cobblePlayer.addNpc(generateRandomCobbleNpc(playerId));
-        cobblePlayer.getNpcs().get(0).setCobbleBuildingId(buildingUUID);
+        cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
+        cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
+        cobblePlayer.getNpcs().get(0).setCobbleBuilding(cobblePlayer.getBuildings().get(0));
         return cobblePlayerRepository.save(cobblePlayer);
-    }
-
-    public void deleteCobblePlayer(long playerId) {
-        cobbleNpcRepository.deleteAllById_UserId(playerId);
-        cobblePlayerRepository.deleteById(playerId);
     }
 
     public List<CobbleNpc> getCobbleNpcs(long playerId) throws CobbleServiceException {
         if(!cobblePlayerRepository.existsById(playerId)) throw new CobbleServiceException("You must start the game first with the " + cobbleResourceService.cm("cobble start")  + " slash command");
-        return cobbleNpcRepository.findAllById_UserId(playerId);
+        return cobbleNpcRepository.findAllByPlayer_PlayerId(playerId);
     }
 
     public CobbleNpc getCobbleNpc(long playerId, UUID npcId) throws CobbleServiceException {
         if(!cobblePlayerRepository.existsById(playerId)) throw new CobbleServiceException("You must start the game first with the " + cobbleResourceService.cm("cobble start")  + " slash command");
-        Optional<CobbleNpc> npc = cobbleNpcRepository.findById_UserIdAndId_Id(playerId, npcId);
+        Optional<CobbleNpc> npc = cobbleNpcRepository.findByPlayer_PlayerIdAndId(playerId, npcId);
         if(npc.isPresent()) return npc.get();
         throw new CobbleServiceException("Cobble npc not found");
     }
@@ -85,7 +80,7 @@ public class CobbleService {
         return cobbleProductionRepository.findAllById_Building(buildingType);
     }
 
-    private CobbleNpc generateRandomCobbleNpc(long id){
+    private CobbleNpc generateRandomCobbleNpc(CobblePlayer cobblePlayer) {
         Random rand = new Random();
         boolean male = rand.nextBoolean();
         String name = cobbleResourceService.randomName(male);
@@ -97,6 +92,6 @@ public class CobbleService {
         appearance += male ? rand.nextInt(5) : 0; // facial hair
         appearance += rand.nextInt(10); // shirt color
         appearance += rand.nextInt(3); // pant color
-        return new CobbleNpc(id, name.split(" ")[0], name.split(" ")[1], appearance);
+        return new CobbleNpc(cobblePlayer, name.split(" ")[0], name.split(" ")[1], appearance);
     }
 }

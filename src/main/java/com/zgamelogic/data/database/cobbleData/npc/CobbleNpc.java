@@ -1,9 +1,11 @@
 package com.zgamelogic.data.database.cobbleData.npc;
 
+import com.zgamelogic.data.database.cobbleData.building.CobbleBuilding;
+import com.zgamelogic.data.database.cobbleData.player.CobblePlayer;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Entity
@@ -13,35 +15,30 @@ import java.util.UUID;
 @NoArgsConstructor
 public class CobbleNpc {
     @Id
-    private CobbleNpcId id;
-    private LocalDate born;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+    private LocalDateTime born;
     private String firstName;
     private String lastName;
     private String appearance;
 
+    @OneToOne
     @JoinColumn(name = "cobbleBuildingId", referencedColumnName = "cobbleBuildingId")
-    private UUID cobbleBuildingId;
+    private CobbleBuilding cobbleBuilding;
 
-    public CobbleNpc(long userId, String firstname, String lastname, String appearance) {
-        id = new CobbleNpcId(userId);
+    @ManyToOne
+    @JoinColumn(name = "playerId", referencedColumnName = "playerId", nullable = false)
+    private CobblePlayer player;
+
+    public CobbleNpc(CobblePlayer player, String firstname, String lastname, String appearance) {
         this.firstName = firstname;
         this.lastName = lastname;
         this.appearance = appearance;
-        born = LocalDate.now();
+        this.player = player;
+        born = LocalDateTime.now();
     }
 
-    @Getter
-    @Embeddable
-    @ToString
-    @EqualsAndHashCode
-    @NoArgsConstructor
-    public static class CobbleNpcId {
-        @GeneratedValue(strategy = GenerationType.UUID)
-        public UUID id;
-        private long userId;
-
-        public CobbleNpcId(long userId) {
-            this.userId = userId;
-        }
+    public String getFullName(){
+        return firstName + " " + lastName;
     }
 }

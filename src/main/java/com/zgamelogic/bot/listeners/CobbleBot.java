@@ -51,8 +51,11 @@ public class CobbleBot {
     private void cobbleStart(SlashCommandInteractionEvent event) {
         try {
             CobblePlayer player = cobbleService.startCobblePlayer(event.getUser().getIdLong());
-            event.replyEmbeds(helperService.getStartMessage(player)).queue();
-        } catch (CobbleServiceException e) {
+            event
+                .replyFiles(FileUpload.fromData(resourceService.mapAppearanceAsStream(player.getNpcs().get(0).getAppearance()), "npc.png"))
+                .addEmbeds(helperService.getStartMessage(player))
+                .queue();
+        } catch (CobbleServiceException | IOException e) {
             event.reply(e.getMessage()).setEphemeral(true).queue();
         }
     }
@@ -79,7 +82,7 @@ public class CobbleBot {
             List<CobbleNpc> npcs = cobbleService.getCobbleNpcs(event.getUser().getIdLong());
             event.replyChoices(npcs.stream()
                 .filter(npc -> citizen.isEmpty() || npc.getFirstName().toLowerCase().contains(citizen.toLowerCase()) ||  npc.getLastName().toLowerCase().contains(citizen.toLowerCase()))
-                .map(npc -> new Command.Choice(npc.getFirstName() + " " + npc.getLastName(), npc.getId().getId().toString()))
+                .map(npc -> new Command.Choice(npc.getFirstName() + " " + npc.getLastName(), npc.getId().toString()))
                 .toList()
             ).queue();
         } catch (CobbleServiceException e) {
@@ -149,9 +152,6 @@ public class CobbleBot {
                     new SubcommandData("building", "Rename a building")
                         .addOption(OptionType.STRING, "name", "The current name of the building", true, true)
                         .addOption(OptionType.STRING, "new-name", "The new name of the building", true),
-                    new SubcommandData("npc", "Rename an NPC")
-                        .addOption(OptionType.STRING, "name", "The current name of the NPC", true, true)
-                        .addOption(OptionType.STRING, "new-name", "The new name of the NPC", true),
                     new SubcommandData("town", "Rename your town")
                         .addOption(OptionType.STRING, "new-name", "The new name of the town", true)
                 )
