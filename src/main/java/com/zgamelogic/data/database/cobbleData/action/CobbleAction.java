@@ -18,6 +18,7 @@ public class CobbleAction {
     private UUID id;
     @Enumerated(EnumType.STRING)
     private CobbleActionType type;
+    // Production remaining
     private int remaining;
 
     @OneToOne

@@ -10,6 +10,7 @@ public enum CobbleBuildingType {
     BUILDER("Builder's Hut", "Builder"),
     WHEAT_FARM("Wheat Farm", "Wheat Farmer"),
     FISHERY("Fishery", "Fisherman"),
+    FORESTRY_HUT("Forestry Hut", "Forester"),
     MINE("Mine", "Miner");
 
     private final String friendlyName;
