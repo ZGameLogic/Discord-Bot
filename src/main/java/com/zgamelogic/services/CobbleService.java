@@ -3,6 +3,8 @@ package com.zgamelogic.services;
 import com.zgamelogic.bot.services.CobbleResourceService;
 import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
 import com.zgamelogic.data.database.cobbleData.CobbleServiceException;
+import com.zgamelogic.data.database.cobbleData.building.CobbleBuilding;
+import com.zgamelogic.data.database.cobbleData.building.CobbleBuildingRepository;
 import com.zgamelogic.data.database.cobbleData.history.CobbleHistoryRepository;
 import com.zgamelogic.data.database.cobbleData.npc.CobbleNpc;
 import com.zgamelogic.data.database.cobbleData.npc.CobbleNpcRepository;
@@ -25,16 +27,19 @@ public class CobbleService {
     private final CobbleHistoryRepository cobbleHistoryRepository;
     private final CobbleNpcRepository cobbleNpcRepository;
     private final CobbleProductionRepository cobbleProductionRepository;
+    private final BadNameService badNameService;
 
     private final CobbleResourceService cobbleResourceService;
 
     private final File BASE_DIR;
     private final CobbleNpcIdRepository cobbleNpcIdRepository;
+    private final CobbleBuildingRepository cobbleBuildingRepository;
 
-    public CobbleService(CobblePlayerRepository cobblePlayerRepository, CobbleHistoryRepository cobbleHistoryRepository, CobbleProductionRepository cobbleProductionRepository, CobbleResourceService cobbleResourceService, CobbleNpcRepository cobbleNpcRepository, CobbleNpcIdRepository cobbleNpcIdRepository) {
+    public CobbleService(CobblePlayerRepository cobblePlayerRepository, CobbleHistoryRepository cobbleHistoryRepository, CobbleProductionRepository cobbleProductionRepository, BadNameService badNameService, CobbleResourceService cobbleResourceService, CobbleNpcRepository cobbleNpcRepository, CobbleNpcIdRepository cobbleNpcIdRepository, CobbleBuildingRepository cobbleBuildingRepository) {
         this.cobblePlayerRepository = cobblePlayerRepository;
         this.cobbleHistoryRepository = cobbleHistoryRepository;
         this.cobbleProductionRepository = cobbleProductionRepository;
+        this.badNameService = badNameService;
         this.cobbleResourceService = cobbleResourceService;
         this.cobbleNpcRepository = cobbleNpcRepository;
         File file = new File("/cobble"); // check if we are in cluster
@@ -42,6 +47,7 @@ public class CobbleService {
         BASE_DIR = file;
         log.info("Cobble service started");
         this.cobbleNpcIdRepository = cobbleNpcIdRepository;
+        this.cobbleBuildingRepository = cobbleBuildingRepository;
     }
 
     @PostConstruct
@@ -49,9 +55,9 @@ public class CobbleService {
         cobblePlayerRepository.deleteById(232675572772372481L);
     }
 
-    public CobblePlayer startCobblePlayer(long playerId) throws CobbleServiceException {
+    public CobblePlayer startCobblePlayer(long playerId, String name) throws CobbleServiceException {
         if(cobblePlayerRepository.existsById(playerId)) throw new CobbleServiceException(("A cobble town already exists for this player"));
-        CobblePlayer cobblePlayer = new CobblePlayer(playerId);
+        CobblePlayer cobblePlayer = new CobblePlayer(playerId, name);
         UUID buildingUUID = UUID.randomUUID();
         cobblePlayer.addBuilding(TOWN_HALL, 1, "Town Hall", buildingUUID);
         cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
@@ -65,15 +71,30 @@ public class CobbleService {
         return cobbleNpcRepository.findAllByPlayer_PlayerId(playerId);
     }
 
-    public CobbleNpc getCobbleNpc(long playerId, UUID npcId) throws CobbleServiceException {
-        if(!cobblePlayerRepository.existsById(playerId)) throw new CobbleServiceException("You must start the game first with the " + cobbleResourceService.cm("cobble start")  + " slash command");
-        Optional<CobbleNpc> npc = cobbleNpcRepository.findByPlayer_PlayerIdAndId(playerId, npcId);
-        if(npc.isPresent()) return npc.get();
-        throw new CobbleServiceException("Cobble npc not found");
-    }
-
     public List<String> getCobbleBuildingList(){
         return Arrays.stream(values()).map(CobbleBuildingType::getFriendlyName).toList();
+    }
+
+    public CobbleBuilding getCobbleBuilding(long uid, String buildingId) throws CobbleServiceException {
+        return cobbleBuildingRepository.findByPlayer_PlayerIdAndCobbleBuildingId(uid, UUID.fromString(buildingId))
+            .orElseThrow(() -> new CobbleServiceException(("No cobble building found")));
+    }
+
+    public void renameBuilding(CobbleBuilding building, String newName) throws CobbleServiceException {
+        if(badNameService.isNotOkay(newName)) throw new CobbleServiceException(("Invalid building name"));
+        building.setBuildingName(newName);
+        cobbleBuildingRepository.save(building);
+    }
+
+    public CobblePlayer getCobblePlayer(long playerId) throws CobbleServiceException {
+        return cobblePlayerRepository.findById(playerId)
+            .orElseThrow(() -> new CobbleServiceException(("No cobble player found. Have you started the game yet?")));
+    }
+
+    public void renameTown(CobblePlayer player, String newName) throws CobbleServiceException {
+        if(badNameService.isNotOkay(newName)) throw new CobbleServiceException(("Invalid town name"));
+        player.setTownName(newName);
+        cobblePlayerRepository.save(player);
     }
 
     public List<CobbleProduction> getCobbleProductions(CobbleBuildingType buildingType){

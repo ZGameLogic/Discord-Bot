@@ -8,5 +8,5 @@ import java.util.UUID;
 
 public interface CobbleNpcRepository extends JpaRepository<CobbleNpc, UUID> {
     List<CobbleNpc> findAllByPlayer_PlayerId(long userId);
-    Optional<CobbleNpc> findByPlayer_PlayerIdAndId(long idUserId, UUID idId);
+    Optional<CobbleNpc> findByPlayer_PlayerIdAndId(long playerPlayerId, UUID id);
 }

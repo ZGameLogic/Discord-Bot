@@ -6,6 +6,7 @@ import com.zgamelogic.data.database.cobbleData.production.CobbleProduction;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
@@ -22,6 +23,7 @@ public class CobbleBuilding {
     private LocalDateTime buildTime;
     @Enumerated(EnumType.STRING)
     private CobbleBuildingType type;
+    @Setter
     private String buildingName;
 
     @OneToOne

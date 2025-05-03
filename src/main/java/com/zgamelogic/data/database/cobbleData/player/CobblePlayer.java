@@ -8,6 +8,7 @@ import com.zgamelogic.data.database.cobbleData.npc.CobbleNpc;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,6 +22,8 @@ public class CobblePlayer {
     @Id
     private long playerId;
     private LocalDateTime started;
+    @Setter
+    private String townName;
 
     @OneToMany(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CobbleBuilding> buildings;
@@ -29,12 +32,13 @@ public class CobblePlayer {
     @OneToMany(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CobbleAction> actions;
 
-    public CobblePlayer(long playerId) {
+    public CobblePlayer(long playerId, String name) {
         this.playerId = playerId;
         started = LocalDateTime.now();
         buildings = new ArrayList<>();
         npcs = new ArrayList<>();
         actions = new ArrayList<>();
+        townName = name + "'s town";
     }
 
     public void addNpc(CobbleNpc npc) { npcs.add(npc); }

@@ -3,6 +3,7 @@ package com.zgamelogic.bot.services;
 import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
 import com.zgamelogic.data.database.cobbleData.CobbleServiceException;
 import com.zgamelogic.data.database.cobbleData.npc.CobbleNpc;
+import com.zgamelogic.data.database.cobbleData.npc.CobbleNpcRepository;
 import com.zgamelogic.data.database.cobbleData.player.CobblePlayer;
 import com.zgamelogic.data.database.cobbleData.production.CobbleProduction;
 import com.zgamelogic.services.CobbleService;
@@ -12,17 +13,22 @@ import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
+import net.dv8tion.jda.api.utils.FileUpload;
 import net.dv8tion.jda.api.utils.TimeFormat;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
+import java.io.IOException;
 import java.util.Comparator;
+import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class CobbleBotHelperService {
     private final CobbleResourceService ces;
     private final CobbleService cobbleService;
+    private final CobbleNpcRepository cobbleNpcRepository;
 
     public final String PAGEABLE_PERMISSION = "You do not have permissions to change the page on this message.";
     public final String COBBLE_DESCRIPTION = """
@@ -45,6 +51,7 @@ public class CobbleBotHelperService {
         """;
 
     private final Color COBBLE_COLOR = new Color(149, 145, 145);
+    private final CobbleResourceService cobbleResourceService;
 
     public MessageEmbed getHelpMessage(int page){
         EmbedBuilder eb = new EmbedBuilder();
@@ -96,14 +103,15 @@ public class CobbleBotHelperService {
         return eb.build();
     }
 
-    public MessageEmbed getCitizenMessage(CobbleNpc npc) throws CobbleServiceException {
+    public MessageEmbed getCitizenMessage(CobbleNpc npc) {
         EmbedBuilder eb = new EmbedBuilder();
         eb.setColor(COBBLE_COLOR);
         eb.setTitle(npc.getFullName());
         String time = TimeFormat.DATE_TIME_LONG.now().toString();
-        eb.setTimestamp(npc.getBorn());
         eb.setImage("attachment://npc.png");
         eb.addField("Born", time, true);
+        String occupation = npc.getCobbleBuilding() != null ? npc.getCobbleBuilding().getType().getWorkerTitle() : "Unemployed";
+        eb.addField("Occupation", occupation, true);
         return eb.build();
     }
 
@@ -148,8 +156,13 @@ public class CobbleBotHelperService {
         return "";
     }
 
-    public void cobbleCitizen(SlashCommandInteractionEvent event, String citizen) {
-
+    public void cobbleCitizen(SlashCommandInteractionEvent event, String citizen) throws CobbleServiceException, IOException {
+        Optional<CobbleNpc> npcOptional = cobbleNpcRepository.findByPlayer_PlayerIdAndId(event.getUser().getIdLong(), UUID.fromString(citizen));
+        CobbleNpc npc = npcOptional.orElseThrow(() -> new CobbleServiceException("Unable to find npc"));
+        event
+            .replyFiles(FileUpload.fromData(cobbleResourceService.mapAppearanceAsStream(npc.getAppearance()), "npc.png"))
+            .addEmbeds(getCitizenMessage(npc))
+            .queue();
     }
 
     public void cobbleCitizens(SlashCommandInteractionEvent event){
