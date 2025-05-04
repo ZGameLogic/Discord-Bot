@@ -41,7 +41,7 @@ public class CobblePlayer {
         npcs = new ArrayList<>();
         actions = new ArrayList<>();
         townName = name;
-        resources = new HashMap<>();
+        resources = CobbleResourceType.mapResources("", true);
     }
 
     public void addNpc(CobbleNpc npc) { npcs.add(npc); }
@@ -61,4 +61,22 @@ public class CobblePlayer {
     public void addResource(CobbleResourceType type, int amount){
         resources.merge(type, amount, Integer::sum);
     }
+
+    public void addResources(Map<CobbleResourceType, Integer> resources){
+        resources.forEach((k, v) -> resources.merge(k, v, Integer::sum));
+    }
+
+    public void removeResources(Map<CobbleResourceType, Integer> resources){
+        resources.forEach((k, v) -> resources.merge(k, -v, Integer::sum));
+    }
+
+    public boolean canAfford(Map<CobbleResourceType, Integer> resources) {
+        for(Map.Entry<CobbleResourceType, Integer> entry : resources.entrySet()) {
+            if(entry.getValue() > this.resources.get(entry.getKey())) return false;
+        }
+        return true;
+    }
+
+    public int populationCount(){ return npcs.size(); }
+    public int populationCapacity(){ return buildings.stream().mapToInt(b -> b.getResource(CobbleResourceType.POPULATION)).sum(); }
 }

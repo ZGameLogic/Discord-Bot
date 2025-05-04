@@ -11,19 +11,22 @@ import java.util.stream.Collectors;
 
 @Getter
 public enum CobbleResourceType {
-    PRODUCTION("pd", "Production"),
-    WOOD("wd", "Wood"),
-    STONE("st", "Stone"),
-    METAL("ml", "Metal"),
-    MAGIC("mc", "Magic"),
-    RATIONS("ra", "Rations");
+    PRODUCTION("pd", "Production", false),
+    WOOD("wd", "Wood", true),
+    STONE("st", "Stone", true),
+    METAL("ml", "Metal", true),
+    MAGIC("mc", "Magic", true),
+    RATIONS("ra", "Rations", true),
+    POPULATION("po", "Population", false);
 
     public final String code;
     public final String friendlyName;
+    public final boolean stockpile;
 
-    CobbleResourceType(String code, String friendlyName) {
+    CobbleResourceType(String code, String friendlyName, boolean stockpile) {
         this.code = code;
         this.friendlyName = friendlyName;
+        this.stockpile = stockpile;
     }
 
     public String getEmojiName(){
@@ -37,8 +40,8 @@ public enum CobbleResourceType {
     public static String mapResources(Map<CobbleResourceType, Integer> map){
         StringBuilder sb = new StringBuilder();
         map.forEach((key, value) -> {
-            if (value == 0) return;
-            sb.append(key.getCode() + value);
+            if (value == 0 || key.isStockpile()) return;
+            sb.append(key.getCode()).append(value);
         });
         return sb.toString();
     }

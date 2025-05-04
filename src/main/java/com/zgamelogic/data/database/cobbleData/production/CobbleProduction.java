@@ -17,6 +17,8 @@ import java.util.Map;
 public class CobbleProduction {
     @EmbeddedId
     private CobbleProductionId id;
+    private int workers;
+
     // The cost it takes to upgrade to this level from the previous
     @Convert(converter = CobbleResourceConverter.class)
     private Map<CobbleResourceType, Integer> cost;
@@ -29,7 +31,6 @@ public class CobbleProduction {
     // The buildings this level unlocks (not cumulative)
     @Convert(converter = CobbleBuildingConverter.class)
     private Map<CobbleBuildingType, Integer> unlocks;
-    private int workers;
 
     @Getter
     @ToString

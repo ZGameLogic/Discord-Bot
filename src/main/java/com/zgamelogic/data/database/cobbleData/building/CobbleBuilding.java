@@ -1,6 +1,7 @@
 package com.zgamelogic.data.database.cobbleData.building;
 
 import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
+import com.zgamelogic.data.database.cobbleData.CobbleResourceType;
 import com.zgamelogic.data.database.cobbleData.npc.CobbleNpc;
 import com.zgamelogic.data.database.cobbleData.player.CobblePlayer;
 import com.zgamelogic.data.database.cobbleData.production.CobbleProduction;
@@ -51,4 +52,6 @@ public class CobbleBuilding {
         this.cobbleBuildingId = buildingId;
         buildTime= LocalDateTime.now();
     }
+
+    public int getResource(CobbleResourceType type){ return production.getProduction().getOrDefault(type, 0); }
 }

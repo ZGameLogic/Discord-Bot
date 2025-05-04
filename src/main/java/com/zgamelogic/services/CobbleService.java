@@ -16,6 +16,7 @@ import com.zgamelogic.data.database.cobbleData.production.CobbleProductionReposi
 import jakarta.annotation.PostConstruct;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import java.util.*;
 
@@ -35,7 +36,33 @@ public class CobbleService {
 
     @PostConstruct
     public void init() {
-        cobblePlayerRepository.deleteById(232675572772372481L);
+//        cobblePlayerRepository.deleteById(232675572772372481L);
+        day();
+    }
+
+    @Scheduled(cron = "0 0 */12 * * *")
+    public void day(){
+        cobblePlayerRepository.findAll().forEach(this::resolvePlayerDay);
+        // TODO post day message
+    }
+
+    private void resolvePlayerDay(CobblePlayer player){
+        // TODO resolve building
+        List<CobbleBuilding> unresolved = List.copyOf(player.getBuildings());
+        for (int i = 0; i < player.getBuildings().size() && !unresolved.isEmpty(); i++) {
+            for(CobbleBuilding building: unresolved.stream()
+                .sorted(Comparator.comparingInt(building -> building.getProduction().getConsumption().size())).toList()){
+                if(player.canAfford(building.getProduction().getConsumption())){
+                    player.removeResources(building.getProduction().getConsumption());
+                    player.addResources(building.getProduction().getProduction());
+                    unresolved.remove(building);
+                }
+            }
+        }
+
+
+//        TODO resolve building/upgrading
+//        TODO births
     }
 
     public CobblePlayer startCobblePlayer(long playerId, String name) throws CobbleServiceException {
