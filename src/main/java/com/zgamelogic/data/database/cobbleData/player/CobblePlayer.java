@@ -40,7 +40,7 @@ public class CobblePlayer {
         buildings = new ArrayList<>();
         npcs = new ArrayList<>();
         actions = new ArrayList<>();
-        townName = name + "'s town";
+        townName = name;
         resources = new HashMap<>();
     }
 

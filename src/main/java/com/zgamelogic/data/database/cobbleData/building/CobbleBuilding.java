@@ -1,6 +1,7 @@
 package com.zgamelogic.data.database.cobbleData.building;
 
 import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
+import com.zgamelogic.data.database.cobbleData.npc.CobbleNpc;
 import com.zgamelogic.data.database.cobbleData.player.CobblePlayer;
 import com.zgamelogic.data.database.cobbleData.production.CobbleProduction;
 import jakarta.persistence.*;
@@ -10,6 +11,7 @@ import lombok.Setter;
 import lombok.ToString;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -32,6 +34,10 @@ public class CobbleBuilding {
         @JoinColumn(name = "level", referencedColumnName = "level", insertable = false, updatable = false)
     })
     private CobbleProduction production;
+
+    @OneToMany
+    @JoinColumn(name = "cobbleBuildingId", referencedColumnName = "cobbleBuildingId")
+    private List<CobbleNpc> cobbleNpcs;
 
     @ManyToOne
     @JoinColumn(name = "playerId", referencedColumnName = "playerId", nullable = false)

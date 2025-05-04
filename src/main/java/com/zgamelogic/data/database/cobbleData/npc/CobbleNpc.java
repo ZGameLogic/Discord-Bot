@@ -22,7 +22,7 @@ public class CobbleNpc {
     private String lastName;
     private String appearance;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "cobbleBuildingId", referencedColumnName = "cobbleBuildingId")
     private CobbleBuilding cobbleBuilding;
 
@@ -40,5 +40,9 @@ public class CobbleNpc {
 
     public String getFullName(){
         return firstName + " " + lastName;
+    }
+
+    public void fire(){
+        cobbleBuilding = null;
     }
 }

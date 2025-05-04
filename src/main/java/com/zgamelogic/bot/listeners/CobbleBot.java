@@ -51,20 +51,14 @@ public class CobbleBot {
     }
 
     @DiscordMapping(Id = "cobble", SubId = "start")
-    private void cobbleStart(SlashCommandInteractionEvent event) {
+    private void cobbleStart(SlashCommandInteractionEvent event, @EventProperty(name = "town-name") String townName) {
         try {
-            CobblePlayer player = cobbleService.startCobblePlayer(event.getUser().getIdLong(), event.getUser().getName());
+            if(townName == null || townName.isEmpty()) townName = event.getUser().getName() + "'s town";
+            CobblePlayer player = cobbleService.startCobblePlayer(event.getUser().getIdLong(), townName);
             event
                 .replyFiles(FileUpload.fromData(resourceService.mapAppearanceAsStream(player.getNpcs().get(0).getAppearance()), "npc.png"))
                 .addEmbeds(helperService.getStartMessage(player))
                 .queue();
-            player.getNpcs().forEach(cobbleNpc -> {
-                try {
-                    event.getChannel().sendFiles(FileUpload.fromData(resourceService.mapAppearanceAsStream(cobbleNpc.getAppearance()), "npc.png")).queue();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
-            });
         } catch (CobbleServiceException | IOException e) {
             event.reply(e.getMessage()).setEphemeral(true).queue();
         }
@@ -190,14 +184,11 @@ public class CobbleBot {
         return List.of(
             Commands.slash("cobble", "All commands related to the cobble game.").addSubcommands(
                 new SubcommandData("help", "Get some idea on how to play the game."),
-                new SubcommandData("start", "Start the game of cobble!"),
+                new SubcommandData("start", "Start the game of cobble!")
+                    .addOption(OptionType.STRING, "town-name", "The name of your town", false),
                 new SubcommandData("production", "Get an overview of production statistics for your town"),
                 new SubcommandData("citizens", "Get information on citizens in your town")
-                    .addOption(OptionType.STRING, "citizen", "Get a specific citizen", false, true),
-                new SubcommandData("schedule-build", "Schedule a building to be built during the day")
-                    .addOption(OptionType.STRING, "building", "The building to be scheduled to be built", true, true),
-                new SubcommandData("schedule-upgrade", "Schedule a building to be upgraded during the day")
-                    .addOption(OptionType.STRING, "building", "The building to be scheduled to be upgraded", true, true)
+                    .addOption(OptionType.STRING, "citizen", "Get a specific citizen", false, true)
             ).addSubcommandGroups(
                 new SubcommandGroupData("building", "building stuff").addSubcommands(
                     new SubcommandData("codex", "Get a book of buildings and what they do")
@@ -209,6 +200,14 @@ public class CobbleBot {
                         .addOption(OptionType.STRING, "new-name", "The new name of the building", true),
                     new SubcommandData("town", "Rename your town")
                         .addOption(OptionType.STRING, "new-name", "The new name of the town", true)
+                ),
+                new SubcommandGroupData("schedule", "Schedule things to happen").addSubcommands(
+                    new SubcommandData("build", "Schedule a building to be built during the day")
+                        .addOption(OptionType.STRING, "building", "The building to be scheduled to be built", true, true)
+                        .addOption(OptionType.STRING, "npc", "The NPC to assign to this building when built", true, true),
+                    new SubcommandData("upgrade", "Schedule a building to be upgraded during the day")
+                        .addOption(OptionType.STRING, "building", "The building to be scheduled to be upgraded", true, true)
+                        .addOption(OptionType.STRING, "npc", "The NPC to assign to this building after upgrade if required", false, true)
                 )
             )
         );

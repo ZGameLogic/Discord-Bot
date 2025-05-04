@@ -14,42 +14,24 @@ import com.zgamelogic.data.database.cobbleData.player.CobblePlayerRepository;
 import com.zgamelogic.data.database.cobbleData.production.CobbleProduction;
 import com.zgamelogic.data.database.cobbleData.production.CobbleProductionRepository;
 import jakarta.annotation.PostConstruct;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import java.io.File;
 import java.util.*;
 
 import static com.zgamelogic.data.database.cobbleData.CobbleBuildingType.*;
 
 @Service
 @Slf4j
+@AllArgsConstructor
 public class CobbleService {
     private final CobblePlayerRepository cobblePlayerRepository;
     private final CobbleHistoryRepository cobbleHistoryRepository;
     private final CobbleNpcRepository cobbleNpcRepository;
     private final CobbleProductionRepository cobbleProductionRepository;
     private final BadNameService badNameService;
-
     private final CobbleResourceService cobbleResourceService;
-
-    private final File BASE_DIR;
-    private final CobbleNpcIdRepository cobbleNpcIdRepository;
     private final CobbleBuildingRepository cobbleBuildingRepository;
-
-    public CobbleService(CobblePlayerRepository cobblePlayerRepository, CobbleHistoryRepository cobbleHistoryRepository, CobbleProductionRepository cobbleProductionRepository, BadNameService badNameService, CobbleResourceService cobbleResourceService, CobbleNpcRepository cobbleNpcRepository, CobbleNpcIdRepository cobbleNpcIdRepository, CobbleBuildingRepository cobbleBuildingRepository) {
-        this.cobblePlayerRepository = cobblePlayerRepository;
-        this.cobbleHistoryRepository = cobbleHistoryRepository;
-        this.cobbleProductionRepository = cobbleProductionRepository;
-        this.badNameService = badNameService;
-        this.cobbleResourceService = cobbleResourceService;
-        this.cobbleNpcRepository = cobbleNpcRepository;
-        File file = new File("/cobble"); // check if we are in cluster
-        if(!file.exists()) file = new File("cobble"); // change to local
-        BASE_DIR = file;
-        log.info("Cobble service started");
-        this.cobbleNpcIdRepository = cobbleNpcIdRepository;
-        this.cobbleBuildingRepository = cobbleBuildingRepository;
-    }
 
     @PostConstruct
     public void init() {
@@ -58,16 +40,10 @@ public class CobbleService {
 
     public CobblePlayer startCobblePlayer(long playerId, String name) throws CobbleServiceException {
         if(cobblePlayerRepository.existsById(playerId)) throw new CobbleServiceException(("A cobble town already exists for this player"));
+        if(badNameService.isNotOkay(name)) throw new CobbleServiceException(("Town name is not okay"));
         CobblePlayer cobblePlayer = new CobblePlayer(playerId, name);
         UUID buildingUUID = UUID.randomUUID();
         cobblePlayer.addBuilding(TOWN_HALL, 1, "Town Hall", buildingUUID);
-        cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
-        cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
-        cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
-        cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
-        cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
-        cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
-        cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
         cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
         cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
         cobblePlayer.getNpcs().get(0).setCobbleBuilding(cobblePlayer.getBuildings().get(0));
