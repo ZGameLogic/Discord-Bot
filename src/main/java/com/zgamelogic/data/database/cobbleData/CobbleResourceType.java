@@ -1,5 +1,7 @@
 package com.zgamelogic.data.database.cobbleData;
 
+import lombok.Getter;
+
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -7,6 +9,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+@Getter
 public enum CobbleResourceType {
     PRODUCTION("pd", "Production"),
     WOOD("wd", "Wood"),
@@ -15,8 +18,8 @@ public enum CobbleResourceType {
     MAGIC("mc", "Magic"),
     RATIONS("ra", "Rations");
 
-    final String code;
-    final String friendlyName;
+    public final String code;
+    public final String friendlyName;
 
     CobbleResourceType(String code, String friendlyName) {
         this.code = code;

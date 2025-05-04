@@ -1,13 +1,13 @@
 package com.zgamelogic.data.database.cobbleData.player;
 
 import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
+import com.zgamelogic.data.database.cobbleData.CobbleResourceConverter;
 import com.zgamelogic.data.database.cobbleData.CobbleResourceType;
 import com.zgamelogic.data.database.cobbleData.CobbleServiceException;
 import com.zgamelogic.data.database.cobbleData.action.CobbleAction;
 import com.zgamelogic.data.database.cobbleData.building.CobbleBuilding;
 import com.zgamelogic.data.database.cobbleData.npc.CobbleNpc;
 import jakarta.persistence.*;
-import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -24,11 +24,8 @@ public class CobblePlayer {
     private LocalDateTime started;
     @Setter
     private String townName;
-    @Getter(AccessLevel.PRIVATE)
-    private String resources;
-
-    @Transient
-    private Map<CobbleResourceType, Integer> resourceMap;
+    @Convert(converter = CobbleResourceConverter.class)
+    private Map<CobbleResourceType, Integer> resources;
 
     @OneToMany(mappedBy = "player", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CobbleBuilding> buildings;
@@ -44,7 +41,7 @@ public class CobblePlayer {
         npcs = new ArrayList<>();
         actions = new ArrayList<>();
         townName = name + "'s town";
-        postLoad();
+        resources = new HashMap<>();
     }
 
     public void addNpc(CobbleNpc npc) { npcs.add(npc); }
@@ -59,20 +56,5 @@ public class CobblePlayer {
             .filter(npc -> npc.getCobbleBuilding().getType() == CobbleBuildingType.TOWN_HALL)
             .findFirst()
             .orElseThrow(() -> new CobbleServiceException("NPC not found"));
-    }
-
-    @PostLoad
-    public void postLoad() {
-        System.out.println("called");
-        resourceMap = CobbleResourceType.mapResources(resources, true);
-    }
-
-    @PrePersist
-    public void prePersist() {
-        // TODO fix
-        if(resourceMap == null) return;
-        StringBuilder sb = new StringBuilder();
-        resourceMap.forEach((key, value) -> sb.append(key.name()).append(value));
-        resources = sb.toString();
     }
 }
