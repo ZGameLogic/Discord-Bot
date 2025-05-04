@@ -63,6 +63,13 @@ public class CobbleService {
         cobblePlayer.addBuilding(TOWN_HALL, 1, "Town Hall", buildingUUID);
         cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
         cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
+        cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
+        cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
+        cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
+        cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
+        cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
+        cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
+        cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
         cobblePlayer.getNpcs().get(0).setCobbleBuilding(cobblePlayer.getBuildings().get(0));
         cobblePlayer.addResource(CobbleResourceType.WOOD, 5);
         return cobblePlayerRepository.save(cobblePlayer);

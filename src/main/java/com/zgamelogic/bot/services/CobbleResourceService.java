@@ -95,6 +95,13 @@ public class CobbleResourceService {
         int facialHairOffset = Integer.parseInt(appearance.substring(index, (index++) + 1));
         int shirtColorOffset = Integer.parseInt(appearance.substring(index, (index++) + 1));
         int pantColorOffset = Integer.parseInt(appearance.substring(index, index + 1));
+        List<Color> colors = List.of(
+            new Color(0, 0, 0),
+            new Color(189, 189, 189),
+            new Color(138, 79, 15),
+            new Color(246, 189, 113),
+            new Color(250, 137, 43)
+        );
 
         BufferedImage npc = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
         Graphics2D pane = npc.createGraphics();
@@ -110,6 +117,14 @@ public class CobbleResourceService {
         // eyes
         BufferedImage eyes = ImageIO.read(resourceLoader.getResource("classpath:/assets/Cobble/Npc Assets/eyes.png").getInputStream());
         pane.drawImage(eyes.getSubimage(eyeColorOffset * 32, 0, 32, 32), 0, 0, null);
+        // hair
+        BufferedImage hair = ImageIO.read(resourceLoader.getResource("classpath:/assets/Cobble/Npc Assets/hair.png").getInputStream());
+        hair = applyColorToWhite(hair.getSubimage(hairStyleOffset * 32, 0, 32, 32), colors.get(hairColorOffset));
+        pane.drawImage(hair, 0, 0, null);
+        // facial hair
+        BufferedImage fhair = ImageIO.read(resourceLoader.getResource("classpath:/assets/Cobble/Npc Assets/facial-hair.png").getInputStream());
+        fhair = applyColorToWhite(fhair.getSubimage(facialHairOffset * 32, 0, 32, 32), colors.get(hairColorOffset));
+        pane.drawImage(fhair, 0, 0, null);
 
         pane.dispose();
         int newWidth = npc.getWidth() * 3;
@@ -119,6 +134,19 @@ public class CobbleResourceService {
         g2d.drawImage(npc, 0, 0, newWidth, newHeight, null);
         g2d.dispose();
         return scaledNpc;
+    }
+
+    private BufferedImage applyColorToWhite(BufferedImage image, Color color) {
+        for (int x = 0; x < image.getWidth(); x++) {
+            for (int y = 0; y < image.getHeight(); y++) {
+                int pixel = image.getRGB(x, y);
+                Color pixelColor = new Color(pixel, true);
+                if (pixelColor.getRed() == 255 && pixelColor.getGreen() == 255 && pixelColor.getBlue() == 255 && pixelColor.getAlpha() > 0) {
+                    image.setRGB(x, y, color.getRGB());
+                }
+            }
+        }
+        return image;
     }
 
     public InputStream mapAppearanceAsStream(String appearance) throws IOException {

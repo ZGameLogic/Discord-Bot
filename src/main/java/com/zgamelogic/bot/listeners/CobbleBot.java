@@ -58,6 +58,13 @@ public class CobbleBot {
                 .replyFiles(FileUpload.fromData(resourceService.mapAppearanceAsStream(player.getNpcs().get(0).getAppearance()), "npc.png"))
                 .addEmbeds(helperService.getStartMessage(player))
                 .queue();
+            player.getNpcs().forEach(cobbleNpc -> {
+                try {
+                    event.getChannel().sendFiles(FileUpload.fromData(resourceService.mapAppearanceAsStream(cobbleNpc.getAppearance()), "npc.png")).queue();
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
         } catch (CobbleServiceException | IOException e) {
             event.reply(e.getMessage()).setEphemeral(true).queue();
         }
