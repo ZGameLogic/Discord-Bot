@@ -34,6 +34,15 @@ public enum CobbleResourceType {
         return Arrays.stream(CobbleResourceType.values()).filter(t -> t.code.equals(code)).findFirst().orElse(null);
     }
 
+    public static String mapResources(Map<CobbleResourceType, Integer> map){
+        StringBuilder sb = new StringBuilder();
+        map.forEach((key, value) -> {
+            if (value == 0) return;
+            sb.append(key.getCode() + value);
+        });
+        return sb.toString();
+    }
+
     public static Map<CobbleResourceType, Integer> mapResources(String resources, boolean includeZero){
         Map<CobbleResourceType, Integer> map = new HashMap<>();
         if(includeZero){

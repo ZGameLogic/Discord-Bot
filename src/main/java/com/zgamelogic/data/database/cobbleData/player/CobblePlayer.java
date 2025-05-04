@@ -57,4 +57,8 @@ public class CobblePlayer {
             .findFirst()
             .orElseThrow(() -> new CobbleServiceException("NPC not found"));
     }
+
+    public void addResource(CobbleResourceType type, int amount){
+        resources.merge(type, amount, Integer::sum);
+    }
 }

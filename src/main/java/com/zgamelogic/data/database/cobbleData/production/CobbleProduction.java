@@ -1,6 +1,7 @@
 package com.zgamelogic.data.database.cobbleData.production;
 
 import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
+import com.zgamelogic.data.database.cobbleData.CobbleResourceConverter;
 import com.zgamelogic.data.database.cobbleData.CobbleResourceType;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
@@ -9,34 +10,18 @@ import lombok.ToString;
 
 import java.util.Map;
 
-import static com.zgamelogic.data.database.cobbleData.CobbleResourceType.mapResources;
-
 @Entity
+@Getter
 @ToString
 public class CobbleProduction {
-    @Getter
     @EmbeddedId
     private CobbleProductionId id;
-    private String cost;
-    private String production;
-    private String consumption;
-
-    @Getter
-    @Transient
-    private Map<CobbleResourceType, Integer> resourceCost;
-    @Getter
-    @Transient
-    private Map<CobbleResourceType, Integer> resourceProduction;
-    @Getter
-    @Transient
-    private Map<CobbleResourceType, Integer> resourceConsumption;
-
-    @PostLoad
-    private void postInit(){
-        resourceCost = mapResources(cost, false);
-        resourceProduction = mapResources(production, false);
-        resourceConsumption = mapResources(consumption, false);
-    }
+    @Convert(converter = CobbleResourceConverter.class)
+    private Map<CobbleResourceType, Integer> cost;
+    @Convert(converter = CobbleResourceConverter.class)
+    private Map<CobbleResourceType, Integer> production;
+    @Convert(converter = CobbleResourceConverter.class)
+    private Map<CobbleResourceType, Integer> consumption;
 
     @Getter
     @ToString

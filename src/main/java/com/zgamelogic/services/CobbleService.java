@@ -2,6 +2,7 @@ package com.zgamelogic.services;
 
 import com.zgamelogic.bot.services.CobbleResourceService;
 import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
+import com.zgamelogic.data.database.cobbleData.CobbleResourceType;
 import com.zgamelogic.data.database.cobbleData.CobbleServiceException;
 import com.zgamelogic.data.database.cobbleData.building.CobbleBuilding;
 import com.zgamelogic.data.database.cobbleData.building.CobbleBuildingRepository;
@@ -63,6 +64,7 @@ public class CobbleService {
         cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
         cobblePlayer.addNpc(generateRandomCobbleNpc(cobblePlayer));
         cobblePlayer.getNpcs().get(0).setCobbleBuilding(cobblePlayer.getBuildings().get(0));
+        cobblePlayer.addResource(CobbleResourceType.WOOD, 5);
         return cobblePlayerRepository.save(cobblePlayer);
     }
 

@@ -6,16 +6,14 @@ import jakarta.persistence.Converter;
 import java.util.Map;
 
 @Converter
-public abstract class CobbleResourceConverter implements AttributeConverter<Map<CobbleResourceType, Integer>, String> {
+public class CobbleResourceConverter implements AttributeConverter<Map<CobbleResourceType, Integer>, String> {
     @Override
     public String convertToDatabaseColumn(Map<CobbleResourceType, Integer> attribute) {
-        // TODO conversion
-        return "";
+        return CobbleResourceType.mapResources(attribute);
     }
 
     @Override
     public Map<CobbleResourceType, Integer> convertToEntityAttribute(String dbData) {
-        // TODO conversion
-        return Map.of();
+        return CobbleResourceType.mapResources(dbData, true);
     }
 }
