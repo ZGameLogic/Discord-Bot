@@ -1,6 +1,6 @@
 package com.zgamelogic.data.database.cobbleData.production;
 
-import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
+import com.zgamelogic.data.database.cobbleData.enums.CobbleBuildingType;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

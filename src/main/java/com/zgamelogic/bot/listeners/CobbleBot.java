@@ -5,7 +5,7 @@ import com.zgamelogic.annotations.DiscordMapping;
 import com.zgamelogic.annotations.EventProperty;
 import com.zgamelogic.bot.services.CobbleBotHelperService;
 import com.zgamelogic.bot.services.CobbleResourceService;
-import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
+import com.zgamelogic.data.database.cobbleData.enums.CobbleBuildingType;
 import com.zgamelogic.data.database.cobbleData.CobbleServiceException;
 import com.zgamelogic.data.database.cobbleData.building.CobbleBuilding;
 import com.zgamelogic.data.database.cobbleData.building.CobbleBuildingRepository;

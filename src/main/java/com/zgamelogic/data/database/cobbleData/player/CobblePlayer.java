@@ -1,8 +1,8 @@
 package com.zgamelogic.data.database.cobbleData.player;
 
-import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
+import com.zgamelogic.data.database.cobbleData.enums.CobbleBuildingType;
 import com.zgamelogic.data.database.cobbleData.CobbleResourceConverter;
-import com.zgamelogic.data.database.cobbleData.CobbleResourceType;
+import com.zgamelogic.data.database.cobbleData.enums.CobbleResourceType;
 import com.zgamelogic.data.database.cobbleData.CobbleServiceException;
 import com.zgamelogic.data.database.cobbleData.action.CobbleAction;
 import com.zgamelogic.data.database.cobbleData.building.CobbleBuilding;

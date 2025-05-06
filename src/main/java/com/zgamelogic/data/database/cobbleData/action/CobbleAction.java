@@ -1,6 +1,6 @@
 package com.zgamelogic.data.database.cobbleData.action;
 
-import com.zgamelogic.data.database.cobbleData.CobbleActionType;
+import com.zgamelogic.data.database.cobbleData.enums.CobbleActionType;
 import com.zgamelogic.data.database.cobbleData.building.CobbleBuilding;
 import com.zgamelogic.data.database.cobbleData.player.CobblePlayer;
 import jakarta.persistence.*;

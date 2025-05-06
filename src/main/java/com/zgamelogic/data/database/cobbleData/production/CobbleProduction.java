@@ -1,9 +1,9 @@
 package com.zgamelogic.data.database.cobbleData.production;
 
 import com.zgamelogic.data.database.cobbleData.CobbleBuildingConverter;
-import com.zgamelogic.data.database.cobbleData.CobbleBuildingType;
+import com.zgamelogic.data.database.cobbleData.enums.CobbleBuildingType;
 import com.zgamelogic.data.database.cobbleData.CobbleResourceConverter;
-import com.zgamelogic.data.database.cobbleData.CobbleResourceType;
+import com.zgamelogic.data.database.cobbleData.enums.CobbleResourceType;
 import jakarta.persistence.*;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;

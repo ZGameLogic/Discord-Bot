@@ -1,5 +1,6 @@
 package com.zgamelogic.data.database.cobbleData;
 
+import com.zgamelogic.data.database.cobbleData.enums.CobbleResourceType;
 import jakarta.persistence.AttributeConverter;
 import jakarta.persistence.Converter;
 
