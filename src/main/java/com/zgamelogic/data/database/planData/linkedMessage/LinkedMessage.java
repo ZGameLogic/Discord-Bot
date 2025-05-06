@@ -2,10 +2,7 @@ package com.zgamelogic.data.database.planData.linkedMessage;
 
 import com.zgamelogic.data.database.planData.plan.Plan;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 @Entity
 @Getter
@@ -30,6 +27,7 @@ public class LinkedMessage {
     @Getter
     @Setter
     @Embeddable
+    @EqualsAndHashCode
     public static class LinkedMessageId {
         private long channelId;
         private long messageId;
