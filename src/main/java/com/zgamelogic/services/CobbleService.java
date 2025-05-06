@@ -57,6 +57,7 @@ public class CobbleService {
 
     @PostConstruct
     public void init() {
+        System.out.println(cobbleHistoryRepository.findAllByPlayer_PlayerId(15L).size());
 //        System.out.println(cobbleHistoryRepository.findAllByPlayer_PlayerId(4L).get(0).getBuildingsUpgraded().size());
 //        CobblePlayer cp = cobblePlayerRepository.getReferenceById(4L);
 //        cobbleHistoryRepository.save(new CobbleHistory(cp));

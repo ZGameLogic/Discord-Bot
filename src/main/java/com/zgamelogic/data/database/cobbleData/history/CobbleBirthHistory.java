@@ -7,5 +7,4 @@ import jakarta.persistence.Table;
 @Table(name = "cobble_history_birth")
 public class CobbleBirthHistory extends CobbleHistory {
     private String name;
-    // TODO finish this
 }

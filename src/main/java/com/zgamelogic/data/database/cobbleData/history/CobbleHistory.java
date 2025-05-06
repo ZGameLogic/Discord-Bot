@@ -11,7 +11,6 @@ import java.util.UUID;
 @Getter
 @Entity
 @Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)
-//@DiscriminatorColumn(name = "history_type")
 @NoArgsConstructor
 public abstract class CobbleHistory {
     @Id
