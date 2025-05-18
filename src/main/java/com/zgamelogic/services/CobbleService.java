@@ -6,14 +6,13 @@ import com.zgamelogic.data.database.cobbleData.enums.CobbleResourceType;
 import com.zgamelogic.data.database.cobbleData.CobbleServiceException;
 import com.zgamelogic.data.database.cobbleData.building.CobbleBuilding;
 import com.zgamelogic.data.database.cobbleData.building.CobbleBuildingRepository;
-import com.zgamelogic.data.database.cobbleData.history.CobbleHistoryRepository;
+import com.zgamelogic.data.database.cobbleData.history.*;
 import com.zgamelogic.data.database.cobbleData.npc.CobbleNpc;
 import com.zgamelogic.data.database.cobbleData.npc.CobbleNpcRepository;
 import com.zgamelogic.data.database.cobbleData.player.CobblePlayer;
 import com.zgamelogic.data.database.cobbleData.player.CobblePlayerRepository;
 import com.zgamelogic.data.database.cobbleData.production.CobbleProduction;
 import com.zgamelogic.data.database.cobbleData.production.CobbleProductionRepository;
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -38,7 +37,7 @@ public class CobbleService {
     private final File BATTLES_DIR;
     private final File HISTORY_DIR;
 
-    public CobbleService(CobblePlayerRepository cobblePlayerRepository, CobbleHistoryRepository cobbleHistoryRepository, CobbleNpcRepository cobbleNpcRepository, CobbleProductionRepository cobbleProductionRepository, BadNameService badNameService, CobbleResourceService cobbleResourceService, CobbleBuildingRepository cobbleBuildingRepository){
+    public CobbleService(CobblePlayerRepository cobblePlayerRepository, CobbleHistoryRepository cobbleHistoryRepository, CobbleNpcRepository cobbleNpcRepository, CobbleProductionRepository cobbleProductionRepository, BadNameService badNameService, CobbleResourceService cobbleResourceService, CobbleBuildingRepository cobbleBuildingRepository) {
         this.cobblePlayerRepository = cobblePlayerRepository;
         this.cobbleHistoryRepository = cobbleHistoryRepository;
         this.cobbleNpcRepository = cobbleNpcRepository;
@@ -47,22 +46,12 @@ public class CobbleService {
         this.cobbleResourceService = cobbleResourceService;
         this.cobbleBuildingRepository = cobbleBuildingRepository;
         File file = new File("/cobble"); // check if we are in cluster
-        if(!file.exists()) file = new File("cobble"); // change to local
+        if (!file.exists()) file = new File("cobble"); // change to local
         BASE_DIR = file;
         BATTLES_DIR = new File(BASE_DIR, "battles");
         HISTORY_DIR = new File(BASE_DIR, "history");
         BATTLES_DIR.mkdirs();
         HISTORY_DIR.mkdirs();
-    }
-
-    @PostConstruct
-    public void init() {
-        System.out.println(cobbleHistoryRepository.findAllByPlayer_PlayerId(15L).size());
-//        System.out.println(cobbleHistoryRepository.findAllByPlayer_PlayerId(4L).get(0).getBuildingsUpgraded().size());
-//        CobblePlayer cp = cobblePlayerRepository.getReferenceById(4L);
-//        cobbleHistoryRepository.save(new CobbleHistory(cp));
-//        cobblePlayerRepository.deleteById(232675572772372481L);
-//        day();
     }
 
     @Scheduled(cron = "0 0 */12 * * *")
