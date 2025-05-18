@@ -59,4 +59,4 @@ jobs:
         run: sudo kubectl apply -f kubernetes/dev
       - name: Rolling update
         run: |
-          sudo kubectl rollout restart deployment discord-bot-dev
+          sudo kubectl rollout restart deployment discord-bot-dev -n dev

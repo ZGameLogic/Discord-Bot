@@ -2,10 +2,7 @@ package com.zgamelogic.data.database.planData.user;
 
 import com.zgamelogic.data.database.planData.plan.Plan;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.Date;
 import java.util.List;
@@ -70,6 +67,7 @@ public class PlanUser {
     @Getter
     @Setter
     @Embeddable
+    @EqualsAndHashCode
     public static class PlanUserId {
         private long planId;
         private long userId;

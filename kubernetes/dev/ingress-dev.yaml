@@ -2,6 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: discord-dev-ingress
+  namespace: dev
 spec:
   rules:
     - host: "discord-dev.zgamelogic.com"
