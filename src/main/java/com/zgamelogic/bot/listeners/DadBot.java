@@ -1,7 +1,7 @@
 package com.zgamelogic.bot.listeners;
 
-import com.zgamelogic.annotations.DiscordController;
-import com.zgamelogic.annotations.DiscordMapping;
+import com.zgamelogic.discord.annotations.DiscordController;
+import com.zgamelogic.discord.annotations.DiscordMapping;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 @DiscordController

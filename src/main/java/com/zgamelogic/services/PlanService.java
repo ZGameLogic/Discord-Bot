@@ -1,8 +1,7 @@
 package com.zgamelogic.services;
 
-import com.zgamelogic.annotations.Bot;
-import com.zgamelogic.annotations.DiscordController;
-import com.zgamelogic.annotations.DiscordMapping;
+import com.zgamelogic.discord.annotations.DiscordController;
+import com.zgamelogic.discord.annotations.DiscordMapping;
 import com.zgamelogic.bot.utils.PlanHelper;
 import com.zgamelogic.data.database.guildData.GuildData;
 import com.zgamelogic.data.database.guildData.GuildDataRepository;
@@ -53,7 +52,6 @@ public class PlanService {
     @Value("${discord.noInviteRole.id}")
     private long discordNoInviteRoleId;
 
-    @Bot
     private JDA bot;
 
     private final GuildDataRepository guildDataRepository;
@@ -78,6 +76,7 @@ public class PlanService {
 
     @DiscordMapping
     private void onReady(ReadyEvent event){
+        bot = event.getJDA();
         discordGuild = event.getJDA().getGuildById(discordGuildId);
         planTextChannel = discordGuild.getTextChannelById(discordPlanId);
 

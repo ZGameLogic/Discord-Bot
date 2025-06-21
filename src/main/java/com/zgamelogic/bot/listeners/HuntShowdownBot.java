@@ -1,7 +1,7 @@
 package com.zgamelogic.bot.listeners;
 
-import com.zgamelogic.annotations.DiscordController;
-import com.zgamelogic.annotations.DiscordMapping;
+import com.zgamelogic.discord.annotations.DiscordController;
+import com.zgamelogic.discord.annotations.DiscordMapping;
 import com.zgamelogic.data.database.huntData.gun.HuntGunRepository;
 import com.zgamelogic.data.database.huntData.item.HuntItemRepository;
 import com.zgamelogic.data.database.huntData.randomizer.HuntRandomizerRepository;

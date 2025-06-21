@@ -1,9 +1,8 @@
 package com.zgamelogic.bot.listeners;
 
-import com.zgamelogic.annotations.Bot;
-import com.zgamelogic.annotations.DiscordController;
-import com.zgamelogic.annotations.DiscordMapping;
-import com.zgamelogic.annotations.EventProperty;
+import com.zgamelogic.discord.annotations.DiscordController;
+import com.zgamelogic.discord.annotations.DiscordMapping;
+import com.zgamelogic.discord.annotations.EventProperty;
 import com.zgamelogic.bot.utils.EmbedMessageGenerator;
 import com.zgamelogic.data.database.planData.linkedMessage.LinkedMessageRepository;
 import com.zgamelogic.data.database.planData.plan.Plan;
@@ -36,6 +35,7 @@ import net.dv8tion.jda.api.events.interaction.component.EntitySelectInteractionE
 import net.dv8tion.jda.api.events.message.MessageUpdateEvent;
 import net.dv8tion.jda.api.events.message.poll.MessagePollVoteAddEvent;
 import net.dv8tion.jda.api.events.message.poll.MessagePollVoteRemoveEvent;
+import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.interactions.commands.Command;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.components.buttons.Button;
@@ -80,7 +80,6 @@ public class PlannerBot {
     private final LinkedMessageRepository linkedMessageRepository;
     private final DataOtterService dataOtterService;
 
-    @Bot
     private JDA bot;
 
     public PlannerBot(PlanRepository planRepository, UserDataRepository userDataRepository, PlanService planService, LinkedMessageRepository linkedMessageRepository, DataOtterService dataOtterService, PollVotesRepository pollVotesRepository) {
@@ -127,6 +126,11 @@ public class PlannerBot {
                 .filter(role -> role.getIdLong() != bot.getGuildById(guildId).getPublicRole().getIdLong())
                 .map(role -> new DiscordRoleData(role.getName(), role.getIdLong(), role.getColor()))
                 .toList();
+    }
+
+    @DiscordMapping
+    private void onReady(ReadyEvent event) {
+        bot = event.getJDA();
     }
 
     @DiscordMapping(Id = "link_poll")

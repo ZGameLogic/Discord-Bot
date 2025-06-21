@@ -1,7 +1,7 @@
 package com.zgamelogic.bot.listeners;
 
-import com.zgamelogic.annotations.DiscordController;
-import com.zgamelogic.annotations.DiscordMapping;
+import com.zgamelogic.discord.annotations.DiscordController;
+import com.zgamelogic.discord.annotations.DiscordMapping;
 import com.zgamelogic.data.intermediates.dataotter.SlashCommandRock;
 import com.zgamelogic.dataotter.DataOtterService;
 import jakarta.annotation.PostConstruct;
