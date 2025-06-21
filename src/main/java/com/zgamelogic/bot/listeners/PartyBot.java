@@ -1,8 +1,7 @@
 package com.zgamelogic.bot.listeners;
 
-import com.zgamelogic.annotations.Bot;
-import com.zgamelogic.annotations.DiscordController;
-import com.zgamelogic.annotations.DiscordMapping;
+import com.zgamelogic.discord.annotations.DiscordController;
+import com.zgamelogic.discord.annotations.DiscordMapping;
 import com.zgamelogic.data.database.chatroomNames.ChatroomNamesRepository;
 import com.zgamelogic.data.database.guildData.GuildData;
 import com.zgamelogic.data.database.guildData.GuildDataRepository;
@@ -48,7 +47,6 @@ public class PartyBot  {
     private final PlanRepository planRepository;
     private final DataOtterService dataOtterService;
 
-    @Bot
     private JDA bot;
 
     @Autowired
@@ -58,6 +56,11 @@ public class PartyBot  {
         this.linkedMessageRepository = linkedMessageRepository;
         this.planRepository = planRepository;
         this.dataOtterService = dataOtterService;
+    }
+
+    @DiscordMapping
+    private void onReady(ReadyEvent event) {
+        bot = event.getJDA();
     }
 
     @Bean

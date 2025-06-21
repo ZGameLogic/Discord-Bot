@@ -1,9 +1,8 @@
 package com.zgamelogic.bot.listeners;
 
 import com.zgamelogic.bot.utils.EmbedMessageGenerator;
-import com.zgamelogic.annotations.Bot;
-import com.zgamelogic.annotations.DiscordController;
-import com.zgamelogic.annotations.DiscordMapping;
+import com.zgamelogic.discord.annotations.DiscordController;
+import com.zgamelogic.discord.annotations.DiscordMapping;
 import com.zgamelogic.data.database.cardData.cards.CardData;
 import com.zgamelogic.data.database.cardData.cards.CardDataRepository;
 import com.zgamelogic.data.database.cardData.guild.GuildCardDataRepository;
@@ -57,7 +56,6 @@ public class CardBot {
     private final PlayerCardDataRepository playerCardDataRepository;
     private final GuildDataRepository guildDataRepository;
 
-    @Bot
     private JDA bot;
 
     @Value("${api.token}")
@@ -73,6 +71,7 @@ public class CardBot {
 
     @DiscordMapping
     public void ready(ReadyEvent event) {
+        bot = event.getJDA();
         new Thread(() -> {
             List<PlayerCardData> newPlayers = new LinkedList<>();
             for(Guild guild: event.getJDA().getGuilds()){
