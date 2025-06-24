@@ -1,11 +1,11 @@
 package com.zgamelogic.bot.listeners;
 
 import com.zgamelogic.bot.utils.EmbedMessageGenerator;
-import com.zgamelogic.annotations.Bot;
-import com.zgamelogic.annotations.DiscordController;
-import com.zgamelogic.annotations.DiscordMapping;
+import com.zgamelogic.discord.annotations.DiscordController;
+import com.zgamelogic.discord.annotations.DiscordMapping;
 import com.zgamelogic.data.database.guildData.GuildDataRepository;
 import com.zgamelogic.data.intermediates.messaging.Message;
+import net.dv8tion.jda.api.events.session.ReadyEvent;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
@@ -37,7 +37,6 @@ public class GeneralListener {
 
     private final GuildDataRepository guildData;
 
-    @Bot
     private JDA bot;
 
     @Value("${api.token}")
@@ -46,6 +45,11 @@ public class GeneralListener {
     @Autowired
     public GeneralListener(GuildDataRepository guildData){
         this.guildData = guildData;
+    }
+
+    @DiscordMapping
+    private void onReady(ReadyEvent event){
+        bot = event.getJDA();
     }
 
     @DiscordMapping
