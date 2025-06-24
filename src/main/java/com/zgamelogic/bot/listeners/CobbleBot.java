@@ -1,8 +1,5 @@
 package com.zgamelogic.bot.listeners;
 
-import com.zgamelogic.annotations.DiscordController;
-import com.zgamelogic.annotations.DiscordMapping;
-import com.zgamelogic.annotations.EventProperty;
 import com.zgamelogic.bot.services.CobbleBotHelperService;
 import com.zgamelogic.bot.services.CobbleResourceService;
 import com.zgamelogic.data.database.cobbleData.enums.CobbleBuildingType;
@@ -11,6 +8,9 @@ import com.zgamelogic.data.database.cobbleData.building.CobbleBuilding;
 import com.zgamelogic.data.database.cobbleData.building.CobbleBuildingRepository;
 import com.zgamelogic.data.database.cobbleData.npc.CobbleNpc;
 import com.zgamelogic.data.database.cobbleData.player.CobblePlayer;
+import com.zgamelogic.discord.annotations.DiscordController;
+import com.zgamelogic.discord.annotations.DiscordMapping;
+import com.zgamelogic.discord.annotations.EventProperty;
 import com.zgamelogic.services.CobbleService;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

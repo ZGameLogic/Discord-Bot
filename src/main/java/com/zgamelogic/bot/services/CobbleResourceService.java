@@ -1,7 +1,7 @@
 package com.zgamelogic.bot.services;
 
-import com.zgamelogic.annotations.DiscordController;
-import com.zgamelogic.annotations.DiscordMapping;
+import com.zgamelogic.discord.annotations.DiscordController;
+import com.zgamelogic.discord.annotations.DiscordMapping;
 import lombok.Getter;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Icon;
