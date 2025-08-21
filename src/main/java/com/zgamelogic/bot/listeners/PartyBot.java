@@ -12,6 +12,7 @@ import com.zgamelogic.data.intermediates.dataotter.SlashCommandRock;
 import com.zgamelogic.dataotter.DataOtterService;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
@@ -227,7 +228,7 @@ public class PartyBot  {
                 ChannelAction<VoiceChannel> builder = guild.createVoiceChannel(name)
                         .setParent(guild.getCategoryById(savedGuild.getPartyCategory()));
                 if(members.stream().map(Member::getIdLong).anyMatch(memberId -> memberId == 232675572772372481L)){
-//                    builder.addMemberPermissionOverride(195174230281814016L, null, List.of(Permission.VIEW_CHANNEL));
+                    builder.addMemberPermissionOverride(195174230281814016L, null, List.of(Permission.VIEW_CHANNEL));
                 }
                 VoiceChannel newChannel = builder.complete();
                 newChannel.sendMessage(String.format("This chatroom name comes from the game: %s", chatroomName.getGame())).queue();
