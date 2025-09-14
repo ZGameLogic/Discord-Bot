@@ -227,9 +227,9 @@ public class PartyBot  {
                 }
                 ChannelAction<VoiceChannel> builder = guild.createVoiceChannel(name)
                         .setParent(guild.getCategoryById(savedGuild.getPartyCategory()));
-                if(members.stream().map(Member::getIdLong).anyMatch(memberId -> memberId == 232675572772372481L)){
-                    builder.addMemberPermissionOverride(195174230281814016L, null, List.of(Permission.VIEW_CHANNEL));
-                }
+//                if(members.stream().map(Member::getIdLong).anyMatch(memberId -> memberId == 232675572772372481L)){
+//                    builder.addMemberPermissionOverride(195174230281814016L, null, List.of(Permission.VIEW_CHANNEL));
+//                }
                 VoiceChannel newChannel = builder.complete();
                 newChannel.sendMessage(String.format("This chatroom name comes from the game: %s", chatroomName.getGame())).queue();
                 Instant time = Instant.now().plus(5, ChronoUnit.MINUTES);
