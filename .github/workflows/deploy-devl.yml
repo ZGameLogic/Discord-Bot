@@ -56,7 +56,7 @@ jobs:
         with:
           sparse-checkout: 'kubernetes/dev'
       - name: Apply Kubernetes Configuration
-        run: sudo kubectl apply -f kubernetes/dev
+        run: sudo kubectl apply -f kubernetes/dev -n dev
       - name: Rolling update
         run: |
-          sudo kubectl rollout restart deployment discord-bot-dev
+          sudo kubectl rollout restart deployment discord-bot-dev -n dev
