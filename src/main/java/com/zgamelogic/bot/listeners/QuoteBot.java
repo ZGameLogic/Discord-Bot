@@ -1,7 +1,7 @@
 package com.zgamelogic.bot.listeners;
 
 import com.zgamelogic.discord.annotations.DiscordController;
-import com.zgamelogic.discord.annotations.DiscordMapping;
+import com.zgamelogic.discord.annotations.mappings.MessageContextMapping;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.entities.User;
 import net.dv8tion.jda.api.events.interaction.command.MessageContextInteractionEvent;
@@ -22,7 +22,7 @@ import java.util.List;
 @Slf4j
 public class QuoteBot {
 
-    @DiscordMapping(Id = "Quote")
+    @MessageContextMapping(id = "Quote")
     private void userQuoted(MessageContextInteractionEvent event){
         User user = event.getTarget().getAuthor();
         String quote = event.getTarget().getContentDisplay().replaceAll("[^\\x00-\\x7F]", "").trim();

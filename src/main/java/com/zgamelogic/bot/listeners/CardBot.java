@@ -2,14 +2,19 @@ package com.zgamelogic.bot.listeners;
 
 import com.zgamelogic.bot.utils.EmbedMessageGenerator;
 import com.zgamelogic.discord.annotations.DiscordController;
-import com.zgamelogic.discord.annotations.DiscordMapping;
 import com.zgamelogic.data.database.cardData.cards.CardData;
 import com.zgamelogic.data.database.cardData.cards.CardDataRepository;
 import com.zgamelogic.data.database.cardData.guild.GuildCardDataRepository;
 import com.zgamelogic.data.database.cardData.player.PlayerCardData;
 import com.zgamelogic.data.database.cardData.player.PlayerCardDataRepository;
 import com.zgamelogic.data.database.guildData.GuildDataRepository;
+import com.zgamelogic.discord.annotations.mappings.ButtonMapping;
+import com.zgamelogic.discord.annotations.mappings.GenericDiscordMapping;
+import com.zgamelogic.discord.annotations.mappings.SlashCommandAutocompleteMapping;
+import com.zgamelogic.discord.annotations.mappings.SlashCommandMapping;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.User;
@@ -29,7 +34,6 @@ import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -69,7 +73,7 @@ public class CardBot {
         this.guildDataRepository = guildDataRepository;
     }
 
-    @DiscordMapping
+    @GenericDiscordMapping(event = ReadyEvent.class)
     public void ready(ReadyEvent event) {
         bot = event.getJDA();
         new Thread(() -> {
@@ -86,7 +90,7 @@ public class CardBot {
         }, "Card bot ready thread").start();
     }
 
-    @DiscordMapping
+    @GenericDiscordMapping(event = GuildMemberJoinEvent.class)
     public void onGuildMemberJoin(GuildMemberJoinEvent event) {
         if(guildDataRepository.findById(event.getGuild().getIdLong()).get().getCardsEnabled()) {
             if(!playerCardDataRepository.existsById(event.getUser().getIdLong()))
@@ -113,7 +117,7 @@ public class CardBot {
                 );
     }
 
-    @DiscordMapping(Id = "cards", SubId = "collection", FocusedOption = "collection")
+    @SlashCommandAutocompleteMapping(id = "cards", sub = "collection", focused = "collection")
     private void collectionAutocomplete(CommandAutoCompleteInteractionEvent event){
         String[] words = cardDataRepository.listCardCollections().toArray(new String[0]);
         List<Command.Choice> options = Stream.of(words)
@@ -123,7 +127,7 @@ public class CardBot {
         event.replyChoices(options).queue();
     }
 
-    @DiscordMapping(Id = "cards", SubId = "buy_pack", FocusedOption = "collection")
+    @SlashCommandAutocompleteMapping(id = "cards", sub = "buy_pack", focused = "collection")
     private void collectionBuyAutocomplete(CommandAutoCompleteInteractionEvent event){
         String[] words = cardDataRepository.listCardCollections().toArray(new String[0]);
         List<Command.Choice> options = Stream.of(words)
@@ -133,7 +137,7 @@ public class CardBot {
         event.replyChoices(options).queue();
     }
 
-    @DiscordMapping(Id = "cards", SubId = "sell", FocusedOption = "collection")
+    @SlashCommandAutocompleteMapping(id = "cards", sub = "sell", focused = "collection")
     private void sellCollectionAutocomplete(CommandAutoCompleteInteractionEvent event){
         String[] words = cardDataRepository.listCardCollectionsById(
                 playerCardDataRepository.findById(event.getUser().getIdLong()).get().getDeck()
@@ -145,7 +149,7 @@ public class CardBot {
         event.replyChoices(options).queue();
     }
 
-    @DiscordMapping(Id = "cards", SubId = "sell", FocusedOption = "name")
+    @SlashCommandAutocompleteMapping(id = "cards", sub = "sell", focused = "name")
     private void sellNameAutocomplete(CommandAutoCompleteInteractionEvent event){
         String collection = event.getOption("collection") == null ? "" : event.getOption("collection").getAsString();
         Set<String> names = new HashSet<>(cardDataRepository.findByCollectionAndIds(
@@ -160,7 +164,7 @@ public class CardBot {
         event.replyChoices(options).queue();
     }
 
-    @DiscordMapping(Id = "cards", SubId = "sell")
+    @SlashCommandAutocompleteMapping(id = "cards", sub = "sell")
     private void sellSlashCommand(SlashCommandInteractionEvent event){
         event.deferReply().queue();
         Guild guild = event.getGuild();
@@ -186,12 +190,12 @@ public class CardBot {
         }
         player.removeCard(card.getId());
         shopChannel.sendMessageEmbeds(EmbedMessageGenerator.cardShopMessage(user, card, event.getOption("price").getAsInt()))
-                .addActionRow(Button.primary("purchase_card", "Purchase")).queue();
+                .setComponents(ActionRow.of(Button.primary("purchase_card", "Purchase"))).queue();
         event.getHook().setEphemeral(true).sendMessage("Added to the <#" + shopChannel.getId() + ">").queue();
         playerCardDataRepository.save(player);
     }
 
-    @DiscordMapping(Id = "purchase_card")
+    @ButtonMapping(id = "purchase_card")
     private void purchaseCard(ButtonInteractionEvent event){
         long cardId = Long.parseLong(event.getMessage().getEmbeds().get(0).getDescription().split("__")[1]);
         long userId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
@@ -215,7 +219,7 @@ public class CardBot {
         playerCardDataRepository.save(seller);
     }
 
-    @DiscordMapping(Id = "cards", SubId = "open_packs")
+    @SlashCommandMapping(id = "cards", sub = "open_packs")
     private void openPacks(SlashCommandInteractionEvent event){
         event.deferReply().queue();
         PlayerCardData player = playerCardDataRepository.findById(event.getUser().getIdLong()).get();
@@ -265,14 +269,14 @@ public class CardBot {
         )).queue();
     }
 
-    @DiscordMapping(Id = "cards", SubId = "status")
+    @SlashCommandMapping(id = "cards", sub = "status")
     private void statusSlashCommand(SlashCommandInteractionEvent event){
         event.replyEmbeds(
                 EmbedMessageGenerator.cardPlayerStatus(event.getUser().getName(), playerCardDataRepository.findById(event.getUser().getIdLong()).get())
         ).queue();
     }
 
-    @DiscordMapping(Id = "cards", SubId = "buy_pack")
+    @SlashCommandMapping(id = "cards", sub = "buy_pack")
     private void buyPackSlashCommand(SlashCommandInteractionEvent event){
         if(event.getOption("count").getAsInt() <= 0) { // need a positive number of packs
             event.reply("You can't buy negative packs").setEphemeral(true).queue();
@@ -308,7 +312,7 @@ public class CardBot {
         }
     }
 
-    @DiscordMapping(Id = "cards", SubId = "collection")
+    @SlashCommandMapping(id = "cards", sub = "collection")
     private void collectionSlashCommand(SlashCommandInteractionEvent event){
         event.deferReply().queue();
         long userId = event.getOption("user") != null ? event.getOption("user").getAsUser().getIdLong() : event.getUser().getIdLong();
@@ -324,7 +328,7 @@ public class CardBot {
             LinkedList<CardData> cardsInCollection = cardDataRepository.findCardsByCollection(collection.getAsString());
             if(cardsInCollection.size() > PAGE_SIZE) {
                 event.getHook().sendMessageEmbeds(EmbedMessageGenerator.specificCollectionView(user, collection.getAsString(), new LinkedList<>(player.getDeck()), cardsInCollection, 0))
-                        .addActionRow(Button.primary("cards_next_page", "Next page")).queue();
+                        .setComponents(ActionRow.of(Button.primary("cards_next_page", "Next page"))).queue();
             } else {
                 event.getHook().sendMessageEmbeds(EmbedMessageGenerator.specificCollectionView(user, collection.getAsString(), new LinkedList<>(player.getDeck()), cardsInCollection, 0)).queue();
             }
@@ -333,7 +337,7 @@ public class CardBot {
         }
     }
 
-    @DiscordMapping(Id = "cards_next_page")
+    @ButtonMapping(id = "cards_next_page")
     private void nextPage(ButtonInteractionEvent event){
         String title = event.getMessage().getEmbeds().get(0).getTitle();
         String username = title.split(" ")[0].replace("'s", "");
@@ -352,7 +356,7 @@ public class CardBot {
 
     }
 
-    @DiscordMapping
+    @GenericDiscordMapping(event = GuildVoiceUpdateEvent.class)
     public void guildVoidUpdate(GuildVoiceUpdateEvent event) {
         try {
             if (event.getChannelLeft() != null) {
@@ -375,7 +379,7 @@ public class CardBot {
         }
     }
 
-    @DiscordMapping
+    @GenericDiscordMapping(event = GenericMessageReactionEvent.class)
     public void genericMessageReaction(GenericMessageReactionEvent event) {
         if(!event.isFromGuild()) return;
         if(event.getUser().isBot()) return;
@@ -388,7 +392,7 @@ public class CardBot {
         playerCardDataRepository.save(pcd);
     }
 
-    @DiscordMapping
+    @GenericDiscordMapping(event = MessageReceivedEvent.class)
     public void messageReceived(MessageReceivedEvent event) {
         if(!event.isFromGuild()) return;
         if(event.getAuthor().isBot()) return;

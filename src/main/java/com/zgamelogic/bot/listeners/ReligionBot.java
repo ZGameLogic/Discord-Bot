@@ -1,9 +1,9 @@
 package com.zgamelogic.bot.listeners;
 
 import com.zgamelogic.discord.annotations.DiscordController;
-import com.zgamelogic.discord.annotations.DiscordMapping;
 import com.zgamelogic.data.intermediates.dataotter.SlashCommandRock;
 import com.zgamelogic.dataotter.DataOtterService;
+import com.zgamelogic.discord.annotations.mappings.SlashCommandMapping;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.build.CommandData;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -19,31 +19,31 @@ public class ReligionBot {
         this.dataOtterService = dataOtterService;
     }
 
-    @DiscordMapping(Id = "pray")
+    @SlashCommandMapping(id = "pray")
     private void praySlashCommand(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
         event.reply("Thank you, my child.").queue();
     }
 
-    @DiscordMapping(Id = "worship")
+    @SlashCommandMapping(id = "worship")
     private void worshipSlashCommand(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
         event.reply("Blessings upon you, for your faith is strong.").queue();
     }
 
-    @DiscordMapping(Id = "cry")
+    @SlashCommandMapping(id = "cry")
     private void crySlashCommand(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
         event.reply("Do not be sad, for you are a child of shlongbot. Your tears are seen, and your heart is understood. You are not alone.").queue();
     }
 
-    @DiscordMapping(Id = "cheer")
+    @SlashCommandMapping(id = "cheer")
     private void cheerSlashCommand(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
         event.reply("Raise your spirits high! For in the realm of shlongbot, joy is never far.").queue();
     }
 
-    @DiscordMapping(Id = "desecrate")
+    @SlashCommandMapping(id = "desecrate")
     private void desecrateSlashCommand(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
         event.reply("Thou hast chosen to walk the path of chaos, yet fear not, for shlongbot oversees all in mischief and mirth alike!").queue();

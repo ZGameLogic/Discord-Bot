@@ -1,7 +1,6 @@
 package com.zgamelogic.bot.listeners;
 
 import com.zgamelogic.discord.annotations.DiscordController;
-import com.zgamelogic.discord.annotations.DiscordMapping;
 import com.zgamelogic.data.database.chatroomNames.ChatroomNamesRepository;
 import com.zgamelogic.data.database.guildData.GuildData;
 import com.zgamelogic.data.database.guildData.GuildDataRepository;
@@ -10,6 +9,8 @@ import com.zgamelogic.data.database.planData.plan.PlanRepository;
 import com.zgamelogic.data.intermediates.dataotter.PartyBotRock;
 import com.zgamelogic.data.intermediates.dataotter.SlashCommandRock;
 import com.zgamelogic.dataotter.DataOtterService;
+import com.zgamelogic.discord.annotations.mappings.GenericDiscordMapping;
+import com.zgamelogic.discord.annotations.mappings.SlashCommandMapping;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.Permission;
@@ -59,7 +60,7 @@ public class PartyBot  {
         this.dataOtterService = dataOtterService;
     }
 
-    @DiscordMapping
+    @GenericDiscordMapping(event = ReadyEvent.class)
     private void onReady(ReadyEvent event) {
         bot = event.getJDA();
     }
@@ -74,7 +75,7 @@ public class PartyBot  {
         );
     }
 
-    @DiscordMapping(Id = "rename-chatroom")
+    @SlashCommandMapping(id = "rename-chatroom")
     private void renameChatroom(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
         try {
@@ -97,7 +98,7 @@ public class PartyBot  {
         }
     }
 
-    @DiscordMapping(Id = "limit")
+    @SlashCommandMapping(id = "limit")
     private void limit(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
         try {
@@ -122,14 +123,14 @@ public class PartyBot  {
     /**
      * Login event
      */
-    @DiscordMapping
+    @GenericDiscordMapping(event = ReadyEvent.class)
     public void ready(ReadyEvent event) {
         new Thread(() -> guildData.findByChatroomEnabledTrue().forEach(data ->
                 checkCreateChatroom(event.getJDA().getGuildById(data.getId()))
         ), "PartyBot Startup").start();
     }
 
-    @DiscordMapping
+    @GenericDiscordMapping(event = SessionResumeEvent.class)
     public void sessionResume(SessionResumeEvent event) {
         for(GuildData data : guildData.findAll()){
             if(data.getChatroomEnabled()){
@@ -139,7 +140,7 @@ public class PartyBot  {
         checkForEmptyChannels();
     }
 
-    @DiscordMapping
+    @GenericDiscordMapping(event = GuildVoiceUpdateEvent.class)
     public void onGuildVoiceUpdate(GuildVoiceUpdateEvent event) {
         if(guildData.findById(event.getGuild().getIdLong()).get().getChatroomEnabled()) {
             if (event.getChannelJoined() != null && event.getChannelLeft() != null) {
