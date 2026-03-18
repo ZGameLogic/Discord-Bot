@@ -9,6 +9,7 @@ import com.zgamelogic.discord.annotations.mappings.GenericDiscordMapping;
 import com.zgamelogic.discord.annotations.mappings.ModalMapping;
 import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.components.buttons.Button;
+import net.dv8tion.jda.api.components.label.Label;
 import net.dv8tion.jda.api.components.textinput.TextInput;
 import net.dv8tion.jda.api.components.textinput.TextInputStyle;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
@@ -66,8 +67,8 @@ public class GeneralListener {
 
     @ButtonMapping(id = "reply_message")
     private void replyMessageButtonPresses(ButtonInteractionEvent event){
-        TextInput message = TextInput.create("message", "Reply", TextInputStyle.PARAGRAPH).build();
-        event.replyModal(Modal.create("reply_message_modal", "Message response").addActionRow(message).build()).queue();
+        TextInput message = TextInput.create("message", TextInputStyle.PARAGRAPH).build();
+        event.replyModal(Modal.create("reply_message_modal", "Message response").addComponents(Label.of("Reply", message)).build()).queue();
     }
 
     @ModalMapping(id = "reply_message_modal")
@@ -80,11 +81,11 @@ public class GeneralListener {
 
     @ButtonMapping(id = "reply_text")
     private void replyTextMessageButtonPress(ButtonInteractionEvent event){
-        TextInput message = TextInput.create("message", "Reply", TextInputStyle.PARAGRAPH).build();
-        event.replyModal(Modal.create("reply_text_modal", "Message response").addActionRow(message).build()).queue();
+        TextInput message = TextInput.create("message", TextInputStyle.PARAGRAPH).build();
+        event.replyModal(Modal.create("reply_text_modal", "Message response").addComponents(Label.of("Reply", message)).build()).queue();
     }
 
-    @DiscordMapping
+    @GenericDiscordMapping(event = UnavailableGuildLeaveEvent.class)
     public void onUnavailableGuildLeave(UnavailableGuildLeaveEvent event) {
         guildData.deleteById(event.getGuildIdLong());
     }

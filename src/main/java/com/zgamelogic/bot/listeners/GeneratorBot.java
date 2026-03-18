@@ -2,7 +2,8 @@ package com.zgamelogic.bot.listeners;
 
 import com.zgamelogic.bot.utils.dungeon.data.Dungeon;
 import com.zgamelogic.discord.annotations.DiscordController;
-import com.zgamelogic.discord.annotations.DiscordMapping;
+import com.zgamelogic.discord.annotations.mappings.SlashCommandAutocompleteMapping;
+import com.zgamelogic.discord.annotations.mappings.SlashCommandMapping;
 import net.dv8tion.jda.api.events.interaction.command.CommandAutoCompleteInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.interactions.commands.Command;
@@ -30,7 +31,7 @@ public class GeneratorBot {
             );
     }
 
-    @DiscordMapping(Id = "generate", SubId = "dungeon", FocusedOption = "size")
+    @SlashCommandAutocompleteMapping(id = "generate", sub = "dungeon", focused = "size")
     private void dungeonSizeAutoCompleteResponse(CommandAutoCompleteInteractionEvent event){
         event.replyChoices(
                 Stream.of(new String[]{"small", "medium", "large"})
@@ -39,7 +40,7 @@ public class GeneratorBot {
         ).queue();
     }
 
-    @DiscordMapping(Id = "generate", SubId = "dungeon")
+    @SlashCommandMapping(id = "generate", sub = "dungeon")
     private void generateDungeonSlashCommand(SlashCommandInteractionEvent event){
         event.deferReply().queue();
         Dungeon dungeon;
