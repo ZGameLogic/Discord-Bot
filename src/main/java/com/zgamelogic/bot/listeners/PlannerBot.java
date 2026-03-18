@@ -24,6 +24,7 @@ import com.zgamelogic.data.plan.PlanModalDataDateless;
 import com.zgamelogic.dataotter.DataOtterService;
 import com.zgamelogic.discord.annotations.mappings.*;
 import com.zgamelogic.services.PlanService;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
 import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.components.label.Label;
 import net.dv8tion.jda.api.components.selections.EntitySelectMenu;
@@ -332,11 +333,11 @@ public class PlannerBot {
         long pollChannelId = planData.getPollChannelId();
         event.replyEmbeds(getPrePlanMessage(planData.title(), planData.notes(), count, pollChannelId, pollId))
                 .setEphemeral(true)
-                .setComponents(
+                .setComponents(ActionRow.of(
                         EntitySelectMenu.create("People_poll", EntitySelectMenu.SelectTarget.USER, EntitySelectMenu.SelectTarget.ROLE)
                                 .setMinValues(1)
                                 .setMaxValues(25)
-                                .build())
+                                .build()))
                 .queue();
     }
 
@@ -371,11 +372,11 @@ public class PlannerBot {
         }
         event.replyEmbeds(getPrePlanMessage(planData.title(), planData.notes(), count, planData.date()))
                 .setEphemeral(true)
-                .setComponents(
+                .setComponents(ActionRow.of(
                         EntitySelectMenu.create("People", EntitySelectMenu.SelectTarget.USER, EntitySelectMenu.SelectTarget.ROLE)
                                 .setMinValues(1)
                                 .setMaxValues(25)
-                                .build())
+                                .build()))
                 .queue();
     }
 
@@ -492,11 +493,11 @@ public class PlannerBot {
             event.reply("You are not the owner of this event").setEphemeral(true).queue();
             return;
         }
-        event.reply("Select people to add to the event. Plan id:" + plan.getId()).setActionRow(
+        event.reply("Select people to add to the event. Plan id:" + plan.getId()).setComponents(ActionRow.of(
                         EntitySelectMenu.create("add_people", EntitySelectMenu.SelectTarget.USER)
                                 .setMinValues(1)
                                 .setMaxValues(25)
-                                .build())
+                                .build()))
                 .setEphemeral(true).queue();
     }
 
@@ -534,12 +535,12 @@ public class PlannerBot {
     private void editDetailsButtonEvent(ButtonInteractionEvent event){
         dataOtterService.sendRock(new ButtonCommandRock(event));
         Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
-        TextInput.Builder notesBuilder = TextInput.create("notes", "Notes about the event", TextInputStyle.SHORT).setRequired(false);
+        TextInput.Builder notesBuilder = TextInput.create("notes", TextInputStyle.SHORT).setRequired(false);
         if(plan.getNotes() != null && !plan.getNotes().isEmpty()) notesBuilder.setValue(plan.getNotes());
         TextInput notes = notesBuilder.build();
-        TextInput name = TextInput.create("title", "Title of the event", TextInputStyle.SHORT)
+        TextInput name = TextInput.create("title", TextInputStyle.SHORT)
                 .setValue(plan.getTitle()).build();
-        TextInput count = TextInput.create("count", "Number of people looking for", TextInputStyle.SHORT)
+        TextInput count = TextInput.create("count", TextInputStyle.SHORT)
                 .setValue(String.valueOf(plan.getCount())).setRequired(false).build();
         SimpleDateFormat formatter = new SimpleDateFormat("M/dd h:mma", Locale.ENGLISH);
         String dateString;
@@ -548,14 +549,15 @@ public class PlannerBot {
         } else {
             dateString = "poll";
         }
-        TextInput date = TextInput.create("date", "Date", TextInputStyle.SHORT)
+        TextInput date = TextInput.create("date", TextInputStyle.SHORT)
                 .setValue(dateString).build();
         event.replyModal(Modal.create("edit_event_modal", "Details of meeting")
-                        .addActionRow(name)
-                        .addActionRow(date)
-                        .addActionRow(notes)
-                        .addActionRow(count)
-                        .build())
+                        .addComponents(
+                        Label.of("Title of the event", name),
+                        Label.of("Date", date),
+                        Label.of("Notes about the event", notes),
+                        Label.of("Number of people looking for", count)
+                        ).build())
                 .queue();
     }
 
@@ -644,13 +646,13 @@ public class PlannerBot {
 
     @ButtonMapping(id = "schedule_reminder")
     private void scheduleReminder(ButtonInteractionEvent event){
-        TextInput message = TextInput.create("message", "Message", TextInputStyle.SHORT).setRequired(true).build();
-        TextInput date = TextInput.create("date", "Date", TextInputStyle.SHORT).setRequired(true).build();
+        TextInput message = TextInput.create("message", TextInputStyle.SHORT).setRequired(true).build();
+        TextInput date = TextInput.create("date", TextInputStyle.SHORT).setRequired(true).build();
 
-        event.replyModal(Modal.create("schedule_reminder_modal", "Schedule Reminder")
-            .addActionRow(message)
-            .addActionRow(date)
-            .build()
+        event.replyModal(Modal.create("schedule_reminder_modal", "Schedule Reminder").addComponents(
+            Label.of("Message", message),
+            Label.of("Date", date)
+        )   .build()
         ).queue();
     }
 

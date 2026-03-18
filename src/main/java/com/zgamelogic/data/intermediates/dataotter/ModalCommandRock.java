@@ -30,7 +30,7 @@ public class ModalCommandRock {
             if(!optionList.isEmpty()) {
                 gen.writeObjectFieldStart("options");
                 for(ModalMapping option : optionList) {
-                    gen.writeStringField(option.getId(), option.getAsString());
+                    gen.writeStringField(option.getCustomId(), option.getAsString());
                 }
                 gen.writeEndObject();
             }
