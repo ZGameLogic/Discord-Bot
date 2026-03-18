@@ -32,7 +32,7 @@ public class GeneratorBot {
     }
 
     @SlashCommandAutocompleteMapping(id = "generate", sub = "dungeon", focused = "size")
-    private void dungeonSizeAutoCompleteResponse(CommandAutoCompleteInteractionEvent event){
+    public void dungeonSizeAutoCompleteResponse(CommandAutoCompleteInteractionEvent event){
         event.replyChoices(
                 Stream.of(new String[]{"small", "medium", "large"})
                 .map(word -> new Command.Choice(word, word))
@@ -41,7 +41,7 @@ public class GeneratorBot {
     }
 
     @SlashCommandMapping(id = "generate", sub = "dungeon")
-    private void generateDungeonSlashCommand(SlashCommandInteractionEvent event){
+    public void generateDungeonSlashCommand(SlashCommandInteractionEvent event){
         event.deferReply().queue();
         Dungeon dungeon;
         if(event.getOption("size") == null) {

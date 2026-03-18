@@ -13,7 +13,6 @@ import com.zgamelogic.discord.annotations.mappings.GenericDiscordMapping;
 import com.zgamelogic.discord.annotations.mappings.SlashCommandMapping;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
@@ -61,7 +60,7 @@ public class PartyBot  {
     }
 
     @GenericDiscordMapping(event = ReadyEvent.class)
-    private void onReady(ReadyEvent event) {
+    public void onReady(ReadyEvent event) {
         bot = event.getJDA();
     }
 
@@ -76,7 +75,7 @@ public class PartyBot  {
     }
 
     @SlashCommandMapping(id = "rename-chatroom")
-    private void renameChatroom(SlashCommandInteractionEvent event){
+    public void renameChatroom(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
         try {
             // get voice channel the user is in
@@ -99,7 +98,7 @@ public class PartyBot  {
     }
 
     @SlashCommandMapping(id = "limit")
-    private void limit(SlashCommandInteractionEvent event){
+    public void limit(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
         try {
             // get voice channel the user is in

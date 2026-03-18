@@ -23,7 +23,7 @@ import java.util.List;
 public class QuoteBot {
 
     @MessageContextMapping(id = "Quote")
-    private void userQuoted(MessageContextInteractionEvent event){
+    public void userQuoted(MessageContextInteractionEvent event){
         User user = event.getTarget().getAuthor();
         String quote = event.getTarget().getContentDisplay().replaceAll("[^\\x00-\\x7F]", "").trim();
         if(quote.isEmpty()){

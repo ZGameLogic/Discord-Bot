@@ -20,37 +20,37 @@ public class ReligionBot {
     }
 
     @SlashCommandMapping(id = "pray")
-    private void praySlashCommand(SlashCommandInteractionEvent event){
+    public void praySlashCommand(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
         event.reply("Thank you, my child.").queue();
     }
 
     @SlashCommandMapping(id = "worship")
-    private void worshipSlashCommand(SlashCommandInteractionEvent event){
+    public void worshipSlashCommand(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
         event.reply("Blessings upon you, for your faith is strong.").queue();
     }
 
     @SlashCommandMapping(id = "cry")
-    private void crySlashCommand(SlashCommandInteractionEvent event){
+    public void crySlashCommand(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
         event.reply("Do not be sad, for you are a child of shlongbot. Your tears are seen, and your heart is understood. You are not alone.").queue();
     }
 
     @SlashCommandMapping(id = "cheer")
-    private void cheerSlashCommand(SlashCommandInteractionEvent event){
+    public void cheerSlashCommand(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
         event.reply("Raise your spirits high! For in the realm of shlongbot, joy is never far.").queue();
     }
 
     @SlashCommandMapping(id = "desecrate")
-    private void desecrateSlashCommand(SlashCommandInteractionEvent event){
+    public void desecrateSlashCommand(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
         event.reply("Thou hast chosen to walk the path of chaos, yet fear not, for shlongbot oversees all in mischief and mirth alike!").queue();
     }
 
     @Bean
-    private List<CommandData> religionSlashCommands(){
+    public List<CommandData> religionSlashCommands(){
         return List.of(
                 Commands.slash("pray", "Pray to our lord and savior: Shlongbot"),
                 Commands.slash("worship", "Worship our lord and savior: Shlongbot"),

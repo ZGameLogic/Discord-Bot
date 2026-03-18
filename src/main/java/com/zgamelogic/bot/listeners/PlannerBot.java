@@ -131,12 +131,12 @@ public class PlannerBot {
     }
 
     @GenericDiscordMapping(event = ReadyEvent.class)
-    private void onReady(ReadyEvent event) {
+    public void onReady(ReadyEvent event) {
         bot = event.getJDA();
     }
 
     @MessageContextMapping(id = "link_poll")
-    private void linkPlanToPoll(MessageContextInteractionEvent event){
+    public void linkPlanToPoll(MessageContextInteractionEvent event){
         MessagePoll poll = event.getTarget().getPoll();
         if(poll == null || poll.isExpired()) {
             event.reply("This can only be used on open polls.").setEphemeral(true).queue();
@@ -171,7 +171,7 @@ public class PlannerBot {
     }
 
     @GenericDiscordMapping(event = MessagePollVoteAddEvent.class)
-    private void pollVoted(MessagePollVoteAddEvent event){
+    public void pollVoted(MessagePollVoteAddEvent event){
         long pollId = event.getMessageIdLong();
         long pollOptionId = event.getAnswerId();
         long userId = event.getUserIdLong();
@@ -181,7 +181,7 @@ public class PlannerBot {
     }
 
     @GenericDiscordMapping(event = MessagePollVoteRemoveEvent.class)
-    private void pollUnVoted(MessagePollVoteRemoveEvent event){
+    public void pollUnVoted(MessagePollVoteRemoveEvent event){
         long pollId = event.getMessageIdLong();
         long pollOptionId = event.getAnswerId();
         long userId = event.getUserIdLong();
@@ -191,7 +191,7 @@ public class PlannerBot {
     }
 
     @GenericDiscordMapping(event = MessageUpdateEvent.class)
-    private void pollEnded(MessageUpdateEvent event){
+    public void pollEnded(MessageUpdateEvent event){
         MessagePoll poll = event.getMessage().getPoll();
         if(poll == null || !poll.isFinalizedVotes()) return;
         Optional<Plan> optionalPlan = planRepository.findPlanByPollIdAndDateIsNull(event.getMessageIdLong());
@@ -222,7 +222,7 @@ public class PlannerBot {
     }
 
     @SlashCommandAutocompleteMapping(id = "plan", sub = "link", focused = "name")
-    private void planLinkNameAutocomplete(
+    public void planLinkNameAutocomplete(
         CommandAutoCompleteInteractionEvent event,
         @EventProperty String name
     ){
@@ -234,7 +234,7 @@ public class PlannerBot {
     }
 
     @SlashCommandAutocompleteMapping(id = "plan", sub = "link", focused = "id")
-    private void planLinkIdAutocomplete(
+    public void planLinkIdAutocomplete(
             CommandAutoCompleteInteractionEvent event,
             @EventProperty String id
     ){
@@ -249,7 +249,7 @@ public class PlannerBot {
     }
 
     @SlashCommandMapping(id = "plan", sub = "link")
-    private void planLinkSlashCommand(
+    public void planLinkSlashCommand(
             SlashCommandInteractionEvent event,
             @EventProperty String name,
             @EventProperty String id
@@ -275,7 +275,7 @@ public class PlannerBot {
     }
 
     @SlashCommandMapping(id = "plan", sub = "notifications")
-    private void planNotifications(
+    public void planNotifications(
             SlashCommandInteractionEvent event,
             @EventProperty boolean receive
     ) {
@@ -288,13 +288,13 @@ public class PlannerBot {
     }
 
     @SlashCommandMapping(id = "plan", sub = "help")
-    private void planHelpCommand(SlashCommandInteractionEvent event){
+    public void planHelpCommand(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
         event.replyEmbeds(EmbedMessageGenerator.plannerHelperMessage()).setEphemeral(true).queue();
     }
 
     @SlashCommandMapping(id = "plan", sub = "event")
-    private void planEventSlashCommand(SlashCommandInteractionEvent event){
+    public void planEventSlashCommand(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
         TextInput notes = TextInput.create("notes", TextInputStyle.SHORT)
                 .setPlaceholder("Grinding the event").setRequired(false).build();
@@ -314,7 +314,7 @@ public class PlannerBot {
     }
 
     @ModalMapping(id = "plan_event_modal_poll")
-    private void planEventModalPollCommand(
+    public void planEventModalPollCommand(
             ModalInteractionEvent event,
             @EventProperty PlanModalDataDateless planData
     ){
@@ -342,7 +342,7 @@ public class PlannerBot {
     }
 
     @ModalMapping(id = "plan_event_modal")
-    private void planEventModalResponse(
+    public void planEventModalResponse(
         ModalInteractionEvent event,
         @EventProperty PlanModalData planData
     ){
@@ -381,7 +381,7 @@ public class PlannerBot {
     }
 
     @EntitySelectMapping(id = "People_poll")
-    private void planPeopleResponsePoll(EntitySelectInteractionEvent event){
+    public void planPeopleResponsePoll(EntitySelectInteractionEvent event){
         if(event.getMentions().getMembers().isEmpty() && event.getMentions().getRoles().isEmpty()) {
             event.reply("You must select a member or role to invite to the event").setEphemeral(true).queue();
             return;
@@ -417,7 +417,7 @@ public class PlannerBot {
     }
 
     @EntitySelectMapping(id = "People")
-    private void planPeopleResponse(EntitySelectInteractionEvent event){
+    public void planPeopleResponse(EntitySelectInteractionEvent event){
         if(event.getMentions().getMembers().isEmpty() && event.getMentions().getRoles().isEmpty()) {
             event.reply("You must select a member or role to invite to the event").setEphemeral(true).queue();
             return;
@@ -450,7 +450,7 @@ public class PlannerBot {
     }
 
     @ModalMapping(id = "edit_event_modal")
-    private void editEventModal(ModalInteractionEvent event){
+    public void editEventModal(ModalInteractionEvent event){
         dataOtterService.sendRock(new ModalCommandRock(event));
         Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         String notes = event.getValue("notes").getAsString();
@@ -486,7 +486,7 @@ public class PlannerBot {
     }
 
     @ButtonMapping(id = "add_users")
-    private void addUsersButton(ButtonInteractionEvent event){
+    public void addUsersButton(ButtonInteractionEvent event){
         dataOtterService.sendRock(new ButtonCommandRock(event));
         Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         if(plan.getAuthorId() != event.getUser().getIdLong()){
@@ -502,7 +502,7 @@ public class PlannerBot {
     }
 
     @EntitySelectMapping(id = "add_people")
-    private void addPeopleResponse(EntitySelectInteractionEvent event){
+    public void addPeopleResponse(EntitySelectInteractionEvent event){
         event.deferReply().setEphemeral(true).queue();
         long planId = Long.parseLong(event.getMessage().getContentRaw().split(":")[1]);
         Plan plan = planRepository.getReferenceById(planId);
@@ -513,7 +513,7 @@ public class PlannerBot {
     }
 
     @ModalMapping(id = "send_message_modal")
-    private void sendMessageModal(
+    public void sendMessageModal(
             ModalInteractionEvent event,
             @EventProperty String message
     ){
@@ -525,14 +525,14 @@ public class PlannerBot {
     }
 
     @ButtonMapping(id = "send_message")
-    private void sendMessageEvent(ButtonInteractionEvent event){
+    public void sendMessageEvent(ButtonInteractionEvent event){
         dataOtterService.sendRock(new ButtonCommandRock(event));
         TextInput message = TextInput.create("message", TextInputStyle.PARAGRAPH).build();
         event.replyModal(Modal.create("send_message_modal", "Send message").addComponents(Label.of("Message to be sent to accepted users", message)) .build()).queue();
     }
 
     @ButtonMapping(id = "edit_event")
-    private void editDetailsButtonEvent(ButtonInteractionEvent event){
+    public void editDetailsButtonEvent(ButtonInteractionEvent event){
         dataOtterService.sendRock(new ButtonCommandRock(event));
         Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         TextInput.Builder notesBuilder = TextInput.create("notes", TextInputStyle.SHORT).setRequired(false);
@@ -562,14 +562,14 @@ public class PlannerBot {
     }
 
     @ButtonMapping(id = "delete_event")
-    private void deleteEvent(ButtonInteractionEvent event){
+    public void deleteEvent(ButtonInteractionEvent event){
         dataOtterService.sendRock(new ButtonCommandRock(event));
         Plan plan = planRepository.getReferenceById(Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText()));
         planService.deletePlan(plan);
     }
 
     @ButtonMapping(id = "request_fill_in")
-    private void requestFillIn(ButtonInteractionEvent event){
+    public void requestFillIn(ButtonInteractionEvent event){
         event.deferEdit().queue();
         dataOtterService.sendRock(new ButtonCommandRock(event));
         long userId = event.getUser().getIdLong();
@@ -579,7 +579,7 @@ public class PlannerBot {
     }
 
     @ButtonMapping(id = "fill_in")
-    private void fillIn(ButtonInteractionEvent event){
+    public void fillIn(ButtonInteractionEvent event){
         event.deferEdit().queue();
         dataOtterService.sendRock(new ButtonCommandRock(event));
         long userId = event.getUser().getIdLong();
@@ -589,13 +589,13 @@ public class PlannerBot {
     }
 
     @ButtonMapping(id = "drop_out_event")
-    private void dropOutEvent(ButtonInteractionEvent event){
+    public void dropOutEvent(ButtonInteractionEvent event){
         dataOtterService.sendRock(new ButtonCommandRock(event));
         event.editButton(Button.danger("confirm_drop_out_event", "Confirm Dropout")).queue();
     }
 
     @ButtonMapping(id = "confirm_drop_out_event")
-    private void confirmDropOutEvent(ButtonInteractionEvent event){
+    public void confirmDropOutEvent(ButtonInteractionEvent event){
         event.deferEdit().queue();
         dataOtterService.sendRock(new ButtonCommandRock(event));
         long userId = event.getUser().getIdLong();
@@ -605,7 +605,7 @@ public class PlannerBot {
     }
 
     @ButtonMapping(id = "accept_event")
-    private void acceptEvent(ButtonInteractionEvent event){
+    public void acceptEvent(ButtonInteractionEvent event){
         event.deferEdit().queue();
         dataOtterService.sendRock(new ButtonCommandRock(event));
         long userId = event.getUser().getIdLong();
@@ -615,7 +615,7 @@ public class PlannerBot {
     }
 
     @ButtonMapping(id = "waitlist_event")
-    private void waitlistEvent(ButtonInteractionEvent event){
+    public void waitlistEvent(ButtonInteractionEvent event){
         event.deferEdit().queue();
         dataOtterService.sendRock(new ButtonCommandRock(event));
         long userId = event.getUser().getIdLong();
@@ -625,7 +625,7 @@ public class PlannerBot {
     }
 
     @ButtonMapping(id = "deny_event")
-    private void denyEvent(ButtonInteractionEvent event){
+    public void denyEvent(ButtonInteractionEvent event){
         event.deferEdit().queue();
         dataOtterService.sendRock(new ButtonCommandRock(event));
         long userId = event.getUser().getIdLong();
@@ -635,7 +635,7 @@ public class PlannerBot {
     }
 
     @ButtonMapping(id = "maybe_event")
-    private void maybeEvent(ButtonInteractionEvent event) {
+    public void maybeEvent(ButtonInteractionEvent event) {
         event.deferEdit().queue();
         dataOtterService.sendRock(new ButtonCommandRock(event));
         long userId = event.getUser().getIdLong();
@@ -645,7 +645,7 @@ public class PlannerBot {
     }
 
     @ButtonMapping(id = "schedule_reminder")
-    private void scheduleReminder(ButtonInteractionEvent event){
+    public void scheduleReminder(ButtonInteractionEvent event){
         TextInput message = TextInput.create("message", TextInputStyle.SHORT).setRequired(true).build();
         TextInput date = TextInput.create("date", TextInputStyle.SHORT).setRequired(true).build();
 
@@ -657,7 +657,7 @@ public class PlannerBot {
     }
 
     @ModalMapping(id = "schedule_reminder_modal")
-    private void scheduleReminderModal(
+    public void scheduleReminderModal(
         ModalInteractionEvent event,
         @EventProperty(name = "date") String dateString,
         @EventProperty String message
@@ -673,7 +673,7 @@ public class PlannerBot {
     }
 
     @Scheduled(cron = "0 * * * * *")
-    private void minuteTasks(){
+    public void minuteTasks(){
         Instant time = Instant.now().plus(5, ChronoUnit.MINUTES);
         Date startTime = new Date();
         Date endTime = Date.from(time);

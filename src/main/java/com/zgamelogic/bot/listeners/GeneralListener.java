@@ -52,7 +52,7 @@ public class GeneralListener {
     }
 
     @GenericDiscordMapping(event = ReadyEvent.class)
-    private void onReady(ReadyEvent event){
+    public void onReady(ReadyEvent event){
         bot = event.getJDA();
     }
 
@@ -66,13 +66,13 @@ public class GeneralListener {
     }
 
     @ButtonMapping(id = "reply_message")
-    private void replyMessageButtonPresses(ButtonInteractionEvent event){
+    public void replyMessageButtonPresses(ButtonInteractionEvent event){
         TextInput message = TextInput.create("message", TextInputStyle.PARAGRAPH).build();
         event.replyModal(Modal.create("reply_message_modal", "Message response").addComponents(Label.of("Reply", message)).build()).queue();
     }
 
     @ModalMapping(id = "reply_message_modal")
-    private void modalResponseMessageReply(ModalInteractionEvent event){
+    public void modalResponseMessageReply(ModalInteractionEvent event){
         event.getJDA().getUserById(
                 event.getMessage().getContentRaw().split("\n")[0].split(":")[1]
         ).openPrivateChannel().queue(privateChannel -> privateChannel.sendMessage(event.getValue("message").getAsString()).queue());
@@ -80,7 +80,7 @@ public class GeneralListener {
     }
 
     @ButtonMapping(id = "reply_text")
-    private void replyTextMessageButtonPress(ButtonInteractionEvent event){
+    public void replyTextMessageButtonPress(ButtonInteractionEvent event){
         TextInput message = TextInput.create("message", TextInputStyle.PARAGRAPH).build();
         event.replyModal(Modal.create("reply_text_modal", "Message response").addComponents(Label.of("Reply", message)).build()).queue();
     }

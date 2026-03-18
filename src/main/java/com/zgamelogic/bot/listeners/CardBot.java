@@ -118,7 +118,7 @@ public class CardBot {
     }
 
     @SlashCommandAutocompleteMapping(id = "cards", sub = "collection", focused = "collection")
-    private void collectionAutocomplete(CommandAutoCompleteInteractionEvent event){
+    public void collectionAutocomplete(CommandAutoCompleteInteractionEvent event){
         String[] words = cardDataRepository.listCardCollections().toArray(new String[0]);
         List<Command.Choice> options = Stream.of(words)
                 .filter(word -> word.startsWith(event.getFocusedOption().getValue()))
@@ -128,7 +128,7 @@ public class CardBot {
     }
 
     @SlashCommandAutocompleteMapping(id = "cards", sub = "buy_pack", focused = "collection")
-    private void collectionBuyAutocomplete(CommandAutoCompleteInteractionEvent event){
+    public void collectionBuyAutocomplete(CommandAutoCompleteInteractionEvent event){
         String[] words = cardDataRepository.listCardCollections().toArray(new String[0]);
         List<Command.Choice> options = Stream.of(words)
                 .filter(word -> word.startsWith(event.getFocusedOption().getValue()))
@@ -138,7 +138,7 @@ public class CardBot {
     }
 
     @SlashCommandAutocompleteMapping(id = "cards", sub = "sell", focused = "collection")
-    private void sellCollectionAutocomplete(CommandAutoCompleteInteractionEvent event){
+    public void sellCollectionAutocomplete(CommandAutoCompleteInteractionEvent event){
         String[] words = cardDataRepository.listCardCollectionsById(
                 playerCardDataRepository.findById(event.getUser().getIdLong()).get().getDeck()
         ).toArray(new String[0]);
@@ -150,7 +150,7 @@ public class CardBot {
     }
 
     @SlashCommandAutocompleteMapping(id = "cards", sub = "sell", focused = "name")
-    private void sellNameAutocomplete(CommandAutoCompleteInteractionEvent event){
+    public void sellNameAutocomplete(CommandAutoCompleteInteractionEvent event){
         String collection = event.getOption("collection") == null ? "" : event.getOption("collection").getAsString();
         Set<String> names = new HashSet<>(cardDataRepository.findByCollectionAndIds(
                 playerCardDataRepository.findById(event.getUser().getIdLong()).get().getDeck(),
@@ -165,7 +165,7 @@ public class CardBot {
     }
 
     @SlashCommandAutocompleteMapping(id = "cards", sub = "sell")
-    private void sellSlashCommand(SlashCommandInteractionEvent event){
+    public void sellSlashCommand(SlashCommandInteractionEvent event){
         event.deferReply().queue();
         Guild guild = event.getGuild();
         TextChannel shopChannel = guild.getTextChannelById(guildCardDataRepository.findById(guild.getIdLong()).get().getShopTextChannelId());
@@ -196,7 +196,7 @@ public class CardBot {
     }
 
     @ButtonMapping(id = "purchase_card")
-    private void purchaseCard(ButtonInteractionEvent event){
+    public void purchaseCard(ButtonInteractionEvent event){
         long cardId = Long.parseLong(event.getMessage().getEmbeds().get(0).getDescription().split("__")[1]);
         long userId = Long.parseLong(event.getMessage().getEmbeds().get(0).getFooter().getText());
         int price = Integer.parseInt(event.getMessage().getEmbeds().get(0).getFields().get(0).getValue());
@@ -220,7 +220,7 @@ public class CardBot {
     }
 
     @SlashCommandMapping(id = "cards", sub = "open_packs")
-    private void openPacks(SlashCommandInteractionEvent event){
+    public void openPacks(SlashCommandInteractionEvent event){
         event.deferReply().queue();
         PlayerCardData player = playerCardDataRepository.findById(event.getUser().getIdLong()).get();
         LinkedList<Long> cardsInPack = new LinkedList<>();
@@ -270,14 +270,14 @@ public class CardBot {
     }
 
     @SlashCommandMapping(id = "cards", sub = "status")
-    private void statusSlashCommand(SlashCommandInteractionEvent event){
+    public void statusSlashCommand(SlashCommandInteractionEvent event){
         event.replyEmbeds(
                 EmbedMessageGenerator.cardPlayerStatus(event.getUser().getName(), playerCardDataRepository.findById(event.getUser().getIdLong()).get())
         ).queue();
     }
 
     @SlashCommandMapping(id = "cards", sub = "buy_pack")
-    private void buyPackSlashCommand(SlashCommandInteractionEvent event){
+    public void buyPackSlashCommand(SlashCommandInteractionEvent event){
         if(event.getOption("count").getAsInt() <= 0) { // need a positive number of packs
             event.reply("You can't buy negative packs").setEphemeral(true).queue();
             return;
@@ -313,7 +313,7 @@ public class CardBot {
     }
 
     @SlashCommandMapping(id = "cards", sub = "collection")
-    private void collectionSlashCommand(SlashCommandInteractionEvent event){
+    public void collectionSlashCommand(SlashCommandInteractionEvent event){
         event.deferReply().queue();
         long userId = event.getOption("user") != null ? event.getOption("user").getAsUser().getIdLong() : event.getUser().getIdLong();
         String username = event.getOption("user") != null ? event.getOption("user").getAsUser().getName() : event.getUser().getName();
@@ -338,7 +338,7 @@ public class CardBot {
     }
 
     @ButtonMapping(id = "cards_next_page")
-    private void nextPage(ButtonInteractionEvent event){
+    public void nextPage(ButtonInteractionEvent event){
         String title = event.getMessage().getEmbeds().get(0).getTitle();
         String username = title.split(" ")[0].replace("'s", "");
         User user = event.getGuild().getMemberById(event.getMessage().getEmbeds().get(0).getDescription().split("\n")[0].replace("<@", "").replace(">", "")).getUser();
@@ -402,7 +402,7 @@ public class CardBot {
     }
 
     @PostMapping("/api/cards")
-    private void addCards(@RequestBody String value) throws JSONException {
+    public void addCards(@RequestBody String value) throws JSONException {
         JSONObject json = new JSONObject(value);
         if(!json.has("token")) return;
         if(!json.getString("token").equals(apiToken)) return;

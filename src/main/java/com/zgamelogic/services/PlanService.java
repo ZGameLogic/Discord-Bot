@@ -75,7 +75,7 @@ public class PlanService {
     }
 
     @GenericDiscordMapping(event = ReadyEvent.class)
-    private void onReady(ReadyEvent event){
+    public void onReady(ReadyEvent event){
         bot = event.getJDA();
         discordGuild = event.getJDA().getGuildById(discordGuildId);
         planTextChannel = discordGuild.getTextChannelById(discordPlanId);
