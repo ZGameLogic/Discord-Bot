@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
         - name: discord-bot
-          image: ghcr.io/zgamelogic/discord-bot:master
+          image: ghcr.io/zgamelogic/discord-bot:production
           imagePullPolicy: Always
           volumeMounts:
             - name: apns-volume
@@ -28,8 +28,8 @@ spec:
               value: "America/Chicago"
           readinessProbe:
             httpGet:
-              path: /health
-              port: 8085
+              path: /actuator/health
+              port: 8080
               scheme: HTTP
             initialDelaySeconds: 15
             periodSeconds: 5
