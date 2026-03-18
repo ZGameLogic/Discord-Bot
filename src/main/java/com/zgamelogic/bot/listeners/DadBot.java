@@ -1,12 +1,12 @@
 package com.zgamelogic.bot.listeners;
 
 import com.zgamelogic.discord.annotations.DiscordController;
-import com.zgamelogic.discord.annotations.DiscordMapping;
+import com.zgamelogic.discord.annotations.mappings.GenericDiscordMapping;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 
 @DiscordController
 public class DadBot {
-    @DiscordMapping
+    @GenericDiscordMapping(event = MessageReceivedEvent.class)
     public void messageReceived(MessageReceivedEvent event) {
         if(!event.isFromGuild()) return;
         if(event.getAuthor().getIdLong() == 195174230281814016L) { // Karisa's stuff

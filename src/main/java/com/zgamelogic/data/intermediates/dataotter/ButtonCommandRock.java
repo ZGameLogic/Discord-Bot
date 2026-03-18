@@ -25,7 +25,7 @@ public class ButtonCommandRock {
             gen.writeStringField("rock type", "button interaction");
             gen.writeNumberField("user", event.getUser().getIdLong());
             gen.writeNumberField("id", event.getIdLong());
-            gen.writeStringField("button id", event.getButton().getId());
+            gen.writeStringField("button id", event.getButton().getCustomId());
             if(event.isFromGuild()){
                 gen.writeNumberField("guild", event.getGuild().getIdLong());
                 gen.writeNumberField("channel", event.getChannel().getIdLong());

@@ -1,7 +1,6 @@
 package com.zgamelogic.services;
 
 import com.zgamelogic.discord.annotations.DiscordController;
-import com.zgamelogic.discord.annotations.DiscordMapping;
 import com.zgamelogic.bot.utils.PlanHelper;
 import com.zgamelogic.data.database.guildData.GuildData;
 import com.zgamelogic.data.database.guildData.GuildDataRepository;
@@ -15,16 +14,17 @@ import com.zgamelogic.data.intermediates.planData.PlanEvent;
 import com.zgamelogic.data.plan.ApplePlanNotification;
 import com.zgamelogic.data.plan.PlanCreationData;
 import com.zgamelogic.data.plan.PlanEventResultMessage;
+import com.zgamelogic.discord.annotations.mappings.GenericDiscordMapping;
 import com.zgamelogic.discord.auth.data.database.authData.AuthDataRepository;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
 import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
-import net.dv8tion.jda.api.interactions.components.ActionRow;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -74,8 +74,8 @@ public class PlanService {
         this.planReminderRepository = planReminderRepository;
     }
 
-    @DiscordMapping
-    private void onReady(ReadyEvent event){
+    @GenericDiscordMapping(event = ReadyEvent.class)
+    public void onReady(ReadyEvent event){
         bot = event.getJDA();
         discordGuild = event.getJDA().getGuildById(discordGuildId);
         planTextChannel = discordGuild.getTextChannelById(discordPlanId);
@@ -190,21 +190,20 @@ public class PlanService {
         if(inviteeIds.isEmpty()) return null;
         inviteeIds.forEach(planUser -> plan.getInvitees().put(planUser, new PlanUser(plan, planUser)));
         Plan savedPlan = planRepository.save(plan); // Save initial plan
-        long planChannelMessageId = planTextChannel.sendMessageEmbeds(getPlanChannelMessage(savedPlan, discordGuild)).addActionRow(
-                Button.secondary("add_users", "Add users"),
-                IOS_BUTTON
+        long planChannelMessageId = planTextChannel.sendMessageEmbeds(getPlanChannelMessage(savedPlan, discordGuild)).setComponents(
+            ActionRow.of(Button.secondary("add_users", "Add users"))
         ).complete().getIdLong();
         savedPlan.setMessageId(planChannelMessageId); // Send plan channel message and save id
         Long authorMessageId = null;
         try {
-            authorMessageId = bot.getUserById(planData.author()).openPrivateChannel().complete().sendMessageEmbeds(getHostMessage(savedPlan, discordGuild)).addActionRow(
+            authorMessageId = bot.getUserById(planData.author()).openPrivateChannel().complete().sendMessageEmbeds(getHostMessage(savedPlan, discordGuild)).setComponents(ActionRow.of(
                     List.of(
                             Button.secondary("schedule_reminder", "Schedule reminder"),
                             Button.secondary("send_message", "Send message"),
                             Button.secondary("edit_event", "Edit details"),
                             Button.danger("delete_event", "Delete event")
                     )
-            ).complete().getIdLong();
+            )).complete().getIdLong();
         } catch(Exception e) {
             log.error("Error sending private message", e);
         }
@@ -218,7 +217,7 @@ public class PlanService {
         inviteeIds.forEach(memberId -> { // Send invitee messages and save ids
             try {
             long pmId = discordGuild.getMemberById(memberId).getUser().openPrivateChannel().complete().sendMessageEmbeds(getPlanPrivateMessage(savedPlan, discordGuild))
-                    .addActionRow(getButtons(savedPlan.isFull(), savedPlan.isNeedFillIn(), PlanUser.Status.DECIDING, false))
+                    .setComponents(ActionRow.of(getButtons(savedPlan.isFull(), savedPlan.isNeedFillIn(), PlanUser.Status.DECIDING, false)))
                     .complete().getIdLong();
             savedPlan.getInvitees().get(memberId).setDiscordNotificationId(pmId);
             authDataRepository
@@ -238,7 +237,7 @@ public class PlanService {
         invitees.forEach(memberId -> { // Send invitee messages and save ids
             plan.getInvitees().put(memberId, new PlanUser(plan, memberId));
             long pmId = discordGuild.getMemberById(memberId).getUser().openPrivateChannel().complete().sendMessageEmbeds(getPlanPrivateMessage(plan, discordGuild))
-                    .addActionRow(getButtons(plan.isFull(), plan.isNeedFillIn(), PlanUser.Status.DECIDING, false))
+                    .setComponents(ActionRow.of(getButtons(plan.isFull(), plan.isNeedFillIn(), PlanUser.Status.DECIDING, false)))
                     .complete().getIdLong();
             plan.getInvitees().get(memberId).setDiscordNotificationId(pmId);
         });
@@ -490,23 +489,23 @@ public class PlanService {
         Plan newPlan = new Plan(planCreationData);
         newCrew.stream().map(user -> user.getId().getUserId()).forEach(planUser -> newPlan.getInvitees().put(planUser, new PlanUser(plan, planUser, PlanUser.Status.ACCEPTED)));
         Plan savedPlan = planRepository.save(newPlan); // Save initial plan
-        long planChannelMessageId = planTextChannel.sendMessageEmbeds(getPlanChannelMessage(savedPlan, discordGuild)).addActionRow(
+        long planChannelMessageId = planTextChannel.sendMessageEmbeds(getPlanChannelMessage(savedPlan, discordGuild)).setComponents(ActionRow.of(
                 Button.secondary("add_users", "Add users"),
                 IOS_BUTTON
-        ).complete().getIdLong();
+        )).complete().getIdLong();
         savedPlan.setMessageId(planChannelMessageId); // Send plan channel message and save id
-        long authorMessageId = bot.getUserById(newPlan.getAuthorId()).openPrivateChannel().complete().sendMessageEmbeds(getHostMessage(savedPlan, discordGuild)).addActionRow(
+        long authorMessageId = bot.getUserById(newPlan.getAuthorId()).openPrivateChannel().complete().sendMessageEmbeds(getHostMessage(savedPlan, discordGuild)).setComponents(ActionRow.of(
                 List.of(
                         Button.secondary("schedule_reminder", "Schedule reminder"),
                         Button.secondary("send_message", "Send message"),
                         Button.secondary("edit_event", "Edit details"),
                         Button.danger("delete_event", "Delete event")
                 )
-        ).complete().getIdLong();
+        )).complete().getIdLong();
         savedPlan.setPrivateMessageId(authorMessageId); // Send author message and save id
         newCrew.stream().map(user -> user.getId().getUserId()).forEach(memberId -> { // Send invitee messages and save ids
             long pmId = discordGuild.getMemberById(memberId).getUser().openPrivateChannel().complete().sendMessageEmbeds(getPlanPrivateMessage(savedPlan, discordGuild))
-                    .addActionRow(getButtons(savedPlan.isFull(), savedPlan.isNeedFillIn(), PlanUser.Status.DECIDING, false))
+                    .setComponents(ActionRow.of(getButtons(savedPlan.isFull(), savedPlan.isNeedFillIn(), PlanUser.Status.DECIDING, false)))
                     .complete().getIdLong();
             savedPlan.getInvitees().get(memberId).setDiscordNotificationId(pmId);
         });

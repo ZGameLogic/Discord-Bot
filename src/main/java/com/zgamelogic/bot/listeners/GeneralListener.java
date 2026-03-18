@@ -2,10 +2,18 @@ package com.zgamelogic.bot.listeners;
 
 import com.zgamelogic.bot.utils.EmbedMessageGenerator;
 import com.zgamelogic.discord.annotations.DiscordController;
-import com.zgamelogic.discord.annotations.DiscordMapping;
 import com.zgamelogic.data.database.guildData.GuildDataRepository;
 import com.zgamelogic.data.intermediates.messaging.Message;
+import com.zgamelogic.discord.annotations.mappings.ButtonMapping;
+import com.zgamelogic.discord.annotations.mappings.GenericDiscordMapping;
+import com.zgamelogic.discord.annotations.mappings.ModalMapping;
+import net.dv8tion.jda.api.components.actionrow.ActionRow;
+import net.dv8tion.jda.api.components.buttons.Button;
+import net.dv8tion.jda.api.components.label.Label;
+import net.dv8tion.jda.api.components.textinput.TextInput;
+import net.dv8tion.jda.api.components.textinput.TextInputStyle;
 import net.dv8tion.jda.api.events.session.ReadyEvent;
+import net.dv8tion.jda.api.modals.Modal;
 import org.springframework.web.bind.annotation.RestController;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
@@ -17,10 +25,6 @@ import net.dv8tion.jda.api.events.guild.UnavailableGuildLeaveEvent;
 import net.dv8tion.jda.api.events.interaction.ModalInteractionEvent;
 import net.dv8tion.jda.api.events.interaction.component.ButtonInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
-import net.dv8tion.jda.api.interactions.components.buttons.Button;
-import net.dv8tion.jda.api.interactions.components.text.TextInput;
-import net.dv8tion.jda.api.interactions.components.text.TextInputStyle;
-import net.dv8tion.jda.api.interactions.modals.Modal;
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,41 +51,41 @@ public class GeneralListener {
         this.guildData = guildData;
     }
 
-    @DiscordMapping
-    private void onReady(ReadyEvent event){
+    @GenericDiscordMapping(event = ReadyEvent.class)
+    public void onReady(ReadyEvent event){
         bot = event.getJDA();
     }
 
-    @DiscordMapping
+    @GenericDiscordMapping(event = MessageReceivedEvent.class)
     public void onMessageReceived(MessageReceivedEvent event) {
         if(event.isFromGuild()) return;
         if(event.getAuthor().isBot()) return;
         if(event.getMessage().getContentRaw().charAt(0) == '!') return;
         event.getJDA().getUserById(232675572772372481L).openPrivateChannel().queue(channel -> channel.sendMessage("Message from " + event.getAuthor().getName() + ":" + event.getAuthor().getId() + "\n" + event.getMessage().getContentRaw())
-                .setActionRow(Button.secondary("reply_message", "Reply")).queue());
+                .setComponents(ActionRow.of(Button.secondary("reply_message", "Reply"))).queue());
     }
 
-    @DiscordMapping(Id = "reply_message")
-    private void replyMessageButtonPresses(ButtonInteractionEvent event){
-        TextInput message = TextInput.create("message", "Reply", TextInputStyle.PARAGRAPH).build();
-        event.replyModal(Modal.create("reply_message_modal", "Message response").addActionRow(message).build()).queue();
+    @ButtonMapping(id = "reply_message")
+    public void replyMessageButtonPresses(ButtonInteractionEvent event){
+        TextInput message = TextInput.create("message", TextInputStyle.PARAGRAPH).build();
+        event.replyModal(Modal.create("reply_message_modal", "Message response").addComponents(Label.of("Reply", message)).build()).queue();
     }
 
-    @DiscordMapping(Id = "reply_message_modal")
-    private void modalResponseMessageReply(ModalInteractionEvent event){
+    @ModalMapping(id = "reply_message_modal")
+    public void modalResponseMessageReply(ModalInteractionEvent event){
         event.getJDA().getUserById(
                 event.getMessage().getContentRaw().split("\n")[0].split(":")[1]
         ).openPrivateChannel().queue(privateChannel -> privateChannel.sendMessage(event.getValue("message").getAsString()).queue());
         event.reply("Message sent back\n" + event.getValue("message").getAsString()).queue();
     }
 
-    @DiscordMapping(Id = "reply_text")
-    private void replyTextMessageButtonPress(ButtonInteractionEvent event){
-        TextInput message = TextInput.create("message", "Reply", TextInputStyle.PARAGRAPH).build();
-        event.replyModal(Modal.create("reply_text_modal", "Message response").addActionRow(message).build()).queue();
+    @ButtonMapping(id = "reply_text")
+    public void replyTextMessageButtonPress(ButtonInteractionEvent event){
+        TextInput message = TextInput.create("message", TextInputStyle.PARAGRAPH).build();
+        event.replyModal(Modal.create("reply_text_modal", "Message response").addComponents(Label.of("Reply", message)).build()).queue();
     }
 
-    @DiscordMapping
+    @GenericDiscordMapping(event = UnavailableGuildLeaveEvent.class)
     public void onUnavailableGuildLeave(UnavailableGuildLeaveEvent event) {
         guildData.deleteById(event.getGuildIdLong());
     }

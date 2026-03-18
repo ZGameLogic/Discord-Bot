@@ -1,0 +1,17 @@
+name: Docker Image CI
+
+on:
+  push:
+    branches: [ "master" ]
+jobs:
+  deploy:
+    permissions:
+      contents: read
+      packages: write
+    uses: zgamelogic/github-actions/.github/workflows/kubernetes-deploy.yaml@0.0.1
+    with:
+      applicationId: 1
+      monitorIds: '1'
+      environment: production
+      deploymentName: discord-bot
+      imageName: discord-bot

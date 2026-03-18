@@ -6,6 +6,7 @@ import com.zgamelogic.data.plan.ApplePlanNotification;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 
 import io.jsonwebtoken.Jwts;
@@ -14,15 +15,16 @@ import okhttp3.OkHttpClient;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.client.OkHttp3ClientHttpRequestFactory;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.io.File;
+import java.net.http.HttpClient;
 import java.nio.file.Files;
 import java.security.KeyFactory;
 import java.security.PrivateKey;
 import java.security.spec.PKCS8EncodedKeySpec;
+import java.time.Duration;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
@@ -53,11 +55,11 @@ public class ApplePushNotificationService {
         headers.add("apns-priority", "10");
         headers.add("apns-expiration", "0");
         headers.add("apns-topic", "zgamelogic.Planner-Bot.push-type.liveactivity");
-        OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .build();
-        RestTemplate restTemplate = new RestTemplate(new OkHttp3ClientHttpRequestFactory(okHttpClient));
+        HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+        JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        requestFactory.setReadTimeout(Duration.ofSeconds(30));
+
+        RestTemplate restTemplate = new RestTemplate(requestFactory);
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             restTemplate.exchange(url, HttpMethod.POST, new HttpEntity<>(objectMapper.writeValueAsString(notification), headers), String.class);
@@ -77,11 +79,11 @@ public class ApplePushNotificationService {
         headers.add("apns-priority", "10");
         headers.add("apns-expiration", "0");
         headers.add("apns-topic", "zgamelogic.Planner-Bot");
-        OkHttpClient okHttpClient = new OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .build();
-        RestTemplate restTemplate = new RestTemplate(new OkHttp3ClientHttpRequestFactory(okHttpClient));
+        HttpClient httpClient = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+        JdkClientHttpRequestFactory requestFactory = new JdkClientHttpRequestFactory(httpClient);
+        requestFactory.setReadTimeout(Duration.ofSeconds(30));
+
+        RestTemplate restTemplate = new RestTemplate(requestFactory);
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             restTemplate.exchange(url, HttpMethod.POST, new HttpEntity<>(objectMapper.writeValueAsString(notification), headers), String.class);
