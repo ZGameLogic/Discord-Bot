@@ -36,8 +36,8 @@ public class PlannerWebsocketService extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws IOException {
         log.debug("Connected: {}", session.getId());
-        String device = session.getHandshakeHeaders().getFirst("device");
-        String token = session.getHandshakeHeaders().getFirst("token");
+        String device = (String) session.getAttributes().get("device");
+        String token = (String) session.getAttributes().get("token");
 
         if (token == null || device == null) {
             session.close(CloseStatus.BAD_DATA);
