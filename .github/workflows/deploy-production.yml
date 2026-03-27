@@ -8,7 +8,7 @@ jobs:
     permissions:
       contents: read
       packages: write
-    uses: zgamelogic/github-actions/.github/workflows/kubernetes-deploy.yaml@main
+    uses: zgamelogic/github-actions/.github/workflows/kubernetes-deploy.yaml@1.0.0
     with:
       applicationId: 1
       monitorIds: '1'
