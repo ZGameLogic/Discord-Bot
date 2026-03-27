@@ -1,1 +1,1 @@
-GET https://discord-dev.zgamelogic.com/health
+GET http://localhost:8080/plan/roles

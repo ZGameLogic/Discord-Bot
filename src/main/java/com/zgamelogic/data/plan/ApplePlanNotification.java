@@ -1,12 +1,10 @@
 package com.zgamelogic.data.plan;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.Data;
-
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 @Data
 @JsonSerialize(using = ApplePlanNotification.ApplePlanNotificationSerializer.class)
@@ -28,28 +26,28 @@ public class ApplePlanNotification {
         return new ApplePlanNotification(title, "You are receiving this notification because this plan is still not filled and you \"maybed\" the plan.", null);
     }
 
-    protected static class ApplePlanNotificationSerializer extends JsonSerializer<ApplePlanNotification> {
-        @Override
-        public void serialize(ApplePlanNotification notification, JsonGenerator jsonGenerator, SerializerProvider serializerProvider)
-                throws IOException {
+    protected static class ApplePlanNotificationSerializer extends StdSerializer<ApplePlanNotification> {
+        protected ApplePlanNotificationSerializer() { super(ApplePlanNotification.class); }
 
-            jsonGenerator.writeStartObject();
-            jsonGenerator.writeObjectFieldStart("aps");
-            jsonGenerator.writeStringField("sound", "bingbong.aiff");
-            jsonGenerator.writeObjectFieldStart("alert");
-            jsonGenerator.writeStringField("title", notification.getTitle());
+        @Override
+        public void serialize(ApplePlanNotification notification, tools.jackson.core.JsonGenerator gen, SerializationContext provider) throws JacksonException {
+            gen.writeStartObject();
+            gen.writeObjectPropertyStart("aps");
+            gen.writeStringProperty("sound", "bingbong.aiff");
+            gen.writeObjectPropertyStart("alert");
+            gen.writeStringProperty("title", notification.getTitle());
 
             if (notification.getSubtitle() != null) {
-                jsonGenerator.writeStringField("subtitle", notification.getSubtitle());
+                gen.writeStringProperty("subtitle", notification.getSubtitle());
             }
 
             if (notification.getBody() != null) {
-                jsonGenerator.writeStringField("body", notification.getBody());
+                gen.writeStringProperty("body", notification.getBody());
             }
 
-            jsonGenerator.writeEndObject(); // alert
-            jsonGenerator.writeEndObject(); // aps
-            jsonGenerator.writeEndObject();
+            gen.writeEndObject(); // alert
+            gen.writeEndObject(); // aps
+            gen.writeEndObject();
         }
     }
 }

@@ -1,10 +1,6 @@
 package com.zgamelogic.data.database.planData.plan;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.zgamelogic.data.database.planData.linkedMessage.LinkedMessage;
 import com.zgamelogic.data.database.planData.user.PlanUser;
 import com.zgamelogic.data.intermediates.planData.PlanEvent;
@@ -12,6 +8,10 @@ import com.zgamelogic.data.plan.PlanCreationData;
 import lombok.*;
 
 import jakarta.persistence.*;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -255,33 +255,29 @@ public class Plan {
         log += dtf.format(new Date())+ ": " + message + "\n";
     }
 
-    public static class PlanSerialization extends JsonSerializer<Plan> {
-
+    public static class PlanSerialization extends StdSerializer<Plan> {
+        public PlanSerialization() { super(Plan.class); }
         @Override
-        public void serialize(Plan value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        public void serialize(Plan value, tools.jackson.core.JsonGenerator gen, SerializationContext provider) throws JacksonException {
             gen.writeStartObject();
-            gen.writeNumberField("id", value.getId());
-            gen.writeStringField("title", value.getTitle());
-            gen.writeStringField("notes", value.getNotes());
+            gen.writeNumberProperty("id", value.getId());
+            gen.writeStringProperty("title", value.getTitle());
+            gen.writeStringProperty("notes", value.getNotes());
             if(value.getDate() != null) {
                 SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX");
                 dateFormat.setTimeZone(TimeZone.getTimeZone("UTC"));
                 String formattedDate = dateFormat.format(value.getDate());
-                gen.writeStringField("start time", formattedDate);
+                gen.writeStringProperty("start time", formattedDate);
             }
-            gen.writeNumberField("count", value.getCount());
-            gen.writeNumberField("author id", value.getAuthorId());
-            gen.writeArrayFieldStart("invitees");
+            gen.writeNumberProperty("count", value.getCount());
+            gen.writeNumberProperty("author id", value.getAuthorId());
+            gen.writeArrayPropertyStart("invitees");
             value.getInvitees().values().forEach(planUser -> {
-                try {
-                    gen.writeStartObject();
-                    gen.writeNumberField("user id", planUser.getId().getUserId());
-                    gen.writeStringField("status", planUser.getUserStatus().name());
-                    gen.writeBooleanField("needs fill in", planUser.isNeedFillIn());
-                    gen.writeEndObject();
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                gen.writeStartObject();
+                gen.writeNumberProperty("user id", planUser.getId().getUserId());
+                gen.writeStringProperty("status", planUser.getUserStatus().name());
+                gen.writeBooleanProperty("needs fill in", planUser.isNeedFillIn());
+                gen.writeEndObject();
             });
             gen.writeEndArray();
             gen.writeEndObject();

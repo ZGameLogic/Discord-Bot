@@ -2,7 +2,6 @@ package com.zgamelogic.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.zgamelogic.data.database.planData.plan.Plan;
 import com.zgamelogic.discord.auth.data.authData.DiscordUser;
 import com.zgamelogic.discord.auth.data.database.authData.AuthData;
@@ -69,11 +68,7 @@ public class PlannerWebsocketService extends TextWebSocketHandler {
     }
 
     public void sendMessage(Object message){
-        Plan.PlanSerialization planSerialization = new Plan.PlanSerialization();
         ObjectMapper om = new ObjectMapper();
-        SimpleModule module = new SimpleModule();
-        module.addSerializer(Plan.class, planSerialization);
-        om.registerModule(module);
 
         try {
             for(Long key: sessions.keySet()){

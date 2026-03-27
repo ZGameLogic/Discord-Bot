@@ -1,27 +1,30 @@
 package com.zgamelogic.data.intermediates.planData;
 
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.databind.JsonSerializer;
-import com.fasterxml.jackson.databind.SerializerProvider;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.SerializationContext;
+import tools.jackson.databind.annotation.JsonSerialize;
+import tools.jackson.databind.ser.std.StdSerializer;
 
 import java.awt.*;
-import java.io.IOException;
 
 @JsonSerialize(using = DiscordRoleData.DiscordRoleDataSerializer.class)
 public record DiscordRoleData(String roleName, Long id, Color color) {
 
-    public static class DiscordRoleDataSerializer extends JsonSerializer<DiscordRoleData> {
+    public static class DiscordRoleDataSerializer extends StdSerializer<DiscordRoleData> {
+        protected DiscordRoleDataSerializer(){
+            super(DiscordRoleData.class);
+        }
+
         @Override
-        public void serialize(DiscordRoleData value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
+        public void serialize(DiscordRoleData value, tools.jackson.core.JsonGenerator gen, SerializationContext provider) throws JacksonException {
             gen.writeStartObject();
-            gen.writeStringField("name", value.roleName);
-            gen.writeNumberField("id", value.id);
+            gen.writeStringProperty("name", value.roleName);
+            gen.writeNumberProperty("id", value.id);
             if(value.color != null) {
-                gen.writeObjectFieldStart("color");
-                gen.writeNumberField("red", value.color.getRed());
-                gen.writeNumberField("green", value.color.getGreen());
-                gen.writeNumberField("blue", value.color.getBlue());
+                gen.writeObjectPropertyStart("color");
+                gen.writeNumberProperty("red", value.color.getRed());
+                gen.writeNumberProperty("green", value.color.getGreen());
+                gen.writeNumberProperty("blue", value.color.getBlue());
                 gen.writeEndObject();
             }
             gen.writeEndObject();
