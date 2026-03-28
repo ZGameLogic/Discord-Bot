@@ -293,24 +293,9 @@ public class PlannerBot {
         event.replyEmbeds(EmbedMessageGenerator.plannerHelperMessage()).setEphemeral(true).queue();
     }
 
-    @SlashCommandMapping(id = "plan", sub = "event")
+    @SlashCommandMapping(id = "plan", sub = "event", document = "plan-form")
     public void planEventSlashCommand(SlashCommandInteractionEvent event){
         dataOtterService.sendRock(new SlashCommandRock(event));
-        TextInput notes = TextInput.create("notes", TextInputStyle.SHORT)
-                .setPlaceholder("Grinding the event").setRequired(false).build();
-        TextInput date = TextInput.create("date", TextInputStyle.SHORT)
-                .setPlaceholder("Central time zone. Examples: 4/5 9:23am, 7:00pm, tomorrow 6:00pm").build();
-        TextInput name = TextInput.create("title", TextInputStyle.SHORT)
-                .setPlaceholder("Hunt Showdown").build();
-        TextInput count = TextInput.create("count", TextInputStyle.SHORT)
-                .setPlaceholder("Leave empty for infinite").setRequired(false).build();
-        event.replyModal(Modal.create("plan_event_modal", "Details of meeting").addComponents(
-                        Label.of("Title of the event", name),
-                        Label.of("Date and time", date),
-                        Label.of("Notes about the event", notes),
-                        Label.of("Number of people (not including yourself)", count)
-                ).build())
-                .queue();
     }
 
     @ModalMapping(id = "plan_event_modal_poll")
@@ -370,14 +355,32 @@ public class PlannerBot {
             event.reply("Invalid count").setEphemeral(true).queue();
             return;
         }
-        event.replyEmbeds(getPrePlanMessage(planData.title(), planData.notes(), count, planData.date()))
-                .setEphemeral(true)
-                .setComponents(ActionRow.of(
-                        EntitySelectMenu.create("People", EntitySelectMenu.SelectTarget.USER, EntitySelectMenu.SelectTarget.ROLE)
-                                .setMinValues(1)
-                                .setMaxValues(25)
-                                .build()))
-                .queue();
+        if(planData.people().getMembers().isEmpty() && planData.people().getRoles().isEmpty()) {
+            event.reply("You must select a member or role to invite to the event").setEphemeral(true).queue();
+            return;
+        }
+
+        event.deferReply().setEphemeral(true).queue();
+        String title = planData.title();
+        String notes = planData.notes();
+        PlanCreationData planCreationData = new PlanCreationData(
+                title,
+                notes,
+                date,
+                event.getUser().getIdLong(),
+                planData.people().getMembers().stream().map(ISnowflake::getIdLong).toList(),
+                planData.people().getRoles().stream().map(ISnowflake::getIdLong).toList(),
+                count,
+                null,
+                null
+        );
+        boolean success = planService.createPlan(planCreationData) != null;
+        if(!success) {
+            event.getHook().setEphemeral(true).sendMessage("Event not created as the invite list resolves to empty. Invites to yourself, bots or users who are marked with `no plan` do not count.").queue();
+            return;
+        }
+        event.getHook().setEphemeral(true).sendMessage("Event created in <#" + discordPlanId + ">").queue();
+        event.getMessage().delete().queue();
     }
 
     @EntitySelectMapping(id = "People_poll")
@@ -412,39 +415,6 @@ public class PlannerBot {
             return;
         }
         planService.sendPollToAll(plan);
-        event.getHook().setEphemeral(true).sendMessage("Event created in <#" + discordPlanId + ">").queue();
-        event.getMessage().delete().queue();
-    }
-
-    @EntitySelectMapping(id = "People")
-    public void planPeopleResponse(EntitySelectInteractionEvent event){
-        if(event.getMentions().getMembers().isEmpty() && event.getMentions().getRoles().isEmpty()) {
-            event.reply("You must select a member or role to invite to the event").setEphemeral(true).queue();
-            return;
-        }
-
-        event.deferReply().setEphemeral(true).queue();
-        List<MessageEmbed.Field> fields = event.getMessage().getEmbeds().get(0).getFields();
-        String title = fields.stream().filter(field -> field.getName().equals("title")).findFirst().get().getValue();
-        String notes = fields.stream().filter(field -> field.getName().equals("notes")).findFirst().get().getValue().replace((char)8206 + "", "");
-        Date date = stringToDate(fields.stream().filter(field -> field.getName().equals("date")).findFirst().get().getValue());
-        int count = Integer.parseInt(fields.stream().filter(field -> field.getName().equals("count")).findFirst().get().getValue());
-        PlanCreationData planData = new PlanCreationData(
-                title,
-                notes,
-                date,
-                event.getUser().getIdLong(),
-                event.getMentions().getMembers().stream().map(ISnowflake::getIdLong).toList(),
-                event.getMentions().getRoles().stream().map(ISnowflake::getIdLong).toList(),
-                count,
-                null,
-                null
-        );
-        boolean success = planService.createPlan(planData) != null;
-        if(!success) {
-            event.getHook().setEphemeral(true).sendMessage("Event not created as the invite list resolves to empty. Invites to yourself, bots or users who are marked with `no plan` do not count.").queue();
-            return;
-        }
         event.getHook().setEphemeral(true).sendMessage("Event created in <#" + discordPlanId + ">").queue();
         event.getMessage().delete().queue();
     }

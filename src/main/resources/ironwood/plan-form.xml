@@ -1,0 +1,7 @@
+<modal xmlns="com.zgamelogic.modal" id="plan_event_modal" title="Details of plan">
+    <input id="title" label="Title of the event" placeholder="Hunt Showdown" />
+    <input id="notes" label="Notes about the event" placeholder="Grinding the event" required="false" />
+    <input id="date" label="Date and time" label-desc="Central time zone. Examples: 4/5 9:23am, 7:00pm, tomorrow 6:00pm" />
+    <input id="count" label="Number of people (not including yourself)" placeholder="Leave empty for infinite" required="false" />
+    <entity-select id="people" label="Invitees" label-desc="If a role is selected, all users in that role will be invited." targets="role user" max="25" min="1" />
+</modal>
