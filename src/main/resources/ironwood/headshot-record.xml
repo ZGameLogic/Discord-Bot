@@ -1,0 +1,4 @@
+<embed xmlns="com.zgamelogic.embed">
+    <title>Headshot recorded</title>
+    <description th:text="'Date Recorded: ' + ${date} + ${'\n'} + 'Recorder: ' + ${recorder} + ${'\n'} + 'Running count: `' + ${count} + '`' " />
+</embed>
