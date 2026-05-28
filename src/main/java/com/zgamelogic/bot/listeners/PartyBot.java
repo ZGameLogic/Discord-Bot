@@ -13,6 +13,7 @@ import com.zgamelogic.discord.annotations.mappings.GenericDiscordMapping;
 import com.zgamelogic.discord.annotations.mappings.SlashCommandMapping;
 import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
+import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
@@ -228,7 +229,7 @@ public class PartyBot  {
                 ChannelAction<VoiceChannel> builder = guild.createVoiceChannel(name)
                         .setParent(guild.getCategoryById(savedGuild.getPartyCategory()));
                 if(members.stream().map(Member::getIdLong).anyMatch(memberId -> memberId == 232675572772372481L)){
-//                    builder.addMemberPermissionOverride(195174230281814016L, null, List.of(Permission.VIEW_CHANNEL));
+                    builder.addMemberPermissionOverride(195174230281814016L, null, List.of(Permission.VIEW_CHANNEL));
 //                    builder.addMemberPermissionOverride(173391902962483200L, null, List.of(Permission.VIEW_CHANNEL));
                 }
                 VoiceChannel newChannel = builder.complete();
