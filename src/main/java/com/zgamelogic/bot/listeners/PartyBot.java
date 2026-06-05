@@ -230,7 +230,7 @@ public class PartyBot  {
                         .setParent(guild.getCategoryById(savedGuild.getPartyCategory()));
                 List<Long> effectedIds = List.of(232675572772372481L, 262458179563159563L);
                 if(members.stream().map(Member::getIdLong).anyMatch(effectedIds::contains)){
-                    builder.addMemberPermissionOverride(195174230281814016L, null, List.of(Permission.VIEW_CHANNEL));
+//                    builder.addMemberPermissionOverride(195174230281814016L, null, List.of(Permission.VIEW_CHANNEL));
 //                    builder.addMemberPermissionOverride(173391902962483200L, null, List.of(Permission.VIEW_CHANNEL));
                 }
                 VoiceChannel newChannel = builder.complete();
