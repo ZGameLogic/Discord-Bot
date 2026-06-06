@@ -8,6 +8,8 @@ target/
 .idea/jarRepositories.xml
 .idea/compiler.xml
 .idea/libraries/
+.idea/copilot.data.migration.ask2agent.xml
+.idea/go.imports.xml
 *.iws
 *.iml
 *.ipr
