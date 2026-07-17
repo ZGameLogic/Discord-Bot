@@ -35,6 +35,7 @@ public class Plan {
     private String title;
     private String notes;
     private Date date;
+    @Column(columnDefinition = "text")
     private String log;
     private long authorId;
     private Long messageId;
