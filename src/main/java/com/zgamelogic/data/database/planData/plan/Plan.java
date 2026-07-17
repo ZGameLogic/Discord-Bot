@@ -35,7 +35,6 @@ public class Plan {
     private String title;
     private String notes;
     private Date date;
-    @Column(columnDefinition = "varchar(max)")
     private String log;
     private long authorId;
     private Long messageId;

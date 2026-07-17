@@ -8,11 +8,11 @@ import java.util.List;
 
 public interface PlanReminderRepository extends JpaRepository<PlanReminder, PlanReminder.PlanReminderId> {
     @Query("SELECT p FROM PlanReminder p WHERE " +
-            "    YEAR(p.id.time) = YEAR(:time) " +
-            "AND MONTH(p.id.time) = MONTH(:time) " +
-            "AND DAY(p.id.time) = DAY(:time) " +
-            "AND HOUR(p.id.time) = HOUR(:time) " +
-            "AND MINUTE(p.id.time) = MINUTE(:time)"
+            "YEAR(CAST(p.id.time AS timestamp)) = YEAR(CAST(:time AS timestamp)) " +
+            "AND MONTH(CAST(p.id.time AS timestamp)) = MONTH(CAST(:time AS timestamp)) " +
+            "AND DAY(CAST(p.id.time AS timestamp)) = DAY(CAST(:time AS timestamp)) " +
+            "AND HOUR(CAST(p.id.time AS timestamp)) = HOUR(CAST(:time AS timestamp)) " +
+            "AND MINUTE(CAST(p.id.time AS timestamp)) = MINUTE(CAST(:time AS timestamp))"
     )
     List<PlanReminder> getRemindersByTime(Date time);
 }

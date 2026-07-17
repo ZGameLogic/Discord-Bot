@@ -29,11 +29,11 @@ public interface PlanRepository extends JpaRepository<Plan, Long> {
 
     @Query("SELECT p FROM Plan p WHERE " +
             "p.date IS NOT NULL " +
-            "AND YEAR(p.date) = YEAR(:date) " +
-            "AND MONTH(p.date) = MONTH(:date) " +
-            "AND DAY(p.date) = DAY(:date) " +
-            "AND HOUR(p.date) = HOUR(:date) " +
-            "AND MINUTE(p.date) = MINUTE(:date)" +
+            "AND YEAR(CAST(p.date AS timestamp)) = YEAR(CAST(:date AS timestamp)) " +
+            "AND MONTH(CAST(p.date AS timestamp)) = MONTH(CAST(:date AS timestamp)) " +
+            "AND DAY(CAST(p.date AS timestamp)) = DAY(CAST(:date AS timestamp)) " +
+            "AND HOUR(CAST(p.date AS timestamp)) = HOUR(CAST(:date AS timestamp)) " +
+            "AND MINUTE(CAST(p.date AS timestamp)) = MINUTE(CAST(:date AS timestamp)) " +
             "AND p.deleted = false"
     )
     List<Plan> getPlansByTime(Date date);
