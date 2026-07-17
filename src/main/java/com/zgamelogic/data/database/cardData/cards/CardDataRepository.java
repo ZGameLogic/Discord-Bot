@@ -11,24 +11,24 @@ import java.util.LinkedList;
 @Component
 public interface CardDataRepository extends JpaRepository<CardData, Long> {
 
-    @Query(value = "SELECT * FROM cards c WHERE c.collection = :collection", nativeQuery = true)
+    @Query("SELECT c FROM CardData c WHERE c.collection = :collection")
     LinkedList<CardData> findCardsByCollection(@Param("collection") String collection);
 
-    @Query(value = "SELECT * FROM cards c WHERE c.rarity = :rarity", nativeQuery = true)
+    @Query("SELECT c FROM CardData c WHERE c.rarity = :rarity")
     LinkedList<CardData> findCardsByRarity(@Param("rarity") int rarity);
 
-    @Query(value = "SELECT * FROM cards c WHERE c.collection = :collection and c.rarity = :rarity", nativeQuery = true)
+    @Query("SELECT c FROM CardData c WHERE c.collection = :collection AND c.rarity = :rarity")
     LinkedList<CardData> findCardsByCollectionAndRarity(@Param("collection") String collection, @Param("rarity") int rarity);
 
-    @Query(value = "SELECT * FROM cards c WHERE c.collection = :collection and c.name = :name", nativeQuery = true)
+    @Query("SELECT c FROM CardData c WHERE c.collection = :collection AND c.name = :name")
     LinkedList<CardData> findCardsByCollectionAndName(@Param("collection") String collection, @Param("name") String name);
 
-    @Query(value = "SELECT DISTINCT collection FROM cards", nativeQuery = true)
+    @Query("SELECT DISTINCT c.collection FROM CardData c")
     LinkedList<String> listCardCollections();
 
-    @Query(value = "SELECT DISTINCT collection FROM cards c WHERE c.id IN :ids", nativeQuery = true)
+    @Query("SELECT DISTINCT c.collection FROM CardData c WHERE c.id IN :ids")
     LinkedList<String> listCardCollectionsById(@Param("ids") Collection<Long> ids);
 
-    @Query(value = "SELECT DISTINCT name FROM cards c WHERE c.id IN :ids AND c.collection like :collection", nativeQuery = true)
+    @Query("SELECT DISTINCT c.name FROM CardData c WHERE c.id IN :ids AND c.collection LIKE :collection")
     LinkedList<String> findByCollectionAndIds(@Param("ids") Collection<Long> ids, @Param("collection") String collection);
 }

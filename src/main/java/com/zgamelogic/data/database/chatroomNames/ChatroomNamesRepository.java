@@ -8,6 +8,6 @@ import java.util.Optional;
 
 @Component
 public interface ChatroomNamesRepository extends JpaRepository<ChatroomName, String> {
-    @Query(value = "SELECT TOP 1 * FROM chatroom_names ORDER BY NEWID()", nativeQuery = true)
+    @Query("SELECT c FROM ChatroomName c ORDER BY FUNCTION('RANDOM') LIMIT 1")
     Optional<ChatroomName> findRandom();
 }
