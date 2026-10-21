@@ -207,8 +207,6 @@ public class PartyBot  {
         if (channel.getParentCategoryIdLong() == savedGuild.getPartyCategory()) {
             if (channel.getIdLong() == savedGuild.getCreateChatId()) {
                 checkCreateChatroom(guild);
-                UUID uuid = sessions.get(channel.getIdLong());
-                if(uuid != null) dataOtterService.sendRock(new PartyBotRock(member.getIdLong(), true, uuid));
             } else if(channel.getIdLong() != savedGuild.getAfkChannelId()) {
                 Instant time = Instant.now().plus(5, ChronoUnit.MINUTES);
                 Date limit = new Date(time.toEpochMilli());
@@ -243,8 +241,10 @@ public class PartyBot  {
                 newChannel.sendMessage(String.format("This chatroom name comes from the game: %s", chatroomName.getGame())).queue();
                 Instant time = Instant.now().plus(5, ChronoUnit.MINUTES);
                 Date limit = new Date(time.toEpochMilli());
+                UUID uuid = sessions.get(newChannel.getIdLong());
                 for (Member member : members) {
                     guild.moveVoiceMember(member, newChannel).queue();
+                    dataOtterService.sendRock(new PartyBotRock(member.getIdLong(), true, uuid));
                     planRepository.findAllPlansByAuthorIdBetweenDates(member.getIdLong(), new Date(), limit).forEach(plan -> {
                         Message message = newChannel.sendMessageEmbeds(getPlanChannelMessage(plan, newChannel.getGuild())).complete();
                         plan.addLinkedMessage(newChannel.getIdLong(), message.getIdLong());
