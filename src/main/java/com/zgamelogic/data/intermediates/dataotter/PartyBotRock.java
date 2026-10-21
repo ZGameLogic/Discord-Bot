@@ -8,6 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.io.IOException;
+import java.util.UUID;
 
 @Getter
 @AllArgsConstructor
@@ -16,6 +17,7 @@ public class PartyBotRock {
     private final String ROCK_TYPE = "party bot";
     private final long userId;
     private final boolean joined;
+    private final UUID session;
 
     public static class PartyRockSerializer extends JsonSerializer<PartyBotRock> {
         @Override
@@ -24,6 +26,7 @@ public class PartyBotRock {
             gen.writeStringField("rock type", "party bot");
             gen.writeNumberField("userId", value.userId);
             gen.writeBooleanField("joined", value.joined);
+            gen.writeStringField("session", value.session.toString());
             gen.writeEndObject();
         }
     }

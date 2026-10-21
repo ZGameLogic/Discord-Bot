@@ -48,6 +48,7 @@ public class PartyBot  {
     private final LinkedMessageRepository linkedMessageRepository;
     private final PlanRepository planRepository;
     private final DataOtterService dataOtterService;
+    private final Map<Long, UUID> sessions;
 
     private JDA bot;
 
@@ -58,6 +59,7 @@ public class PartyBot  {
         this.linkedMessageRepository = linkedMessageRepository;
         this.planRepository = planRepository;
         this.dataOtterService = dataOtterService;
+        this.sessions = new HashMap<>();
     }
 
     @GenericDiscordMapping(event = ReadyEvent.class)
@@ -177,7 +179,8 @@ public class PartyBot  {
      * @param guild       the guild that the user left from
      */
     private void playerLeft(AudioChannel channelLeft, Guild guild, Member member) {
-        dataOtterService.sendRock(new PartyBotRock(member.getIdLong(), false));
+        UUID uuid = sessions.get(channelLeft.getIdLong());
+        if(uuid != null) dataOtterService.sendRock(new PartyBotRock(member.getIdLong(), false, uuid));
         GuildData savedGuild = guildData.findById(guild.getIdLong()).get();
         VoiceChannel channel = guild.getVoiceChannelById(channelLeft.getIdLong());
         if (channel.getParentCategoryIdLong() == savedGuild.getPartyCategory()) {
@@ -185,6 +188,7 @@ public class PartyBot  {
                 // We get here if the channel left in is the chatroom categories
                 if (channel.getMembers().isEmpty()) {
                     linkedMessageRepository.deleteAllById_ChannelId(channel.getIdLong());
+                    sessions.remove(channelLeft.getIdLong());
                     channel.delete().queue();
                 }
             }
@@ -199,11 +203,12 @@ public class PartyBot  {
      */
     private void playerJoined(VoiceChannel channelJoined, Guild guild, Member member) {
         VoiceChannel channel = guild.getVoiceChannelById(channelJoined.getIdLong());
-        dataOtterService.sendRock(new PartyBotRock(member.getIdLong(), true));
         GuildData savedGuild = guildData.findById(guild.getIdLong()).get();
         if (channel.getParentCategoryIdLong() == savedGuild.getPartyCategory()) {
             if (channel.getIdLong() == savedGuild.getCreateChatId()) {
                 checkCreateChatroom(guild);
+                UUID uuid = sessions.get(channel.getIdLong());
+                if(uuid != null) dataOtterService.sendRock(new PartyBotRock(member.getIdLong(), true, uuid));
             } else if(channel.getIdLong() != savedGuild.getAfkChannelId()) {
                 Instant time = Instant.now().plus(5, ChronoUnit.MINUTES);
                 Date limit = new Date(time.toEpochMilli());
@@ -234,6 +239,7 @@ public class PartyBot  {
                     builder.addMemberPermissionOverride(173391902962483200L, null, List.of(Permission.VIEW_CHANNEL));
                 }
                 VoiceChannel newChannel = builder.complete();
+                sessions.put(newChannel.getIdLong(), UUID.randomUUID());
                 newChannel.sendMessage(String.format("This chatroom name comes from the game: %s", chatroomName.getGame())).queue();
                 Instant time = Instant.now().plus(5, ChronoUnit.MINUTES);
                 Date limit = new Date(time.toEpochMilli());
