@@ -208,6 +208,8 @@ public class PartyBot  {
             if (channel.getIdLong() == savedGuild.getCreateChatId()) {
                 checkCreateChatroom(guild);
             } else if(channel.getIdLong() != savedGuild.getAfkChannelId()) {
+                UUID uuid = sessions.get(channelJoined.getIdLong());
+                dataOtterService.sendRock(new PartyBotRock(member.getIdLong(), true, uuid));
                 Instant time = Instant.now().plus(5, ChronoUnit.MINUTES);
                 Date limit = new Date(time.toEpochMilli());
                 planRepository.findAllPlansByAuthorIdBetweenDates(member.getIdLong(), new Date(), limit).forEach(plan -> {
