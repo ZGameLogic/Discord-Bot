@@ -1,4 +1,4 @@
-FROM --platform=linux/arm64 eclipse-temurin:25-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 LABEL authors="Ben Shabowski"
 
 ARG SPRING_PROFILES_ACTIVE
