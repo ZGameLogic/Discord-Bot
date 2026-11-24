@@ -50,7 +50,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.*;
-import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.interactions.commands.OptionType;
 import net.dv8tion.jda.api.interactions.commands.build.Commands;
@@ -66,7 +65,6 @@ import static com.zgamelogic.bot.utils.Helpers.stringToDate;
 import static com.zgamelogic.bot.utils.PlanHelper.getPlanChannelMessage;
 import static com.zgamelogic.bot.utils.PlanHelper.getPrePlanMessage;
 
-@Slf4j
 @DiscordController
 @RestController
 public class PlannerBot {
