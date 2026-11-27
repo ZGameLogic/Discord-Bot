@@ -52,11 +52,11 @@ public class ReligionBot {
     @Bean
     public List<CommandData> religionSlashCommands(){
         return List.of(
-                Commands.slash("pray", "Pray to our lord and savior: Shlongbot"),
-                Commands.slash("worship", "Worship our lord and savior: Shlongbot"),
-                Commands.slash("cry", "Cry to our lord and savior: Shlongbot"),
-                Commands.slash("cheer", "Cheer to our lord and savior: Shlongbot"),
-                Commands.slash("desecrate", "Desecrate our lord and savior: Shlongbot")
+            Commands.slash("pray", "Pray to our lord and savior: Shlongbot"),
+            Commands.slash("worship", "Worship our lord and savior: Shlongbot"),
+            Commands.slash("cry", "Cry to our lord and savior: Shlongbot"),
+            Commands.slash("cheer", "Cheer to our lord and savior: Shlongbot"),
+            Commands.slash("desecrate", "Desecrate our lord and savior: Shlongbot")
         );
     }
 }

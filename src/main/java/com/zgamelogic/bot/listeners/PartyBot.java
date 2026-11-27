@@ -11,9 +11,7 @@ import com.zgamelogic.data.intermediates.dataotter.SlashCommandRock;
 import com.zgamelogic.dataotter.DataOtterService;
 import com.zgamelogic.discord.annotations.mappings.GenericDiscordMapping;
 import com.zgamelogic.discord.annotations.mappings.SlashCommandMapping;
-import lombok.extern.slf4j.Slf4j;
 import net.dv8tion.jda.api.JDA;
-import net.dv8tion.jda.api.Permission;
 import net.dv8tion.jda.api.entities.Guild;
 import net.dv8tion.jda.api.entities.Member;
 import net.dv8tion.jda.api.entities.Message;
@@ -41,7 +39,6 @@ import static com.zgamelogic.bot.utils.PlanHelper.getPlanChannelMessage;
  * Party bot stuff
  */
 @DiscordController
-@Slf4j
 public class PartyBot  {
     private final GuildDataRepository guildData;
     private final ChatroomNamesRepository namesRepository;
@@ -233,11 +230,11 @@ public class PartyBot  {
                 }
                 ChannelAction<VoiceChannel> builder = guild.createVoiceChannel(name)
                         .setParent(guild.getCategoryById(savedGuild.getPartyCategory()));
-                List<Long> effectedIds = List.of(232675572772372481L, 262458179563159563L);
-                if(members.stream().map(Member::getIdLong).anyMatch(effectedIds::contains)){
+//                List<Long> effectedIds = List.of(232675572772372481L, 262458179563159563L);
+//                if(members.stream().map(Member::getIdLong).anyMatch(effectedIds::contains)){
 //                    builder.addMemberPermissionOverride(195174230281814016L, null, List.of(Permission.VIEW_CHANNEL));
 //                    builder.addMemberPermissionOverride(173391902962483200L, null, List.of(Permission.VIEW_CHANNEL));
-                }
+//                }
                 VoiceChannel newChannel = builder.complete();
                 sessions.put(newChannel.getIdLong(), UUID.randomUUID());
                 newChannel.sendMessage(String.format("This chatroom name comes from the game: %s", chatroomName.getGame())).queue();

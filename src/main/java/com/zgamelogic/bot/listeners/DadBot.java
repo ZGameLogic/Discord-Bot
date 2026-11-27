@@ -10,7 +10,7 @@ public class DadBot {
     public void messageReceived(MessageReceivedEvent event) {
         if(!event.isFromGuild()) return;
         if(event.getAuthor().getIdLong() == 262458179563159563L) {
-            String message = event.getMessage().getContentRaw().toLowerCase().replaceAll("'", "").replaceAll("’", "");
+            String message = event.getMessage().getContentRaw().toLowerCase().replace("'", "").replace("’", "");
             if(message.startsWith("im ") || message.contains(" im ")){
                 String[] messageArray = message.split(" ");
                 StringBuilder dad = new StringBuilder();

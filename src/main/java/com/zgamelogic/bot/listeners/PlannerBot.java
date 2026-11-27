@@ -124,7 +124,7 @@ public class PlannerBot {
     private List<DiscordRoleData> getRoles(){
         return bot.getGuildById(guildId).getRoles().stream()
                 .filter(role -> role.getIdLong() != bot.getGuildById(guildId).getPublicRole().getIdLong())
-                .map(role -> new DiscordRoleData(role.getName(), role.getIdLong(), role.getColor()))
+                .map(role -> new DiscordRoleData(role.getName(), role.getIdLong(), role.getColors().getPrimary()))
                 .toList();
     }
 
@@ -474,7 +474,7 @@ public class PlannerBot {
         event.deferReply().setEphemeral(true).queue();
         long planId = Long.parseLong(event.getMessage().getContentRaw().split(":")[1]);
         Plan plan = planRepository.getReferenceById(planId);
-        Long[] ids = event.getMentions().getMembers().stream().map(ISnowflake::getIdLong).toList().toArray(Long[]::new);
+        Long[] ids = event.getMentions().getMembers().stream().map(ISnowflake::getIdLong).toArray(Long[]::new);
         planService.addUsersToPlan(plan, ids);
         event.getHook().sendMessage("Added user(s) to event").setEphemeral(true).queue();
         event.getMessage().delete().queue();
